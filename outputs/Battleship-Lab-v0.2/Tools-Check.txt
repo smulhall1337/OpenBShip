@@ -1,0 +1,2 @@
+PASS packaged evidence extractor reproduced 14 original-data/code manifest files byte-identically.
+PASS packaged disassembler decoded original 0x42393B as push 7.

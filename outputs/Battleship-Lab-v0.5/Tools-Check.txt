@@ -1,0 +1,4 @@
+PASS 123 original-derived code/data/CSV files reproduced byte-identically with four packaged extractors and two numerical oracles.
+PASS two recorded modern endpoint-observation files preserved and checked separately.
+PASS relocated source-built palette oracle reproduces 15 patches and 65 fade outputs; targeting oracle reproduces 113 coordinate/RNG-state cases.
+No original process or desktop palette was modified; optional tools are not game runtime dependencies.

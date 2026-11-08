@@ -1,0 +1,15 @@
+PASS relocated initial ZIP:967manifest records match SHA256.
+PASS relocated85model/42form checks, actual SILENT waveOut lifecycle, and owned
+no-argument startup/message loop with clean exit0. Production EXE remains
+5ADCAA56997DB8FFE7E49E3DD751B771F4F45241B8F90CE6FF9502B3E0E83379.
+Final report-only archive updates are byte-verified entry by entry against the
+updated manifest. No production source/executable or original asset changed.
+PASS clean source-only restoration:251native-derived evidence files and3Program
+exports regenerate from absence;2recorded modern palette inputs retained;253total
+evidence files match.525original assets match supplied hashes. Runtime-only
+restoration without -WithChecks also renders the production result card.
+27muted previews generated; result card/movie and minimum high battle inspected.
+Natural runs:4result sequences (both outcomes, muted and SILENT), plus1high-detail
+level0scripted duel/19shots/111stages/362seconds. Exact scopes/limitations are in
+Playback-Validation.txt. Prior version comparisons are not counted as new runs.
+No user game terminated. Audible sync/physical controls remain hands-on checks.

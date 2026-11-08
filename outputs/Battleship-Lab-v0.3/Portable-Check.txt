@@ -1,0 +1,4 @@
+PASS 90 package manifest files matched after extraction.
+PASS relocated Windows x64 executable: 26 focused reader/model checks and 5 form checks, exit 0.
+PASS normal and minimum-size simulated mouse placement uses the actual relocated form handler.
+The game loads its bundled assets by relative path; original media/registry setup is not part of its runtime.

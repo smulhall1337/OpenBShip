@@ -1,0 +1,47 @@
+Native front-end movie findings - 2026-11-07
+
+Exact Bs.exe SHA256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+Confidence: static instructions/call flow only. No new native game was launched.
+This is follow-on reconstruction evidence; modern bindings/player remain unchanged.
+
+The shared front-end movie helper0x42FE70..42FEE2 differs from the Classic battle
+loop. With a nonempty low-media path it admits a requested movie if inactive,
+checks active state, then decodes. Decoder status6 calls close0x402980. It then
+checks Space(event5AE590) and held left mouse(563434bit0); either can call close
+and return9. Without those inputs it returns the decoder status. Space has
+priority over the mouse branch. This is evidence for that helper's skip semantics,
+not evidence that the Classic combat path has the same skip route. Mouse is a
+held-bit test here; the Classic loop instead gates its click handler on a rising
+bit and native phase. Do not merge these different input contexts.
+
+If decoder6and a skip input coincide, the helper's instruction flow can call
+close twice in one iteration. Follow-up inspection of0x402980..4029EF resolves
+sequential cleanup: it returns immediately if active-path byte4B42A0is zero,
+and normal first cleanup clears that byte before sound stops. Thus a second
+sequential close is guarded; this is not evidence of duplicate native resource
+cleanup. No causal connection to the reported original intro-skip crash is
+established. Dynamic full-device behavior is still a separate reference check.
+The modern once-only callback and finite output policies remain documented.
+
+Front-end callers0x42F35E..42F38E and0x42F4C7..42F4F7 enforce a50msminimum elapsed
+interval before this helper: nominal20fps. The Classic battle limiter0x42323E..
+42325E enforces40ms: nominal25fps. Existing reconstructed combat-library playback
+uses the latter context. Do not assign25fps universally to all original movies
+or any future intro/tutorial/attract enhancement. Script owner/state, palette,
+network and actual presentation load can affect observed timing.
+
+Other helper call sites:0x42F6D5(script operand),0x42F52E(random1..137 after an
+ending status6) and0x42FD29(random1..137). These are static paths, not fully
+reconstructed scripts or proof that all138table entries/media are supported.
+Space-skipping a front-end movie returns9; decoder ending returns6, and callers
+can distinguish them. Keep these return values distinct in any future interpreter.
+
+Reproduction with packaged read-only PeDisasm (optional existing Iced dependency):
+PeDisasm.exe <exact Bs.exe> range 42FE70 42FEE2
+PeDisasm.exe <exact Bs.exe> range 42F35E 42F3B5
+PeDisasm.exe <exact Bs.exe> range 42F4C7 42F53E
+PeDisasm.exe <exact Bs.exe> range 42323E 42330B
+Static text retained under work/reconstruction-v13/analysis. Full front-end,
+script/intro playback and original skip perception remain future comparison work.
+

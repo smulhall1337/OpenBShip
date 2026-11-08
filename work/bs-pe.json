@@ -1,0 +1,208 @@
+{
+  "Path": "C:\\Users\\Sean\\Documents\\Battleship-The-Classic-Naval-Warfare-Game_Win_EN_ISO-Version\\Battleship-The-Classic-Naval-Warfare-Game_Win_EN_Full-RIP\\Battleship_The_Classic_Naval_Warfare_Game\\Bs.exe",
+  "SHA256": "B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569",
+  "Machine": "0x014C",
+  "ImageBase": "0x00400000",
+  "EntryRva": "0x00039F80",
+  "Sections": [
+    {
+      "Name": ".text",
+      "Rva": 4096,
+      "VirtualSize": 280520,
+      "RawSize": 280576,
+      "Raw": 1024
+    },
+    {
+      "Name": ".rdata",
+      "Rva": 286720,
+      "VirtualSize": 1776,
+      "RawSize": 2048,
+      "Raw": 281600
+    },
+    {
+      "Name": ".data",
+      "Rva": 290816,
+      "VirtualSize": 1595188,
+      "RawSize": 63488,
+      "Raw": 283648
+    },
+    {
+      "Name": ".idata",
+      "Rva": 1888256,
+      "VirtualSize": 3088,
+      "RawSize": 3584,
+      "Raw": 347136
+    },
+    {
+      "Name": ".rsrc",
+      "Rva": 1892352,
+      "VirtualSize": 1884,
+      "RawSize": 2048,
+      "Raw": 350720
+    },
+    {
+      "Name": ".reloc",
+      "Rva": 1896448,
+      "VirtualSize": 29644,
+      "RawSize": 29696,
+      "Raw": 352768
+    }
+  ],
+  "Imports": [
+    {
+      "Dll": "MSACM32.dll",
+      "Symbols": [
+        "acmMetrics"
+      ]
+    },
+    {
+      "Dll": "DDRAW.dll",
+      "Symbols": [
+        "DirectDrawCreate"
+      ]
+    },
+    {
+      "Dll": "WINMM.dll",
+      "Symbols": [
+        "mmioSeek",
+        "mmioAscend",
+        "mmioRead",
+        "mmioSetInfo",
+        "mmioOpenA",
+        "mmioAdvance",
+        "mmioClose",
+        "mmioGetInfo",
+        "mmioWrite",
+        "mmioCreateChunk",
+        "timeGetTime",
+        "sndPlaySoundA",
+        "mmioDescend"
+      ]
+    },
+    {
+      "Dll": "KERNEL32.dll",
+      "Symbols": [
+        "SetEndOfFile",
+        "GlobalFree",
+        "GlobalAlloc",
+        "GlobalUnlock",
+        "GlobalHandle",
+        "GlobalLock",
+        "OutputDebugStringA",
+        "_lclose",
+        "_lread",
+        "_lopen",
+        "LockResource",
+        "LoadResource",
+        "FindResourceA",
+        "GlobalMemoryStatus",
+        "GetDriveTypeA",
+        "GetProcAddress",
+        "LoadLibraryA",
+        "FreeEnvironmentStringsA",
+        "GetStringTypeW",
+        "UnhandledExceptionFilter",
+        "RtlUnwind",
+        "WriteFile",
+        "GetStdHandle",
+        "GetFileType",
+        "SetHandleCount",
+        "SetFilePointer",
+        "GetCurrentProcess",
+        "TerminateProcess",
+        "ExitProcess",
+        "VirtualAlloc",
+        "VirtualFree",
+        "HeapCreate",
+        "HeapDestroy",
+        "GetVersion",
+        "GetCommandLineA",
+        "GetStartupInfoA",
+        "GetModuleHandleA",
+        "HeapFree",
+        "FlushFileBuffers",
+        "SetStdHandle",
+        "GetFileSize",
+        "GetStringTypeA",
+        "GetOEMCP",
+        "HeapCompact",
+        "GetACP",
+        "GetCPInfo",
+        "WideCharToMultiByte",
+        "GetEnvironmentStringsW",
+        "FreeEnvironmentStringsW",
+        "GetEnvironmentStrings",
+        "MultiByteToWideChar",
+        "GetModuleFileNameA",
+        "HeapAlloc",
+        "GetLastError",
+        "RaiseException",
+        "LCMapStringW",
+        "LCMapStringA",
+        "CreateFileA",
+        "FreeLibrary",
+        "CloseHandle",
+        "ReadFile"
+      ]
+    },
+    {
+      "Dll": "USER32.dll",
+      "Symbols": [
+        "MessageBoxA",
+        "PostQuitMessage",
+        "wsprintfA",
+        "LoadCursorA",
+        "SetFocus",
+        "GetClientRect",
+        "ClientToScreen",
+        "OffsetRect",
+        "GetDC",
+        "ReleaseDC",
+        "SetCursor",
+        "SetWindowTextA",
+        "LoadIconA",
+        "RegisterClassA",
+        "CreateWindowExA",
+        "ShowWindow",
+        "UpdateWindow",
+        "DestroyWindow",
+        "PeekMessageA",
+        "GetMessageA",
+        "TranslateMessage",
+        "DispatchMessageA",
+        "DefWindowProcA"
+      ]
+    },
+    {
+      "Dll": "GDI32.dll",
+      "Symbols": [
+        "SelectObject",
+        "TextOutA",
+        "SetPixel",
+        "GetPixel",
+        "CreateCompatibleDC",
+        "GetObjectA",
+        "StretchBlt",
+        "DeleteDC",
+        "GetSystemPaletteEntries",
+        "GetStockObject"
+      ]
+    },
+    {
+      "Dll": "ADVAPI32.dll",
+      "Symbols": [
+        "RegQueryValueExA",
+        "RegOpenKeyExA",
+        "RegCloseKey"
+      ]
+    },
+    {
+      "Dll": "ole32.dll",
+      "Symbols": [
+        "CoInitialize",
+        "CoCreateInstance",
+        "CoUninitialize"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+PASS packaged extractors reproduced 35 original-data/code/CSV manifest files byte-identically.
+PASS packaged disassembler decoded native Classic scale instruction 0x408A4E as mov eax,75h (117).

@@ -1,0 +1,61 @@
+Historical subsystem report; the originating milestone appears below.
+Current v0.13 behavior/check totals are in README.txt and HUD-EVIDENCE.txt.
+Those current records supersede earlier milestone limits/counts in this report.
+Later detail decoding: HIGH-DETAIL-EVIDENCE.txt; approved alpha: BACKDROP-EVIDENCE.txt.
+
+Battle backdrop and approved transparency - v0.11 - 2026-11-07
+
+User direction: videos should be behind the game board as a background, and the
+board should have transparency while a cinematic plays. User explicitly approved
+30% transparency, with grid lines, ships, markers and controls kept opaque, and
+full opacity restored afterward. This approval preceded implementation.
+
+Composition is modern design. No original mask or alpha value is claimed recovered.
+ClassicBackdrop derives two convex board regions and 22 grid lines per board from
+the recovered native projection. Opaque HUD rectangles are documented in source.
+Board interiors away from lines use alpha179/255 (nearest eight-bit representation
+of70% opacity); grid-line neighborhoods1.5native pixels, outer borders and HUD use
+alpha255. Areas outside the foreground mask use alpha0. Indexed source bytes and
+original palette values are retained; alpha is applied only to a derived ARGB image.
+Ships/markers/roster/results render afterward and receive no additional fade.
+Existing marker tints/ship transparency already defined by earlier rendering remain
+unchanged. Board pixels sample70%art plus30%video; raster rounding can differ by1.
+
+BoardView draws the current finite movie frame as centered aspect-preserving cover
+of the playfield, then foreground artwork and gameplay details. Cover can crop
+movie edges; it does not stretch the4:3source. The separate106px playback row is
+reserved by a TableLayoutPanel, so controls never cover the board. Native640x512
+board coordinate/picking logic is unchanged and mapped to the available viewport.
+The board viewport resizes when the playback row appears/disappears.
+ClipStudy owns decoded bitmap/audio resources; BoardView borrows only the current
+image on the UI thread. FrameChanged updates that reference/invalidation. Palette
+changes replace/dispose the derived foreground without touching the movie state.
+Completion/reset/failure remove the borrowed frame and restore opaque original art;
+pause holds the cinematic frame and its transparency. Independent library unchanged.
+
+Source evidence: exact Bs.exe SHA256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+0x4028B0..0x402972 decodes/scales movies into the main buffer. Classic loop
+0x42325E..0x42330B processes video before later game/UI update calls. Those spans
+support further drawing-order investigation; they do NOT prove this exact modern
+composition, HUD mask, transparency, crop or timing. No new source-format reader
+or raw source fixture was needed for the presentation change. Existing201evidence
+files and428original assets remain intact;61movie content/timing is unchanged.
+
+Validation:68focused checks and30real-form checks pass. New cases check mask alpha
+at fixed independent grid/HUD/interior/background pixels, unchanged PCX data,
+cover aspect/centering, live renderer red/green backgrounds with unchanged opaque
+grid and expected30%surface blend, normal/minimum separate control bounds, palette
+bitmap disposal, pause/complete/reset/failed-load restoration. Simulated input and
+synthetic renders do not establish physical controls or perceptual acceptance.
+Twenty muted scripted previews include clean background compositions at normal and
+minimum sizes. Packaged/source-only/relocated checks and actual SILENT waveOut test
+supplement owned no-argument startup/clean exit0. Audible output remains unconfirmed.
+
+No new game mechanics, weapon/target RNG changes or new native timing claims.
+User's general v0.10 appearance feedback is recorded without inferring specific
+new hit/miss/sink/audio acceptance. v0.1..v0.10 and original baseline are preserved.
+Next work remains original priority/preemption/interruption and completion routing.
+
+
+

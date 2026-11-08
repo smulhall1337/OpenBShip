@@ -1,0 +1,38 @@
+Battleship project roadmap - current 2026-11-07
+
+Current reconstruction: v0.13 cinematic HUD and native4:3viewport, optional original
+320x240movies,61low/highclip libraries, approved30%surface transparency behindopaque
+boards/ships/markers/HUD.76model/34form checks; source/portable/device/startup checks
+pass. Natural production-timer duels continue; see Natural-Cinematic-Validation.txt.
+
+Next useful comparison: play a full movie-enabled duel, including hit/miss/sink and
+pause/resume, in high detail. Confirm perceived sound/sync and focus behavior. Then
+compare a recorded native Classic scenario for camera ownership, palette/fade,
+last-frame/terminal timing, movie skip and RNG scheduling. Existing bounded native
+admission/phase/input evidence reduces uncertainty but does not establish all routes.
+Keep original reference and versioned comparisons intact. No original full battle
+has been dynamically confirmed; original menu/clean Quit remain accepted baseline.
+Stretch goal SG-01 — optional AI enhancement of combat movies
+Requested by user: "add it as a stretch goal for this project".
+Status: recorded/backlog; not part of the fidelity baseline or current milestone.
+Start from the supplied HWEBS higher-resolution originals, not the current LWEBS
+frames. Inspection found all twenty firing clips at header 40,30,2,2 (320x240),
+with matching 1460 frames / 58.4 seconds at nominal 25 fps. Both detail variants are now decoded and checked; no AI enhancement has run.
+Pilot: compare BATFIRE1 from its native 320x240 source, ordinary scaling and an
+AI upscale (candidate 1280x960), with identical frame count, cadence, aspect ratio
+and audio. Evaluate temporal shimmer, invented details, turret/hull distortion,
+explosions/smoke and palette/contrast changes. Benchmark processing on available
+hardware before estimating the full batch. Windows inspection surfaced Intel UHD;
+render speed has not been measured. Video2X/Real-ESRGAN are candidate tools, not
+installed/selected dependencies. Model licenses and exact versions must be recorded.
+If the pilot is accepted, build a reproducible batch pipeline, record source/model/
+parameter/output hashes, and add an optional Original/Enhanced presentation choice.
+Keep originals unchanged and selectable; AI details are intentional modernization,
+not recovered original evidence. Keep enhanced results out of reconstruction tests.
+Planning estimate only: a few hours for a pilot and roughly one to two working
+days for a reusable pipeline/integration, plus unbenchmarked compute and review.
+No AI processing, model download, new dependency install or external upload has
+been performed as part of recording this stretch goal.
+
+
+

@@ -1,0 +1,11 @@
+PASS relocated ZIP:944manifest records match SHA256.
+PASS relocated81model/38real-form checks and actual SILENT waveOut lifecycle.
+PASS minimal source restoration:244original-derived evidence files regenerate
+from absence,2recorded modern observations retained; all246match package bytes.
+PASS owned no-argument production startup/message loop and clean exit0.
+25muted previews generated; ending normal/minimum scenes visually inspected.
+Natural playback: two full scripted duels, both61combat-clip catalog sweeps,
+both2ending sweeps and two prepared near-defeat cases. Playback-Validation.txt
+records exact scopes, raw report locations and SILENT/physical limitations.
+The production executable is unchanged by final report-only archive updates;
+final entries/relocated hashes are compared before delivery. No user game closed.

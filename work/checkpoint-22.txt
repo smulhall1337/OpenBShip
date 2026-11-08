@@ -1,0 +1,80 @@
+Checkpoint 22 — delivered v0.16 — 2026-11-07
+
+Latest user: continue. No new physical exit, audible or visual acceptance inferred.
+Default outputs/Launch-Reconstruction.cmd now points to v0.16. Prior builds and
+original menu baseline verified unchanged. Current scope: outputs/Current-Status.txt.
+
+New vertical slice
+Original menu tab, automatic result-completion handoff to title once. Exact original
+E_TITLE.PCX/EO_TITLE.SPH, selected-label two-half sprites, native button geometry,
+zero-key unscaled rendering. FrontMenu.cs + TitleProgram.cs; MainForm/EndingPlayer
+connect once-only handoff and retain paused game. Program adds two preview modes;
+Validation adds three model groups; MainForm adds four UI groups. ClipStudy.cs and
+Game/targeting/battle/HUD sources unchanged from v0.15.1. Tightened remaining late
+tab/key/view guards, retaining the exit fix. No global exception suppression.
+
+Modern policies: 40ms per fade factor, explicit pause/replay, fresh press/release,
+keyboard edges, held-key suppression, inline quit confirmation. Solo starts current
+modern setup; Preferences uses Display; Multiplayer unavailable. Original native
+submenus are not executed. Default startup remains Classic duel. Return retains
+paused board; F2 resets. Approved 30% board alpha/opaque overlays and bindings kept.
+
+Native source identity
+Bs.exe SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+EO_TITLE.SPH D5928B8FDF76EC36D40B31E6DFAF7C0F9688735DB1B76B0FF05BF6A9CDCD511F
+Opcode18 at42F856 assigns pointer then scans labels with42F200; no return stack.
+Entry44EF88/56bytes writes21(global,value), calls4321F0 via26, chains44EFC0.
+Reset callback writes55EA48=-1,55E820=1,4E384C=2,word4E42D0=0,4FB6EC=0,
+word4AA7FC=0; returns0 to457B58. Semantic CSV names are inferred analysis labels.
+Title full392bytes44EFC0..44F148; supported init168bytes to44F068/state39.
+IMPORTANT state39 ->42F43D ->4300B0, not4331E0 (that's state40). Init labels11/12,
+sets menu-kind456A18=0; flag456CA0 controls native fade-in after return.
+Button group27 loaded42EF91. Records (128,y,frame,27,action): y231/273/313/375,
+frame0/1/2/3, action1/2/5/4.430820 loads records,433140 derives SPH dimensions.
+4323E0 draws frame at(x,y), frame+4 at(x+200,y), mode0/100%/flags0; frames200/174
+wide,44high. Mode0 ignores SPH origin1,1.407950 +4339F3 skips stored index0.
+4302D6 click branch adds200 to width in title mode0 =>400x44, half-open, first
+record wins overlaps. Full polling rising-edge guards are static evidence only.
+Original action targets:1->44F208,2->44F3F8,5->450EC8,4->44F148. Not implemented.
+
+MenuOracle: guarded private x86 copied entry/reset/scanner/fades/loader/dimensions/
+click-branch/draw/unscaled raster; file/device/menu polling stubbed. Exact relocation
+counts163,22,3,6,3,4,13,10,10,0. Three paths (ending victory/loss, direct-no-fade),
+four buttons, eight draws,1104grouped boundary samples, four full raster hashes
+on deterministic synthetic background, canaries intact. No original game/window/
+network/audio/full input polling. Do not mistake raw pixels for native capture.
+Extract-MenuEvidence exports raw spans plus runtime MenuEntry/MenuTitle.seqbin and
+Menu-Provenance.csv. Runtime always exports these even without WithChecks.
+
+Checks and artifacts
+88model+46form=134 checks;14shutdown cases pass. NaturalMenuCheck uses actual
+MainForm timers/callbacks, both complete ending -> title -> confirmed Quit paths,
+SILENT device, two buffers, one350msmovie pause, paused game preserved, zero
+ThreadException,83seconds. Current run natural-menu-002/Results; 001pre-final-guard
+trial also passed but not counted separately. Source-only restore269native-derived
+fixtures from absence +2modern palette inputs=271, six Program files,527original
+assets allbyte-match. Runtime-only restore renders title. Restored/relocated134+
+14shutdown+SILENT lifecycle, owned startup/clean exit0 pass. No full duel rerun;
+prior reports are historical. Four current menu previews;27older comparisons kept.
+
+Source work/reconstruction-v16/src; package outputs/Battleship-Lab-v0.16/Source.
+Final ZIP1009entries/1008manifest files, everyentry verified. EXE unchanged from
+portable execution; reports-only updates afterward. Logs under reconstruction-v16.
+ZIP8DD11D5C8F92AD25B003C0DB565FA3888BC740B1006D331993792FED477202C4
+EXEB0975BC7AA80147ED3B422210424704C3A7DB8E908A55B171E7D2C215825DC68
+A premature portable invocation before ZIP creation failed Resolve-Path; retried
+after archive existed and passed. No production defect or asset change resulted.
+
+Next steps
+User menu/ending/quit physical check remains pending. Recover original Solo setup
+44F208, its resources and supported transitions before replacing the modern bridge.
+Inspect exact-image disassembly/bytes and use bounded stubs, not guessed VM behavior.
+Keep native mainmenu/Quit baseline; establish actual Classic gameplay for RNG/
+ownership/interruption calibration. Fade factors known, native cadence unmeasured;
+40ms remains modern. AI SG-01 optional backlog, no models/downloads/processing.
+Preserve v0.16 before further edits. Restore compiler list explicitly includes
+MenuOracle once; runner gets exe/GRAPHICS/evidence, separate from other signatures.
+
+Git initialized/no HEAD due protected metadata. Do not retry/bypass/relocate it.
+Prepared local commit script current. Source snapshot22 excludes originals, binaries,
+settings, scratch and .git; see outputs/Source-Checkpoint-22.txt. No remote/upload.

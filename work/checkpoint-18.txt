@@ -1,0 +1,70 @@
+Checkpoint18 delivered - v0.13 - 2026-11-07
+
+User authorized autonomous work07:04:10..09:04:10UTC, stopping at an appropriate
+checkpoint. This run delivered v0.11approved30%board-surface transparency, v0.12
+optional original320x240movies and admission evidence, then v0.13original cinematic
+HUD/4:3viewport. Default outputs\Launch-Reconstruction.cmd now selects v0.13.
+Source work\reconstruction-v13\src; preserved v0.1..v0.12 and original menu baseline.
+
+New v0.13 behavior: original E_CLAS2curved panels/phase-specific roster/number/result
+commands,640x480crop from512storage, modernopaqueHUDbacking deliberately retained.
+Surfacealpha179/255unchanged. Original100%SPHrenderer keys index0transparent, so
+storedblackbacking is explicitly modern. Moviebackground/controls remain separate;
+fullopacityrestores aftercompletion/reset/failure. Instant/legacy compare retained.
+Native input evidence:12key-state and24Escape/P/network-mode cases, recording
+stubs; Pconfirmed, Escapeoriginalpausedoptions differ, Spacecontext separate.
+
+76model/format and34real-form checks pass, packaged/source-only/relocated. All61
+low and61high clips match original decoder fixtures(5641frames eachcatalog); per-
+clip duration differences retained.490assets hashmatch suppliedRIP. Minimal source
+restore starts without original-derived Evidence:230files regenerate,2recorded
+modernWindows palette inputs retained; all232matchpackage. ActualSILENTwaveOut
+and owned noargumentstartup/cleanexit0pass, including final relocated archive.
+22muted previews generated; highminimum/sink, fleet/minimum and defeat reviewed.
+
+Natural production-timer diagnostics:9fullv0.13duels(fourlevels lowmuted/highsilent,
+plus one corrected-sampler repeat),21acrossv0.11..v0.13. Each19playershots/111stages,
+no stageskips, pause/frame/damage and terminalvictory checked. Overall399playershots/
+2331stages/999realSILENTbuffers. v0.13battlecoverage42distinctclips; standalone
+librarysweeps coverall61inbothqualities,5641frames each,61once-onlycompletions/reset.
+Highlibrary61actualSILENTbuffers; lowmuted. Preparedneardefeat low/highcases each
+3naturalstages/10sec; high3SILENTbuffers, pause650ms, lossdeferredthroughsink andF2.
+These are distinct scopes, not thousands of gameplay scenarios. Physical/audible/
+perceivedsync and fullnativegameplay still pending. Nativebaseline onlymenu/Quit.
+
+Diagnostic sampling error found/corrected: old Player/Firing Frames column sampled
+previous Timeline. All380stale entries identified across20oldduels; rawCSV retained,
+source-derived counts in Stage-Frame-Audit.csv. Counts/clipIDs/phase/damage/terminal/
+audio checks unaffected. Fixed sampler asserts currentclip/count;111ordered clip/
+turn/damage rows match originalhighlevel0run,0staleentries. Oneinitialquote-parser
+attempt failed before formstartup and was excluded; only its ownedhelper stopped.
+No user game was terminated. Refer Natural-Frame-Metadata-Audit.txt for exactscope.
+
+Native front-end follow-on static report: helper42FE70Space/heldleft skips return9,
+decoder6ending distinct; somefront-end50ms limiter versus Classic40ms. Normal
+close402980isguarded byactivepath and clearsit beforecuecleanup, so sequential
+secondclose returns. No causal attribution to earlier introcrash. No new native
+process launched. Palette/owner/priority/terminal/sharedRNG/wholefrontend remain
+incomplete. No AI model, SDK, codec or engine downloaded/installed; no externalupload.
+
+Final v0.13manifest882records, ZIP883entries, allarchive/source andrelocatedbytes
+verified. ZIP SHA256:
+9FC3E24F0631DD477801903E2843230726CC046317A03D6982AAF17CD9FC6A91
+EXE SHA256:
+4643C4A86005931FDC20F2995D3D3999F6015DE1108CE5BB7061579E958132F1
+Archive105890430bytes. Do notmodify frozenpackage or versioned original baselines.
+Root Restore-Workspace.ps1 latestv0.13; source/comparison source archive separate.
+InitialGitcommit remains blocked by protected.gitmetadata/escalationdisabled;
+prepared Complete-Git-Checkpoint.ps1/cmd supports userterminal. No remote/publication.
+
+Next meaningful hands-on check: enable Display/Battle movies and High-detail before
+deployment, Auto-place/Start, observe hit/miss/sink, sound/perceivedsync, roster/HUD
+readability and pause/focus. P/Escape pauses, Space skips once,F2resets,Quit exits.
+Then record native Classic start/deployment/shoot/hit/miss/sink/end with exactsetup,
+compare owner/camera/palette/lastframe/terminal/RNG before claiming more fidelity.
+Minor UIcopy follow-up: finished sidebarhint still has shooting advice; overlay/F2
+are correct. Firingclips tab name covers wholecombatlibrary. Do not infer native
+behavior from modern timer delay, serial player, selection lines or RGB layering.
+Keep SG01AIupscale optional; native HWEBSdecoding is groundwork, not enhancement.
+
+Authored-source backup completed: outputs/Battleship-Source-Checkpoint-18.zip,1443authored/sourcefixturefiles+manifest,1444ZIPentries, SHA256F34E2F34D8D58B41EB239B8B4053B10B9249D463AD9EED8D4E2EA28CD8326061. Everyentryverified. Metadata-onlycompletionbookkeepingfollows snapshot. Repo rootverifiedyes/main,0remotes,noHEADcommit; sourceaudit1444paths,0unexpectedmedia/generatedentries. Allownednaturaldiagnosticsfinished. End at this tested checkpoint within authorizedwindow; no further product decision was needed.

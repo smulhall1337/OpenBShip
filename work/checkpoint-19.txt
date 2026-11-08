@@ -1,0 +1,73 @@
+Checkpoint 19 - delivered v0.14 - 2026-11-07
+
+Latest user: 'looks good. continue'. Recorded general visual acceptance of v0.13;
+no new audible/native-gameplay acceptance inferred. Default launcher now v0.14.
+Original baseline and v0.1..v0.13 are preserved with manifests/delivery hashes.
+
+Implemented bounded vertical slice
+Combat movies appends original VICTORY/LOSE. Both high-only320x240; native ending
+script wait-state6 uses50ms versus Classic combat40ms. Native movie IDs139/140,
+scripts4512D8/451318; source lookup44E288+9*ID. Raw scripts/calls exported, not
+interpreted. Native ending selector4196F0 compares local player/winner in modes3/14;
+Classic sink route424130 calls42E5D0 ->4196F0. Full automatic cards/fades/wait/menu
+return and exact sink-to-outcome ordering remain unresolved. Study playback only.
+
+661/680 frames, all1341 indexed hashes/consumed spans match hash-guarded x86 native
+decoder, canaries and independent first-frame checks. Ending sequence oracle60cue
+starts/cleanup;26mono11025Hz8-bit WAV paths. Kept original LOSE README and optional
+TUNE1/2/3 cues.523original assets hash-match supplied RIP; no material replaced.
+
+MovieCatalog separates name, native-high-only folder and40/50ms cadence. Limits
+PAT/SEQ/mix extend512->1024 defensively. FrameSample uses floor(frame*rate*ms/1000).
+VICTORY theoretical end has quarter sample; finite audio364376samples maps to
+visual33050ms on buffer completion, avoiding false two-second audio-stall fallback.
+ClipFrames retains decoded index surfaces, realizes one colour bitmap, keeps old
+bitmap through FrameChanged and releases after. Settled1/handoff2 bitmap bounds;
+not streaming total movie data. LOSE indexed52224000bytes vs208896000allcolourpixel
+bytes. Pause reuses the bitmap; old clip owner disposed after new frame published.
+
+MainForm terminal guidance corrected; Firing clips tab renamed Combat movies.
+Saved user preferences exposed two diagnostic assumptions; UI checks now initialize
+unsaved defaults. Normal preference persistence and accepted bindings unchanged.
+No Game.cs rules/targeting/phase behavior change. Approved30% board surfaces and
+opaque grid/ships/markers/HUD remain. No automatic ending injection in the duel.
+
+Validation
+81model/format +38real-form checks pass packaged/source-restored/relocated. New
+checks cover1341native frames,60cue events/26PCM paths, source clock/catalog,
+20fpspartitions, sample floor, all680cache handoffs, borrowed frame validity,
+quality independence, once-only finite completion and terminal/reset guidance.
+Minimal restore starts with only2recorded modern palette inputs:244original-
+derived evidence files regenerate; all246match bytes. Both new x86oracles built
+from source. Twenty-five muted previews; normal/minimum endings visually reviewed.
+Owned no-argument production startup/clean exit0 and actual SILENT waveOut pass,
+including final relocated archive. No user game terminated.
+
+Natural production regressions: low/muted level0 full duel357sec, high/SILENT
+level3 full duel441sec; each19player shots/111stages and one pause/resume. Both
+61combat catalog sweeps complete naturally (low229sec/high231sec),5641frames each.
+Both2ending sweeps complete naturally (lowpref/muted69sec, highpref/SILENT68sec),
+1341frames each, no skips, one pause, two once-only completions/reset. Endings
+remain320x240 regardless of combat preference. Two prepared near-defeat scenarios
+pass natural3stages/10sec, pause/resume, delayed loss andF2. These are distinct
+scopes, not hundreds of played games. Physical/audible/perceived sync remains
+pending. Raw data: work\matrix-v014-*, natural-library-v014, natural-endings-v014,
+natural-defeat-v014. All diagnostic modules match final production hash.
+
+Final package944manifest files /945ZIP entries, all bytes/source/relocated hashes
+verified; final startup/clean exit0 and SILENT device check pass. ZIP129756873bytes.
+ZIP SHA256:0C2AF58BD2CBB5FAEE97BDDBAD229962CAE7BF77518B59CB919E5F32E2EAF896
+EXE SHA256:BE0B5ECA844391585AB127CA2798E903E5F789A904CF5EF999ED1FF06B1A1736
+Frozen delivery: outputs\Battleship-Lab-v0.14, versioned/default launchers. Source
+work\reconstruction-v14\src, analysis work\reconstruction-v14\analysis. Root
+Restore-Workspace.ps1 updated. Native tools/spans/catalogs in package Tools/Evidence.
+
+Next: hands-on VICTORY/LOSE sound/sync and focus, then native ending script cards,
+fade/wait/menu-return semantics. Establish repeatable original Classic gameplay
+reference before further ownership/timing/RNG claims. Original native acceptance
+still only menu/Quit. AI SG-01 remains optional; no processing/model download.
+No engine/SDK/codec installation, external upload/publication or original registry/
+media changes. Git initial commit still protected-write blocked; prepared user-
+terminal script remains. Preserve frozen v0.14 and earlier comparisons.
+
+Authored-source backup verified:1658authored/sourcefixturefiles plusmanifest,1659ZIPentries. SourceZIP SHA25664EAF658F077FF33F4D561B8C8A4103549DADDBF7AD6F70614911C4EF84D198F. Source-Checkpoint-19.txt recordsscope; Gitmetadataexcluded, no commit claimed. Allowneddiagnosticruns complete. Delivery/sourcehashes unchanged at final handoff.

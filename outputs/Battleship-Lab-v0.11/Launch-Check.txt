@@ -1,0 +1,5 @@
+PASS packaged no-argument x64 startup reached main form/message loop.
+Owned PID 29292 main form found: Battleship Fleet Lab 0.11 — Battle movies behind the board; WM_CLOSE posted=True
+Normal close exited=True; Windows exit code=0.
+Only this new hidden owned smoke process was closed. No existing user game was closed.
+Agent-desktop startup/close does not establish physical user controls or audible playback.

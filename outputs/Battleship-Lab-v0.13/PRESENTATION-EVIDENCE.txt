@@ -1,0 +1,148 @@
+Historical subsystem report; the originating milestone appears below.
+Current v0.13 behavior/check totals are in README.txt and HUD-EVIDENCE.txt.
+Those current records supersede earlier milestone limits/counts in this report.
+Later detail decoding: HIGH-DETAIL-EVIDENCE.txt; approved alpha: BACKDROP-EVIDENCE.txt.
+
+Classic board and ship presentation — checkpoint 10, 2026-11-06
+
+Executable identity
+All addresses refer to supplied Full-RIP Bs.exe, size 397824, PE32/i386, image
+base 0x00400000, SHA-256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+No patch to that game executable was made. Findings use read-only static analysis
+with raw source bytes and Iced decoding. These are new readable implementations,
+not recovered original source or a completed port. Original desktop gameplay
+beyond the menu remains unconfirmed.
+
+Board parameters and forward transform — high static confidence
+Classic view mode 7 dispatches via 0x408C00[7] to 0x408A30. That case sets camera
+X=10, camera Y=5, horizontal scale=117 and vertical scale=78. The mode-7 camera
+tracking table 0x408D28[7] selects 0x408D11, restoring camera 10,5. The Classic
+initializer at 0x4238D0 puts the player fleet at world (0,0), opponent at (11,0),
+and orientation/elevation bytes at zero.
+
+Traced native forward arithmetic, including 0x40D728..0x40D770:
+    screenX = 320 + trunc((worldX + worldY - 10 - 5) * 117 / 6)
+    screenY = 240 + trunc((worldY - worldX + 10 - 5) * 78 / 6)
+Division truncates toward zero. Grid units are cells; screen units are pixels in
+the original 640x512 scene. World X/Y includes the fleet's origin. The flat
+Classic path has no elevation offset. Other views/orientations are not ported.
+
+Independent vertex cases, in native X/Y order (0,0),(10,0),(10,10),(0,10):
+    player:   (28,305), (223,175), (417,305), (223,435)
+    opponent: (242,162), (437,32),  (632,162), (437,292)
+These meet the original colored border pixels within their drawn thickness.
+The earlier v0.2 bilinear grid started at the upper vertex and therefore rotated
+logical X/Y relative to the original. v0.3 corrects the recovered preset while
+retaining the old mapping for the v0.1 preset and preserving earlier builds.
+
+Mouse inverse — traced algorithm, extended-precision boundary limitation
+0x430D70..0x430F09 calculates the projection origin (28,305) using signed integer
+arithmetic. It converts mouse deltas to floating point; the factor at 0x446180 is
+3. The selected Classic fleet is type 1, which uses the flat-plane inverse:
+    h = float32((pixelX - 28) / 117 * 3)
+    v = (pixelY - 305) / 78 * 3
+    worldX = trunc(h - v), worldY = trunc(h + v)
+The compiler helper 0x439A8C sets the x87 rounding mode to truncation during
+conversion. World coordinates are checked against the chosen fleet's 10x10 area.
+There is no floor operation: e.g. pixel (27,305) still truncates to player (0,0).
+
+The native v operand stays in extended x87 precision; the managed reader uses
+double there, while preserving the explicit h float32 store. Exact points on
+floating-point boundary ties may differ. Pixel coordinates are first converted
+to integer original-resolution pixels after modern window scaling. All 400 cell
+centers across native/legacy mappings pass picking checks, but this is not an
+exhaustive bit-level comparison of all boundary pixels or other view modes.
+
+Centered placement — high static confidence
+At 0x431372..0x43137E, validation subtracts trunc(length/2) from selected Y before
+bounds/overlap checks. At 0x431073..0x431098, commit stores the same centered start.
+The new recovered preset therefore selects the ship's center cell, rather than
+using the v0.2 cursor as the first occupied cell. The fixed native Y axis and
+19-cell fleet remain unchanged. Auto-placement still uses a modern bounded RNG.
+The translucent preview and colored validity footprint are intentional new UI.
+
+Ship frame selection — high static confidence
+The native dispatch at 0x40DD00 uses type-1 to index 0x40E068. Asset-loading calls
+establish bank numbers, filenames and the sprite pointer table at 0x563090:
+
+Type / ship          resource       bank   frame   source WxH   at 79%
+7 Super Carrier      ALLSHIPS.SPH      6       0     135x95      106x75
+1 Battleship         BATTSHIP.SPH     10       0     134x95      105x75
+2 Frigate            FRIGATE.SPH       7       0      78x56       61x44
+12 Missile Submarine ALLSHIPS.SPH      6       4     103x71       81x56
+4 Destroyer          NEWSHIPS.SPH     13       8      65x48       51x37
+
+Handlers are 0x40DE11, 0x40DD16, 0x40DD47, 0x40DF11 and 0x40DD78 respectively.
+Evidence/Native-Ship-Dispatch.csv records handler VA, bank pointer, frame, source
+file hash, sizes and scaled sizes. Ship-Handler-<type>.bin retains source bytes.
+Only the Classic orientation-0 dispatch is implemented. Unsupported types fail
+explicitly instead of silently substituting another ship.
+
+Native ship anchors — high static confidence for this orientation
+The fleet draw routine at 0x40D640 chooses the ship's X and startY+trunc(length/2),
+adds the fleet origin, then projects it. Orientation 0 at 0x40D7A0 adds:
+    even length: X += trunc(117/12)=9;  Y += trunc(78/-12)=-6
+    odd length:  X += 18;              Y += -6+trunc(78/12)=0
+The draw call at 0x40D934..0x40D94F uses mode 1 (centered). Scale is integer
+trunc(100*117/147)=79, from the caller's scale computation. Scaled dimensions are
+trunc(sourceDimension*79/100), centered by subtracting trunc(dimension/2).
+Header origins are not added in mode 1.
+
+Anchor examples:
+player Super Carrier start (0,0) -> (85,331), bounds (32,294,106,75)
+opponent Super Carrier start (0,0) -> (299,188)
+player Battleship start (4,3) -> (221,318)
+player Missile Submarine start (2,1) -> (134,312)
+player Destroyer start (9,8) -> (387,299)
+player Frigate start (1,7) -> (221,396)
+
+Sprite scaling and transparency — recovered scaled path
+0x407B59..0x407D65 establishes integer destination sizes, 16.16 source steps and
+scaled scanline runs. For each output row it selects source row floor(y*stepY /
+65536), scales that row's transparent skip and literal count separately, then
+samples literals from the start of the run using stepX. Palette index 0 is
+skipped in this scaled path. It is not equivalent to generic bitmap resizing;
+ClassicShips.Scale implements the observed scanline behavior separately from the
+unscaled SPH reader. Independent sparse/zero-index fixtures check it. Dimensions,
+bounds and disjoint spans are validated. All five original frames scale and load.
+This does not claim every native sprite drawing mode or scaled clipping variant.
+
+Visibility, damage and result presentation
+The original fleet slot becomes null on sinking. v0.3 removes its large sprite
+while keeping the known sunk model and red status icon. Opponent sprites are not
+rendered during battle; a check guards against hidden-layout disclosure. Revealing
+surviving opponents after battle is a modern convenience. Shot crosses/circles
+remain modern replacements for original fire/effects. Roster-order drawing is
+retained; original draw-queue priority behavior beyond this path is not ported.
+
+Native result drawing at 0x4094E4..0x40956F selects EO_CLASS frame 2 for a miss or
+3 for a hit. It uses (32,176) on the player board and (512,272) on the opponent.
+v0.3 uses these resources/coordinates but keeps each result visible until the
+next result for that board. The original cinematic phase windows are not ported.
+v0.5 keeps the accepted palette by default and adds recovered mutable gameplay
+RGB entries with documented deterministic reserved endpoints. It also adds the
+original persistent damage frames. DISPLAY-EVIDENCE.txt describes their evidence
+and the remaining palette-transition/global-phase limits.
+
+Validation and reproducibility
+49 focused model/reader checks and 15 form checks pass. Presentation cases cover raw camera
+parameters, native vertices, inverse/axis orientation, odd/even ship anchors,
+scaled-run transparency, original frame dispatch, opponent secrecy and centered
+manual deployment. The actual mouse handler is exercised with known native pixel
+(164,331) -> logical (2,4) -> 5-cell start (2,2), at normal/minimum window sizes.
+Those input events are simulated, not physical desktop verification. Nine actual
+packaged-form previews are rendered with fixed seed 731 and visually inspected.
+Original palette appearance, full gameplay and audible sound still need comparison.
+
+Tools/Extract-ClassicPresentation.ps1 verifies the executable hash, reads original
+parameters/handlers and writes independent source bytes and CSV records. It never
+executes the original. Presentation-Code-Spans.csv records raw source context
+spans; these can include neighboring data/instructions and are not callable ports.
+v0.4 targeting evidence and source-executed numerical fixtures are documented in
+OPPONENT-EVIDENCE.txt. Current palette/damage work is in DISPLAY-EVIDENCE.txt.
+v0.6 adds recovered ship/weapon choice in WEAPONS-EVIDENCE.txt. v0.7 adds a silent BATFIRE1 study in PAT-EVIDENCE.txt. Next: other variants and battle/audio sequencing, retaining prior builds.
+
+
+
+

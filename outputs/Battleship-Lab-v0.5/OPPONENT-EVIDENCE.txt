@@ -1,0 +1,117 @@
+Original Classic opponent targeting — checkpoint 10, 2026-11-06
+
+Build identity and scope
+All addresses apply only to supplied Full-RIP Bs.exe, PE32/i386, base 0x00400000,
+size 397824, SHA-256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+No edit to that executable was made. OriginalOpponent.cs is newly written readable
+source for the target selector, not a recovered original source file or complete AI.
+
+Active caller established
+The solo loop at 0x423368 checks phase 4 and network flag 0, then calls 0x41C8C0
+at 0x423376. That entry chooses the active shooting ship/weapon presentation and
+calls target selector 0x41C940 at 0x41C91B with the X/Y output pointers. The nearby
+0x423B00 random-shot helper has no direct caller in the decoded image and is not
+used as evidence for the active solo selector. No claim that it is universally
+unreachable is made. It was not implemented as the recovered opponent strategy.
+
+Observation grid
+0x41C940..0x41C9B0 copies a 10x10 x-major grid for the opposing fleet. Codes 0,2,4
+become 0 (unknown); other codes are retained. In the traced Classic impact path,
+1 is a miss and 8 a hit. Intact hidden ship cells (2) are therefore not revealed
+to targeting. The new runtime builds observations only from resolved shots and
+passes a copied integer grid; the selector receives no Board or Ship objects.
+Sunk hits remain known 8s, matching the original grid after its fleet pointer is
+cleared. The source grid is not mutated by the managed selector.
+
+Hit pursuit
+The native scan visits X=0..9 outside Y=0..9. For each 8:
+- With a previous-Y hit, try the next Y if unknown; otherwise keep scanning.
+- With a next-Y hit, try the previous Y if unknown; otherwise keep scanning.
+- An isolated hit repeatedly draws rand()%2 until an unknown Y neighbor is chosen.
+All pursuit stays on the same X. The first eligible scanned hit wins, including
+hits belonging to already sunk ships. No horizontal-neighbor pursuit or hunt
+queue is used. This differs from v0.3's provisional four-neighbor queue.
+
+Search and settings
+With no pursuit result, native level at 0x4FBDF4 selects budgets through 0x41CC60:
+level 0 -> 10, level 1 -> 50, level 2 -> 100, level 3 -> 200 samples.
+Assignment blocks are 0x41CB11/1B/25/2F. Default initialization at 0x42A715..722
+sets that global to 0. The original option captions were not recovered; the new
+UI uses neutral "Original target 1..4" in the same order. More attempts are not
+claimed a calibrated or uniformly stronger difficulty level.
+
+Each sample draws X=rand()%10, Y=rand()%8+1, excluding endpoint rows 0/9 during
+search (pursuit can reach them). If the candidate is unknown, draw rand()%6 and
+accept the candidate when its selected pattern holds:
+0: Y>2, previous Y unknown, Y-2 is a miss.
+1: Y<8, next Y unknown, Y+2 is a miss.
+2: X>0 and Y>0, diagonal X-1,Y-1 is a miss.
+3: X>0 and Y<9, diagonal X-1,Y+1 is a miss.
+4: X<9 and Y>0, diagonal X+1,Y-1 is a miss.
+5: X<9 and Y<9, diagonal X+1,Y+1 is a miss.
+After the budget, it returns the last sampled coordinate even if already resolved.
+The native source does not filter that final return to an unshot square.
+
+Repeat semantics
+Impact 0x423FB0 initializes the result to miss/0. An intact hit decrements HP and
+becomes 8 only when the target code was 2 (0x42408D..0x424111). A previously hit
+square takes no further damage; a known miss is not changed. Normal phase
+progression still ends the shot. The port therefore permits original-opponent
+repeats, logs "repeat / no new damage", reports no fresh hit, and hands the turn
+back. Player repeated-shot rejection is unchanged. No stronger fallback is hidden.
+
+Random arithmetic and stream limits
+0x439790..0x4397B9 implements uint32 state wraparound:
+state = state*214013 + 2531011; result = (state>>16)&32767.
+NativeRandom matches this arithmetic. The original generator is shared across
+layout, weapon and movie choices; the modern game uses an isolated targeting
+stream seeded from the new game seed. Those other random consumers and original
+whole-game seed/schedule are not reconstructed. Matching a selector invocation
+for a given state does not imply identical complete-game shot sequences.
+
+Independent executable oracle
+Tools/ClassicTargetOracle.cs is a standalone x86 harness. It verifies the source
+hash, copies ONLY 0x41C940..0x41CC87 and 0x439790..0x4397B9 into its own process,
+and validates/relocates the enumerated global operands, RNG calls and jump-table
+entries. Data and code are allocated separately; written code becomes execute/read.
+It uses role 1 and controlled grids, then reads target coordinates and final RNG
+state. It never loads/starts the original game, attaches to a process, writes its
+files or accesses its registry/media setup. Raw source bytes and all relocations
+remain reviewable in the source; hash mismatch rejects another executable build.
+
+113 source-executed numerical cases in Evidence/Original-Target-Cases.csv cover:
+64 empty-grid seed/setting combinations; 16 isolated-hit seeds; 6 chain/order/
+blocked-chain cases; 16 sparse-grid cases; one intact-code masking case; six
+explicit search-pattern branch cases; and four edge/direction-retry cases.
+Branch-specific inputs use a generator helper to choose seeds, but expected
+coordinates/states still come from executing the original copied code. The C#
+implementation matches BOTH returned coordinates and final original RNG state
+for every row, including rejected random choices and budget exhaustion.
+These are numerical cases grouped within one focused check, not 113 full battles.
+
+Explicit departures and unsupported cases
+The original isolated-hit retry can loop forever when both Y neighbors are blocked
+and neither is a hit. The port reports a stalled selector, pauses, and points to
+F2. It also caps isolated direction retries at 4096. No substitute target is used.
+This is a deliberate finite diagnostic change, not reproduced native hanging.
+The native oracle does not execute that hanging case. The trap was not encountered
+in the valid fixed-axis battle sweep. Native targeting is unavailable for the
+rotating legacy fleet; Prototype pursuit remains available for that preset and
+for comparison on the recovered fleet. Native settings outside 0..3 are rejected;
+the source dispatch otherwise leaves a stack budget uninitialized.
+
+Validation and remaining work
+38 focused checks and 9 actual-form checks pass. Tests include all oracle rows,
+raw source search budgets, observation secrecy, unchanged input data, repeated
+opponent turns without damage, explicit stall handling, and complete battles in
+all four settings plus prototype pursuit. The 15 added battle runs are one grouped
+sweep. UI checks cover setting changes/reset/locking, F2 and preset retention,
+and minimum-size paused toolbars in both fleet presets. UI events are simulated.
+
+Original shooter/weapon selection, movie progression, shared RNG call scheduling,
+response timing, palette transition timing and original full-gameplay comparison remain
+unreconstructed or pending. This evidence upgrades the target-choice subsystem,
+not the entire opponent or original application. Palette/damage data is upgraded
+in DISPLAY-EVIDENCE.txt. Next: native weapon/shooter selection and transient
+combat feedback scheduling, followed by desktop comparison.

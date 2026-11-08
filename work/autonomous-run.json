@@ -1,0 +1,9 @@
+{
+  "StartUTC": "2026-11-07T07:04:10Z",
+  "DeadlineUTC": "2026-11-07T09:04:10Z",
+  "Authorization": "Continue autonomously for two hours unless a user decision is required; stop at a tested checkpoint.",
+  "CurrentDeliveredVersion": "0.13",
+  "Next": "Hands-on v0.13 high-detail battle and native Classic comparison. Checkpoint18, playable/source archives verified; initial Git commit remains environment-blocked.",
+  "State": "complete-at-tested-checkpoint",
+  "CompletedUTC": "2026-11-07T08:43:37.4358874Z"
+}

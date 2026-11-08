@@ -1,0 +1,34 @@
+Battleship project roadmap (updated 2026-11-07)
+
+Current reconstruction priority
+Recover and integrate the bounded Classic firing/travel/impact sequence, including
+completion, skip, failed-media behavior and sound lifetime. Keep the accepted
+instant-impact model and earlier runnable builds for comparison. Continue to label
+confirmed source behavior, inferred behavior and intentional modern choices.
+
+Stretch goal SG-01 — optional AI enhancement of combat movies
+Requested by user: "add it as a stretch goal for this project".
+Status: recorded/backlog; not part of the fidelity baseline or current milestone.
+Start from the supplied HWEBS higher-resolution originals, not the current LWEBS
+frames. Inspection found all twenty firing clips at header 40,30,2,2 (320x240),
+with matching 1460 frames / 58.4 seconds at nominal 25 fps. Validate that decoder
+variant before producing enhanced assets.
+Pilot: compare BATFIRE1 from its native 320x240 source, ordinary scaling and an
+AI upscale (candidate 1280x960), with identical frame count, cadence, aspect ratio
+and audio. Evaluate temporal shimmer, invented details, turret/hull distortion,
+explosions/smoke and palette/contrast changes. Benchmark processing on available
+hardware before estimating the full batch. Windows inspection surfaced Intel UHD;
+render speed has not been measured. Video2X/Real-ESRGAN are candidate tools, not
+installed/selected dependencies. Model licenses and exact versions must be recorded.
+If the pilot is accepted, build a reproducible batch pipeline, record source/model/
+parameter/output hashes, and add an optional Original/Enhanced presentation choice.
+Keep originals unchanged and selectable; AI details are intentional modernization,
+not recovered original evidence. Keep enhanced results out of reconstruction tests.
+Planning estimate only: a few hours for a pilot and roughly one to two working
+days for a reusable pipeline/integration, plus unbenchmarked compute and review.
+No AI processing, model download, new dependency install or external upload has
+been performed as part of recording this stretch goal.
+
+Pending hands-on checks
+v0.7 visible BATFIRE1 playback is confirmed. v0.8 audible sound, perceived sync,
+new library playback/controls and full original-battle comparison remain pending.

@@ -1,0 +1,12 @@
+PASS relocated ZIP:882 manifest entries match.
+PASS relocated76model/34real-form checks and actual SILENT waveOut lifecycle, exit0.
+PASS source-only restore; all232 evidence files reproduced byte-for-byte.
+PASS owned production startup/message loop and clean exit0; no user game closed.
+22muted diagnostic previews rendered; high/minimum and sinking composition reviewed.
+Naturally paced matrix results live in workspace Natural-Cinematic-Validation.txt.
+Physical controls, audible sync and full original behavior are not inferred. Final
+report-only archive updates are byte-compared before delivery; executable preserved.
+
+
+Final package adds input/diagnostic tools and reports; production executable remains SHA2564643C4A86005931FDC20F2995D3D3999F6015DE1108CE5BB7061579E958132F1. The final archive is compared entry-by-entry with the package; model/form reruns are unnecessary for report-only changes. Both61clip natural library sweeps,9v0.13full duels and2prepared terminal scenarios pass.
+

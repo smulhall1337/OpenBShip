@@ -1,0 +1,7 @@
+PASS Preset switch resets deployment and exposes the matching rotation control
+PASS Battle locks preset changes; F2 retains the selected preset
+PASS Map transition pauses battle and disables deployment controls
+PASS Simulated held Enter produces one deployment action
+PASS Simulated native-coordinate mouse placement at normal and minimum sizes
+UI checks passed=5 failed=0
+These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.

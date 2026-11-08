@@ -1,0 +1,44 @@
+v0.16 menu reconstruction validation - 2026-11-07
+
+PASS88model/format and46offscreen form checks (134focused checks), plus14shutdown
+case groups. New tests validate exact entry/title prefixes, reject every mutated
+word and malformed length, compare native reset/boundary traces, all four button
+records,8split draw commands,1104grouped half-open edge samples and four complete
+native unscaled raster hashes. These are not1104played sessions. Synthetic raster
+background exposes skipped index0pixels; native canaries remain intact.
+
+Form tests cover once-only result -> menu transition, preserved paused game,
+arrow/confirm edges, native coordinate mapping, earlier-entry mouse release,
+Solo/Preferences bridges, unavailable Multiplayer, inline Quit/Cancel, fade focus
+pause/resume, minimum toolbar layout, F2 and released image lifetime. Shutdown
+checks include confirmed menu Quit and late Deactivate AND tab notifications.
+ThreadException=0, including an active SILENT waveOut finite movie buffer.
+
+PASS two natural complete ending-to-menu flows through production MainForm:
+VICTORY41365ms, LOSE41979ms,83seconds total;54ending trace events each, title
+reveal to64, paused game object/turn/events retained, once-only handoff and inline
+Quit with clean disposal. Real waveOut receives SILENT samples, two finite buffers;
+one350msmovie pause/resume. No skip, seek or accelerated time. Raw reports:
+work/reconstruction-v16/natural-menu-002/Results/. An earlier pre-final-guard
+trial also passed; it is not counted as a separate current acceptance run.
+
+PASS clean source-only restoration from absence:527original assets,6Program files,
+271evidence files match byte-for-byte.269native-derived evidence files regenerate;
+2recorded modern palette inputs retained. Restored134checks+14shutdown/device pass.
+Separate runtime-only restoration without -WithChecks renders original title.
+No Iced DLL or original full-game execution needed on either restoration path.
+Native MenuOracle source/image/sprite hashes and all10relocation counts guarded.
+
+PASS owned no-argument production startup/message loop and clean exit0, plus real
+SILENT waveOut lifecycle. Final production EXE SHA256:
+B0975BC7AA80147ED3B422210424704C3A7DB8E908A55B171E7D2C215825DC68
+Two direct title previews and two natural menu captures are current;27older
+comparison images remain historical. Minimum title and complete menu layouts
+were visually inspected. The updated tab/key/view disposal guards are included.
+No full duel rerun: Game/targeting/battle presentation code is unchanged and its
+prior reports are explicitly historical. Existing regression suite retains those
+rules/input/board/movie checks. Physical input/focus, audible sync and complete
+original-gameplay fidelity remain user checks. Original menu/Quit reference only.
+No user game process was terminated. Originals and earlier builds preserved.
+
+PASS relocated ZIP1008manifest records,134model/form checks,14shutdown cases, SILENT device lifecycle and owned startup/clean exit0. Final reports-only ZIP updates preserve the tested production EXE and are verified entry by entry.

@@ -1,0 +1,117 @@
+Earlier subsystem evidence retained in v0.12. Current quality/lifecycle findings: HIGH-DETAIL-EVIDENCE.txt.
+
+Historical subsystem evidence retained in v0.11. Current composition/opacity: BACKDROP-EVIDENCE.txt.
+
+Historical v0.9 evidence retained in v0.10. Current scope and corrections: IMPACT-EVIDENCE.txt.
+
+Battleship — optional battle movie sequence (v0.9, 2026-11-07)
+
+New playable milestone
+Before deploying, Display -> Battle movies (experimental) enables original firing
+and travel playback in the Classic duel. A shot reserves its coordinate and weapon
+without changing the target board. Travel completion applies exactly one impact.
+At recovered target settings 2..4, non-sinking hits/misses can then play CL_HIT /
+CL_MISS. The turn hands off after that feedback finishes. Sinks and setting 1
+omit that feedback, as supported by the traced impact path. Repeated occupied
+opponent targets apply no new damage or hit movie; repeated misses can show miss
+feedback. Both sides use the same bounded sequencing rules.
+
+The default remains the accepted instant-impact model. The optional setting is
+persistent, locked during battle and unavailable in the rotating prototype preset.
+Changing it during deployment resets deployment, like other rule settings. Earlier
+v0.8 is preserved separately. This is an experimental bounded shot sequence, not
+complete original combat animation or an exact port.
+
+Controls and lifecycle
+Skip stage advances one stage; Space/Enter can skip while the movie/grid owns
+keyboard focus. Other native buttons retain their focused confirmation behavior.
+A held firing/skip key cannot skip successive stages. Mouse presses carry a media
+epoch, so releasing a press from an old stage cannot click the next stage. P/Escape
+pauses, F2 cancels and resets. Paused completion is deferred until Resume. Entering
+maps/library, Display or losing focus pauses the pending shot/audio. Returning
+requires explicit Resume. Color/mute changes preserve the pending shot. Reset and
+cross-game/stale completion tokens cannot apply an old impact. During playback
+the board is hidden/locked, then returns with the resolved result.
+
+Missing/invalid video pauses visibly and requires explicit Skip stage or F2. This
+differs deliberately from native unavailable-media recursion; no unsupported stage
+is silently treated as faithful playback. Sound failures keep the existing explicit
+silent visual fallback. The unverified immediate extra CANNON1 effect is suppressed
+in movie mode, relying on decoded stage soundtracks. Instant mode retains it.
+
+Source identity
+All addresses apply only to supplied Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+0x423540 dispatches eight solo Classic phases via table 0x4238A4. Firing has already
+started when phase 0 advances to 1 (or 4 to 5 for the opponent). Firing completion
+enters the travel selectors at 0x4235B9 / 0x42373B. Travel completion enters impact
+at 0x4236C2 / 0x423836, calling 0x423FB0 at 0x4236EE / 0x423862. Phase 3 advances
+to 4 after post-impact completion; phase 7 resets to 0. The original also invokes
+overworld hit/miss/sink animation machinery, which remains outside this slice.
+
+Travel mapping confirmed from code and isolated execution:
+weapons 14..18 -> random%3 +129: S_FLY1 / S_FLY2 / S_FLY3;
+25/26 ->24 TORPRUN; 27..30 ->12 MIS_FLY3; remaining reachable cases ->21 CRS_FLY1.
+0x4240B7 returns on sinking before the CL_HIT request. 0x42408D rejects repeated
+occupied cells. Non-sinking hits at source level >0 request 137 CL_HIT; misses
+request 136 CL_MISS. Source difficulty zero omits those movies and uses board
+effects. This bounded implementation omits those transient board-effect waits;
+instant post-impact handoff at setting 1 is an explicit approximation.
+
+ClassicPhaseOracle executes copied 0x423540..0x4238C4 with forty validated absolute
+relocations/table pointers, source identity guard, controlled random return and
+record-only view/movie/impact stubs. Across 528 phase/weapon/roll/availability cases,
+it confirms travel selection, phase order, random-call counts and unavailable-media
+recursion. It does not run the original impact/simulation, graphics, media or game.
+For example, unavailable travel advances through one impact to phase 3/7. The modern
+UI instead pauses and asks for an explicit skip/reset, as described above.
+
+Media and audio evidence
+Eight added travel/feedback resources share header 20,15,4,4 and the bounded PAT
+reader: S_FLY1/2/3, TORPRUN, MIS_FLY3, CRS_FLY1, CL_MISS, CL_HIT. The independent
+library now exposes all 28 combat clips. All 2179 managed indexed-frame hashes
+match original decoder execution with exact consumed lengths/canaries and independent
+first frames. ClassicShotPatOracle has a hardcoded 28-PAT hash whitelist.
+Twenty-eight SEQs contain 117 cue requests across 84 WAV paths; all original sample
+counts and controlled original-code onset/cleanup fixtures match. Cues retain the
+v0.8 finite eight-voice mixing/native-end-field behavior, with documented modern
+gain/device/cleanup boundaries in AUDIO-EVIDENCE.txt. The total of 181 original
+assets is byte-identical to the supplied RIP. Source media remain unchanged.
+
+Random/timing modernization boundary
+Travel draws use a third isolated recovered-generator stream (seed XOR 0x721CAB).
+This retains accepted target AND firing-choice histories when comparing modes.
+The original shares layout/firing/travel/target RNG; its exact whole-game schedule
+is still not reconstructed. Both modes match in targets, firing choices, damage
+and turn outcomes in paired tests; exact native seeded histories are not claimed.
+The player retains nominal 25 fps, modern last-frame holds/audio-clock catch-up,
+pause/reset and safe native-buffer ownership. Those choices do not reproduce all
+historical timing. Media loading is bounded and replaces only the current clip.
+
+Validation and confidence
+61 focused checks and 25 actual-form checks pass, including inherited regressions,
+the 528 source phase cases, all media/audio fixtures, delayed exactly-once impact,
+paused/stale/cross-game callbacks, full terminal cases and paired instant/cinematic
+histories across four settings. UI tests exercise real handlers and live completion,
+held keys, old mouse epochs, failed-loader injection, maps/focus/display transitions,
+mode locking/preset retention, reset and minimum layout. Events/device failures are
+simulated. Two new shot previews were visually reviewed; an actual board/player
+layering problem found in preview was corrected. A hidden agent-desktop startup /
+clean close and separate SILENT actual-device lifecycle check supplement these.
+These checks do not establish physical input, audible playback, perceived sync or
+full original-battle fidelity. Large fixture grids are grouped numerical cases.
+
+Scope and next work
+The mode is optional because transient board impact/sink animation completion,
+camera/overlay differences, native skip semantics and full shared RNG scheduling
+remain incomplete. The new per-stage skip and failed-media pause are modern controls.
+Next: trace 0x419CE0 / 0x4177A0 and their completion callbacks into 0x423540, plus
+native input/media interruption, before claiming the entire eight-phase simulation.
+Original main-menu/clean-Quit, visible v0.5 damage and visible v0.7 BATFIRE1 feedback
+remain scoped. No new v0.8/v0.9 audible or full-game acceptance is inferred.
+AI upscale stretch goal SG-01 is recorded in PROJECT-ROADMAP.txt, outside the
+reconstruction baseline. Local Git records source/scripts/reports/manifests;
+original assets, compiled builds, user settings and scratch data remain excluded.
+
+
+

@@ -1,0 +1,149 @@
+Current v0.9: SHOT-EVIDENCE.txt adds optional firing/travel/feedback sequencing.
+This retained report records its earlier subsystem/milestone; current checks are
+61 focused and 25 real-form. Full board-impact/sink animation remains incomplete.
+
+Battleship — Classic firing library and sound (v0.8, 2026-11-07)
+
+New playable/observable milestone
+Firing clips now selects all 20 firing movies reachable from the recovered Classic
+fleet/player/opponent weapon lists. Sound:on enables the supplied WAV cues. Pause,
+resume, frame stepping, restart, replay, skip, clip changes, mute/unmute, leaving
+the tab, Display and focus loss coordinate video and audio. No game shots, damage,
+turns or RNG are consumed by the study. The normal duel is unchanged; firing,
+travel and impact movies are not yet coupled to battle turns.
+User "it plays. continue" confirms visible v0.7 BATFIRE1 playback only. It does
+not establish audible sound, all 20 clips, synchronization or v0.8 acceptance.
+
+Identity and media
+All addresses refer only to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Firing-Clip-Inventory.csv records headers, sizes, frame counts and hashes for all
+20 movies. All have the already-supported 20,15,4,4 header and FFFFFFFF marker.
+Total: 1460 frames. Every managed indexed-frame hash matches isolated original
+decoder execution; exact consumed lengths/output canaries pass, and all first
+frames are independent of prior surface contents. ClassicFiringPatOracle guards
+the executable plus a hardcoded whitelist of all twenty PAT hashes; it does not
+execute arbitrary movies or original graphics/audio/media code.
+There are 20 original SEQ files, 104 cue records and 71 referenced WAV paths.
+Every referenced WAV is PCM format 1, mono, 11025 Hz, unsigned 8-bit. Inventory
+records original sample counts and hashes. Wave identity is scoped to its movie
+directory: equal filenames in different directories can contain different data.
+144 bundled original assets match the supplied RIP without modification.
+
+SEQ reconstruction
+0x402560 reads filename,start,end comma records until an asterisk terminator.
+Source storage is: cursor at +0; 64 start shorts at +2; end shorts at +0x82;
+handles at +0x102; twelve-byte name slots at +0x182. The modern bounded parser
+accepts the observed *END* marker, ASCII resource stems <=8 characters, three
+integer fields, valid frame bounds and at most 63 records. The source's full
+64-record sentinel boundary is not silently assumed safe. Extra data, unsupported
+instructions, path traversal, missing terminators and malformed records fail.
+Original end fields are retained as SoundCue.End rather than renamed as duration.
+
+0x4029F0 starts at most ONE queued cue each invocation. It compares that cue's
+start <= current zero-based movie frame, starts it, then advances the cursor once.
+Thus tied thresholds spread across successive frames: effective onset is
+max(declaredStart, previousEffectiveOnset+1). This matters for MEDFIRE1/TWOFIRE2;
+duplicates are not collapsed or started simultaneously by the new scheduler.
+
+The native end-threshold loop at 0x402A98..0x402AB5 calls stop only when the stored
+handle equals -1; 0x41A720 immediately ignores -1. Valid handles therefore do not
+stop at their declared end thresholds in the traced path. Once the last cue has
+started, cursor -1 also returns before that loop. The implementation preserves
+this effective behavior: finite samples run naturally, limited by study completion.
+This is source evidence, not a guessed interpretation of the third column.
+Movie cleanup 0x402980 stops valid recorded handles, with an early failure/sentinel
+boundary. The study always releases all its own audio at reset/end/switch/disposal,
+including failure paths; it does not reproduce possible native cleanup leaks.
+
+ClassicSequenceOracle executes only copied 0x402980..0x402ACD code with fifteen
+validated absolute relocations. Sound requests/stops are recording stubs returning
+successful dummy handles; file close and time calls are local return stubs. It
+captures all 104 onset requests and close cleanup across the original twenty SEQs.
+All onsets match the managed scheduler; no valid handle stops during frame polling.
+Cleanup rows use the fixture's AFTER-FRAME-POLLS boundary, not an independently
+measured original wall-clock cleanup time. These fixtures do not execute native
+WAV loading, voice allocation, sound-device output or every failed-handle case.
+
+Finite voices and modern mixing boundary
+0x422320 builds SFX/<movie>/<cue>.wav and calls 0x41A990 with pool range [0,8).
+It passes zero to 0x41A630, whose DirectSound path selects finite Play flags 0.
+The loader scans completed same-name slots in reverse order, otherwise takes an
+empty/completed slot, and fails if all eight are busy. Repeated active cues can
+occupy separate slots. This is static code evidence; complete legacy sound-driver
+behavior/shared pool occupancy has not been dynamically reconstructed.
+
+ClipSound validates RIFF size, chunk lengths/padding, fmt/data presence/uniqueness,
+PCM units and the observed mono/8-bit/11025 format. Ancillary chunks are bounded
+but not interpreted; complete original WAV files preserve their contents. Samples
+convert exactly as (byte-128)*256 to signed sixteen-bit at the SAME 11025 Hz rate.
+The deterministic mixer models eight finite voices, overlapping samples, dropped
+requests when full, completed-slot reuse, integer summation and signed saturation.
+At nominal timing this model drops one request in TWOFIRE2. That is a model result,
+not a physical original-game observation. Other legacy/global sounds could change
+native pool occupancy. No managed resampling, looping or inferred cue-end truncation
+is added. No claim of bit-identical DirectSound mixing, original gain/volume curves,
+historical hardware latency, stereo spatialization or calibrated acoustics is made.
+
+Audio backend and synchronization
+WaveOutput owns one finite PCM buffer through x64 WinMM waveOut. WAVEHDR uses
+pointer-sized fields (48 bytes on x64). Buffer memory remains owned until reset,
+unprepare and close succeed; it is not freed while a driver can still reference it.
+No system mixer volume or original process/registry is changed. The backend is
+behind IClipOutput so a later WASAPI implementation can replace it. Existing .NET
+Framework tooling plus a small finite-buffer backend avoid a new SDK/dependency
+for this milestone; this is not a claim that WinMM is Microsoft's preferred new
+audio API. The primary reference recommends WASAPI/Audio Graphs for new code:
+[Waveform devices and data types](https://learn.microsoft.com/en-us/windows/win32/multimedia/devices-and-data-types).
+
+While sound is active, reported device samples drive video. Samples, bytes and
+millisecond position formats are checked explicitly, and backward position reports
+cannot move video backward. Microsoft documents alternate return units and zero
+position after open/reset:
+[waveOutGetPosition](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutgetposition).
+Pause retains device position; restart resumes it. Stepping/restart/switch reset
+the finite buffer, and unmute starts at the current video sample position:
+[waveOutPause](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutpause).
+Reset/unprepare/close order follows ownership requirements:
+[waveOutUnprepareHeader](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutunprepareheader),
+[waveOutClose](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutclose).
+No original codec or DLL is loaded. Device/open/position errors are visible and
+fall back to silent visual progression; a two-second stalled-position watchdog
+also prevents an audio device from holding the study indefinitely. Retrying Sound
+off/on can reopen the default device. Native resource-release failures retain
+owned storage rather than risking use-after-free.
+
+Study timing remains a deliberate modern boundary: 25 fps, forty milliseconds per
+frame including the last. Soundtracks end at that finite study duration. Native
+movie completion is detected during the last decode and can advance the next phase
+earlier than this final-frame hold. Device-clock mode may skip display frames after
+a UI stall to preserve audio alignment; muted mode retains v0.7's bounded visual
+catch-up. These are documented usability choices, not exact historical scheduling.
+
+Validation and limits
+55 focused checks and 19 real-form checks pass. New coverage includes the complete
+1460-frame oracle, all 104 cue onsets/cleanup, original wave sample counts, independent
+PCM edge samples, malformed RIFF/SEQ cases, overlapping finite audio, eight-voice
+drop/reuse/saturation, device-clock monotonicity, all twenty selector loads, image
+disposal, simulated audio sync/pause/mute/seek/replay, failure fallback and global
+Sound routing. Fixture grids are grouped comparisons, not thousands of separate
+gameplay scenarios. UI inputs and failure cases are simulated offscreen.
+
+A separate actual x64 device test passed open/prepare/write, position progress,
+pause/restart, finite completion, reset/unprepare/close, reopen/seek and idempotent
+stop. It submitted ONLY SILENT samples: this proves API/device behavior, NOT
+audibility or perceived audio/video synchronization. Those remain user checks.
+No-argument packaged startup and clean exit pass on the agent desktop. New library
+previews were reviewed at normal/minimum sizes; automated previews are muted.
+
+Why battle integration remains separate
+0x423540 has eight cyclic phases, including firing, travel and impact, mirrored
+for both sides. Gun weapons 14..18 choose S_FLY1/S_FLY2/S_FLY3 (IDs 129..131);
+25/26 use TORPRUN (24); 27..30 use MIS_FLY3 (12); the remaining traced weapons use
+CRS_FLY1 (21). Impact is called at 0x4236EE / 0x423862, after travel completion,
+and higher difficulty can request CL_MISS/CL_HIT (136/137). These resources and
+completion/skip dependencies are NOT silently skipped under a fidelity claim.
+The normal duel therefore retains its accepted immediate-impact model for now.
+Next: validate those travel/impact assets, recover skip/phase transitions and failed
+media behavior, then integrate the complete bounded Classic shot sequence while
+preserving the previous instant prototype and isolated targeting RNG baseline.

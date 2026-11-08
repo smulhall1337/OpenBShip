@@ -1,0 +1,55 @@
+Classic cinematic HUD and native viewport evidence - v0.13 - 2026-11-07
+
+All addresses refer ONLY to Bs.exe SHA256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+Copied-code tools are bounded experiments with controlled state/call stubs. They
+are not a running original-game reference or recovered original source.
+
+Confirmed from original code and assets
+- 0x437F9B (2x) and 0x438026 (4x) expand 320x240 and 160x120 indexed inputs to
+  exactly 640x480. Generated patterns, full output comparison and boundary canaries
+  pass. The display-copy span uses 0x4B000 bytes (307200). PCX storage is 640x512;
+  its extra 32 rows do not establish a 512-high native viewport. Window setup also
+  loads640at0x401366 and480at0x40136B into the window/display dimension globals.
+- E_CLAS2.SPH loads at 0x42AC51 as asset slot41 (global563134). SHA256:
+  03C82EAE0E85CA1B222B01710EFAA7491CA9492A0294E5EDE069617412D7E877
+  Four frames: 200x216,200x216,197x216,205x216; then null sentinel. Stored-run
+  pixels total109467. Origins(1,1). The selected top-left draw mode ignores origins.
+- Dispatcher0x40938C..0x40956F draws panels only when the movie-active flag is set,
+  in order frame0@(0,0),2@(200,0),1@(235,264),3@(435,264).
+- Phases0..3 display own EO_CLASS number/roster;4..8 display enemy. Number1 at
+  (232,56), number2 at(382,392). Five living/sunk roster entries use frames4..8 or
+  9..13. Existing source-derived roster positions are retained.
+- Enemy hit/miss at(512,272) appears only in phases3/4 with a result flag. Own
+  hit/miss at(32,176) appears only in7/8. EO_CLASS frame2=miss,frame3=hit.
+- ClassicHudOracle executes only this dispatcher:26relocations,486controlled
+  cases,4032ordered draw calls. Sprite rendering is a recording stub; percent100,
+  sort/mode0,alignment0. This confirms dispatch, not final native raster pixels.
+- 0x407B33 ->0x4339F3 native100% sprite rendering treats palette index0 as a
+  transparency key. Stored-run visibility and zero-index keying are distinct.
+
+Implementation and intentional modernization
+- Recovered preset uses a4:3 top640x480 crop. Native board coordinates are unchanged;
+  pointer mapping and viewport scaling use480. Legacy comparison retains512.
+- ClassicHud separates command generation from palette-owned panel bitmaps. The
+  modern pending shot maps firing/travel/feedback to phases1/2/3 or5/6/7; waiting
+  phases0/4. Finished/placement return to persistent comparison presentation.
+- The original shapes/positions/phase guards are reconstructed. Stored HUD backing,
+  including black index0, stays opaque to preserve the approved legible controls/HUD.
+  This differs deliberately from native zero-key raster transparency. The user's
+  alpha approval remains board surfaces only:179/255, about70%opacity. The exact
+  original fade/palette/presentation order has not been dynamically observed.
+- Modern selection outline, sidebars, scalable layout, background cover/cropping,
+  hit markers, confirmation controls and serial playback remain explicit modern
+  choices. This is not a pixel-exact or fully reconstructed original renderer.
+
+Validation
+76 model/format checks include486native command cases, complete panel stored-run
+alpha/color matching, two whole640x480 native scaler comparisons, pending-phase
+handoff and prior decoder/model regressions.34offscreen real-form checks include
+normal/minimum4:3viewport, opaque HUD over synthetic red/green movies, proper result
+phase timing, palette-resource disposal, reset and all prior playback regressions.
+Simulated input/offscreen checks do not establish physical focus/audio perception.
+Source/portable/production startup results are recorded separately. Original menu
+and clean Quit are the only user-confirmed native reference scenario so far.
+

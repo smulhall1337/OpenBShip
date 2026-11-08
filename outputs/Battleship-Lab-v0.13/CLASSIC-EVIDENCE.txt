@@ -1,0 +1,132 @@
+Historical subsystem report; the originating milestone appears below.
+Current v0.13 behavior/check totals are in README.txt and HUD-EVIDENCE.txt.
+Those current records supersede earlier milestone limits/counts in this report.
+Later detail decoding: HIGH-DETAIL-EVIDENCE.txt; approved alpha: BACKDROP-EVIDENCE.txt.
+
+Classic reconstruction evidence — checkpoint 10, 2026-11-06
+
+Identity and method
+All native virtual addresses in this report refer to the supplied Full-RIP
+Bs.exe, PE32/i386, image base 0x00400000, size 397824 bytes, SHA-256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+The project has not patched that executable. The RIP's existing modifications
+remain part of its provenance. Addresses must not be transferred to other builds.
+
+Read-only static analysis used PE sections/imports/strings, Iced 1.21.0 instruction
+decoding and raw table bytes. Native code was not executed by the analysis tool.
+Evidence/Code-Spans.csv identifies exact raw context spans, lengths and hashes;
+these spans may contain adjacent instructions or data and are not callable ports.
+Decompiler output is not treated as recovered source. Runtime comparison beyond
+the original menu remains pending.
+
+Fleet: high confidence from original code plus independent raw-data fixtures
+The mode global at 0x4E3868 equals 0x14 for Classic: the asset-selection branch
+at 0x42A9AA selects "e_class", and the initializer dispatch at 0x42B951/0x42B95C
+selects 0x4238D0. That initializer creates exactly five ships using 0x42CEF0:
+
+slot  push VA   call VA   type   name                 length/hits
+0     42393B    423988      7    Super Carrier             5 / 5
+1     42399F    4239AB      1    Battleship                5 / 5
+2     4239C2    4239CE      2    Frigate                   3 / 3
+3     4239E5    4239F1     12    Missile Submarine         4 / 4
+4     423A09    423A15      4    Destroyer                 2 / 2
+
+0x42CFE0..0x42D018 copies a 268-byte template from 0x448D70 + type*268.
+Template +0x0E is a little-endian 16-bit cell length, +0x10 initial remaining
+hits. Names are fixed 26-byte ASCII entries at 0x44C6C0 + type*26. The resulting
+fleet occupies 19 cells. Evidence/Classic-Fleet.csv records per-row addresses.
+Classic-TypeIds.bin, Classic-Templates.bin, Classic-Names.bin and the initializer
+bytes independently validate the new hard-coded, readable ShipSpec definitions.
+
+Placement: high confidence for the traced Classic paths
+Human validator 0x431330..0x43149A bounds a 10x10 board. Its Classic branch at
+0x431411 tests equal X and overlapping inclusive Y intervals. Adjacent columns
+and touching Y endpoints without overlap remain allowed. The non-Classic margin
+branch is not applied to Classic. Ship coordinates are 16-bit X at +8, Y at +0xA;
+length is +0xE. No rotation is used by these traced paths.
+
+Classic auto-placement 0x41B820..0x41B99E tries longer ships first, chooses one X
+and a valid starting Y, then occupies consecutive Y cells. Failed retries can
+restart the layout. The new generator preserves these placement constraints and
+roster order, but uses System.Random and explicit finite retry limits. Its random
+sequence and distributions are not claimed identical to the native rand() path.
+v0.3 recovers the native board X/Y projection and centered cursor placement.
+PRESENTATION-EVIDENCE.txt records those formulae, source addresses and remaining
+x87 boundary-precision limits; these supersede v0.2's inferred screen mapping.
+
+Shots and turn progression: strong static evidence, partial subsystem coverage
+0x42CE70 rebuilds the 10x10 cell state with index x*10+y. Empty unshot cells are
+0, intact ship cells 2. Target validation at 0x423ECD..0x423ED8 permits 0 or 2.
+0x423FB0..0x42412D changes a miss to 1; an intact hit decrements remaining hits
+by one and changes that cell to 8. Resolved cells do not take damage repeatedly.
+When remaining hits reaches zero, 0x424130 handles sinking, clears the fleet
+pointer and selects another live ship. With no fleet left, it calls 0x42E5D0.
+
+The normal solo controller 0x423540..0x4238A1 has eight cyclic phases, four per
+player. Stage 3 advances to stage 4 at 0x4236C2; stage 7 resets to 0 around
+0x423875..0x42388C. A hit does not retain an extra normal turn in this traced
+flow. This supports v0.2's basic alternating-shot rules. It does not establish
+all weapon, movie-completion, animation, network or special-mode semantics.
+v0.4 reconstructs the active native target selector and RNG arithmetic, validated
+against original numerical-code executions. OPPONENT-EVIDENCE.txt records its
+scope. v0.6 adds firing ship/weapon selection in WEAPONS-EVIDENCE.txt. Timing and
+original shared RNG call schedule remain provisional or absent.
+
+Fleet status: original resource, coordinates and selection recovered
+0x42AC3C loads EO_CLASS into sprite bank 40 (pointer 0x563130); 0x42AC51 loads
+E_CLAS2 into bank 41. E_CLAS2 contains UI restoration panels, not ship models.
+EO_CLASS slots 4..8 are the five live fleet icons; 9..13 are their destroyed
+counterparts. The drawing loops at 0x409434 and 0x40949E choose 4+i for a live
+fleet pointer and 9+i for a null/sunk pointer. The original coordinate tables are
+at 0x4483B0/0x4483C0 (own X/Y), 0x4483D0/0x4483E0 (opponent X/Y):
+
+slot     own X,Y       opponent X,Y
+0         13,61           437,325
+1        115,61           539,325
+2         64,94           488,358
+3         13,127          437,391
+4        115,127          539,391
+
+Classic-RosterXY.bin retains the exact raw table span including padding.
+The new runtime decodes and draws those SPH frames, selects destroyed frames from
+its own Sunk state, and validates the coordinate table against the raw fixture.
+0x407800 queues draw arguments. In 0x407950, header origin fields are added only
+for draw mode 3; these roster calls use mode 0, so their coordinates are used
+directly. The packaged icons are 88x30 with header origins 1,1.
+
+Palette limits
+0x42314B pushes "island.col" before the call at 0x423150 to palette loader
+0x42A780. This corrects the 0x43114B transcription in earlier reports. It reads 768
+RGB bytes and applies additional color changes. This confirms the game's use of
+ISLAND.COL. v0.5 recovers all 15 patches and the mutable RGB entries 10..245,
+with an optional gameplay-color profile. The accepted PCX palette stays default.
+DISPLAY-EVIDENCE.txt records the original-code numerical checks, deterministic
+reserved endpoint boundary and unresolved transition timing. Complete historical
+palette fidelity is not claimed.
+
+Modernization and retained baseline
+v0.1's 5/4/3/3/2 rotating fleet was inferred, not recovered. It remains available
+as a selectable prototype preset, and its separate accepted build is unchanged.
+v0.3 adds native ship frame selection, scaling, anchoring, board coordinates and
+centered deployment, while preserving v0.2 as a separate comparison build.
+Cell highlights, text labels, log, mute, pause and keyboard controls remain new
+presentation. v0.5 adds the original persistent own-ship damage frames/placement.
+v0.6 recovers weapon/shooter choice; original movies and transient sequences remain
+absent; targeting and display evidence are documented separately.
+
+Validation and next experiment
+49 focused model/reader checks and 15 real-form checks pass. The fleet test reads
+the original initializer opcodes, constructor call destinations, templates and
+name entries. Generation is swept over 128 seeds per preset for both boards;
+these are numeric cases inside one check. A deterministic full battle and reset
+runs for each preset. The actual packaged exe renders deployment, fleet, sunk-ship,
+legacy, minimum-size and map views offscreen. These were visually inspected.
+Form tests use actual buttons/tabs and simulated key/mouse events, not physical
+desktop input. Sound has not been auditioned. Native full-battle comparison is
+still pending. Native board/art evidence is now in PRESENTATION-EVIDENCE.txt.
+Next useful trace: additional PAT variants, soundtrack/impact sequences and
+remaining palette presentation timing, alongside an original gameplay comparison.
+
+
+
+

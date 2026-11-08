@@ -1,0 +1,3 @@
+# Preserve fixture CSV bytes and historical source exactly across local checkouts.
+* -text
+*.rgb binary

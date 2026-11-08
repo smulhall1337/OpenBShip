@@ -1,0 +1,6 @@
+Prepared near-terminal low/muted and high/SILENT defeat scenarios pass with the
+new bitmap cache. Final sinking completes naturally before loss, pause/resume
+freezes frame/state, opacity returns, and simulatedF2clears media/deployment.
+Each scenario prepares copied runtime state with99shots/one remainingHP; this
+is not a complete played defeat or full original-gameplay acceptance. Exact
+results and limitations: Playback-Validation.txt, work\natural-defeat-v014.

@@ -1,0 +1,79 @@
+Recovered asset formats — evidence checkpoint 10
+
+Executable evidence identity:
+Supplied Full-RIP Bs.exe, SHA-256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569; PE32 image base 0x00400000. Addresses below apply only to that build. The game executable has not been patched by this project.
+
+SCN scenario records:
+The original loader at VA 0x0041B230 was inspected. It visits x first, then y, with 64 iterations on each axis. Each destination cell has a 402-byte in-memory stride. File cells are variable-length: read a kind byte; kinds 2, 4 and 7 add one byte; kind 3 and kinds 31 through 41 add one byte plus a 400-byte payload. Other kinds add no payload. This follows the native dispatch/remap tables at 0x0041B418 and 0x0041B434, not a guessed compression scheme.
+
+After the 4096 cells, a one-byte count controls the player-record loop. Each player has two groups. Each group starts with a little-endian signed 32-bit record count and then that many 400-byte records. The managed reader preserves all embedded and grouped 400-byte payloads without assigning meanings to their fields. It validates lengths, count bounds and exact end-of-file consumption.
+
+This layout consumes 120 of the 121 supplied SCN files exactly. BsSB418.scn is rejected explicitly because its remaining record layout does not fit the supported group-count structure. Its original bytes are preserved; it is not repaired or silently skipped. Source filename digits are not treated as authoritative player counts. For example, some files have a different player-record count than their names might suggest.
+
+Terrain byte offsets for packaged fixtures:
+BS201.SCN: 4342; two player record groups.
+BS202.SCN: 4519; two player record groups.
+BS204.SCN: 11052; two player record groups.
+
+The map viewer uses the decoded x/y ordering and raw kinds. Its colors are schematic. Semantic names, passability, original map projection, entity fields and scenario behavior remain unresolved. The Classic duel does not run those scenarios.
+
+PCX images:
+Implemented the supplied 8-bit, one-plane RLE variant: 128-byte header, dimensions from inclusive min/max coordinates, padded scanline stride from bytes-per-line, RLE escape bytes 0xC0..0xFF, and a 0x0C marker plus 256 RGB triples at the end. Header, dimensions, stride, palette, run length, output bounds and truncation are checked. Other image variants fail clearly. Any unconsumed bytes preceding the palette are retained as UnresolvedTail.
+
+All 120 PCX files in the inspected graphics directory decoded. E_CLASS.PCX is 640x512. WATER.PCX exported as a sea texture. The prototype uses E_CLASS.PCX's own embedded palette; the image is scaled with nearest-neighbor filtering.
+
+SPH sprites:
+Observed a little-endian 16-bit slot count followed by 32-bit absolute file offsets; 0xFFFFFFFF marks an absent slot. A present frame starts with two signed 16-bit origin fields, followed by unsigned 16-bit width/height. Each scanline begins with one byte of transparent skip and one byte of literal-pixel count, followed by that many palette indices. The decoder checks frame-table offsets, dimensions, scanline extents and input bounds. Native draw routine 0x407950 confirms this scanline path and shows origins added in mode 3, with centering/bottom alignment in other modes. Classic roster calls use mode 0, drawing at the supplied coordinates without origin adjustment. Other presentation paths remain unimplemented.
+
+Headers and these frame spans parsed for all 123 supplied SPH files. IGISLE_0.SPH has 154486 unconsumed bytes under this interpretation; those bytes are preserved as UnresolvedTail and that resource is not claimed fully reconstructed. Classic roster rendering uses EO_CLASS.SPH: 15 slots, last absent; slots 4..8 are live fleet icons and 9..13 their destroyed counterparts, all 88x30. Their native draw selection and coordinate tables are documented in CLASSIC-EVIDENCE.txt. BATTSHIP.SPH is rendered as native ship art and retained as an original fixture: five slots, four present, first frame 134x95. POINTER.SPH exported as an 11x11 cursor with its other slot absent.
+
+ISLAND.COL is exactly 768 bytes (256 RGB triples). The original palette loader 0x42A780 receives "island.col" from push 0x42314B / call 0x423150 and patches 15 bytes. v0.5 checks those patches and fade arithmetic against original numerical-code execution and optionally applies recovered RGB entries 10..245 with deterministic endpoint colors. The earlier PCX palette remains default. Historical reserved endpoint state and transition cadence remain unresolved; see DISPLAY-EVIDENCE.txt. The earlier 0x43114B citation was a transcription error.
+
+Classic board alignment:
+v0.3 replaces the inferred recovered-preset mapping with native Classic forward/inverse projection, world origins, scale constants and integer truncation. Eight native vertices meet independently read source border colors. Picking is checked at 400 centers across native and retained legacy mappings. Native X/Y orientation differs from v0.2's upper-corner-first bilinear grid, which remains only in the v0.1 preset. PRESENTATION-EVIDENCE.txt records exact formulae, addresses and the remaining x87 extended-precision boundary limitation.
+
+Scaled ship rendering:
+ClassicShips.cs separately implements the traced native percent-scaled SPH path: integer scaled width/height, 16.16 source steps, separately scaled row skip/run lengths and zero palette-index transparency. This is not generic GDI bitmap resizing. The five orientation-0 ships use BATTSHIP frame 0, FRIGATE frame 0, ALLSHIPS frames 0/4 and NEWSHIPS frame 8, all at 79%. Ship anchors follow the native odd/even offsets and centered draw mode. ClassicGeometry.cs separates screen/cell units and native truncation. Other sprite modes and animations remain unimplemented.
+
+ClassicDamage.cs now uses SMOKE.SPH's 33 present frames and absent sentinel slot, all decoded with no trailing data. It applies the same 79% scaled path with native bottom-centered mode-2 anchors and (tick+8*segment)%33 frame selection to known hits on surviving own ships. The new visual clock/pause/still policy is documented separately. Transient weapon/movie effects remain unimplemented.
+
+Sound fixtures:
+KEYCLIK2.WAV: PCM mono, 22050 Hz, 16-bit, 0.0154 seconds.
+CANNON1.WAV: PCM mono, 11025 Hz, 8-bit, 1.0621 seconds.
+RIFF/chunk boundaries, PCM fields, block alignment and data lengths were checked. The application preloads them with SoundPlayer and uses nonblocking, interruptible playback on one effects channel. Sound failures do not stop turn progression. These clips have not been audibly confirmed. The original SEQ sound timing and mixing are not implemented.
+
+Reusable source:
+Source\Assets.cs contains the bounded readers and preserved raw records.
+Source\OriginalOpponent.cs implements the native target selector and 32-bit RNG;
+its original code spans/observation cases are documented in OPPONENT-EVIDENCE.txt.
+Tools\InspectAssets.exe <original GRAPHICS directory> <output directory> produces a format inventory and selected PNG exports. Tools\Original-Format-Inventory.txt records the full supplied dataset scan. Source\Validation.cs contains the independent fixtures and focused behavior checks.
+
+Implementation choice:
+C# with Windows Forms/GDI+ was chosen for this Windows x64 slice because the compiler/runtime already exist locally and fit the game's indexed 2D assets. Game.cs is independent of Windows UI and sound. ClassicGeometry.cs documents recovered units and conversions; ClassicShips.cs handles original ship-art presentation. The presentation can later be replaced without discarding the readers or state model. This build uses .NET Framework, not a newly installed modern .NET SDK. No claim of exact language translation or recovered original source is made.
+
+PAT v0.7: ClassicPat.cs decodes the observed 20,15,4,4 block-video variant with all thirteen handlers. Records use DWORD payload lengths and a final FFFFFFFF marker. BATFIRE1's 46 frames match original-code output. Silent clip study, both palette branches, strict bounds and unresolved variants are documented in PAT-EVIDENCE.txt; this supersedes earlier statements that no PAT reader exists. Battle movie/impact sequencing and SEQ audio remain unimplemented.
+
+v0.8 adds bounded SEQ cue records and original 11025 Hz mono unsigned 8-bit PCM decoding/mixing in ClipSound.cs. It preserves original end fields and ancillary RIFF bytes in the bundled source files. All twenty Classic firing clips use the observed PAT header. AUDIO-EVIDENCE.txt documents source timing, pool limits, modern x64 output and remaining phase/audio boundaries.
+
+v0.9 expands the supported-header library to 28 clips, 2179 frames and 117 SEQ cues. ClassicSequence.cs and Game.PendingShot define the bounded optional phase order; SHOT-EVIDENCE.txt documents native comparisons, modern skip/failure policy and missing overworld impact/sink waits. Source profiles remain unchanged; AI upscaling is separate stretch goal SG-01.
+
+v0.10 impact extension:
+All 61 combat PATs share 20,15,4,4 frame headers. Their 5641 indexed frames/lengths
+match original decoder execution. 404 SEQ requests cover 232 PCM paths. 231 are
+11025 Hz mono unsigned 8-bit; FRG_DSH/S_EXPL2.WAV is 11025 Hz mono signed little-
+endian 16-bit, 19826 samples. Pcm now accepts these two explicit bit depths, checks
+byte rate/block alignment and rejects partial samples. Output stays mono signed
+16-bit at 11025 Hz. No resampling or new codec is involved.
+Native ID 12 is MIS_FLY2, ID 13 is MIS_FLY3. The latter is used as a default-setting
+miss clip for weapons 29/30; v0.9 conflated these names for travel. See IMPACT-EVIDENCE.
+
+v0.11 presentation: original formats/media remain unchanged. Derived board alpha
+is a modern UI layer only:179inside cinematic board surfaces,255grid/HUD,0outside.
+See BACKDROP-EVIDENCE.txt; this is not a recovered PCX transparency convention.
+
+v0.12: PAT supports only two explicit original header pairs:20,15,4,4->160x120,
+40,30,2,2->320x240. Same8x8block operations, dynamic columns/rows/stride. Different
+variants inside a clip reject. Source high palettes match low and are reused. Two
+impact clips differ by one frame; see HIGH-DETAIL-EVIDENCE.txt. No AI processing.
+
+v0.13: E_CLAS2.SPH has four curved cinematic HUD panels plus null sentinel; stored runs are preserved with deliberately opaque index-zero backing. Native progressive display is640x480, versus PCX storage640x512. See HUD-EVIDENCE.txt and Classic-Hud/Scale-Oracle fixtures.

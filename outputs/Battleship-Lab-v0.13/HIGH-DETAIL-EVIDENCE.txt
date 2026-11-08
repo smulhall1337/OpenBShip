@@ -1,0 +1,83 @@
+Historical subsystem report; the originating milestone appears below.
+Current v0.13 behavior/check totals are in README.txt and HUD-EVIDENCE.txt.
+Those current records supersede earlier milestone limits/counts in this report.
+Later detail decoding: HIGH-DETAIL-EVIDENCE.txt; approved alpha: BACKDROP-EVIDENCE.txt.
+
+Original high-detail media and request admission - v0.12 - 2026-11-07
+
+This milestone adds an optional original320x240HWEBS path to the existing160x120
+LWEBS path. It is recovered source media, not AI upscaling. Default low preserves
+the prior comparison. No targeting/firing/damage/RNG choices change with detail.
+User-approved30%surface transparency and background composition are unchanged.
+
+Exact Bs.exe SHA256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Header40,30,2,2means the copied decoder visits40columns by30rows of8x8blocks,
+producing320x240indexed pixels. Native block loop0x433AA5..0x433B7D derives stride
+from header columns*8; same13handlers/quartet tables work at both recovered sizes.
+The fourth byte remains a preserved variant discriminator, not a blanket promise
+to support arbitrary header variants. Reader accepts only20,15,4,4and40,30,2,2,
+rejects within-clip variant changes and retains bounds/count/terminal validation.
+The old160x120constants remain compatibility defaults; decoded dimensions are per
+movie. Video bitmaps/canvas use the decoded size. Source palette/audio unchanged.
+
+ClassicHighPatOracle has a61file HWEBS SHA whitelist, exact executable identity,
+validated copied decoder relocation counts, read/execute code pages, consumed-length
+and output canaries and independent first-frame tests.5641managed high frames match
+native hashes/lengths. Independent high fill blocks test row/column stride; malformed
+opcode, mismatched header pair and mixed-resolution clip reject explicitly.
+Export-HighInventory.ps1 verifies61high/low palette pairs are byte-identical; their
+hashes are retained while runtime reuses LWEBS PALs.489assets include61new high PATs.
+Original high sources total94,423,634bytes, maximum frame payload25,843bytes.
+
+Per-clip timing matters: low BATT_DSH95frames, high96; low FRG_DSH121, high120.
+Other59clip counts match; both totals5641is coincidental. Do not pad/drop these
+frames to manufacture equality. High source counts determine duration/mix cleanup.
+ClassicHighSequenceOracle executes copied native cue polling/cleanup with successful
+dummy handles:404onsets match the shared SEQs; cleanup at each high count.232PCM
+paths remain the same, including the one signed16bit FRG_DSH cue. No new resampling.
+
+Quality UI is a modern usability option. Before battle/after finish it replaces
+both players' frames, preserves the study's whole frame index (clamps to shorter
+source), resumes if playing, and retains deployment/state. Subframe fractions can
+restart within that frame. Failure retains the old visual/detail choice and reports
+it; mid-battle changes are gated to avoid phase/audio races. F2 retains the choice.
+Low remains default for old configs; highmovies boolean persists with unknown keys.
+
+Movie admission reconstruction:
+ClassicMovieAdmissionOracle copies0x402460..0x402552 with19validated relocations.
+File formatting/palette/media-context/SEQ work is stubbed, as is close.182controlled
+cases cover priorities0..4, decoded frame counts0/30/31, active/inactive and guards,
+load failure and directory mode. It does not open real media or invoke game state.
+Guard order: movieID0, disabled flag4FB904or empty low/root path4E3770 returns1.
+If requested priority55E810 is strictly greater than current4B3BF0, request4or
+age55EA4C>30calls close. Otherwise an active4B42A0path rejects the new request.
+Without an active movie, a lower/equal request can still load; current priority is
+updated before palette load. Mode4FBDD4==2uses4E41F0(HWEBS), otherwise4E3770(LWEBS).
+Nine-byte names at44E288+9*ID are confirmed, including12MIS_FLY2and137CL_HIT.
+Palette/load failure returns1and clears active path; prior movie/context IDs can
+remain. Success initializes context/movieID, clears sequence context then calls
+SEQ loader; its return is ignored. The oracle deliberately returnsSEQfailure yet
+native admission still reports success. Audio failure must not block progression.
+55EA4Cis decoded-frame count:0x402813resets;0x40284Dincrements. The threshold is
+strictly after30, not milliseconds. Check-ClassicMovieAdmission.ps1 verifies all
+182rows against these independently transcribed conditions. One numerical grid,
+not182played scenarios. Current serial modern duel does not implement concurrent
+native ownership/priority/preemption; this evidence is retained for future routing.
+
+Pause/completion spans:422CD0toggles4B46F8and invokes audio pause/restart helpers;
+Classic loop42325E..42330Bdecodes when unpaused, redisplays when paused, closes and
+advances423540on decoder status6. The final decode and next-clip load can occur in
+one iteration; palette/presentation ordering needs original dynamic comparison.
+Do not infer visible frame duration solely from phase advancement. Modern last-frame
+holds, bounded catch-up, safe finite output, explicit per-stage skip/failure pause
+and deferred final result remain documented policies. No original key mapping or
+full main-loop equivalence is claimed from the bounded Classic input span.
+
+72model/format and32form checks pass, source restore/relocation/device/startup
+reports supplement them. Naturally paced muted and actual-device SILENT runs use
+scripted perfect targets and offscreen forms; results in workspace validation record.
+They establish modern pipeline behavior, not audible/physical/full-original acceptance.
+Next: source640x480progressive scaler evidence and native cinematic HUD panels can
+improve viewport/HUD reconstruction while preserving this runnable comparison.
+

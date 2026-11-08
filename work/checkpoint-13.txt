@@ -1,0 +1,127 @@
+Battleship — checkpoint 13: firing library and sound (2026-11-07)
+
+Launch:
+C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Launch-Reconstruction.cmd
+Versioned app: outputs\Battleship-Lab-v0.8\BattleshipLab.exe
+Portable source/build: outputs\Battleship-Lab-v0.8.zip
+Details: outputs\Battleship-Lab-v0.8\AUDIO-EVIDENCE.txt and README.txt
+Preview: outputs\Battleship-Lab-v0.8\Library-Preview.png
+Previous baseline: outputs\Launch-Reconstruction-v0.7.cmd
+Original comparison: outputs\Launch-Original.cmd
+
+New playable/observable milestone:
+Firing clips selects all twenty original firing movies reachable from the recovered
+Classic fleet and weapon lists. Sound:on plays their supplied sound cues. Pause,
+resume, restart, replay, stepping, skip, mute/unmute, clip changes, tab changes,
+Display, focus loss and disposal manage their owned finite audio. Device samples
+synchronize video while sound plays. Step is silent and playback/unmute seeks to
+the current position. Device errors are visible and continue silently; stalled
+position reporting has a two-second fallback. Sound uses the existing persistent
+preference and does not change system mixer volume. F2 resets the study and game.
+
+This remains an INDEPENDENT STUDY LIBRARY. Normal shots still use the accepted
+immediate-impact duel. The original sequence also needs travel and impact stages;
+no partial firing-only sequence has been silently presented as complete battle
+playback. Clip actions do not consume turns, HP, shots or RNG. Recovered ships,
+weapon logs, targeting, damage, palettes, prototype preset and maps remain available.
+
+Evidence and reconstruction:
+All native addresses apply exclusively to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+All twenty movies use header 20,15,4,4 and the existing bounded reader. All 1460
+managed frame hashes match original copied-code decoding, with exact input lengths,
+output canaries and independent first frames. ClassicFiringPatOracle guards both
+executable identity and a hardcoded twenty-PAT hash whitelist. It runs only decoder
+arithmetic in its own x86 allocation, with no original graphics/audio/process setup.
+
+Twenty SEQs contain 104 cues referencing 71 WAV paths. Every referenced WAV is
+11025 Hz mono unsigned 8-bit PCM; all original sample counts validate. Names are
+scoped to each movie directory because equal filenames can contain different data.
+SEQ polling 0x4029F0 starts at most one queued cue per frame, so effective onset is
+max(declaredStart, previousEffectiveStart+1). All 104 onsets and close cleanup
+match isolated original-code fixtures with successful dummy handles. Those fixtures
+do not execute the native WAV loader, pool or audio device.
+Declared cue end fields are retained. Source 0x402A98..0x402AB5 only stops handle
+-1, which 0x41A720 ignores; valid handles therefore run finite rather than cutting
+at those thresholds in the traced path. Cursor -1 also bypasses the end loop.
+Source 0x422320 uses loader pool [0,8) and finite Play flags 0 at 0x41A630.
+
+Modernization boundaries:
+ClipSound validates RIFF chunks/padding/PCM units and converts each unsigned byte
+exactly to signed sixteen-bit at the same rate. Complete original files retain
+ancillary RIFF contents; ancillary semantics are not invented. Deterministic mixing
+models eight finite voices, overlaps, completed-slot reuse, full-pool dropping and
+signed saturation. At nominal timing the model drops one TWOFIRE2 cue. Native
+volume curves, hardware mixing and global shared voice occupancy are not claimed
+identical; actual original pool occupancy can differ.
+WaveOutput owns one finite x64 WinMM buffer behind IClipOutput. Reset/unprepare/
+close precede freeing driver-visible storage; failed release retains ownership.
+No original DLL or codec is loaded. The interface permits a later WASAPI backend.
+Microsoft primary references and API rationale are recorded in AUDIO-EVIDENCE.txt.
+
+Study cadence remains nominal 25 fps including a modern final-frame hold. Audio
+is clipped to that study duration and explicitly cleaned up, rather than reproducing
+possible failed-handle cleanup leaks. Native phase completion can occur during the
+last decode. Audio-clock mode may skip display frames after a UI stall; muted mode
+retains the v0.7 bounded visual clock. Historical performance/latency and exact
+full-application timing are not claimed. Pause/seek/mute policies are explicit.
+
+Validation:
+55 focused checks and 19 real-form checks pass. New coverage includes the full
+1460-frame comparison, all 104 cue onsets/cleanup, source pool/finite arguments,
+71 sample-count cases, independent PCM values, malformed RIFF/SEQ, finite overlaps,
+eight-voice drop/reuse/saturation, device-clock monotonicity, twenty selector loads,
+old bitmap disposal, simulated sync/pause/mute/seek/replay/failure and Sound routing.
+UI inputs/device failures are simulated; numeric grids are grouped comparisons,
+not thousands of gameplay scenarios. All checks also pass after ZIP relocation,
+with 414 manifest entries matching. Actual x64 waveOut device lifecycle checks
+pass using SILENT PCM (open/prepare/write, position, pause/restart, finite completion,
+reset/unprepare/close, reopen/seek, idempotent stop). This does not establish audible
+output or perceived synchronization. Normal no-argument startup/clean exit 0 passes
+on the agent desktop. Only the new hidden smoke process was closed.
+
+Twelve current application previews were rendered muted. New normal/minimum-size
+clip-library views were visually reviewed. They are diagnostic renders, not original
+application captures. Fifteen new code/table/inventory/oracle files reproduce from
+packaged tools; all 164 inherited evidence/endpoint files match v0.7. 144 packaged
+original assets match the supplied RIP. Packaged and working source match. The game
+needs no ISO, original registry/wrapper, Bs.exe or optional x86 analysis tools.
+
+Preservation and user feedback:
+User: "it plays. continue" confirms visible v0.7 BATFIRE1 playback only. No sound,
+new library, synchronization, full battle or physical v0.8 acceptance is inferred.
+Earlier visible v0.5 damage effects and original main-menu/clean-Quit feedback remain
+separately scoped. Audible output and full original gameplay comparison are pending.
+Accepted original executable/wrapper/config/launcher match menu-baseline-001.
+All previous manifest entries (v0.1 29, v0.2 61, v0.3 90, v0.4 107, v0.5 200,
+v0.6 226, v0.7 258) and delivered executable/ZIP hashes are unchanged. No supplied
+source material or running user game was replaced or terminated.
+
+Hands-on check:
+Launch -> Sound:on -> Firing clips -> Play. Try BATFIRE1, TWOFIRE2 and SUBMISS1.
+Confirm audible sound and perceived alignment, pause/resume, mute/unmute without
+restart, skip and switching clips. Return to the duel and Resume/P explicitly.
+The v0.7 silent baseline remains available for comparison. Physical controller
+support has not been added or tested.
+
+Implementation and next steps:
+C#/.NET Framework x64 Forms/GDI+ remains the implementation. New ClipSound.cs
+(SEQ/PCM/finite mixer) and WaveOutput.cs (owned native output/interface) remain
+separate from ClipStudy rendering and the game model. Source, Build.cmd/Verify.cmd,
+provenance, raw evidence, optional source-built tools and validation reports are
+packaged. Work/checkpoint: work\reconstruction-v08 and checkpoint-13.txt.
+
+Next: validate the complete bounded Classic shot sequence. Native 0x423540 has
+mirrored firing/travel/impact phases. Weapons 14..18 choose S_FLY1/2/3 (IDs129..131);
+25/26 use TORPRUN (24); 27..30 use MIS_FLY3 (12); remaining traced cases CRS_FLY1
+(21). Impact is called at 0x4236EE/0x423862; higher difficulty can request CL_MISS/
+CL_HIT (136/137). Inspect those resources and recover skip/failed-media transitions
+before integrating movies into turns. Preserve the accepted instant model as a
+comparison and the isolated targeting RNG. Do not infer exact shared RNG scheduling
+from the twenty firing clips. Full original gameplay, impact/sink effects, fades,
+missions, real-time simulation, saves, networking, controllers, historical palette
+endpoints and x87 picking-boundary limitations remain absent/provisional/pending.
+Roadmap update (2026-11-07): user requested AI clip upscaling as stretch goal SG-01.
+See outputs\Project-Roadmap.txt. It remains optional modernization/backlog; resume
+the Classic shot-sequence reconstruction before stretch work. Originals stay preserved.
+

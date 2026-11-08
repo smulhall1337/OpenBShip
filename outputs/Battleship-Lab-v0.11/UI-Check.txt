@@ -1,0 +1,32 @@
+PASS Preset switch resets deployment and exposes the matching rotation control
+PASS Battle locks preset changes; F2 retains the selected preset
+PASS Map transition pauses battle and disables deployment controls
+PASS Simulated held Enter produces one deployment action
+PASS Simulated native-coordinate mouse placement at normal and minimum sizes
+PASS Opponent settings reset deployment, lock during battle and survive F2
+PASS Minimum-size paused toolbar keeps all controls visible in both presets
+PASS Display controls remain visible and preserve battle state while changing colors
+PASS Live visual timer advances, freezes for pause/still and resets with F2
+PASS Own-ship and original roster clicks select without firing at both sizes
+PASS Fleet-list keyboard skips sunk ships and confirmation stays out of the grid
+PASS Fleet list and wrapped firing results fit the minimum layout
+PASS Clip study pauses battle and does not consume game actions
+PASS Clip buttons pause, step, restart, finish and replay
+PASS Clip controls fit minimum size and disposed images release resources
+PASS Library selector loads all 61 clips and releases previous frames
+PASS Simulated audio clock controls video, pause, mute, seek and completion
+PASS Simulated audio failure is visible and visual playback can finish
+PASS Global Sound control applies to the study and preserves paused state
+PASS Opt-in battle movies reserve shots and held confirmations skip only once
+PASS Live last-frame completion and paused completion advance the right stage
+PASS Mouse press from a prior movie epoch cannot skip the next stage
+PASS Failed movie loads pause visibly and require explicit skip or reset
+PASS Map/focus/display transitions preserve pending shots and frozen audio
+PASS Default-setting hit and miss movies load, pause and hand off after completion
+PASS Final sinking movie defers victory and F2 cancels it safely
+PASS Movie backdrop changes behind intact grids and playback controls never overlap
+PASS Backdrop survives palette replacement and reset clears borrowed video safely
+PASS Cinematic transparency persists on pause and restores after completion/reset/failure
+PASS Battle mode remains opt-in, retained by F2, disabled for prototype and fits minimum
+UI checks passed=30 failed=0
+These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.

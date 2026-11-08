@@ -1,0 +1,32 @@
+Battleship project roadmap - updated 2026-11-07
+
+Current checkpoint: v0.15.1 (exit hotfix)
+Late focus/player callbacks during disposal now ignore released resources; regression covers12shutdown cases. Original result-card/five-second-wait/movie/fade prefix playable in Result
+sequences, or from a finished battle's Watch link. Native factor order and
+boundary before menu opcode18 are verified. Modern40msfade cadence, nonblocking
+pause and explicit postbattle selection are documented. Existing61combat and
+two ending movie study baselines remain.127focused checks plus restoration,
+natural playback, portable and SILENT device checks; see Current-Status.txt.
+Accepted30%board-surface transparency and opaque overlays remain unchanged.
+
+Next reconstruction priority
+Trace original menu handoff opcode18 and its destination44EF88, with bounded
+entry/exit semantics. Establish an observable original Classic gameplay reference
+before claiming native terminal/presentation timing or calibrating shared RNG,
+ownership and movie interruption. Current result player stops before that menu.
+Preserve original reference and all versioned runnable builds.
+
+Stretch goal SG-01 - optional AI enhancement of combat movies
+Requested by the user; backlog, outside reconstruction baseline. Native HWEBS
+320x240 decoding is validated; no AI processing/model download has run.
+Pilot BATFIRE1: compare native original, ordinary scaling and candidate1280x960
+AI upscale with identical frame count, cadence, aspect ratio and audio. Inspect
+temporal shimmer, invented detail, hull/turret distortion, smoke/explosions and
+contrast. Benchmark available hardware before estimating batch compute. Earlier
+Intel UHD observation is not a measured processing benchmark. Video2X/Real-ESRGAN
+are candidates, not installed/selected dependencies. Record tool/model versions,
+licenses, source/parameter/output hashes and timing. If accepted, build optional
+Original/Enhanced pipeline and preserve originals. Planning estimate: a few hours
+for pilot, roughly1-2working days for integration, plus compute and user review.
+Cadence belongs to scene: Classic combat40ms/25fps; ending front-end50ms/20fps.
+Do not apply a global25fps assumption to intro/attract/tutorial playback.

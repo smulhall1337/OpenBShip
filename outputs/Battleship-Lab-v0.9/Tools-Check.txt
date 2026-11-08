@@ -1,0 +1,5 @@
+PASS 10 new source/inventory/oracle files reproduce from packaged v0.9 tools.
+PASS all 179 inherited evidence/observation files match preserved v0.8.
+PASS 28 trusted movie decoder inputs / 2179 frame hashes; 117 cue onsets/cleanup with successful dummy handles; 528 controlled solo phase/availability cases.
+Native view/movie/impact/audio-device behavior is stubbed in subsystem oracles; no original game is started or modified.
+Optional analysis programs are not runtime dependencies.

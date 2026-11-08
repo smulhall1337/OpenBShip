@@ -1,0 +1,4 @@
+PASS all 212 evidence files match source-only restoration.
+PASS72model/32form and actual SILENT waveOut lifecycle after clean restore.
+New high/admission tools are rebuilt from source and regenerated; original game/file/media calls remain stubbed where documented.
+Source restore test caught an incorrect tool-list expansion; corrected before delivery. Original assets are SHA-verified and unchanged.

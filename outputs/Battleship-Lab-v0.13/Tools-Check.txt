@@ -1,0 +1,12 @@
+PASS source-only export: all232 evidence files match byte for byte.
+PASS76model/34real-form checks and actual SILENT waveOut lifecycle after clean restore.
+HUD/scale tools are compiled from source with the existing x86 Framework compiler.
+486bounded HUD cases record4032draw calls; native scaler output and canaries match.
+Only guarded copied routines run; original full game/window/media calls are not launched.
+490restored assets are hash-verified against the supplied RIP, which remains unchanged.
+Restore refuses changed assets or a running latest-version executable; no dependencies downloaded.
+
+PASS original key-input fixtures:12key-state and24Escape/P cases regenerated and independently verified; no physical keys/audio/network driven.
+
+PASS minimal export starts without any original-derived Evidence:230files regenerated;2recorded modern Windows palette observations retained as source inputs. Same76model/34form and actual SILENT device checks pass.
+

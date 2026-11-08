@@ -1,0 +1,55 @@
+Checkpoint21 - v0.15.1 exit-crash hotfix - 2026-11-07
+
+User said v0.15looks good, supplied exact exit exception in ClipStudy.SyncControls
+line100 <- EndingPlayer.Pause line34 <- MainForm.Deactivate line289. Recorded
+visual approval and shutdown defect in outputs/User-Feedback.txt; no audible/
+native-gameplay approval inferred. Latest default now v0.15.1 side by side.
+
+Reproduced on untouched v0.15 by EndingPlayer.Dispose then Pause. Its manually
+owned Movie has frames=null after disposal; late MainForm.Deactivate invokes
+Pause -> SyncControls -> null owner. Native Form teardown can issue Deactivate
+after derived Dispose has released the player. Earlier hidden startup test did
+not establish that ordering. Raw repro:work/reconstruction-v15.1/repro-v015/.
+
+Production changes only three files (working/package source identical):
+- MainForm.cs: guard Deactivate/tab callbacks once disposal starts; held-control
+  suppression ignores teardown. Existing disposed flag is set before childcleanup.
+- ClipStudy.cs: late playback/pause/reset/sound/tick/sync no-op once disposed;
+  timeline paused/cleared, canvas detached before audio/frames disposed. Sync
+  does not dispatch completion if a callback disposed the player. CurrentImage
+  returnsnull after disposal. No broad catch of programming errors introduced.
+- EndingPlayer.cs: guard late start/pause/cancel/sound/timer/movie callbacks;
+  stop timeline/timer and clear canvas/card before movie/ownedbitmap disposal.
+No game/media/timing/alpha/binding/preferences change. Build/Verify also include
+root ShutdownCheck.exe from Tools/Check-Shutdown.cs, same Framework compiler.
+
+Validation:85model+42form, plus12shutdown cases all pass. Ten owned formstates:
+idle,reveal,hold,cardfade,movie,pausedmovie,moviefade,complete,combat,silentmovie.
+Disposed callback and late reflected OnDeactivate after Close, idempotent cleanup,
+no frame retention, ThreadException=0. Two component lifecycle cases separately
+exercise disposed calls. SILENT waveOut buffer active before close, releasedonexit.
+Both full result sequences play naturally in83sec with actual SILENT device,
+pause/reset/once-only completion. No full duel rerun for this disposal-only fix;
+prior v0.15evidence retained historically. No user process closed.
+
+Clean source-only restore from absence:525original assets+3Programs+253evidence
+byte-identical,251native-derived fixtures rebuilt+2recorded modern inputs.127checks
+plus12shutdown and device pass. Minimal work/source-restore-v0151-001. Logs under
+work/reconstruction-v15.1/{verify,restore-validation,portable-validation}.log.
+Relocated ZIP973records passes samechecks. Final reports-only archive974entries
+allSHAverified; EXE unchanged. Naturalrun:natural-result-001/silent-device.
+ZIP93370471134DC30C2D516F9A781F2B4FAB19BC0E69445DA54DD15DA157C7B37F
+EXE78F2E1AE2D9174F2926D0234679C609959E034D5EC1EA60E8D6BE2816B67EBB6
+Original menu reference and every prior build manifest/delivery unchanged.
+
+Next: user close/Quit during/after result movie; physicaldesktop acceptance remains
+pending. Continue broader project from checkpoint20's menu opcode18/44EF88 boundary
+on exact supplied source hash; this hotfix does not implement the native menu.
+Preserve40ms modern fade cadence label, approved30%board transparency, opaque HUD/
+ships/grid/markers, accepted controls and earlier comparisons. AI SG-01 staysbacklog.
+
+Git remains initialized/noHEAD due protectedmetadata; do not retry/bypass/relocate.
+Prepared user's Complete-Git-Checkpoint script includes shutdown scope. Source
+snapshot21 is allowlisted/read-only Git inventory and excludes originals, compiled
+outputs, preferences, scratch and metadata; see outputs/Source-Checkpoint-21.txt.
+No external publication/remote/download/systemconfiguration changes performed.

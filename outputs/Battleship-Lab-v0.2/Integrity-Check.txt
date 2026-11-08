@@ -1,0 +1,4 @@
+﻿PASS accepted original reference executable, wrapper, configuration and launcher match menu-baseline-001.
+PASS 29 accepted v0.1 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS delivered v0.2 game executable is PE32+ machine 0x8664 (Windows x64).
+PASS nine packaged assets match the user-supplied original files byte for byte by SHA-256.

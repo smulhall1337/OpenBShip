@@ -1,0 +1,4 @@
+PASS packaged x86 oracle rebuilt from source.
+PASS 113 original numerical selector/RNG executions reproduced the exact shipped CSV.
+PASS delivered x64 selector matched every returned target and final RNG state in those rows.
+This validates the numerical selector, not complete original AI/gameplay or shared whole-game RNG scheduling.

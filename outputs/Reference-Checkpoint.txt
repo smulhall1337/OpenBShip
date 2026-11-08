@@ -1,0 +1,197 @@
+Historical checkpoint ledger. Current behavior is in Current-Status.txt; the
+original working baseline is work\checkpoints\menu-baseline-001\baseline.json.
+Earlier launch failures/milestone limits below are retained history.
+
+Battleship reference checkpoint 2 — 2026-11-06
+
+Located installed RIP:
+C:\Users\Sean\Documents\Battleship-The-Classic-Naval-Warfare-Game_Win_EN_ISO-Version\Battleship-The-Classic-Naval-Warfare-Game_Win_EN_Full-RIP\Battleship_The_Classic_Naval_Warfare_Game
+
+Executable: Bs.exe (397,824 bytes), PE32 i386.
+SHA-256: B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+Image base: 0x00400000; entry RVA: 0x00039F80.
+No version resource was reported by Windows. Strings identify an Ultimate Battleships engine; precise release/build remains unverified.
+
+The RIP contains 1,939 files / 546,537,832 bytes. A separate copy is prepared under work\reference-rip; supplied files have not been edited. Comparing hashes against the previous ISO-extraction manifest found 1,897 identical files, 31 differing files, and 11 files absent from that manifest. Differences are existing source differences, not our edits. The RIP executable's relationship to the ISO payload has not been established.
+
+The supplied START THE GAME.bat forcibly terminates explorer.exe. It was not run. Launch-Original.cmd starts the copied Bs.exe directly, with the correct working directory and launch logging, and leaves Explorer running. It expects the sibling work\reference-rip directory. The current batch launcher uses an inline PowerShell storage command to mount Battleship.iso read-only before starting the game. It reuses an existing mount and waits up to five seconds for a CD drive letter. It does not load a .ps1 file or change execution policy. Mount failures are logged and stop launch; the image remains mounted after exit.
+
+Static imports confirm DirectDrawCreate, WinMM multimedia/file APIs, MSACM32, registry reads, and OLE/COM. Strings also mention DirectSound initialization and optional MConnect/MPlayer modules. Actual graphics/audio API success is unconfirmed.
+
+The supplied install_32bit.reg defines HKLM\SOFTWARE\Hasbro_Interactive\Battleship paths: BSDIR, GRAPATH, HWEBPATH, LWEBPATH, PINPPATH, SFXPATH. That key was absent from the 32-bit HKLM view. No registry file was imported. The missing registry configuration is a hypothesis for startup failure, not a demonstrated cause.
+
+Launch checks:
+- The first ShellExecute-based helper stalled without a Bs process and was canceled.
+- Direct process creation succeeded; Bs.exe then exited.
+- A diagnostic repeat captured startup exit code 0x00000000.
+- No sustained game process, visible rendering, audible playback, menu interaction, or gameplay has been established. Native desktop UI observation is unavailable in this session. Exit code zero does not prove success.
+
+Use Launch-Original.cmd for the next hands-on comparison and report any message or screen that appears. Startup logs are written under work\reference-logs.
+
+Launcher correction verification: ran the actual updated .cmd through cmd.exe with stdin redirected from NUL so its final pause could complete unattended. It reached Bs.exe and logged exit code 0. The PowerShell policy error is resolved; the game's immediate startup exit remains unresolved. The latest batch launch log is work\reference-logs\launch-batch-last.txt.
+
+Project records:
+- work\rip-provenance.csv: all 1,939 RIP source file hashes and sizes.
+- work\rip-comparison.json: names of differing and newly inventoried files.
+- work\bs-pe.json: import, section, and executable identity data.
+- work\inspect-pe.ps1: reusable PE32 static inspection tool.
+
+Next investigation: establish how this exact executable reads its registry paths and handles missing values; configure only a reversible local reference setup supported by that evidence. Confirm a menu, start a small game, and observe representative actions before reconstructing original behavior. No modern playable rebuild has been implemented at this checkpoint.
+
+CD discovery update:
+The user observed a missing-CD dialog from the game. This establishes that execution reaches the media check; the earlier clean exit alone did not identify that failure. The launcher now mounts the supplied ISO before game launch and records its drive letter. The actual updated .cmd was checked: its inline PowerShell command executes despite the earlier .ps1 policy issue, but Windows denies mounting in the agent environment. The failure is logged and game launch is correctly stopped. A successful mount and in-game disc recognition still require a desktop run of this launcher; gameplay and audio remain pending.
+
+Resource-path correction after successful desktop mount:
+- User confirmed the game still displays an insert-CD dialog; the named drive is another letter or absent.
+- The user's last launch log showed the supplied ISO was already mounted as E:. E:\DISK1.ID is present and contains the correct Battleship Master CD marker.
+- The 32-bit HKLM\SOFTWARE\Hasbro_Interactive\Battleship key is absent in this environment. Static inspection at VA 0x0041FDB0 reads GRAPATH/SFXPATH/HWEBPATH/LWEBPATH/PINPPATH from that key. The media routine at 0x0041FFE0 builds the DISK1.ID filename from the parent directory of GRAPATH, opens it in C text mode, and compares with the compiled marker literal at 0x00448BD4 (raw 0x46FD4). This explains why adding a mounted disc without configuring paths is insufficient.
+- The supplied RIP executable already contains two NOPs after the drive-type comparison at VA 0x0041FF78 and returns success from that routine. Provenance of these existing bytes is unknown; no binary edits were made by this project.
+- The launcher now writes six absolute REG_SZ values in the 32-bit HKLM view: BSDIR and paths for the GRAPHICS, HWEBS, LWEBS, PINP and SFX directories in our reference copy. The local DISK1.ID matches the executable's literal after Windows C text-mode CRLF conversion. The mount step remains in place.
+- Before changes, the launcher backs up those six values to work\reference-logs\registry-before-first-setup.json. Restore-Original-Settings.cmd restores them or removes only the values introduced by this setup, preserving unrelated values. It removes the Battleship key only if this setup created it and it is empty after restoration.
+- Both batch files use inline PowerShell commands, require no .ps1 loading, and do not change execution policy. Command syntax and cmd.exe line lengths were checked; all five asset directories and the independent marker fixture were checked. Bs.exe remains SHA-256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+- Agent checks: the full launcher reports mount Access denied and stops before launching; a separate execution of its configuration command reports registry CreateSubKey Access denied. It saved a pre-change snapshot but did not configure paths. That diagnostic snapshot was archived separately so the desktop launcher will capture its own first-run backup. Successful configuration and in-game disc recognition remain pending a desktop administrator run.
+- Next hands-on step: right-click Launch-Original.cmd and run as administrator once. Verify it prints resource paths configured, then confirm the missing-CD dialog is cleared and report the next visible screen. Later launches can use normal privileges if the image is already mounted and the paths are unchanged.
+
+Automatic setup elevation update:
+The user ran the resource-path launcher and Windows denied CreateSubKey in HKLM. Launch-Original.cmd now recognizes UnauthorizedAccessException/SecurityException as status 5 and requests a Windows UAC prompt for a separate --configure-only invocation of itself. That invocation backs up and configures the same six values; it does not mount media or start Bs.exe. The original launcher waits for setup, reads the settings again, and starts the game only if configuration succeeds. The helper console is hidden; Windows handles the administrator prompt. A normal desktop double-click keeps game execution in the original launcher security context. If UAC is canceled or setup fails, launch stops with a log message.
+Validation: all three inline PowerShell commands parse. The exact quoted cmd.exe argument construction was exercised without elevation against the real setup-only path; it returned the expected permission-required status 5, without starting the game. The actual UAC approval and subsequent successful registry setup cannot be completed in the agent environment; they remain a desktop check. No execution policy or registry ACL was changed, and Bs.exe remains untouched.
+Next desktop check: double-click Launch-Original.cmd normally, allow Windows' administrator prompt for setup, then report whether the insert-CD dialog clears.
+
+Startup access violation and desktop diagnostics checkpoint:
+- The user reports exit -1073741819, i.e. 0xC0000005. The latest launch log confirms elevated resource setup completed with code 0 and all six paths read back correctly. The earlier registry-write failure is resolved on the user's desktop.
+- Windows Application event 1000 at 2026-11-06 16:11:56 identifies Bs.exe crashing in winmmbase.dll 10.0.26100.9549, exception C0000005, module offset 0x54DF. Earlier events in Bs.exe+0x394A0 occurred before successful path setup and must not be conflated with this latest fault.
+- Preserved evidence: work\reference-logs\startup-crash-before-diagnostic.txt and windows-crash-record.txt. WER's archived report folder is access denied to this session.
+- Added work\NativeTrace.cs, an x86 Windows debugging helper compiled with C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /nologo /platform:x86 /out:work\NativeTrace.exe work\NativeTrace.cs. It launches a new diagnostic game process, logs modules/exceptions, captures registers, stack bytes, frame pointers and a local minidump for a second-chance access violation. At 25 seconds it detaches without terminating a running game. It does not attach to an existing process or patch the game.
+- An automated original-game diagnostic run exited normally before reproducing the desktop multimedia crash; it loaded the graphics stack but did not load winmmbase.dll. This is an observation of the automated session only and does not supersede the desktop crash report.
+- Diagnostic validation used an independent synthetic PE32 program performing a native null-pointer read. The final helper captured EIP 0x00401002, read target 0x00000000, final C0000005 exit, and an 82,872-byte minidump with the MDMP signature. This validates the capture mechanism, not game compatibility.
+- Launch-Diagnostic.cmd invokes the existing CD/setup workflow, then NativeTrace instead of starting Bs.exe directly. Unique timestamp folders under work\reference-logs\desktop-crash contain trace.txt, stack.bin and crash.dmp when a crash is captured. Diagnostic status codes are 0=captured AV, 4=game exited without captured AV, 5=detached at timeout. Normal Launch-Original.cmd still starts the game directly. The reference Bs.exe has not been patched.
+- Next required desktop observation: run outputs\Launch-Diagnostic.cmd once and report when it finishes. The agent can read the resulting local trace/dump directly; no upload or pasted stack is needed. Then identify the specific MMIO/audio API and its arguments before choosing a compatibility fix.
+
+Superseded by outputs\Current-Status.txt and work\checkpoint-3.txt: desktop dump confirmed that our long absolute resource paths overflow the game's 80-byte sound diagnostic buffer. Launch-Original.cmd now uses the RIP's original relative paths; all 748 WAV filenames fit (maximum message including terminator 58 bytes). No game binary edit. A desktop run with the one-time registry update is pending.
+
+Checkpoint 4 supersedes startup notes: user confirmed a visible intro after the relative-path fix but skipping fails in native DirectDraw palette setup. A separate game-local cnc-ddraw 7.1 build is now the default launcher target; the prior native build remains available via Launch-Native-Baseline.cmd. Palette API checks pass; the intro-to-menu transition still requires a desktop launch. See outputs\Current-Status.txt / work\checkpoint-4.txt for current evidence and dependency provenance.
+
+Accepted checkpoint 5: user confirmed launch to main menu and clean Quit. Desktop log exit code is 0 with cnc-ddraw windowed and relative asset paths. Exact launcher/configuration/hash snapshots are frozen in work\checkpoints\menu-baseline-001; current status is in outputs\Current-Status.txt / work\checkpoint-5.txt. Gameplay and audio remain pending separate checks.
+
+Checkpoint 6 delivered: outputs\Launch-Reconstruction.cmd and Battleship-Lab-v0.1.zip contain the first playable Classic prototype, runtime original-asset readers, separate game/UI/audio source modules, build commands, manifests and 14 passing focused checks. Rules/AI are explicitly provisional. The original menu reference is unchanged. See outputs\Current-Status.txt / work\checkpoint-6.txt for exact new scope, checks, unsupported format variant and next original-game comparisons.
+
+Checkpoint 7 delivered: v0.2 replaces the default inferred fleet with original
+Classic types/lengths 7:5, 1:5, 2:3, 12:4, 4:2; fixed-axis placement and native
+live/destroyed status icons are now playable. v0.1 remains as a selectable preset
+and a separate unchanged build. 20 focused and 4 form checks pass; portable
+relocation and original-byte fixture reproduction passed. Current details and
+limits are in outputs\Current-Status.txt and Battleship-Lab-v0.2\CLASSIC-EVIDENCE.txt.
+The accepted original menu reference remains unchanged. Next: native board input
+projection and ship presentation, then original Classic gameplay comparison.
+
+Checkpoint 8 delivered: v0.3 now uses native Classic board X/Y projection,
+centered manual placement and original ship frame/scale/anchor rules. Twelve
+original assets are bundled; HIT/MISS art and hidden/sunk visibility are checked.
+26 focused checks and 5 form checks pass, including two-size simulated mouse
+placement; portable relocation and 35-file evidence reproduction also pass.
+Earlier v0.1/v0.2 and accepted original-menu baselines are unchanged. Current scope,
+remaining x87/palette/AI limits and exact next steps are in outputs\Current-Status.txt
+and Battleship-Lab-v0.3\PRESENTATION-EVIDENCE.txt.
+
+Checkpoint 9 delivered: v0.4 reconstructs the active Classic target selector and
+original RNG arithmetic. Four search settings and prototype comparison are
+playable; native repeated shots are logged with no additional damage. 113 numerical
+oracle cases match original copied-code execution in target and final RNG state.
+32 focused and 7 form checks pass, plus portable and 45-file evidence reproduction.
+All earlier builds and accepted original-menu baseline are unchanged. User accepted
+v0.3 appearance. Current limits/next work: complete palette state and combat timing.
+Palette address correction: push 0x42314B / call 0x423150, not earlier 0x43114B.
+See outputs\Current-Status.txt and Battleship-Lab-v0.4\OPPONENT-EVIDENCE.txt.
+
+Checkpoint 10 delivered: v0.5 adds original persistent own-ship damage frames,
+selectable recovered mutable palette colors, still-effects and persistent display
+preferences with legacy mute compatibility. 38 focused and 9 form checks pass;
+original-code palette patch/65-factor fade arithmetic matches, while automatic
+fade scheduling remains unimplemented. Eight previews include labeled controlled
+damage comparisons. Portable checks pass; 123 original-derived evidence files
+reproduce, with two modern endpoint observations kept separate. Earlier builds
+and original-menu reference are unchanged. See outputs\Current-Status.txt and
+Battleship-Lab-v0.5\DISPLAY-EVIDENCE.txt. Next: native weapon selection and transient
+combat feedback, preserving this persistent-damage/palette-data baseline.
+
+Checkpoint 11 delivered: v0.6 adds original firing-ship selection, sink fallback,
+weighted player/opponent weapon choices and original weapon-name shot feedback.
+Intended firing-clip dispatch is recovered but no firing movies are played yet.
+44 focused and 12 form checks pass, including two original-code numerical grids
+(500 list outputs / 220 dispatch outputs), source data, selection/turn/sink gates,
+input handlers and target-history preservation with isolated presentation RNG.
+Portable checks and normal agent-desktop startup/clean close pass. Nine diagnostic
+previews were reviewed. Five extractors/three oracles reproduce 141 source-derived
+files; two endpoint observations remain separate. v0.5 and all previous builds/
+original menu reference are unchanged. User confirms visible v0.5 battle effects
+only; audio/full original gameplay remain pending. Next: bounded original PAT
+firing-clip decoding and completion/skip/SEQ semantics. See Current-Status.txt and
+Battleship-Lab-v0.6\WEAPONS-EVIDENCE.txt. This remains a partial reconstruction.
+
+Checkpoint 12 delivered (2026-11-07): v0.7 decodes original LWEBS/BATFIRE1 with
+all thirteen block operations in the observed 20,15,4,4 variant. All 46 frame
+hashes, three index surfaces, 256 quartet patterns and a constructed all-opcode
+case match isolated original-code decoding. Firing clip exposes silent finite
+playback, pause/restart/step/skip and battle isolation. Palette branch conditions
+correct the earlier overly broad 118-entry gameplay description; the preview uses
+the standard 236-entry branch. 49 focused/15 form checks, portable relocation and
+agent-desktop startup/clean close pass. Six extractors/four oracles reproduce 162
+source-derived/constructed fixture files, with two endpoint observations separate.
+Original/menu baseline and v0.1..v0.6 are unchanged. Next: other clip variants,
+SEQ audio and completion/skip phase integration. See Current-Status.txt and
+Battleship-Lab-v0.7\PAT-EVIDENCE.txt. This is not full battle-movie playback.
+
+Checkpoint 13 delivered (2026-11-07): v0.8 expands Firing clips to twenty original
+movies and supplied sound cues. All 1460 frame hashes and 104 original-code cue
+onsets/cleanup match controlled fixtures. Finite PCM mixing models the eight-voice
+pool; x64 output supports audio-clock synchronization, mute, pause/seek, finite
+completion and failure fallback. 55 focused/19 form checks and portable relocation
+pass. Actual device lifecycle passes with silent samples; audibility remains a
+user check. New raw evidence/inventories reproduce, and 164 inherited evidence
+files match v0.7. All 144 original assets and earlier builds/reference are preserved.
+User confirms v0.7 visible playback only. Normal battles retain immediate impact;
+next: travel/impact assets, skip/phase transitions, then complete shot integration.
+Current-Status.txt and Battleship-Lab-v0.8\AUDIO-EVIDENCE.txt record exact boundaries.
+
+Checkpoint 14 (2026-11-07): v0.9 optional Classic shot movies, 28-clip library,
+delayed once-only damage, 61 model + 25 form checks, relocated/source-only restore,
+SILENT actual audio-device and owned startup/clean-close checks pass. 181 original
+assets match; older versions unchanged. See Current-Status.txt / checkpoint-14.txt.
+Local Git main initialized; first commit blocked by protected .git metadata despite
+a filesystem grant; elevated staging disabled. Prepared Complete-Git-Checkpoint.ps1
+for user terminal; no remote/publication. AI upscale SG-01 remains optional backlog.
+
+Checkpoint 15 (2026-11-07): v0.10 fills default-setting hit/miss and all Classic
+sink movie paths. 252 controlled selector cases, 61 clips/5641 native frames,
+404cues/232PCM paths, 428 original assets. Corrected travel ID12=MIS_FLY2 and added
+one signed16bit PCM variant. 66 model +27 form, source restoration, portable,
+SILENT device and owned startup/clean exit pass. Old references/builds preserved.
+Current details: Current-Status.txt and checkpoint-15.txt. New feedback pending
+hands-on; full native routing/priority/shared RNG remain unresolved. Git commit
+still requires writable metadata; no remote/publication. AI SG01 stays backlog.
+
+Checkpoint16(2026-11-07): v0.11 moves movies behind visible boards. Explicitly
+approved30%surface transparency, opaque grid/HUD/ships/markers, restoration after
+completion/reset/failure and separate playback controls.68model/30form checks plus
+source restore, portable, SILENT device and owned startup/clean exit0 pass. Original
+content/older builds unchanged. Current detail BACKDROP-EVIDENCE.txt/checkpoint16.
+User authorized autonomous2hours07:04:10..09:04:10UTC; continue native cinematic
+priority/interruption/completion. No extra transparency approval is required.
+
+Checkpoint17(2026-11-07): v0.12 adds original HWEBS320x240choice,72model/32form
+checks,489original assets,212reproduced evidence files; details checkpoint17 and
+HIGH-DETAIL-EVIDENCE.txt. Natural visual-clock and actual-SILENT waveOut duels are
+tracked separately. No AI upscale; native admission182case grid informs future.
+
+Checkpoint18delivered: v0.13nativeHUD/4:3viewport,76model/34form,490originalassets,232evidencefiles(230regenerated+2recordedmodernobservations),9fullv0.13naturalduels, both61clip naturalcatalogues and2preparedterminaldefeats pass. Originalbaseline/olderversions preserved. See Current-Status.txt, checkpoint-18.txt and Archive-v013-Validation.txt for exactarchive/scope/nextchecks. User-approved30%boardtransparency retained; optionaloriginal320x240isnotAIupscaling.
+
+
+Checkpoint19: v0.14originalVICTORY/LOSEstudies320x240/20fps;81model/38form,523originalfiles,246evidence(244regenerated+2recordedobservations). Natural combat/ending library sweeps, two full duels and preparedterminal scenarios pass. Boundedbitmapcache/finitefractionalsampleend corrected. Automaticending scripts remain pending. Usergeneralv0.13appearanceaccepted. See Current-Status.txt/checkpoint-19.txt/Archive-v014-Validation.txt. Allpreviousdeliveries/originalbaseline preserved.
+
+Checkpoint20/v0.15: original ending result-card/wait/movie/fade prefix delivered; current scope/limits in Current-Status.txt and work/checkpoint-20.txt. Native original reference acceptance remains mainmenu/Quit only. Prior baseline unchanged.
+
+Checkpoint21/v0.15.1: fixed reported late-Deactivate exit exception. Current status in Current-Status.txt and work/checkpoint-21.txt.12shutdown cases,127regressions, clean restore/portable/SILENT checks pass. Original reference and v0.15preserved.
+
+Checkpoint22/v0.16: original title/menu handoff after endings delivered, bounded entry/render/input evidence and explicit modern Solo/Preferences/Quit bridges. Current scope/limits in Current-Status.txt and work/checkpoint-22.txt.134model/form checks+14shutdown cases, restore/portable/natural/SILENT pass. Original reference preserved.
+
+Checkpoint23/v0.17: original Solo Practice setup and Classic Start path delivered. Corrected address labels: Solo44F3F8, Multiplayer44F208, independently verified by native label scanner.141focused checks+16shutdown cases, source/portable/SILENT and one full Solo-entry duel pass. Current scope/limits in Current-Status.txt and work/checkpoint-23.txt; prior reference/builds preserved.

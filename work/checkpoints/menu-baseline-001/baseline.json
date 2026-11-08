@@ -1,0 +1,40 @@
+{
+  "Checkpoint": "menu-baseline-001",
+  "Date": "2026-11-06",
+  "UserConfirmed": [
+    "Application launched",
+    "Main menu reached",
+    "Quit from main menu exited cleanly"
+  ],
+  "LogExitCode": 0,
+  "NotYetConfirmed": [
+    "Gameplay",
+    "Audible sound",
+    "Save/load",
+    "Intro skip as a separately repeated check"
+  ],
+  "Files": [
+    {
+      "Path": "C:\\Users\\Sean\\Documents\\Codex\\2026-11-06\\yes\\work\\reference-ddraw\\Bs.exe",
+      "SizeBytes": 397824,
+      "SHA256": "B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569"
+    },
+    {
+      "Path": "C:\\Users\\Sean\\Documents\\Codex\\2026-11-06\\yes\\work\\reference-ddraw\\ddraw.dll",
+      "SizeBytes": 411648,
+      "SHA256": "85E0F7D530DFDA134793A57CB3E76B0287DCC96892EE57162DD68F47283B03A9"
+    },
+    {
+      "Path": "C:\\Users\\Sean\\Documents\\Codex\\2026-11-06\\yes\\work\\reference-ddraw\\ddraw.ini",
+      "SizeBytes": 244,
+      "SHA256": "306FD0F75B812B2B6F58ED9948FA5446AE68B1CB2C71B6E2CF6BC190BDC40E96"
+    },
+    {
+      "Path": "C:\\Users\\Sean\\Documents\\Codex\\2026-11-06\\yes\\outputs\\Launch-Original.cmd",
+      "SizeBytes": 7094,
+      "SHA256": "2C1FE4D049BE8386A056BD932580F35F46C759C38D2B2EA9816DCEC9AD06A70F"
+    }
+  ],
+  "LaunchFrom": "outputs\\Launch-Original.cmd",
+  "SnapshotsAreNotLaunchers": true
+}

@@ -1,0 +1,67 @@
+Checkpoint20 - delivered v0.15 - 2026-11-07
+
+Latest user: continue. No new acceptance inferred. Default now Launch-Reconstruction
+->Battleship-Lab-v0.15. All older builds/original reference verified unchanged.
+
+Completed useful slice
+See outputs/Current-Status.txt for current scope and package links. Source:
+work/reconstruction-v15/src; packaged Source copy identical. Added EndingProgram
+and EndingTimeline, bounded16-word/64byte exact-script reader; EndingPlayer owns
+palette-faded bitmaps and borrows movie current frames with owner lifetime.
+Result sequences tab and terminal Watch link; old game terminal policy unchanged.
+85model+42form checks; clean restore and runtime-only restore; four natural result
+sequences; one complete19shot/111stage high level0SILENTduel; portable127checks,
+SILENT and owned exit0;27previews. Final ZIP969entries/968records byte-verified.
+ZIP3C8AE2F52638B7AF92305B6BFB37A5DCD12E50646604A74D9571684664486BFC
+EXE5ADCAA56997DB8FFE7E49E3DD751B771F4F45241B8F90CE6FF9502B3E0E83379
+
+Evidence and boundaries
+Exact native Bs.exe SHA256B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Scripts4512D8/451318:8,cardptr,9,15,5,5000,14,1,6,movieid,14,1,18,44EF88,4,0.
+Result card refs44EE64/44EE5C, movie IDs139/140. Dispatcher42F300, fades422BA0..
+422CCE. Native fade-in12..64step4(14samples), fade-out64..0step-4(17). Scene7
+4075B4calls422C70increasing; scene8 4075D0calls422C10decreasing. Earlier vague
+fade naming must not invert these. Native updates10..245;20protected Windows
+endpoints are recorded modern observations, not1997capture. Original wait5000ms
+is blocking in4222B0; modern wait is nonblocking and pausable. Fade cadence40ms
+is modern and deliberately not native timing. Native movie cadence50ms retained.
+
+EndingProgramOracle guards source hash, relocation counts136/22, private x86
+copieddispatcher/fade code with recording stubs, no original device/media APIs.
+Four54event traces stop when pointer reaches script+48 BEFORE opcode18. Never
+claim old menu execution. Modern result clears content then offers Return to duel.
+Copied original resultPCX files plus previous523assets=525; Programs/2seqbins and
+provenance are derived exports, not loose original assets. Runtime-only restore
+always invokes Extract-EndingFlow even withoutWithChecks.251native-derived
+fixtures regenerate, two modern palette inputs retained =>253total evidence.
+
+Diagnostic notes
+NaturalResultCheck initially failed its phase-count assertion because DoEvents
+could add Complete during the loop; fixed harness counts the actual final phase.
+Production was not changed for that. First tool compilation also needed reflection
+for internal ClipStudy.AudioActive; failed scratch directories retained. Successful
+runs are natural-results-003/{muted,silent-device},83/84sec; two350mspauses per
+outcome. natural-duel-001/Level-0=362sec. restore-validation.log and source-restore-
+v015-001 preserve source-only path; source-runtime-v015-001 verifies noWithChecks.
+portable-v015-001 executed initialZIP with same finalEXE; only reports subsequently
+changed. final-archive-verification.txt confirms everyfinalentry. No user process
+closed. No audible/physical acceptance claimed. Current tests isolate user prefs.
+
+Exact next steps
+1. User hands-on both Result sequences with Sound; pause/resume/Return. Preserve
+   accepted30%boardalpha and opaquegrids/ships/markers/HUD; no binding changes.
+2. Inspect opcode18dispatch near42F300 plus target44EF88 on SAME source identity.
+   Trace only required menu helpers using guarded native stubs; document entry/
+   exit and unsupported instructions. Do not invent fullVM or automatic terminal
+   behavior from these prefix traces. Native fade cadence still unmeasured.
+3. Establish observable native Classic gameplay reference before claiming shared
+   RNG, ownership/interrupt/timing calibration. Original mainmenu/Quit only accepted.
+4. Preservev15; clone tov16before behavior changes. Update Restore explicitly:
+   compile neworacle once and keep specialized argument runners separate; no broad
+   replacement appending to unrelated generic loops.
+5. AI SG-01 remains optional pilot backlog, no downloads or enhancement run.
+
+Git initializedmain noHEAD/commit; protectedmetadata denied earlier. Do not retry,
+move metadata or bypass. Prepared Complete-Git-Checkpoint script for user'sterminal
+updated127checks. Source snapshot20 excludes originals, compiled builds/settings/
+scratch/.git and is byteverified; see outputs/Source-Checkpoint-20.txt. No remote.

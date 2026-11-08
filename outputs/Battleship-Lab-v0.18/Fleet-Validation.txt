@@ -1,0 +1,46 @@
+Battleship v0.18 validation — 2026-11-07
+
+PASS94model/format checks +53real-form groups =147focused checks, plus18shutdown
+cases. These totals count named groups, not each vertex/frame/sample as a game.
+New groups cover camera121vertices/100center picks,780native move decisions,
+strict184/224byte readers and11button dimensions, native initializer roster/
+randomization requests, valid move/overlap/bounds rollback, draft isolation,
+Back preservation, held confirm/shot suppression, stale pointer/focus, minimum
+layout, reset and image lifetime. Existing direct placement, AI/movie, 30percent
+board transparency, ending/title/Solo checks continue to pass.
+
+PASS18shutdown cases:16owned form states plus2component lifecycle cases. Added
+selected fleet and post-Fleet-Start closing; late Deactivate/repeated Dispose
+remain safe. Active SILENT waveOut buffer lifecycle passes. Physical desktop
+focus, physical input, audible playback and original gameplay are separate.
+
+PASS clean source-only restoration:535original assets +13Program +300Evidence
+files byte-match.298native-derived fixtures regenerate with only2recorded modern
+palette inputs retained. No downloads/original installer/registry/device wrapper
+changes. Runtime-only restore without -WithChecks also renders the new screen.
+Logs: work/reconstruction-v18/restore-validation.log, runtime-restore-validation.log.
+
+PASS relocated draft ZIP1073manifest records,147checks/18shutdown and separate
+SILENT audio device. Production executable unchanged after portable checks:
+812B73766A8CA9C7AE26D7BC0A381F18C077FCEB367BFD53033E8CF0F4CEA749.
+Final report/image-only archive refresh receives independent byte verification.
+Owned no-argument startup reaches actual form/message loop and closes with exit0.
+
+Normal1236x879/minimum1040x779 Fleet previews inspected: artwork letterboxed,
+ship art/grid aligned, instructions and controls fit, correct fleet guidance.
+Previous version previews/reports remain historical comparisons. New screen is
+partial reconstruction; native budget/cursor/font/occlusion/fade cadence and
+shared layout RNG remain unresolved. Original-mainmenu/Quit acceptance retained;
+latest user feedback accepts general v0.17visuals only. See FLEET-EVIDENCE.txt.
+
+Final lifecycle review found that result→title could reveal an older fleet draft. The handoff now resets/hides that draft; an added real-form regression verifies bitmap release, draft disposal, preserved game identity and title reveal. All final checks use the corrected executable.
+
+Final corrected production executable, complete high-detail level0 SILENT duel:
+PASS one scripted perfect-target duel entered through original title -> Solo Practice -> Classic -> Fleet Configuration -> Start Game, using production form/timers, natural movie completion and original opponent level 0.
+Detail=320x240, audio=actual waveOut with SILENT samples.
+Player shots=19, movie stages=111, elapsed seconds=362, max observed GDI handles=51.
+Actual-device buffer starts=111, pause calls=1, resumes=1.
+Pause froze frame and damage; hit/sink captures and terminal victory completed. No stages were skipped.
+Form offscreen. Targets use hidden-board knowledge for testing. No physical-input, audible-playback or full original-gameplay acceptance claim.
+Raw stages/progress/captures: work/reconstruction-v18/natural-high-silent-final/Level-0.
+Earlier pre-handoff-fix run also passed the same scenario; not counted as a distinct gameplay scenario.

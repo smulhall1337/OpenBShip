@@ -1,0 +1,113 @@
+Battleship — checkpoint 12: original firing clip study (2026-11-07)
+
+Launch:
+C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Launch-Reconstruction.cmd
+Versioned app: outputs\Battleship-Lab-v0.7\BattleshipLab.exe
+Portable source/build: outputs\Battleship-Lab-v0.7.zip
+Details: outputs\Battleship-Lab-v0.7\PAT-EVIDENCE.txt and README.txt
+Previews: outputs\Battleship-Lab-v0.7\Clip-Preview.png / Clip-Small-Preview.png
+Previous baseline: outputs\Launch-Reconstruction-v0.6.cmd
+Original reference: outputs\Launch-Original.cmd
+
+New observable milestone:
+Firing clip -> Play now displays the original 46-frame BATFIRE1 animation.
+Play/Pause, Restart, Previous/Next frame and Skip to end support explicit study.
+Playback finishes, holds the last image and can replay. Leaving the tab, Display
+or focus loss pauses it. F2 resets the study and game. Inspecting pauses a live
+duel, and return to the duel requires Resume/P. Clip actions do not consume turns,
+shots, HP or RNG. Existing recovered firing selection, weapon logs, targeting,
+damage effects, palettes and prototype comparison remain playable.
+
+This clip study is SILENT and independent of battle shots. It does not execute
+SEQ audio or the original blocking movie/impact phases. It is a tested decoder/
+player milestone within the existing playable rebuild, not a completed combat
+movie system or an exact/full game port. Only BATFIRE1 is exposed in this UI.
+
+Evidence:
+All native addresses apply exclusively to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+PAT driver 0x402830 reads DWORD lengths; 0x433920 ->0x433AA5 decodes the 8x8 block
+surface via 0x433B2D and thirteen handlers in table 0x451875. BATFIRE1 consists of
+46 payload records, header 20,15,4,4, dimensions 160x120 and fourfold native scale.
+The fourth header byte's meaning is unresolved and enforced as observed. The end
+marker is FFFFFFFF, not zero. Every record and all original bytes are accounted for.
+The bounded managed reader implements all thirteen operations, including temporal
+retention/latches, and rejects unsupported headers/opcodes, malformed lengths,
+truncation, trailing bytes and excessive counts. Caps: 16 MiB input, 65532-byte
+payload, 512 frames. HWEBS/other size/scale variants are not claimed supported.
+
+Every managed frame hash matches isolated execution of the original decoder.
+Three complete index surfaces (0,20,45), all 256 quartet codes and an independently
+constructed two-frame all-opcode input also match. The first original frame is
+independent of prior surface contents. The optional source-built x86 oracle guards
+BOTH original executable and BATFIRE1 hashes, validates relocations/pointer tables,
+checks exact consumed lengths/output canaries, and executes only copied decoder
+arithmetic in its own allocation. It never runs the original game's graphics,
+audio, registry, file or media setup. Malformed inputs go only to managed tests.
+Constructed fixture inputs are labeled as such, not original media.
+
+Palette correction:
+Earlier preliminary notes called the 118-entry branch the gameplay palette too
+broadly. Source 0x402732 uses state==2 and script-state!=0x29 to update entries
+10..245 (236 entries); the alternate branch updates 20..137 (118 entries). Both
+are implemented/tested explicitly. The study uses the standard 236-entry branch,
+six-bit PAL values shifted left two, plus documented deterministic reserved system
+endpoints. BATFIRE1 uses indices above 137. Historical desktop endpoint fidelity
+is not claimed. Duel Display preferences do not mutate the study palette.
+
+Playback policy:
+Classic's 40 ms loop supports nominal 25 fps. The study holds each frame 40 ms,
+including the last; the nominal uninterrupted duration is 1.84 seconds. Catch-up
+is capped at 200 ms/five frames. Pause/step/reset, letterboxing, focus behavior and
+independent study lifecycle are explicit modern choices. Original performance,
+full application palette transitions and exact historical timing are not claimed.
+
+Validation:
+49 focused model/reader checks and 15 real-form checks pass, including inherited
+regressions, native frame/operation fixtures, malformed/resource bounds, palette
+branches, clock partitions/holds/completion, live control/timer operation, battle
+isolation, focus-loss events, minimum layout and disposed bitmap resources.
+Input events are simulated offscreen. The extracted portable x64 payload passes
+all 49+15 checks with 258 manifest entries matching. No-argument packaged startup
+and clean close exit 0 pass on the agent desktop; that launch was hidden and proves
+neither user-desktop visibility nor physical input. No pre-existing game was closed.
+Two new actual-form clip previews were reviewed at normal/minimum sizes, showing
+frame index 20 (UI frame 21). Nine earlier comparison scenes were regenerated.
+They are diagnostic renders, not captured original gameplay. Six packaged
+extractors and four isolated oracles reproduce 162 original-derived/constructed
+fixture files; two modern endpoint observations are checked separately.
+Fifteen original assets match the supplied RIP. Working and packaged source match.
+The app needs bundled assets, not the ISO, original registry/wrapper or analysis tools.
+
+Preservation and user feedback:
+The original accepted executable/wrapper/config/launcher match menu-baseline-001.
+All earlier manifest entries (v0.1 29, v0.2 61, v0.3 90, v0.4 107, v0.5 200,
+v0.6 226) and delivered executable/ZIP hashes are unchanged. Supplied media and
+user games are preserved. User-confirmed v0.5 visible damage effects remain scoped
+to visibility; continue requests do not imply physical v0.6/v0.7 or audible/full
+battle acceptance. Original main-menu access and clean Quit remain confirmed.
+
+Hands-on check:
+Launch -> Firing clip -> Play. Confirm the short gun-firing animation moves,
+finishes, replays, pauses and frame-steps; try Skip to end and return to the duel.
+The clip is silent. Resume/P explicitly restores a paused battle. Physical input,
+perceived cadence and full original-gameplay comparison remain pending.
+
+Implementation/checkpoint:
+Maintainable C#/.NET Framework x64 Forms/GDI+ remains the implementation. New modules:
+ClassicPat.cs (bounded decoder, palette branches and explicit ClipTimeline),
+ClipStudy.cs (finite player/viewport/lifecycle). Source, Build.cmd/Verify.cmd,
+evidence, provenance, analysis tools and reports are packaged. Work lives in
+work\reconstruction-v07; checkpoint 11 and all earlier versions remain available.
+
+Next experiment:
+Inventory/decode the other reachable Classic firing clips and their header variants.
+Then recover 0x402560 SEQ parsing, 0x4029F0 event/stop-handle semantics and actual
+finite audio playback/pause/mute/reset; BATFIRE1.SEQ contains EXPLOSN3,12,46 but
+full semantics are not implemented. Trace completion/skip phase advancement at
+0x4232AF..0x4232C5 before coupling movies to turns. Keep unsupported instructions
+and dependencies explicit. Preserve v0.7 and the isolated targeting stream.
+Original shared RNG scheduling, transient impact/explosion sequencing, fades,
+missions, real-time simulation, saves, networking and controllers remain absent/
+provisional. Historical palette endpoints and x87 picking boundaries retain their
+previous limits. Do not call this first clip a complete movie/audio/tutorial system.

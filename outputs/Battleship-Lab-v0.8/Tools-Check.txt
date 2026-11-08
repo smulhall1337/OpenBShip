@@ -1,0 +1,5 @@
+PASS 15 new code/table/inventory/oracle files reproduce exactly from the packaged v0.8 tools.
+PASS inherited 162 original-derived/constructed fixture files and two endpoint observations match preserved v0.7 evidence (checked with package integrity).
+PASS 1460 original decoder frame hashes for twenty trusted firing clips and 104 original sequence cue onsets/close cleanup requests.
+The sequence fixture uses successful dummy handles; it does not run the native WAV loader, voice pool or sound device.
+No original process, supplied file, registry or desktop palette was changed. Optional x86 tools are not runtime dependencies.

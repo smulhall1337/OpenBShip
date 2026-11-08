@@ -1,0 +1,39 @@
+Battleship — current checkpoint 5: accepted menu reference (2026-11-06)
+
+Working launcher: outputs\Launch-Original.cmd
+Working game copy: work\reference-ddraw
+Graphics: official cnc-ddraw 7.1, windowed, renderer=auto; original game-requested resolution.
+Resource paths: the six relative paths supplied in the RIP registry configuration.
+
+Confirmed by the user:
+The application launched, reached the main menu, and exited cleanly when Quit was selected there. The corresponding desktop launch log reports cnc-ddraw 7.1, windowed; all six resource paths; ISO mounted as E:; exit code 0. The earlier user report also established visible intro playback.
+
+Repeatable reference scenario:
+1. Double-click outputs\Launch-Original.cmd in the desktop session.
+2. Reach the main menu.
+3. Select Quit from the main menu.
+4. Confirm exit code 0 in work\reference-logs\launch-batch-last.txt.
+This scenario is the accepted startup/menu/exit baseline. It does not establish playable game state, audio output, save/load, or a separately repeated intro-skip test.
+
+Preserved checkpoint:
+work\checkpoints\menu-baseline-001 holds snapshots of all launch/restore commands, ddraw.ini, the accepted launch log and baseline.json with exact file hashes. Snapshot commands are archival copies; launch from outputs, not from the checkpoint folder. No accepted launcher, graphics setting or executable was changed while recording this milestone.
+
+Executable identity:
+Bs.exe SHA-256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+Local ddraw.dll SHA-256 85E0F7D530DFDA134793A57CB3E76B0287DCC96892EE57162DD68F47283B03A9
+All 1,939 supplied RIP files previously verified unchanged in the compatibility copy. Source ISO and Full-RIP are preserved.
+
+Runtime/provenance:
+cnc-ddraw v7.1.0.0, official release https://github.com/FunkyFr3sh/cnc-ddraw/releases/tag/v7.1.0.0
+Archived package, release metadata, file hashes and original extracted wrapper are in work\dependencies\cnc-ddraw-v7.1.0.0. Installed resources and origins are recorded in work\reference-ddraw-manifest.csv. Earlier native graphics remain available via outputs\Launch-Native-Baseline.cmd; diagnostics via Launch-Diagnostic.cmd; registry restore via Restore-Original-Settings.cmd.
+
+Established causes of previous failures:
+- Missing 32-bit HKLM game resource settings prevented media lookup.
+- Our earlier absolute paths overflowed an 80-byte native audio diagnostic buffer; the supplied relative paths resolved that corruption.
+- Native DirectDraw palette setup failed after intro playback. The separate cnc-ddraw copy now reaches the menu and exits cleanly on the user's desktop.
+Historical traces, reports and checkpoints 0–4 remain under work and in Reference-Checkpoint.txt. The latest positive desktop feedback supersedes earlier statements that menu access is unconfirmed.
+
+Next reconstruction work:
+Establish one playable single-player scenario and record a representative action. The source GRAPHICS\SCENARIO.TXT lists Classic Battleship alongside fleet-combat scenarios. These are asset labels, not yet verified menu routes. Begin with a single-player board/scenario, confirm that it loads and accepts a move/shot, then observe turn changes and pause/reset/quit before choosing the reconstruction slice. Do not infer rules or gameplay fidelity from the menu checkpoint.
+
+A maintainable modern game reconstruction has not yet been implemented. This milestone establishes a runnable, user-verified original menu reference.

@@ -1,0 +1,5 @@
+2026-11-07: User said 'looks good. continue' after v0.13. Records general visual acceptance of the current presentation; does not independently establish audible sync, physical controller support or native-gameplay equivalence. Preserve approved 30% board-surface transparency and opaque grids/ships/markers/HUD.
+
+2026-11-07: User said v0.15 looks good and supplied an exit NullReferenceException: ClipStudy.SyncControls -> EndingPlayer.Pause -> MainForm.Deactivate. Records visual acceptance of result sequence and a reproducible shutdown defect. No audible-sync or native-gameplay acceptance inferred. v0.15.1 addresses lifecycle ordering; approved30%board transparency remains.
+
+2026-11-07: User said 'looks good. continue' after v0.17. Records general visual acceptance of Solo Practice setup, not independent native-gameplay, audible-sync or physical-exit acceptance. Continue Classic downstream reconstruction; retain approved cinematic board transparency.

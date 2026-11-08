@@ -1,0 +1,5 @@
+PASS packaged no-argument Windows x64 launch reached its own main form and message loop.
+Owned PID 29512 main form found: Battleship Fleet Lab 0.7 — Original firing clip study; WM_CLOSE posted=True
+Normal close exited=True; Windows exit code=0.
+The new smoke-check process was launched hidden on the agent desktop; no pre-existing game was closed.
+This does not establish user-desktop visibility, physical input or audible playback.

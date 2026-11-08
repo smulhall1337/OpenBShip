@@ -1,0 +1,18 @@
+Natural terminal-defeat validation - v0.13 - 2026-11-07
+
+PASS two prepared near-terminal scenarios: low160x120/muted and high320x240/
+actual SILENT waveOut. Each uses original target selection and production timers,
+with no stage skips. Firing MEDFIRE1(41frames), travel S_FLY1(76), final FRIGSINK
+(100) complete naturally. Damage sinks the final player ship after travel, while
+Phase remains OpponentTurn through the sinking movie. Only its completion shows
+FLEET LOST. Pause650ms freezes the sinking frame/state; resume completes. Video
+and audio clear, full opaque art returns, and simulated F2 resets deployment.
+Each scenario took10seconds; high submitted3finite SILENT buffers with onepause/
+one restart. These totals are separate from complete-duel integration counts.
+
+Setup intentionally prepares a copied runtime board with99shots and one remaining
+HP; it is not a complete played loss, original-gameplay reproduction, physical-
+input acceptance or audible-output/sync confirmation. No original assets changed.
+Offscreen Defeat.png/Paused-Sinking.png live under work\natural-defeat-v013\low/high.
+High final defeat scene visually inspected. Module hash matches frozen v0.13.
+Tools\NaturalDefeatCheck.cs and Run-Natural-Defeat.ps1 reproduce these diagnostics.

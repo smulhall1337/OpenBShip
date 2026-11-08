@@ -1,0 +1,4 @@
+PASS source-built packaged x86 palette oracle reproduced 67 numerical output/manifest files.
+PASS 15 native loader patches and all 65 fade factors match managed arithmetic.
+Graphics API calls are stubbed in this numerical oracle; no original game or desktop palette is changed.
+Reserved endpoint colors are an explicitly documented deterministic boundary, not a historical desktop capture.

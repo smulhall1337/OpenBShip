@@ -1,0 +1,7 @@
+PASS no-argument packaged x64 launch reached its message loop (InputIdle=True).
+Owned PID 29408 main form found: Battleship Fleet Lab 0.6 — Firing ships and recovered weapon choices; WM_CLOSE posted=True
+Normal close exited=True; Windows process exit code=0.
+The process was launched hidden; the main form becomes available after asset initialization.
+The close probe was scoped to this owned process and retained its handle for the exit query.
+This is an agent-desktop startup/close check, not proof of user-desktop visibility or physical play.
+No pre-existing game process was closed.

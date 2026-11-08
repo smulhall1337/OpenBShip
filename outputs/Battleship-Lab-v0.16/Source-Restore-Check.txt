@@ -1,0 +1,6 @@
+PASS 804 asset/Program/evidence files match clean restoration byte-for-byte.
+527unchanged original assets;6Program files;271evidence files.269native-derived evidence files regenerate from absence,2recorded modern palette inputs retained.
+PASS source-restored88model+46form checks and14shutdown cases; actual SILENT waveOut lifecycle.
+Both new title runtime scripts regenerate without any pre-supplied Programs data.
+No Iced dependency or original full-game execution needed. See work/reconstruction-v16/restore-validation.log.
+PASS separate runtime-only restoration without -WithChecks or numerical oracles renders the original title screen; runtime scripts are present.

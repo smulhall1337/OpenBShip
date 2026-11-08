@@ -1,0 +1,92 @@
+Battleship — checkpoint 8: native Classic board and ship art (2026-11-06)
+
+Launch the current reconstruction:
+C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Launch-Reconstruction.cmd
+Versioned executable: outputs\Battleship-Lab-v0.3\BattleshipLab.exe
+Portable source/build package: outputs\Battleship-Lab-v0.3.zip
+Readme: outputs\Battleship-Lab-v0.3\README.txt
+Evidence: outputs\Battleship-Lab-v0.3\PRESENTATION-EVIDENCE.txt
+Original comparison: outputs\Launch-Original.cmd
+Earlier builds: outputs\Launch-Reconstruction-v0.2.cmd and -v0.1.cmd
+
+Newly playable/observable:
+Recovered Classic now draws all five original ship types using their recovered
+resource/frame selection, integer 79% scaling and native odd/even anchor offsets.
+The board's X/Y mapping is corrected: prior v0.2 logical axes were rotated relative
+to the native screen projection. Manual placement centers a ship on the selected
+cell, with a translucent original-sprite preview and a modern validity footprint.
+Original HIT/MISS artwork reports the latest shot on each board. Opponent ships
+stay hidden during battle; sunk large sprites disappear while red status icons
+and modern hit-cell markers remain. The v0.1 rotating preset retains its old map.
+
+Quick comparison:
+Auto-place -> Start battle gives a full duel. For manual deployment, Clear fleet
+and click the lower-left grid at each ship's center, leaving room for both ends.
+The 19-cell fleet is unchanged: Super Carrier 5, Battleship 5, Frigate 3, Missile
+Submarine 4, Destroyer 2. Click the upper-right board to fire; P pauses/resumes,
+F2 restarts in the current preset, Quit exits. Recovered maps remains read-only
+and pauses battles. Sound mute is persistent. Original media setup is independent.
+
+New source evidence:
+All native addresses apply only to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Classic view mode 7 sets camera 10,5, scales 117,78; fleet origins are (0,0)/(11,0).
+Forward transform is 320+trunc((X+Y-15)*117/6), 240+trunc((Y-X+5)*78/6).
+Native inverse 0x430D70 uses a float32 intermediate, factor 3 and truncation toward
+zero. Centered deployment is confirmed by validation at 0x431372 and commit at
+0x431073. Native ship dispatch 0x40DD00 selects BATTSHIP 0, FRIGATE 0, ALLSHIPS 0/4,
+NEWSHIPS 8. Fleet draw 0x40D640 supplies native centers and odd/even offsets;
+0x407B59 supplies scaled scanline sampling and zero-index transparency. Result
+banners are traced at 0x4094E4. Exact structures/addresses/limits are documented.
+Two hash-guarded read-only extractors reproduce 35 raw/CSV evidence files. Twelve
+packaged original assets are byte-identical to the supplied RIP.
+
+Validation:
+26 focused model/reader checks and 5 form checks pass. New cases cover camera
+source bytes and mode dispatch, independent native vertices/inverse cases,
+odd/even anchors, sparse scaled runs including a 16.16 truncation case, five
+original sprite frames, opponent secrecy and centered placement. The real mouse
+handler is exercised at normal/minimum window sizes. Input is simulated; physical
+input/focus is a separate check. 400 board centers and 128 layout seeds per preset
+are numeric sweeps within focused checks, not separate gameplay scenarios.
+Six actual application-form previews were rendered with fixed seed 731 and
+visually reviewed, including fleet, battle and 1040x780 scenes. Relocated ZIP
+payload passed all 26+5 checks; extraction matched its manifest. Both packaged
+evidence tools reproduced all 35 fixtures exactly. Windows x64 architecture and
+original-asset integrity were verified.
+
+Preserved baselines and feedback:
+Original executable, cnc-ddraw DLL/config and launcher still match accepted
+menu-baseline-001. All 29 v0.1 manifest files and all 61 v0.2 manifest files match;
+the earlier exe/ZIP hashes are unchanged. No running user game was replaced or
+terminated. User's earlier "looks good" remains appearance acceptance of v0.1;
+no full battle, audible sound or original gameplay acceptance is inferred.
+Original main-menu access and clean Quit remain confirmed separately.
+
+Limits:
+This remains a partial reconstruction. Original AI, layout random sequences,
+first-player choice, timing, movies, fire/combat animation, weapon presentation,
+scenario execution, real-time fleet simulation, networking, saves and controller
+support are absent or provisional. Native x87 extended precision is approximated
+by double for one inverse operand; exact boundary ties are not claimed identical.
+The accepted PCX palette appearance is retained; native palette timing/state is
+not complete. Modern hit markers, alpha preview, pause/reset, UI and persistent
+last-result banners are intentional replacements. Surviving enemy art is revealed
+only after battle as a modern convenience. No completed/exact port claim is made.
+
+Build and records:
+Existing Windows .NET Framework C# compiler/runtime, Windows x64 Forms/GDI+.
+Source modules now include ClassicGeometry and ClassicShips alongside readers,
+model, rendering, audio, UI/input and validation. Build.cmd/Verify.cmd reproduce
+the build/checks. Asset, dependency and build manifests plus integrity, portable
+and tool reports are bundled. Iced 1.21.0 is an optional MIT analysis dependency;
+the game does not load it. Work is under work\reconstruction-v03. Earlier work,
+original media and accepted baseline remain preserved.
+
+Next milestone:
+Hands-on comparison: centered deployment, visible ship/footprint agreement, several
+shots and HIT/MISS results, pause, restart and exit; compare original Classic ship
+direction/art. Continue static work with original opponent targeting (start around
+0x423B00 and the solo turn controller), then palette transition callers around
+0x42A780/0x43114B. Preserve v0.3 before changing those systems. Keep SCN entity
+semantics and its unsupported variant separate; do not claim mission execution.

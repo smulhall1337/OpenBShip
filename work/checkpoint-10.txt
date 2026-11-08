@@ -1,0 +1,114 @@
+Battleship — checkpoint 10: original persistent damage and display options (2026-11-06)
+
+Launch current build:
+C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Launch-Reconstruction.cmd
+Versioned executable: outputs\Battleship-Lab-v0.5\BattleshipLab.exe
+Portable source/build: outputs\Battleship-Lab-v0.5.zip
+New evidence: outputs\Battleship-Lab-v0.5\DISPLAY-EVIDENCE.txt
+Readme: outputs\Battleship-Lab-v0.5\README.txt
+Original comparison: outputs\Launch-Original.cmd
+Preserved targeting baseline: outputs\Launch-Reconstruction-v0.4.cmd
+Earlier -v0.3.cmd/-v0.2.cmd/-v0.1.cmd remain available.
+
+Newly playable/observable:
+Surviving player ships now draw original persistent damage art at known hit cells.
+SMOKE.SPH's 33 frames use native per-segment phase, 79% scaling and bottom-centered
+anchors. Effects disappear on sinking; hidden opponent ships/damage stay hidden.
+A Display button selects the default v0.4 PCX color appearance or recovered mutable
+gameplay colors, plus animated/still damage. Opening it pauses a live battle;
+Resume/P continues. Choices preserve the battle, shots, HP, targeting and visual
+phase. Color/motion preferences persist with legacy mute and unknown config keys.
+No existing bindings are replaced. A focused Display button gets native Enter/
+Space confirmation; held confirmation is suppressed after popup closure.
+
+Quick check:
+Auto-place -> Start battle. After taking a hit, inspect the damage effect. Use
+Display to compare color profiles or uncheck Animated damage effects, then Resume.
+P/Escape pauses/resumes, F2 resets, Sound mutes/unmutes, Quit exits. Recovered maps
+remains a read-only inspector and pauses a live duel. The recovered 19-cell fleet,
+centered placement, native coordinates/art and four target settings are retained.
+The rotating v0.1 preset retains its original prototype strategy/mapping.
+
+Evidence:
+All native addresses apply to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Classic palette entry pushes island.col at 0x42314B, calls 0x42A780 at 0x423150;
+loader patches 15 RGB bytes at 0x42A7D6..0x42A840. Palette API 0x401D40 copies only
+10..245, preserving 20 system endpoints. Recovered gameplay colors use those exact
+mutable entries, with fixed modern endpoint values from an explicitly documented
+local GDI observation. The probe returned zero despite filling endpoint bytes;
+this is not treated as successful full API read or a 1997 desktop capture.
+
+An isolated source-built x86 oracle executes only copied patch/fade arithmetic,
+with the graphics call stubbed. Patched bytes and all 65 fade outputs match the new
+managed functions. Automatic fades are NOT enabled: original presentation cadence
+remains unresolved. Full historical color/display-state fidelity is not claimed.
+The earlier PCX color appearance remains default and available in Display.
+
+Classic type-1 damage path 0x40DB39..0x40DCC0 selects SMOKE bank 15, loaded at
+0x42AB14, for live-ship cells with code 8. Frame is (T+8*segment)%33, anchor is the
+native projected cell plus 19 screen-X pixels, and mode 2 bottom-centers at 79%.
+All 33 frames decode without trailing data. The native loop increments its counter
+and enforces a timeGetTime delta >=40 ms. New EffectClock targets 25 Hz, caps
+catch-up at 200 ms/five frames, freezes for pause/focus/map/still/terminal state and
+resets with a new game. Those pause/reset/global-phase choices are modern and do
+not claim exact native workload timing. Visual effects do not consume game RNG,
+advance turns or alter HP. The existing modern 600 ms opponent delay is unchanged.
+
+Validation:
+38 focused model/reader checks and 9 real-form checks pass. New checks cover original
+palette outputs, all recorded endpoint values, source draw constants, 33 frame
+boundaries, known-hit/sink rendering, clock partitions/freeze/reset/catch-up,
+atomic preference writes, legacy mute, unknown config retention, actual recolored
+pixels, old-resource disposal, battle-state retention and focused keyboard routing.
+The live form timer advances and freezes/resets under message-pumped tests.
+Input is simulated; physical desktop input/focus and audible output remain separate.
+113 targeting oracle cases, 65 fade factors, 400 board centers, layout seeds and
+battle runs remain grouped numerical cases, not inflated gameplay test totals.
+
+Eight actual packaged-form previews were rendered and reviewed at normal/minimum
+sizes. Damage-Preview.png and Recovered-Colors.png deliberately inject a labeled
+single own-ship hit and use the same seed/phase (tick 4, segment-2 frame 20) for
+color comparison; this is diagnostic data, not original battle observation.
+The extracted ZIP payload passed all 38+9 checks. Four packaged extractors and two
+numerical oracles reproduced 123 original-derived code/data/CSV files exactly;
+two recorded modern endpoint-observation files are preserved/checked separately.
+Thirteen original assets match the supplied RIP. Delivered game is Windows x64;
+optional x86 numerical tools are not loaded or invoked by the game.
+
+Limits:
+This remains a partial rebuild. Original weapon/shooter selection, combat movies,
+transient shot/explosion sequencing, fade scheduling, historical endpoint palette
+state, real-time fleet simulation, mission execution, networking, saves and
+controller support remain absent or provisional. Native x87 picking boundary
+precision still has the documented limitation. Layout RNG, first player, response
+timer, isolated targeting RNG stream, hit markers, alpha preview, persistent result
+banners, pause/reset and post-battle reveal remain modern choices. No complete or
+exact port claim is made. Full original gameplay and audible playback remain pending.
+
+Preserved references and feedback:
+Original menu reference executable, cnc-ddraw/config and launcher match accepted
+menu-baseline-001. All 29 v0.1, 61 v0.2, 90 v0.3 and 107 v0.4 manifest files and
+previous delivered exe/ZIP hashes are unchanged. No running user game was replaced
+or terminated. Positive feedback on v0.3 remains appearance acceptance; later
+continue requests authorize progress without implying a full battle/audio check.
+Original main-menu access and clean Quit remain independently confirmed.
+
+Implementation and records:
+Existing Windows .NET Framework C# compiler/runtime, x64 Forms/GDI+. New modules:
+DisplaySettings (legacy-compatible atomic prefs), ClassicPalette (patch/fade data),
+ClassicDamage/EffectClock (damage placement/phase/time). Readers, targeting, model,
+geometry, ship rendering and audio remain separate. Build.cmd/Verify.cmd reproduce
+build/checks. Package includes source, manifests, integrity/portable/tool/oracle
+reports, previews and raw evidence. Optional Iced remains MIT-licensed and separate.
+The game needs no original ISO, registry settings, wrapper or external analysis tool.
+Work: work\reconstruction-v05. Checkpoint history and earlier builds are retained.
+
+Next milestone:
+Hands-on: take a hit, inspect motion, compare Display color profiles/still mode,
+Resume, restart and quit. Next static work: native player weapon/shooter selection
+and transient combat feedback. Start with 0x423D70, 0x416640, weapon-list tables
+0x44D730/0x44D750/0x44D760 and the movie/impact phase calls; recover semantics before
+adding selectors or assuming multi-cell damage. Preserve v0.5. Keep fade cadence,
+reserved palette history and unsupported SCN/entity semantics explicit; do not
+claim those systems complete from these palette/damage checks.

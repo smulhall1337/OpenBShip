@@ -1,0 +1,34 @@
+Battleship — current checkpoint 4 (2026-11-06)
+
+Run outputs\Launch-Original.cmd normally. It now launches the separate work\reference-ddraw copy with a game-local cnc-ddraw 7.1 library in windowed mode. Launch-Diagnostic.cmd uses the same compatibility copy and records crashes locally. Launch-Native-Baseline.cmd preserves access to the earlier work\reference-rip copy using Windows native DirectDraw.
+
+Confirmed user observations:
+- After correcting the resource paths to the supplied RIP's relative paths, the intro cutscene became visible. Audible playback was not separately confirmed.
+- Attempting to skip it produced the dialog 'Setpallet error number -2147467259 failed' (HRESULT 0x80004005) followed by a desktop crash, exit C0000005.
+- The corresponding Windows Application event attributes that later crash to Bs.exe offset 0x14C0. Earlier winmmbase failures belong to the now-corrected sound-path overflow.
+
+Compatibility change:
+- Added cnc-ddraw v7.1.0.0 from its official GitHub release to a separate full reference copy. No game executable or original asset was patched. The source Full-RIP and earlier native reference copy remain available.
+- Pinned source: https://github.com/FunkyFr3sh/cnc-ddraw/releases/tag/v7.1.0.0
+- Package: https://github.com/FunkyFr3sh/cnc-ddraw/releases/download/v7.1.0.0/cnc-ddraw.zip
+- Archive SHA-256: 0B13AB89A64C9918189B1DADD449EF6ED3CB3B7B19CABD96D8ADBD95505BB908
+- Installed PE32 i386 ddraw.dll SHA-256: 85E0F7D530DFDA134793A57CB3E76B0287DCC96892EE57162DD68F47283B03A9
+- Bs.exe SHA-256 remains B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+- Added upstream Shaders resources. Custom ddraw.ini sets windowed=true, fullscreen=false, width=0, height=0, maintas=true, renderer=auto and savesettings=0. The game continues requesting its own display resolution; the wrapper presents it in a window. Other wrapper settings use upstream defaults; equivalence of game timing is not yet calibrated.
+- Registry resource values remain the RIP's relative paths. They resolve against whichever reference copy the launcher selects. No new machine-wide graphics driver, codec or DirectX installation was performed.
+
+Evidence and checks:
+- Static references in this exact executable associate the Setpallet error string with Surface.SetPalette (COM vtable offset 0x7C, call around VA 0x401E14) and Palette.SetEntries (offset 0x18, call around VA 0x401E9A). The dialog alone cannot distinguish which of those calls returned E_FAIL.
+- Added work\PaletteProbe.cs / .exe, built with the existing Framework x86 compiler. Against the installed local wrapper, DirectDrawCreate, 8-bit CreatePalette, 8-bit offscreen CreateSurface, Surface.SetPalette, Palette.SetEntries for entries 10..245, and Palette.GetEntries all returned S_OK. All 236 RGB entries round-tripped correctly. This is an API check, not proof of primary-surface presentation or the intro-skip transition.
+- A direct game startup trace loaded work\reference-ddraw\ddraw.dll and had no access violation during 25 seconds. It detached with the game responding. The user saw no window from that agent-started instance, so this does not establish visible rendering. After that feedback, only the assistant-started hidden test PID 23088 was stopped; its exact executable path and start time were verified first. No other game process was terminated.
+- The launcher's setup-only path succeeds against the new copy and existing relative registry settings without requesting elevation.
+- Integrity check: all 1,939 supplied RIP files in the new copy match their recorded SHA-256 hashes; none are changed or missing. The compatibility copy contains 1,956 files including wrapper resources and reference runtime files.
+- Integrity inventory: work\reference-ddraw-manifest.csv and reference-ddraw-integrity.json. Dependency release metadata, downloaded ZIP, original extracted package, PE inspection and installed hashes are in work\dependencies\cnc-ddraw-v7.1.0.0.
+- Native Windows TLS calls failed in the agent environment due to missing Schannel credentials. The download succeeded with Git's existing OpenSSL, with CA-chain and hostname verification enabled. No certificate or execution-policy bypass was used. The helper source is work\fetch-https-openssl.ps1.
+
+Next desktop comparison:
+Double-click outputs\Launch-Original.cmd from the desktop session. Confirm the log says 'Graphics mode: cnc-ddraw 7.1, windowed', skip the intro, and check whether a menu appears. If a crash remains, use Launch-Diagnostic.cmd to capture this compatibility copy's fault. Successful desktop intro skipping, audible sound, menu controls and gameplay remain unconfirmed at this checkpoint.
+
+Larger project:
+The original reference is still being stabilized. No reconstructed modern game has been implemented yet. Once menu and gameplay behavior can be observed, record a small repeatable scenario and choose the first playable reconstruction slice.
+

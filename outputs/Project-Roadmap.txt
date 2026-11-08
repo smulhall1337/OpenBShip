@@ -1,0 +1,37 @@
+Battleship project roadmap — updated2026-11-07
+
+Current checkpoint: v0.18 Classic Fleet Configuration.
+Original Solo/Practice Classic Start now opens a complete editable fleet using
+original EC_FLEET/EO_FLEET artwork, camera/grid/ship geometry and move validation.
+Start commits the draft and begins battle. Existing direct deployment persists.
+147model/form checks and18shutdown cases pass; exact validation and natural duel
+scope are in Current-Status.txt/Fleet-Validation.txt. User visually acceptedv0.17;
+physical new editor/audio/exit remain pending. Approved30percent board transparency
+and opaque overlays preserved. General layout RNG/draft/shuffle remain modern.
+
+Next reconstruction priority
+Trace the post-fleet Classic local path450E18: E_WAIT1, state6, wait branches,
+final opcode4 and outer game-entry handling. Start currently bridges directly to
+the modern duel. Establish an observable original Classic gameplay scenario to
+compare shared RNG/ownership/interruption/timing and native input/camera behavior.
+Do not claim the initializer's temporary coordinates as default placements:
+native4238D0 randomizes BOTH fleets before returning. Modern RNG remains explicit.
+Native menu font/wrapping/fleet labels/cursor/occlusion/fade cadence, other Practice
+simulations, World Domination/Scenario, campaigns, saves/network/controllers remain
+unfinished. Solo destination44F3F8, Multiplayer44F208: correctedv0.17evidence; earlier
+v0.16notes swapped names and remain historical. Preserve older builds/reference.
+
+Stretch goal SG-01 - optional AI enhancement of combat movies
+Requested by the user; backlog, outside reconstruction baseline. Native HWEBS
+320x240 decoding is validated; no AI processing/model download has run.
+Pilot BATFIRE1: compare native original, ordinary scaling and candidate1280x960
+AI upscale with identical frame count, cadence, aspect ratio and audio. Inspect
+temporal shimmer, invented detail, hull/turret distortion, smoke/explosions and
+contrast. Benchmark available hardware before estimating batch compute. Earlier
+Intel UHD observation is not a measured processing benchmark. Video2X/Real-ESRGAN
+are candidates, not installed/selected dependencies. Record tool/model versions,
+licenses, source/parameter/output hashes and timing. If accepted, build optional
+Original/Enhanced pipeline and preserve originals. Planning estimate: a few hours
+for pilot, roughly1-2working days for integration, plus compute and user review.
+Cadence belongs to scene: Classic combat40ms/25fps; ending front-end50ms/20fps.
+Do not apply a global25fps assumption to intro/attract/tutorial playback.

@@ -1,0 +1,5 @@
+PASS relocated ZIP: 838 manifest entries match.
+PASS relocated72model/32form checks and actual SILENT waveOut lifecycle, exit0.
+PASS source-only restore; all212 evidence files reproduced byte-for-byte.
+Owned production startup/close and naturally paced runs are documented separately.
+Physical controls, audible sync and full original behavior are not inferred. Final report-only archive changes byte-compared.

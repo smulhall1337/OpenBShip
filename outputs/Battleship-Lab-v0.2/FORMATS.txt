@@ -1,0 +1,45 @@
+Recovered asset formats — evidence checkpoint 7
+
+Executable evidence identity:
+Supplied Full-RIP Bs.exe, SHA-256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569; PE32 image base 0x00400000. Addresses below apply only to that build. The game executable has not been patched by this project.
+
+SCN scenario records:
+The original loader at VA 0x0041B230 was inspected. It visits x first, then y, with 64 iterations on each axis. Each destination cell has a 402-byte in-memory stride. File cells are variable-length: read a kind byte; kinds 2, 4 and 7 add one byte; kind 3 and kinds 31 through 41 add one byte plus a 400-byte payload. Other kinds add no payload. This follows the native dispatch/remap tables at 0x0041B418 and 0x0041B434, not a guessed compression scheme.
+
+After the 4096 cells, a one-byte count controls the player-record loop. Each player has two groups. Each group starts with a little-endian signed 32-bit record count and then that many 400-byte records. The managed reader preserves all embedded and grouped 400-byte payloads without assigning meanings to their fields. It validates lengths, count bounds and exact end-of-file consumption.
+
+This layout consumes 120 of the 121 supplied SCN files exactly. BsSB418.scn is rejected explicitly because its remaining record layout does not fit the supported group-count structure. Its original bytes are preserved; it is not repaired or silently skipped. Source filename digits are not treated as authoritative player counts. For example, some files have a different player-record count than their names might suggest.
+
+Terrain byte offsets for packaged fixtures:
+BS201.SCN: 4342; two player record groups.
+BS202.SCN: 4519; two player record groups.
+BS204.SCN: 11052; two player record groups.
+
+The map viewer uses the decoded x/y ordering and raw kinds. Its colors are schematic. Semantic names, passability, original map projection, entity fields and scenario behavior remain unresolved. The Classic duel does not run those scenarios.
+
+PCX images:
+Implemented the supplied 8-bit, one-plane RLE variant: 128-byte header, dimensions from inclusive min/max coordinates, padded scanline stride from bytes-per-line, RLE escape bytes 0xC0..0xFF, and a 0x0C marker plus 256 RGB triples at the end. Header, dimensions, stride, palette, run length, output bounds and truncation are checked. Other image variants fail clearly. Any unconsumed bytes preceding the palette are retained as UnresolvedTail.
+
+All 120 PCX files in the inspected graphics directory decoded. E_CLASS.PCX is 640x512. WATER.PCX exported as a sea texture. The prototype uses E_CLASS.PCX's own embedded palette; the image is scaled with nearest-neighbor filtering.
+
+SPH sprites:
+Observed a little-endian 16-bit slot count followed by 32-bit absolute file offsets; 0xFFFFFFFF marks an absent slot. A present frame starts with two signed 16-bit origin fields, followed by unsigned 16-bit width/height. Each scanline begins with one byte of transparent skip and one byte of literal-pixel count, followed by that many palette indices. The decoder checks frame-table offsets, dimensions, scanline extents and input bounds. Native draw routine 0x407950 confirms this scanline path and shows origins added in mode 3, with centering/bottom alignment in other modes. Classic roster calls use mode 0, drawing at the supplied coordinates without origin adjustment. Other presentation paths remain unimplemented.
+
+Headers and these frame spans parsed for all 123 supplied SPH files. IGISLE_0.SPH has 154486 unconsumed bytes under this interpretation; those bytes are preserved as UnresolvedTail and that resource is not claimed fully reconstructed. v0.2 renders EO_CLASS.SPH: 15 slots, last absent; slots 4..8 are live fleet icons and 9..13 their destroyed counterparts, all 88x30. Their native draw selection and coordinate tables are documented in CLASSIC-EVIDENCE.txt. BATTSHIP.SPH remains a packaged original fixture: five slots, four present, first frame 134x95. POINTER.SPH exported as an 11x11 cursor with its other slot absent.
+
+ISLAND.COL is exactly 768 bytes (256 RGB triples). The original palette loader 0x42A780 is called with "island.col" at 0x43114B and makes additional channel changes. Complete palette timing/state remains unresolved. v0.2 retains E_CLASS.PCX's embedded palette for its background and EO_CLASS roster icons to preserve the accepted appearance. The BATTSHIP analysis export uses ISLAND.COL. Recognizability does not establish exact native colors.
+
+Classic board alignment:
+The red and blue border pixels in the decoded E_CLASS.PCX were measured to infer board corners. Each board is divided into 10x10 bilinear cells for new hit testing. Eight anchors are checked against independently read source border colors, and the 200 cell centers are checked for picking consistency. This is new alignment/picking code, not recovered original input logic.
+
+Sound fixtures:
+KEYCLIK2.WAV: PCM mono, 22050 Hz, 16-bit, 0.0154 seconds.
+CANNON1.WAV: PCM mono, 11025 Hz, 8-bit, 1.0621 seconds.
+RIFF/chunk boundaries, PCM fields, block alignment and data lengths were checked. The application preloads them with SoundPlayer and uses nonblocking, interruptible playback on one effects channel. Sound failures do not stop turn progression. These clips have not been audibly confirmed. The original SEQ sound timing and mixing are not implemented.
+
+Reusable source:
+Source\Assets.cs contains the bounded readers and preserved raw records.
+Tools\InspectAssets.exe <original GRAPHICS directory> <output directory> produces a format inventory and selected PNG exports. Tools\Original-Format-Inventory.txt records the full supplied dataset scan. Source\Validation.cs contains the independent fixtures and focused behavior checks.
+
+Implementation choice:
+C# with Windows Forms/GDI+ was chosen for this first Windows x64 slice because the compiler/runtime already exist locally and fit the game's indexed 2D assets. Game.cs is independent of Windows UI and sound. The presentation can later be replaced without discarding the readers or state model. This build uses .NET Framework, not a newly installed modern .NET SDK. No claim of exact language translation or recovered original source is made.

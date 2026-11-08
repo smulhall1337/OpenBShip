@@ -1,0 +1,115 @@
+Historical v0.9 evidence retained in v0.10. Current scope and corrections: IMPACT-EVIDENCE.txt.
+
+Current v0.9: SHOT-EVIDENCE.txt adds optional firing/travel/feedback sequencing.
+This retained report records its earlier subsystem/milestone; current checks are
+61 focused and 25 real-form. Full board-impact/sink animation remains incomplete.
+
+Current v0.8: AUDIO-EVIDENCE.txt supersedes the earlier one-clip/silent-study
+limits with twenty firing clips and sound. This retained report describes an
+earlier subsystem/milestone; current checks are 55 focused and 19 real-form.
+Normal battle movie integration remains pending.
+
+Current v0.7 note: PAT-EVIDENCE.txt adds one independently played silent firing
+clip; the duel's blocking movie/impact sequence remains unimplemented. This file
+documents its retained subsystem; earlier milestone descriptions are historical.
+
+Battleship Classic — firing ship and weapon evidence (v0.6)
+
+Identity and confidence
+All addresses apply only to supplied Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+The following choices are confirmed from code/data and isolated numerical
+execution. They have not yet been compared against an entire original battle.
+This is a partial reconstruction, not recovered original source.
+
+Firing ship
+Classic initialization assigns a firing slot at fleet offset +0x1D4. The solo
+entry at 0x423100/0x42311D selects slot 1 (Battleship). The native player click
+handler 0x423D70 checks a friendly ship's fixed X and inclusive-start/exclusive-end
+Y span at 0x423DE4..0x423E42. Successful selection stores global pointer 0x4E3814
+and the slot at +0x1D4, at 0x423E49..0x423E63. No shot/turn occurs on that branch.
+Sinking at 0x424130 clears the roster pointer. If it was the selected slot, the
+routine scans from roster slot 0 and takes the first remaining live ship; no
+survivors leads to battle completion. Both sides retain their selected shooter.
+v0.6 implements this selection/fallback in the recovered preset. Friendly ship
+cells, the original roster artwork, and an accessible modern list select it.
+Gold outlines, list navigation, pause gating and selected text are modern UI.
+Sunk rows cannot be selected; keyboard navigation skips them. The v0.1 preset
+retains its previous prototype model without recovered firing choices.
+
+Weapon lists and weighting
+Player 0x423EDE draws native rand()%50, then walks a zero-terminated list with
+wraparound. Generic 0x44D730: 14,15,16,26,17,18,20. Type 12 uses 0x44D750:
+26,24,25. Type 7 uses 0x44D760: 29,30. Therefore a 50-value residue sweep gives
+generic counts 8,7,7,7,7,7,7; submarine 17,17,16; carrier 25,25. The 15-bit native
+RNG introduces its additional modulo-50 bias; the implementation retains both
+operations and does not replace them with a uniform list draw.
+Opponent 0x41C8C0 uses its active shooter but ALWAYS the generic list, even if
+that shooter is a carrier or submarine. This differs from player selection.
+Names are 48-byte records at 0x44B560 + weaponID*48, confirmed by label lookup
+0x40DA45..0x40DA60. In the reachable Classic subset:
+14 Small Guns; 15 Medium Guns; 16 Large Guns; 17 Rapid Small Guns;
+18 Ultra Large Guns; 20 Multi Head Missile; 24 Submarine Cruise Missile;
+25 Torpedos; 26 Large Torpedos; 29 Multi Air Rockets; 30 Multi Air Missiles.
+Names preserve the source spelling. No ammunition inventory is inferred.
+The traced Classic impact path still resolves one target cell and removes one
+hit point for an intact occupied cell; weapon names do not add multi-cell damage.
+
+Firing presentation dispatch
+0x416640 uses remap bytes at 0x4169D0 and a handler table at 0x41698C. All reachable
+Classic handlers consume one further native random result. The recovered subset:
+14/15: odd -> movie 127, even ->128.
+16/18: result%4 -> movies 1,2,3,123.
+17: odd ->33, even ->34. 20: odd ->29, even ->30.
+24: odd ->27, even ->28.
+25/26: ship types 12/11 odd ->25/even ->26; types 1/3 odd ->124/even ->125;
+all others odd ->126/even ->90.
+29/30: ship type 10 odd ->37/even ->38; otherwise odd ->10/even ->9.
+The movie-name table at 0x44E288 has 9-byte records (8 characters + terminator).
+v0.6 records these intended IDs/names for analysis. It displays shooter and weapon
+names with the shot result. It DOES NOT play the identified firing clips yet.
+Unsupported weapon dispatch throws explicitly; this is not the full 34-ID system.
+
+Random scheduling boundary
+Native firing choices, targeting, layout and presentation share state and consume
+it in phase-dependent order. That complete schedule remains unresolved. v0.6
+uses the exact recovered 15-bit generator for an isolated presentation stream,
+seeded with seed XOR 0x63D1E, separate from the accepted targeting stream. A valid
+recovered shot consumes two presentation rolls; rejected/paused shots consume
+none. This deliberate modern boundary preserves v0.4/v0.5 target histories and
+prevents visual/selection choices from altering target outcomes. Original seeded
+whole-game histories are not claimed identical. Damage remains immediately
+resolved, and the 600 ms opponent timer is unchanged.
+
+Original-code fixtures
+Tools/ClassicWeaponsOracle.cs is a separate source-built x86 diagnostic. It copies
+only hash-locked list-selection and movie-dispatch spans into its own allocation,
+validates 24/4/2 relocation operands, makes only those code pages executable, and
+replaces RNG/movie calls with controlled-value and record-only stubs. All memory
+is released afterward. No original process is started or modified, and no graphics,
+audio, registry or media playback call runs. Inputs are restricted to five Classic
+ship types and the eleven reachable weapons. Weapons-Oracle.csv captures 500
+list choices; Firing-Movies-Oracle.csv captures 220 dispatch outputs, including
+random/movie call counts. These are TWO grouped numerical fixtures, not 720
+independent gameplay scenarios. Managed results match every recorded output.
+Extract-ClassicWeapons.ps1 separately reproduces code/data spans, lists, remap/
+handler records, and movie names with an exact executable identity guard.
+The Windows x64 game never loads or invokes either optional analysis program.
+
+Validation and feedback
+49 focused checks and 15 real-form checks pass, including inherited regression
+checks, both original-code grids, all 32768 input values against list bytes,
+source text/movie names, initial selection, rejection/turn gates, sink fallback,
+RNG use and twin battles with different selections but identical target/damage
+histories. Form tests exercise real click/list/key handlers offscreen at normal
+and minimum sizes, keyboard traversal over sunk rows, reset and layout/log bounds.
+These input events are simulated. Nine packaged-form previews are rendered; the
+new firing view uses explicitly labeled scripted model actions, not an original
+battle capture. User feedback confirms visible v0.5 battle effects only. Audible
+playback, physical selection/focus and full original gameplay remain pending.
+
+v0.7 now decodes BATFIRE1 and exposes a silent independent study player.
+See PAT-EVIDENCE.txt for the two conditional palette paths and updated format/
+validation findings. This supersedes the earlier preliminary partial-palette note.
+Battle integration, the other clips, soundtrack and shared RNG remain unresolved.
+

@@ -1,0 +1,56 @@
+Checkpoint 15 - Classic default hit/miss and sinking movies - 2026-11-07
+
+Current: outputs\Current-Status.txt, outputs\Battleship-Lab-v0.10\IMPACT-EVIDENCE.txt.
+Launch outputs\Launch-Reconstruction.cmd; enable Display battle movies, Original
+target 1. Earlier v0.9 preserved via Launch-Reconstruction-v0.9.cmd. Do not alter
+old delivered packages or terminate running games to replace them.
+
+Discovery: previously named board-effect helpers are movie selectors. Level-zero
+hit calls419CE0, miss4177A0; sinks424130->419270 regardless of level. Classic fleet
+kind1 and scenario20 established from initializer/caller. New ClassicImpactOracle
+hash-guards Bs.exe, copies three selectors with22/18/21 relocations, uses controlled
+RNG and movie/no-op stubs;252 bounded rows. Does not execute complete impact/game.
+Mode7 exposes chosen hit/miss IDs; native owner/view/secondary routing unresolved.
+Native ID12=MIS_FLY2 vs13=MIS_FLY3: corrected previous travel name mismatch.
+
+Added33 filesets to61 movies,5641 native decoder frames,404 sequence cues,232 PCM
+paths.428 original asset files match supplied hashes. One path FRG_DSH/S_EXPL2.WAV
+is signed16 mono11025Hz19826samples, other231 paths unsigned8. PCM reader supports
+both with correct sample alignment/byte rate and independent fixture values.
+ClassicImpact.cs chooses hit(first/later/weapon), Classic miss variants, sinks.
+Game uses one feedback stage after travel; exactly-once damage and deferred turn/
+terminal handoff. Separate impact RNG seed XOR0x42AC1, only gun/torpedo misses at
+level0 draw. Firing/travel/target streams retained; shared native schedule unknown.
+Pending stage label now Hit/Miss/Sinking; no new controls/binding takeover.
+
+66 model/format and27 real-form checks pass packaged/relocated/source-only restore.
+Includes252-selector parity, native ID/name binding,61clip frame/cue/PCM fixtures,
+default feedback/final sink gating, new16bit fixture; UIdefault hit/miss load/pause/
+natural completion, terminal sink/skip/F2, all61library loads/image disposal.
+Fixed UI test summary's hardcoded count to derive results.Count. Old comparison
+histories and targeting/geometry/audio/input suites pass. UI input/failures simulated.
+Actual SILENT x64 waveOut lifecycle passes, owned no-arg form/clean exit0 passes.
+Eighteen muted scripted previews render; impact small and sink normal inspected.
+No audible/physical/full-native acceptance. No user process terminated.
+
+All201evidence files reproduce through clean source-only export and updated
+Restore-Workspace.ps1 -WithChecks -AudioDeviceCheck. New extraction6spans+manifest,
+61clip/wave inventories, decoder/SEQ/selectororacles;189v09 evidencefiles unchanged.
+All old baseline/v01..v09 delivered hashes pass. .NET Framework Forms/GDI+ x64,
+WinMM output retained; no new dependency/network/upload. Root README/restore,
+roadmap and Git helper updated. Local Git still no initial commit due protected
+metadata; do not alter ACLs/redirect metadata to bypass. Complete-Git-Checkpoint.cmd
+prepared for user-terminal commit. No remote/publication. SG01 AI upscale backlog.
+
+Scope: movies play full-field for both sides as modern presentation, source camera/
+owner routing/priority/preemption/fades and skip not recovered. Native can signal
+terminal during sink setup; modern waits for full sink movie intentionally. No
+arbitrary board-effect delay added. Source rendering/audio timing/lifetime policies
+remain labeled modern. User confirmed v09fire/flight; v10feedback not yet accepted.
+
+Next: trace movie priority/preemption402490..4024BB (55E810 /4B3BF0 /55EA4C),
+Classic input42277F..4227EB and completion42325E..4232D3 /402980 ->423540. Native
+scenario20confirmed42B951..42B95C. Recover interruption/terminal handoff before
+claiming whole native loop. Keep instant comparison, isolated RNG and original
+media. Hands-on pending miss/hit/sink at setting1, pause/skip/F2 and audible sync.
+Final ZIP: 749 entries match packaged bytes, SHA256 108111F6E5E624AD8353C8D595F8C419E75830DA65DE73E1EF97F752D236E32A. UserData excluded; previous portable behavioral checks use identical executable/source/assets.

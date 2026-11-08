@@ -1,0 +1,80 @@
+PASS Independent PCX RLE/color fixture
+PASS PCX truncation, palette and RLE bounds
+PASS Independent SPH skip/run and missing-frame fixture
+PASS Independent SCN x-major grid and tail bounds
+PASS Packaged original resource fixtures
+PASS Classic HUD dispatch against 486 native cases and 4032 ordered commands
+PASS Original cinematic HUD shape and deliberately opaque stored backing
+PASS Progressive nearest-neighbor output matches original 640x480 scalers
+PASS Classic HUD eight-phase mapping follows pending shot and turn handoff
+PASS All 61 high-detail clips against 5641 original 320x240 decoder frames
+PASS High detail preserves source palettes and documented per-clip durations
+PASS Independent high block stride and malformed/mixed variant rejection
+PASS High-detail preference preserves legacy settings and unknown keys
+PASS Backdrop mask keeps grid lines opaque, surfaces at 70% and separate HUD holes open
+PASS Backdrop cover keeps movie aspect ratio and centered bounded cropping
+PASS Independent signed 16-bit cue conversion and alignment rejection
+PASS Impact selectors against 252 original hit/miss/sink cases
+PASS Native movie names identify every impact and corrected travel clip
+PASS 61 original combat clips: 5641 native frames, 404 cues, 232 PCM paths
+PASS Default-setting impact and terminal sink wait, pause and once-only completion
+PASS Original solo phase and unavailable-movie transitions (528 controlled cases)
+PASS Complete 28-clip shot library: 2179 native frames, 117 cues and 84 PCM files
+PASS Movie shot reserves without damage, impacts once after travel and completes feedback
+PASS Feedback subset, default opt-in and movie preference round trip
+PASS Cinematic and instant histories preserve targets, weapons, damage and turns
+PASS Cinematic terminal outcomes and stale cross-game callbacks
+PASS All 20 reachable firing clips and 1460 frames against original decoder
+PASS Original SEQ one-cue-per-frame timing and close cleanup fixtures
+PASS Independent cue PCM sample conversion and malformed RIFF/SEQ bounds
+PASS Finite overlapping cue mixing, preserved end fields, saturation and eight-voice pool
+PASS All 71 original cue files decode and 20 finite soundtracks compose
+PASS Device-clock timeline synchronization is monotonic and respects pause/completion
+PASS Original PAT movie against 46 original-decoder frame hashes and lengths
+PASS All 13 PAT block operations and 256 quartet patterns against original code
+PASS PAT length, truncation, terminal, opcode, variant and frame-count bounds
+PASS Both original movie palette branches preserve untouched entries
+PASS Clip timeline frame holds, completion, partitions, pause/step/reset and bounded catch-up
+PASS Palette patches and 65 fade outputs against original x86 code
+PASS Recovered gameplay RGB entries and deterministic protected endpoints
+PASS Classic damage resource, phase and bottom-aligned anchors
+PASS Damage rendering responds to known hits and disappears on sinking
+PASS Effect clock partitions, pause/still, reset and bounded catch-up
+PASS Legacy sound settings and atomic display preference round-trip
+PASS Managed targeting against 113 executions of original x86 selector/RNG
+PASS Original targeting budgets, masking and non-mutating observations
+PASS Opponent observation hides unshot ships and preserves visible sunk hits
+PASS Original exhausted search can repeat without damage and still ends its turn
+PASS Unsupported isolated-hit trap fails visibly instead of hanging
+PASS Native camera constants and fleet origins from original code bytes
+PASS Independent native board vertices, picking and boundary truncation
+PASS Original odd/even ship anchor and percent-centering cases
+PASS Independent scaled SPH scanline, transparency and 16.16 fixture
+PASS Native ship dispatch fixtures and five packaged scaled ship frames
+PASS Ship visibility hides opponent layout and removes sunk art
+PASS Recovered fleet against original initializer/template/name bytes
+PASS Recovered weapon names, weighted lists and dispatch against native data
+PASS Original-code weapon selection and movie dispatch fixtures (two numerical grids)
+PASS Firing ship selection gates and initial slot
+PASS Selected ship sinking switches to the first surviving roster slot
+PASS Weapon presentation consumes two rolls only for valid actions
+PASS Different ship/weapon choices retain the accepted target and damage history
+PASS Recovered manual fixed-axis placement, touching and edge cases
+PASS v0.1 preset retains rotating 17-cell fleet
+PASS Fleet generation and roster order across both presets (128 seeds each)
+PASS Original EO_CLASS icons and native roster coordinate fixture
+PASS Hit/miss/sink handoff, repeated-shot gate and destroyed roster state
+PASS Placement overlap, bounds and adjacency
+PASS Hit, miss, repeat rejection and sink
+PASS Turn handoff and pause gates
+PASS Victory, defeat and terminal input gates
+PASS Complete deterministic battles and reset in both presets
+PASS Complete battles across four original settings and prototype pursuit
+PASS Native and v0.1 board picking across 400 cell centers
+PASS Board anchors against independent original border pixels
+  1 channel, 22050 Hz, 16 bit; 0.0154 seconds; playback not auditioned
+PASS Original PCM fixture KEYCLIK2.WAV
+  1 channel, 11025 Hz, 8 bit; 1.0621 seconds; playback not auditioned
+PASS Original PCM fixture CANNON1.WAV
+Focused checks passed=76 failed=0
+These checks do not establish original gameplay fidelity, audible playback or physical keyboard/focus behavior.

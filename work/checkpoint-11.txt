@@ -1,0 +1,123 @@
+Battleship — checkpoint 11: firing ships and original weapon choices (2026-11-06)
+
+Run:
+C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Launch-Reconstruction.cmd
+Versioned app: outputs\Battleship-Lab-v0.6\BattleshipLab.exe
+Portable source/build: outputs\Battleship-Lab-v0.6.zip
+Details: outputs\Battleship-Lab-v0.6\README.txt and WEAPONS-EVIDENCE.txt
+Preview: outputs\Battleship-Lab-v0.6\Firing-Preview.png
+Previous baseline: outputs\Launch-Reconstruction-v0.5.cmd
+Original comparison: outputs\Launch-Original.cmd
+All earlier versioned launchers/builds remain available.
+
+Newly playable/observable:
+Recovered Classic now selects a firing ship. Both sides begin with Battleship.
+Click a surviving own ship, its original roster icon, or the fleet list to select
+it without using a turn. Gold outlines and the selected list row identify it.
+The list supports Up/Down/Home/End and skips sunk ships. Selection is locked while
+paused, in the opponent phase, on maps and after battle. Its Enter confirmation
+does not fire into the grid. F2 resets selection; a new battle starts on Battleship.
+A selected ship's sinking switches to the first surviving roster slot.
+
+Each valid shot uses the recovered automatic weighted weapon choice. Carrier and
+Missile Submarine use different player lists; the opponent always uses its generic
+list, independent of ship type. The log shows firing ship, original weapon name
+and result. Damage still affects one cell and one hit point. These names do not
+introduce ammunition or area damage. Intended original firing-clip IDs are stored
+for analysis; the actual firing clips are not decoded or played in this checkpoint.
+Persistent damage effects, both palette options, still mode, 19-cell fleet,
+original ship art/coordinates and the four targeting settings remain available.
+The rotating v0.1 preset retains its earlier model without recovered firing choices.
+
+Hands-on comparison:
+Auto-place -> Start battle -> select Super Carrier -> fire on the upper-right
+board. Its log should name Multi Air Rockets or Multi Air Missiles. On your next
+turn, select Missile Submarine; its choices are Large Torpedos, Submarine Cruise
+Missile and Torpedos. Confirm the gold selection marks follow your choice without
+advancing the turn. Try the keyboard fleet list, pause/resume, F2 and Quit.
+Grid arrows/Enter, P/Escape, R in the prototype and existing controls are retained.
+Click the board to return keyboard focus from the fleet list to grid targeting.
+
+Evidence:
+All native addresses apply exclusively to Bs.exe SHA-256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Initial selection: 0x423100/0x42311D, fleet offset +0x1D4. Friendly-cell click
+selection: 0x423DE4..0x423E63. Sink/fallback: 0x424130..0x4241C2.
+Player weapon: rand()%50 then zero-terminated list walk/wrap at 0x423EDE..0x423F2C.
+Generic list 0x44D730: 14,15,16,26,17,18,20; submarine list 0x44D750: 26,24,25;
+carrier list 0x44D760: 29,30. The opponent 0x41C8C0 uses only the generic list.
+Text labels: 0x44B560+weaponID*48, confirmed by native lookup 0x40DA45..0x40DA60.
+Movie dispatch: 0x416640, remap 0x4169D0, handler table 0x41698C, nine-byte movie
+name records 0x44E288. Only the eleven reachable Classic weapon handlers are ported.
+Unsupported dispatch fails explicitly. This does not implement every game weapon.
+
+An optional source-built x86 oracle executes only the copied hash-guarded list/
+dispatch fragments, with controlled RNG and record-only movie stubs, in its own
+allocation. Managed results match 500 list choices and 220 movie-dispatch outputs,
+including call counts. These are two grouped numerical fixtures, not 720 gameplay
+scenarios. No original game, registry, media or desktop graphics call is executed.
+New extractor/tool source, raw bytes, addresses, names and fixtures are packaged.
+
+Modernization boundaries:
+Firing choices use the recovered generator in a separate presentation stream
+(seed XOR 0x63D1E). Targeting keeps its accepted v0.4/v0.5 stream. The original
+shared layout/weapon/movie/target RNG call schedule remains unresolved; whole-game
+seed identity is not claimed. Visual effects never consume either gameplay stream.
+Immediate impact and the 600 ms opponent response are retained modern timing.
+Selection outlines/list, keyboard handling, pause/reset/focus policy, modern hit
+markers, persistent result banners, layout RNG, first player and terminal reveal
+remain intentional modern behavior. Historical reserved palette endpoint state,
+fade cadence and native x87 inverse-boundary precision still have documented limits.
+
+Validation:
+44 focused model/reader checks and 12 real-form checks pass. New checks include
+source weapon/name/movie records, original-code grids, all 32768 possible random
+results against list bytes, initial selection and turn gates, selected/unselected
+sink paths, two-roll presentation use, rejected actions and twin battles using
+different ships/weapons with identical target/damage histories. Form checks cover
+own-board/icon/list handlers at normal/minimum sizes, sunk-row keyboard traversal,
+confirmation routing, pause/reset and visible list/log bounds. Input is simulated.
+The portable extracted payload also passes all 44+12 checks. Normal no-argument
+startup and clean close (exit 0) were checked on the agent desktop; the window was
+hidden and this does not establish visibility on the user's desktop. No pre-existing
+game was closed. See Launch-Check.txt and Portable-Check.txt.
+
+Nine actual packaged-form previews were rendered and reviewed at normal/minimum
+sizes. Firing-Preview.png contains labeled scripted model actions. Damage/color
+previews retain labeled controlled hit/phase injection. They are diagnostic scenes,
+not evidence of an original battle. Five packaged extractors and three numerical
+oracles reproduce 141 original-derived files exactly; two recorded modern endpoint
+observations match v0.5 separately. Thirteen original assets match the supplied RIP.
+Working source and packaged Source files match. The game is Windows x64 and does
+not depend on the ISO, original registry/wrapper, Bs.exe or analysis tools.
+
+Preservation and user feedback:
+User reports: "i can see battle effects. continue". This confirms visible v0.5
+effects only; it does not establish audio, exact phase/placement fidelity, full
+battle completion or v0.6 input acceptance. Prior original main-menu access and
+clean Quit remain separately confirmed. Earlier positive appearance feedback stays
+scoped to those builds. Audible playback and full original gameplay remain pending.
+Accepted original executable/wrapper/config/launcher match menu-baseline-001.
+All 29 v0.1, 61 v0.2, 90 v0.3, 107 v0.4 and 200 v0.5 manifest entries and prior
+exe/ZIP hashes are unchanged. No supplied source or running user game was replaced.
+
+Checkpoint and next work:
+Maintainable C#/.NET Framework x64 Forms/GDI+ source is in work\reconstruction-v06\src
+and packaged Source. Build.cmd/Verify.cmd rebuild and check it. ClassicWeapons.cs
+separates firing selection from damage and rendering. Current status is distinct
+from historical reports; checkpoint 10 and all earlier builds are preserved.
+The project remains a partial rebuild. Combat movies, transient impact/explosion
+sequencing, full fades, missions, real-time simulation, saves, network and controllers
+remain absent/provisional. A decompiler listing is not a completed port.
+
+Next: implement ONE bounded original firing clip from LWEBS/BATFIRE1.PAT/.PAL.
+Source 0x402460 maps movie names to resources; 0x402830 reads frame payload lengths
+and calls 0x433920 ->0x433AA5. Header begins DWORD 3031 then 14 0F 04 04 (hex);
+8x8 block iteration is at 0x433B2D, opcode table 0x451875. Recover its temporal
+block handlers before implementing a reader; preserve unresolved fields and fail
+clearly on unsupported opcodes/variants. Gameplay palette loader 0x4026E0 shifts
+PAL bytes 60..413 left by two into entries 20..137. Validate decoded frames against
+an independent source-code fixture. Then trace cadence, completion, skip and
+SFX/<name>/<name>.SEQ sound semantics before integrating blocking playback into
+turn progression. Preserve v0.6 and targeting RNG histories; do not call an isolated
+clip a complete combat movie system. Keep full original-battle comparison pending.
