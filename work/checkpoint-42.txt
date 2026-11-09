@@ -1,0 +1,40 @@
+Battleship current status - evidence checkpoint 42 / playable v0.31
+
+Launch outputs/Launch-Reconstruction.cmd. The v0.31 repeated-shot feedback fixes,
+all accepted controls/settings, original menus/movies and approved 30% board-surface
+transparency remain unchanged. No runtime source, settings or media changed here.
+
+Checkpoint 42 connects original opponent firing, targeting, travel, impact,
+feedback and sink cleanup on one CRT state, with both five-ship fleets and all
+HP/grid data prepared before selection. All 1,280 bounded cases match the
+independent board and delivered pure selectors. All 81,860 native draws, states
+and exact call positions agree. Outcomes include 470 surviving hits, 480 sinks
+and 330 miss/no-new-hit results; 160 sinks reach the terminal recording endpoint.
+Thirty repeated-sunk and forty repeated-water targets retain correct feedback.
+These are prepared numerical fixtures, not played games or original initialization.
+
+Review outputs/Inspect-Native-Combined-Shot.cmd. Exact evidence, reproduction and
+boundaries: Native-Combined-Shot-Findings.txt. Two native processes produce identical
+traces; nine negative checks pass. The previous 2,496-case impact regression retains
+its exact hashes. The new actual review shortcut also passes its console smoke check.
+
+Media/view/message/terminal lifecycle remain stubs and completion boundaries are
+supplied by the harness. Terminal cases stop at phase7; real native game-over,
+frame clock, initialization, player entry and whole-session RNG schedule remain
+unestablished. Production streams deliberately stay independent.
+
+Playable v0.31 remains the tested checkpoint41 package: 137 model/format +88 real-form
+=225 focused groups,48 shutdown cases and separate native impact checks. Source-only
+restore, archive/relocated/device checks and controlled natural repeated-shot playback
+passed there. Those broad checks were not rerun for this source-only evidence step.
+Executable/ZIP identities are unchanged. Audible and physical-input acceptance still
+need hands-on feedback; native original reference is main menu and clean Quit only.
+Campaign/network/tutorials/radar/controllers and complete lifecycle remain incomplete.
+AI movie upscale remains SG-01 backlog. Ten builds22..31 and archived older records
+remain; no new runtime package or cleanup was needed.
+
+Next: original fleet creator/initializer plus both placement/rebuild passes and
+seed boundaries, then player-side entry before any shared-stream gameplay mode.
+Current source archive/hash: Source-Checkpoint-42.txt. Automatic local commits are
+required by AGENTS.md; actual commit identity is in ignored Git-Checkpoint.txt.
+No push or publication is requested.

@@ -10,15 +10,13 @@ production route reaches victory, Watch result, title and confirmed Quit through
 112SILENT buffers without skipped movies. Source/portable/API evidence retains
 its stated limits; audible playback and physical focus/input need user feedback.
 
-Reconstruction checkpoint 41: original phase/impact/feedback/sink-cleanup code
-matches 2,496 bounded cases. The v0.30 baseline revealed two repeated-shot routing
-issues; v0.31 matches feedback and random consumption in all cases. A controlled
-production-form repeated-sunk shot completes firing/travel/feedback with no new
-damage and a clean next-turn handoff. See Native-Damage-Order-Findings.txt.
-The comparison enters phase 6 with prepared fleet data; media/message/terminal
-callbacks are stubs. Next, join a valid initialized fleet and shot to the shared
-firing/target/travel prefix, then player entry and both seed/fleet passes before
-an optional shared-stream mode. Keep the independent-stream baseline available.
+Reconstruction checkpoint 42: prepared coherent fleets connect native opponent
+firing, target, travel, impact, feedback and cleanup on one CRT state. All1,280
+bounded cases and81,860draws agree. This includes70resolved targets and160last-ship
+terminal endpoints. No runtime change; v0.31 remains the accepted baseline. See
+Native-Combined-Shot-Findings.txt for exact stubs/completion/initialization limits.
+Next: original creator/initializer plus both placement/rebuild passes and seed
+boundaries, then actual player-side entry before a shared-stream gameplay mode.
 
 Reference next: extend the working original main-menu/Quit baseline into one
 repeatable native Classic battle scenario. Modern rebuild checks do not establish

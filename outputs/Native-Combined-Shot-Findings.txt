@@ -1,0 +1,107 @@
+Combined native opponent-shot evidence - checkpoint 42
+Playable comparison remains v0.31.
+
+New reconstruction boundary
+The original opponent prefix, firing dispatcher, target selector, phase controller,
+impact handler, hit/miss/sink selectors and sink cleanup now execute together on
+one original CRT state in a newly owned x86 helper. Both five-ship fleets and
+all player HP/shot history are prepared BEFORE targeting. Target callbacks only
+observe results; no ship, HP or grid state is planted after the target is chosen.
+
+All 1,280 bounded cases agree with independently constructed managed boards and
+the delivered pure selectors replayed consecutively on one NativeRandom. Every
+observed random value, state and exact call-site position agrees: 81,860 draws,
+comprising 2,560 firing-pair draws, 78,570 target draws, 640 gun-travel draws and
+90 miss-feedback draws. This establishes the scoped chain across recording
+endpoints, not the random schedule inside omitted callbacks or the full game.
+
+Input matrix / outcomes
+Eight prepared board states x four seeds (0,1,731,UINT_MAX) x four difficulty
+levels x five firing slots x two travel-admission returns give 1,280 cases.
+The fleets use Classic types 7/1/2/12/4, lengths 5/5/3/4/2, fixed native Y axes,
+non-overlapping coordinates, coherent HP/cell markers, live/dead slot pointers
+and active slots. Player rows are X=0,2,4,6,8; enemy rows X=1,3,5,7,9; Y-start=2.
+States: fresh, wounded, hit-line, finish inactive ship, finish active ship,
+previously sunk first ship, crowded late board, and last remaining hit.
+These are prepared field fixtures, not observed original initialization or
+1,280 played games. Untouched fields outside the copied fragments are not recovered.
+Fixture ship storage uses independent 256-byte slots; original pool stride is
+268 bytes. Only the documented consumed fields are represented in this probe.
+
+Outcomes: 330 miss/no-new-hit, 470 surviving hit and 480 sink, including 160
+last-ship terminal endpoint calls. Of the 70 already-resolved targets, 40 are
+water misses and 30 are sunk-ship hits. v0.31's retained-metadata feedback gate
+agrees in this connected path. No runtime changes or new gameplay build were needed.
+
+The oracle records full 100-cell grids and five HP values before/after the shot.
+The checker rebuilds the input independently, verifies every final cell/HP value,
+roster masks, active-slot changes, movie IDs, random-call counts and final state.
+It checks callback-time HP/grid/outcome/roster transitions: damage occurs before
+hit/sink movie requests, hit marker8 follows request/cleanup, miss marker1 precedes
+miss feedback, and slot removal follows the sink movie request. Existing modern
+atomic damage/marker commitment before playback remains a deliberate boundary.
+
+Original travel return1 recurses into impact before firing completion returns;
+return0 waits for the supplied travel-completion boundary. Both are exercised.
+Non-terminal cases reach original phase0/side0 after a supplied post-impact call.
+When terminal callback1 is recorded, the harness stops at phase7/side1 rather
+than resetting the controller under a fake game-over lifecycle. The actual
+terminal routine, animation clock and playback-completion callbacks are not run.
+
+Identity / implementation
+Only original Bs.exe SHA256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569 is accepted.
+PE32/x86 imagebase00400000. Twelve copied data/code-span hashes are retained in
+Native-Combined-Shot-Provenance.csv. Existing validated copy/relocation utilities
+are reused. ClassicDamageOrderOracle.CopyImpact is now protected for reuse;
+its 2,496-case regression retains the exact checkpoint41 output hashes.
+
+Original globals/fields used remain identity-specific. Fleet0=004B47A0, fleet1
+=004B498C (492-byte stride), pointer slots+0x10, grid+0x40, active slot+0x1D4.
+The enemy active byte is004B4B60. Player ship fleet/owner indices are0, enemy1.
+X numbers and Y letters follow the existing game convention. The original side
+flag004E42D0 becomes1 in the opponent prefix. Current player shooter may change
+on sink cleanup; the prefix independently records the attacking enemy ship.
+
+Validation / artifacts
+Two independently allocated owned helper processes produce byte-identical case
+and event traces. Nine failure-path checks reject incoherent initial grid, changed
+HP/feedback/state, wrong target call-site ordering, premature terminal, missing
+boundary, wrong original identity and a non-owned helper path. The debugger only
+starts its exact newly compiled helper, never attaches to an existing game, and
+bounds fault/timeout cleanup to that child. No user game or original media changes.
+
+The new actual .cmd review launcher exits0 under redirected console input and
+shows active-ship and final-ship sinks. It reads evidence only. Compact cases,
+provenance, reports and runnable tools are retained in source control/checkpoint.
+Full events and guard logs remain intermediate under work/native-combined-shot-42-final
+and work/native-combined-shot-42-guards. Existing impact-only regression output is
+under work/native-damage-order-42-regression. Broad production tests were not rerun:
+v0.31's validated executable and ZIP remain byte-identical.
+
+Case SHA256:
+32F7B4DD1B5EEC30F38EEF775E3DB2293CCCB38562CAB942A1664945BDA84C88
+Event SHA256:
+C944D57E57668969EDA0D087453267CCD5847D6CB2E876A955BD37CB58BFB65E
+
+Reproduce from workspace, fresh destination:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File work\analysis-tools\Run-CombinedShotProbe.ps1 -Executable work\reference-rip\Bs.exe -Destination work\my-fresh-combined-probe
+Uses the existing .NET Framework compiler: four native-helper source files with
+/main:ClassicCombinedShotOracle, owned x86 debugger and x64 comparison against
+v0.31. No downloads or devices needed. Test-CombinedShotGuards.ps1 takes the
+completed -RunDirectory and a fresh -Destination. Show-CombinedShotProbe.ps1
+-RunDirectory outputs -Probe 8 displays the compact evidence; use the full work
+run and -Events for actual callback rows. Review shortcut:
+outputs/Inspect-Native-Combined-Shot.cmd.
+
+Next reconstruction step
+Replace prepared fleets with the original initializer/placement/rebuild chain.
+Reuse package Tools/FleetOracle.cs: 004238D0+0x217,28relocations and its four-entry
+jump table00423AE8; its existing allocation and two placement requests are stubs.
+Actual placement0041B820+0x17F and rebuild0042CE70+0x7A are already isolated in
+Tools/PlacementOracle.cs. Reuse its pointer-table/268-byte pool layout and canaries.
+Establish real creator0042CEF0/template fields before connecting those passes.
+Seed call0042B788 follows004222A0 in initialization0042B780; the other candidate
+is0042A4C3. Record controlled seed boundaries and any callbacks that consume random
+state. Recover player-side entry too, before considering a shared-stream gameplay
+option. Keep v0.31's accepted independent streams and original reference baseline.

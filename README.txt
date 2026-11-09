@@ -1,4 +1,4 @@
-Battleship reconstruction - playable v0.31 / checkpoint 41
+Battleship reconstruction - playable v0.31 / evidence checkpoint 42
 
 Run outputs/Launch-Reconstruction.cmd. This is a runnable partial rebuild for
 modern Windows x64 using the existing .NET Framework, WinForms, GDI+ and WinMM.
@@ -28,7 +28,7 @@ Fresh source-only restore, with the exact supplied RIP:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Restore-Workspace.ps1 -OriginalRoot "<supplied RIP root>" -WithChecks -AudioDeviceCheck
 The modern game requires no original EXE, mount or registry configuration to run.
 Research tools require the exact supplied Bs.exe. Source checkpoint/hash record:
-outputs/Source-Checkpoint-41.txt. Original game media is excluded from source ZIPs.
+outputs/Source-Checkpoint-42.txt. Original game media is excluded from source ZIPs.
 
 Per user instruction, automatically commit each completed tested checkpoint locally.
 AGENTS.md records the policy. Complete-Git-Checkpoint.ps1 accepts -Message and
@@ -42,3 +42,5 @@ Still incomplete: original live-gameplay reference, complete lifecycle and share
 RNG schedule, campaign/network/tutorials/radar, controllers and save formats.
 Original reference acceptance is main menu and clean Quit only. AI movie upscale
 remains stretch goal SG-01; no model download or processing has occurred.
+
+Evidence checkpoint 42 joins the native opponent firing/target/travel/impact/cleanup chain on prepared coherent fleets. All 1,280 bounded cases agree. Review outputs/Inspect-Native-Combined-Shot.cmd; limits/reproduction are in Native-Combined-Shot-Findings.txt. Gameplay v0.31 is unchanged.

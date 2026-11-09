@@ -17,7 +17,7 @@ class ClassicDamageOrderOracle : ClassicStageOrderOracle {
  [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void Message(int id,int owner,int x,int y);
  [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void Terminal(int winner);
  const int Fleet=0xb47a0,TargetShip=0x1f0000,GuardShip=0x1f0100,Viewer=0x1f1000;
- void CopyImpact(uint first,uint end,int expected,bool tables) {
+ protected void CopyImpact(uint first,uint end,int expected,bool tables) {
   var globals=new HashSet<uint>(new uint[]{0x5ae67c,0x4e3818,0x4e42d0,0x4ae830,0x4fbdf4,0x4ae83c,0x4ae836,0x5ae678,0x4b47a0,0x55e800,0x4e3814,0x4fb3d8,0x4aa7fc,0x55e810,0x4b47a6,0x4e3868});
   byte[] code=Read(first,(int)(end-first));int count=0;
   for(int at=0;at<=code.Length-4;at++){

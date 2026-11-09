@@ -1,54 +1,40 @@
-Battleship current status - v0.31 / checkpoint 41 - November 8, 2026
+Battleship current status - evidence checkpoint 42 / playable v0.31
 
-Launch outputs/Launch-Reconstruction.cmd. v0.31 corrects repeated-shot feedback:
-a repeated shot at a sunk ship receives the original miss movie without new
-damage; a repeat on a surviving ship consumes no feedback random draw. HP,
-target/firing/travel streams, controls and accepted configuration are preserved.
-v0.30 remains available for comparison.
+Launch outputs/Launch-Reconstruction.cmd. The v0.31 repeated-shot feedback fixes,
+all accepted controls/settings, original menus/movies and approved 30% board-surface
+transparency remain unchanged. No runtime source, settings or media changed here.
 
-Evidence: Native-Damage-Order-Findings.txt. Original phase, impact, feedback and
-sink-cleanup code executes in a source-identity-locked numerical helper. All
-2,496 bounded cases agree with v0.31; the v0.30 baseline has 360 differences in
-this matrix. The 120 actual miss-variant draws, HP/cell changes, roster removal,
-terminal endpoint and callback ordering are checked. Three helper processes
-produce identical traces; eight failure-path checks pass. These are numerical
-fixtures, not 2,496 played games or evidence of the full native lifecycle.
+Checkpoint 42 connects original opponent firing, targeting, travel, impact,
+feedback and sink cleanup on one CRT state, with both five-ship fleets and all
+HP/grid data prepared before selection. All 1,280 bounded cases match the
+independent board and delivered pure selectors. All 81,860 native draws, states
+and exact call positions agree. Outcomes include 470 surviving hits, 480 sinks
+and 330 miss/no-new-hit results; 160 sinks reach the terminal recording endpoint.
+Thirty repeated-sunk and forty repeated-water targets retain correct feedback.
+These are prepared numerical fixtures, not played games or original initialization.
 
-Production checks: 137 model/format + 88 real-form = 225 focused groups, plus
-48 shutdown cases. A controlled production-form shot plays BATFIRE2 -> S_FLY3
--> SHELMISC naturally in 9,703 ms, with a 300 ms feedback pause, no new damage,
-next-player handoff and clean close. Three SILENT waveOut buffers were used.
-Audible/physical input acceptance is not inferred. Owned no-argument startup
-also reaches the form and exits 0 after WM_CLOSE.
+Review outputs/Inspect-Native-Combined-Shot.cmd. Exact evidence, reproduction and
+boundaries: Native-Combined-Shot-Findings.txt. Two native processes produce identical
+traces; nine negative checks pass. The previous 2,496-case impact regression retains
+its exact hashes. The new actual review shortcut also passes its console smoke check.
 
-Fresh source restore matches 1,485 assets, 27 programs and 447 evidence files;
-445 native-derived outputs regenerated, two modern palette observations retained.
-All 49 authored C# files match frozen package source. Archive integrity passes
-2,315 manifest records / 2,316 ZIP entries. Final relocated-package validation
-is recorded separately in Battleship-v031-Portable-Check.txt.
+Media/view/message/terminal lifecycle remain stubs and completion boundaries are
+supplied by the harness. Terminal cases stop at phase7; real native game-over,
+frame clock, initialization, player entry and whole-session RNG schedule remain
+unestablished. Production streams deliberately stay independent.
 
-Classic setup/loading/battle, original intro/Preferences/Credits/Quit/results
-and the 137-movie archive remain. P/Escape pauses; F2 resets; mouse/arrows+Enter
-target; Space/Skip advances a stage. Movies remain behind the board, surfaces
-30% transparent during cinematics, with ships/grid/markers/HUD opaque.
-Diagnostic coordinate labels now match game Y-letter/X-number conventions.
-Review source behavior with outputs/Inspect-Native-Impact.cmd.
+Playable v0.31 remains the tested checkpoint41 package: 137 model/format +88 real-form
+=225 focused groups,48 shutdown cases and separate native impact checks. Source-only
+restore, archive/relocated/device checks and controlled natural repeated-shot playback
+passed there. Those broad checks were not rerun for this source-only evidence step.
+Executable/ZIP identities are unchanged. Audible and physical-input acceptance still
+need hands-on feedback; native original reference is main menu and clean Quit only.
+Campaign/network/tutorials/radar/controllers and complete lifecycle remain incomplete.
+AI movie upscale remains SG-01 backlog. Ten builds22..31 and archived older records
+remain; no new runtime package or cleanup was needed.
 
-Native damage fixtures start at phase 6 with prepared data; firing/target/travel
-initialization and actual decoder-completion callbacks are outside that test.
-Media/message/terminal endpoints are stubs. The game deliberately keeps separate
-RNG streams. Campaign/network/tutorials/radar/controllers and full lifecycle
-remain incomplete. Original reference acceptance is main menu plus clean Quit.
-AI upscale remains SG-01 backlog, with no models or processing added.
-
-Ten tested builds v0.22..v0.31 are retained. v0.21 source/reports/settings were
-archived and entry-verified before generated copies retired; 23 older versions
-are now retired. Originals, reference, authoring source and Git history remain.
-Latest source archive/hash record: Source-Checkpoint-41.txt. Automatic local
-commits are required by AGENTS.md; commit ID is in ignored Git-Checkpoint.txt.
+Next: original fleet creator/initializer plus both placement/rebuild passes and
+seed boundaries, then player-side entry before any shared-stream gameplay mode.
+Current source archive/hash: Source-Checkpoint-42.txt. Automatic local commits are
+required by AGENTS.md; actual commit identity is in ignored Git-Checkpoint.txt.
 No push or publication is requested.
-
-Next: join a valid initialized fleet and impact to the earlier shared-RNG prefix,
-then player-side entry and seed/both fleet passes before any shared-stream mode.
-Next hands-on check: use v0.31 for a normal Classic battle and Watch result/Quit;
-audio and physical controls still need that confirmation.

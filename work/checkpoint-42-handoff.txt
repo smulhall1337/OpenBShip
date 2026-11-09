@@ -1,0 +1,67 @@
+Checkpoint 42 handoff - playable v0.31 unchanged
+
+Read outputs/Current-Status.txt and Native-Combined-Shot-Findings.txt. This step
+is a runnable source-only numerical comparison and evidence viewer, not v0.32.
+Default launcher remains v0.31. No runtime assets/source/settings changed.
+
+ClassicCombinedShotOracle derives from damage/stage/target utilities and combines
+original opponent prefix, firing dispatcher, real target, controller, impact,
+hit/miss/sink selectors, cleanup and CRT. CopyImpact is protected (only base
+visibility change). Prior2496 impact traces retain their exact checkpoint41 hashes.
+Use /main:ClassicCombinedShotOracle with all four helper C# sources. New debugger
+CombinedShotTrace accepts only its newly compiled owned helper and bounds cleanup;
+no existing user game is accepted. All original spans are pinned to Bs.exe
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+
+Both full five-ship fleets are prepared before calling the opponent. Native records
+use the documented consumed fields, live/dead pointer slots and coherent shot/HP
+history; independent fixture slot spacing256 is not the original pool stride268.
+Fleet stride492: player4B47A0, enemy4B498C; enemy active byte4B4B60. All target
+callbacks only observe; no later HP/grid planting. Fixed positions/types are fixture
+inputs, not recovered initialization. Eight states x4seeds x4levels x5shooter slots
+x2travel-admission returns =1280 cases. Pure managed model independently reconstructs
+those boards, then firing/target/travel/damage/feedback use one NativeRandom.
+
+81860actual native draws:2560firing pair,78570target,640gun travel,90miss feedback.
+Each value/state/exact caller site agrees. Complete HP/grid before/after, callbacks'
+HP/grid/outcome/alive timing, slot cleanup and phase/side histories match. Results:
+330miss/no-new-hit,470surviving hit,480sink;160terminal callbacks. Resolved targets
+include40water and30sunk hits. No runtime change was needed. Media/view/message/
+terminal callbacks are recording endpoints and completion calls are supplied. Unknown
+work/draws inside omitted endpoints are not covered. Terminal cases stop at7/side1;
+other cases reset0/side0 only after the harness post-impact call. Not full native play.
+
+Two native processes produce identical CSVs; nine negative checks reject incoherent
+initial grid, HP/feedback/state changes, wrong target call-site, premature terminal,
+missing boundary and wrong original/helper identities. Original damage2496 regression
+retains exact output hashes. New inspector .cmd exits0 with redirected-console input.
+Case hash32F7B4DD1B5EEC30F38EEF775E3DB2293CCCB38562CAB942A1664945BDA84C88.
+Event hashC944D57E57668969EDA0D087453267CCD5847D6CB2E876A955BD37CB58BFB65E.
+
+Reproduce:work/analysis-tools/Run-CombinedShotProbe.ps1 -Executable
+work/reference-rip/Bs.exe -Destination <fresh workspace directory>.
+Final:work/native-combined-shot-42-final (events/check/trace), guard mutations in
+work/native-combined-shot-42-guards; first allocation42-first. Previous damage
+regression:work/native-damage-order-42-regression. Compact Cases/Provenance/Check/
+Guards are under outputs. Review Inspect-Native-Combined-Shot.cmd for cases8/14;
+Show-CombinedShotProbe.ps1 accepts -RunDirectory/-Probe and optional -Events.
+This viewer never launches a game. Preserve CSV bytes and provenance identities.
+
+Next: connect actual initialization, creation, both placement/rebuild passes to
+this pipeline. Existing package Tools/FleetOracle.cs copies4238D0+0x217 with28
+relocations and jump table423AE8; its creator42CEF0 and two autoplace requests are
+stubs. Tools/PlacementOracle.cs already executes41B820+0x17F and42CE70+0x7A with
+268-byte pool records, pointer tables and canaries. Reuse exact layouts and relocation
+checks. Native creator42CEF0/template fields need to be established. Initialization
+42B780 seeds at42B788 after4222A0; second direct srand candidate42A4C3. Control seed
+boundary and record any downstream callback RNG effects, then original player entry
+before adding optional shared-RNG gameplay. Don't enable it from one matching slice.
+
+Frozen v0.31 exe0D12C9C5BD5EF2BE9ACC0B90EDBB120185C7AAB7AD93D09972451310FDC54A86
+and ZIP131C9FECED66A5E25F94A2B4581907E28E0944FE8D5281079D9C1B88A9215AF2
+remain unchanged. Existing225production groups/48shutdown and source/portable/native
+impact reports are distinct from these new1280cases. No broad redundant reruns or
+cleanup; ten versions22..31 retained. Physical/audible/original-live-game acceptance
+remain separate. Original menu/Quit reference, accepted controls/alpha and SG-01
+backlog remain. Source checkpoint42 and automatic local Git commit preserve the step;
+commit ID is in ignored outputs/Git-Checkpoint.txt. No push/upload/publication.

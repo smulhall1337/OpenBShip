@@ -1,0 +1,5 @@
+PASS 1,280 prepared coherent-fleet native opponent shots: 8 board states x4 seeds x4 difficulty levels x5 shooter slots x2 travel-admission paths.
+PASS shared CRT history: 81860 actual draws (target=78570,travel=640,feedback=90); every value/state and native caller position agrees.
+PASS firing, target, travel, damage, feedback, roster cleanup and callback-time HP/grid changes match the delivered pure selectors and independent board model.
+Outcomes: 330 miss/no-new-hit,470 surviving hit,480 sink; 70 already-resolved targets; 160 last-ship terminal endpoint calls.
+Scope: prepared fleets and seed, manually supplied completion boundaries, stubbed media/view/message/terminal lifecycle. Terminal cases stop at phase7. No original initialization, player-side entry, natural playback/animation or complete game/session is established. Production streams remain independent.
