@@ -51,6 +51,16 @@ class FixtureTrace {
    finally{Marshal.FreeHGlobal(info);Marshal.FreeHGlobal(pointers);}
   }finally{if(thread!=IntPtr.Zero)CloseHandle(thread);Marshal.FreeHGlobal(ctx);}
  }
+ static string QuoteArgument(string value){
+  var quoted=new StringBuilder("\"");int slashes=0;
+  foreach(char c in value){
+   if(c=='\\'){slashes++;continue;}
+   if(c=='"'){quoted.Append('\\',slashes*2+1);quoted.Append(c);}
+   else {quoted.Append('\\',slashes);quoted.Append(c);}
+   slashes=0;
+  }
+  quoted.Append('\\',slashes*2);quoted.Append('"');return quoted.ToString();
+ }
  static int Main(string[] args){try{return Run(args);}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
  static int Run(string[] args){
   if(args.Length!=4){Console.Error.WriteLine("FixtureTrace <ClassicTargetOrderOracle.exe> <diagnostic-dir> <original> <evidence>");return 2;}
@@ -59,7 +69,7 @@ class FixtureTrace {
   Directory.CreateDirectory(dir);
   using(log=new StreamWriter(Path.Combine(dir,"trace.txt"))){
    STARTUPINFO si=new STARTUPINFO();si.cb=Marshal.SizeOf(si);PROCESS_INFORMATION pi;
-   if(!CreateProcess(exe,new StringBuilder("\""+exe+"\" \""+Path.GetFullPath(args[2])+"\" \""+Path.GetFullPath(args[3])+"\""),IntPtr.Zero,IntPtr.Zero,false,2,IntPtr.Zero,Path.GetDirectoryName(exe),ref si,out pi)){Say("CreateProcess failed: "+Marshal.GetLastWin32Error());return 3;}
+   if(!CreateProcess(exe,new StringBuilder(QuoteArgument(exe)+" "+QuoteArgument(Path.GetFullPath(args[2]))+" "+QuoteArgument(Path.GetFullPath(args[3]))),IntPtr.Zero,IntPtr.Zero,false,2,IntPtr.Zero,Path.GetDirectoryName(exe),ref si,out pi)){Say("CreateProcess failed: "+Marshal.GetLastWin32Error());return 3;}
    process=pi.process;DebugSetProcessKillOnExit(true);Say("Started diagnostic PID "+pi.pid);Say("Diagnostic directory: "+dir);
    IntPtr ev=Marshal.AllocHGlobal(96);bool exited=false,captured=false;uint childExit=0;var timer=Stopwatch.StartNew();
    try{while(timer.Elapsed.TotalSeconds<45){if(!WaitForDebugEvent(ev,1000))continue;uint type=U(ev,0),pid=U(ev,4),tid=U(ev,8),status=0x10002;
@@ -76,10 +86,3 @@ class FixtureTrace {
   }
  }
 }
-
-
-
-
-
-
-

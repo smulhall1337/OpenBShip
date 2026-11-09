@@ -1,4 +1,4 @@
-Battleship reconstruction - playable v0.30 / evidence checkpoint 39
+Battleship reconstruction - playable v0.30 / evidence checkpoint 40
 
 Run outputs/Launch-Reconstruction.cmd. Detailed scope, evidence and pending
 hands-on checks: outputs/Current-Status.txt. Source and controls are packaged
@@ -29,12 +29,13 @@ WinForms/GDI+/WinMM. The modern runtime needs no mount/registry/original EXE.
 Source-only restore, with the exact supplied RIP:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Restore-Workspace.ps1 -OriginalRoot "<supplied RIP root>" -WithChecks -AudioDeviceCheck
 
-Evidence checkpoint 39 adds a runnable bounded opponent firing/target probe:
-720 numerical cases match the original chained selectors and all native draws.
-Review outputs/Inspect-Native-Target-Order.cmd; reproduction and limits are in
-outputs/Native-Target-Order-Findings.txt. The playable v0.30 streams are unchanged.
+Evidence checkpoint 40 adds a runnable bounded opponent/target/phase probe:
+1,440 cases match the original firing, target and travel sequence, including
+unavailable-media recursion. Review outputs/Inspect-Native-Stage-Order.cmd;
+reproduction and limits: outputs/Native-Stage-Order-Findings.txt. The playable
+v0.30 streams are unchanged. The earlier target inspector is also retained.
 
-Source checkpoint 39 ZIP/hash record: outputs/Source-Checkpoint-39.txt.
+Source checkpoint 40 ZIP/hash record: outputs/Source-Checkpoint-40.txt.
 Per user instruction, automatically make a local Git commit after each completed,
 tested checkpoint. AGENTS.md records this preference; Complete-Git-Checkpoint.ps1
 accepts -Message and writes commit identity to outputs/Git-Checkpoint.txt.
@@ -49,4 +50,3 @@ Remaining: native live-gameplay reference, campaign/network/tutorials/radar,
 controllers and full native lifecycle/RNG schedule. Source reference acceptance
 is menu plus clean Quit only. Optional AI movie upscale remains SG-01backlog;
 no models or processing run. outputs/Project-Roadmap.txt records next steps.
-

@@ -19,12 +19,12 @@ class ClassicTargetOrderOracle {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int RandomCall(int returnAddress);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void Target(IntPtr x, IntPtr y);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int LoadMovie(int id, IntPtr owner);
-    const string Identity = "B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569";
-    const int TargetCode = 0x120000, Ship = 0x1ff020, Grid = 0xb47e0;
-    byte[] source;
-    int pe;
-    uint imageBase;
-    IntPtr memory;
+    protected const string Identity = "B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569";
+    protected const int TargetCode = 0x120000, Ship = 0x1ff020, Grid = 0xb47e0;
+    protected byte[] source;
+    protected int pe;
+    protected uint imageBase;
+    protected IntPtr memory;
     int Offset(uint va) {
         uint rva = va - imageBase;
         int table = pe + 24 + BitConverter.ToUInt16(source, pe + 20);
@@ -36,19 +36,19 @@ class ClassicTargetOrderOracle {
         }
         throw new InvalidDataException("Address outside raw PE sections");
     }
-    byte[] Read(uint va, int length) {
+    protected byte[] Read(uint va, int length) {
         byte[] bytes = new byte[length]; Array.Copy(source, Offset(va), bytes, 0, length); return bytes;
     }
-    uint Address(int offset) { return unchecked((uint)memory.ToInt32() + (uint)offset); }
-    void Write(int offset, byte[] bytes) { Marshal.Copy(bytes, 0, IntPtr.Add(memory, offset), bytes.Length); }
-    static string Hash(byte[] bytes) {
+    protected uint Address(int offset) { return unchecked((uint)memory.ToInt32() + (uint)offset); }
+    protected void Write(int offset, byte[] bytes) { Marshal.Copy(bytes, 0, IntPtr.Add(memory, offset), bytes.Length); }
+    protected static string Hash(byte[] bytes) {
         using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "");
     }
     void Patch(byte[] bytes, int offset, uint expected, uint replacement) {
         if (BitConverter.ToUInt32(bytes, offset) != expected) throw new InvalidDataException("Target relocation differs at " + offset.ToString("X"));
         BitConverter.GetBytes(replacement).CopyTo(bytes, offset);
     }
-    void CopyPrefix(uint va, int length, int expected) {
+    protected void CopyPrefix(uint va, int length, int expected) {
         byte[] bytes = Read(va, length); int changes = 0;
         var globals = new HashSet<uint>(new uint[] { 0x4fb3d8, 0x4aa7fc, 0x55e810, 0x4b47a0, 0x4169d0, 0x41698c, 0x4e3814, 0x44d730, 0x44d750, 0x44d760, 0x4b4b60, 0x4e42d0, 0x4b499c, 0x4fb6f4, 0x4ae818, 0x4ae81a, 0x4e375c, 0x4fbc4c, 0x454d50 });
         for (int at = 0; at <= bytes.Length - 4; at++) {
@@ -60,7 +60,7 @@ class ClassicTargetOrderOracle {
         if (changes != expected) throw new InvalidDataException("Prefix relocation count differs at " + va.ToString("X8"));
         Write((int)(va - 0x400000), bytes);
     }
-    void CopyTarget() {
+    protected void CopyTarget() {
         // Same five absolute operands, four calls and ten table entries as the
         // independently established ClassicTargetOracle. Internal branches move
         // together. Only external rand calls require new relative displacements.
@@ -82,12 +82,12 @@ class ClassicTargetOrderOracle {
         }
         Write(TargetCode, bytes);
     }
-    void Stub(int at, Delegate callback) {
+    protected void Stub(int at, Delegate callback) {
         var bytes = new List<byte> { 0xb8 };
         bytes.AddRange(BitConverter.GetBytes(Marshal.GetFunctionPointerForDelegate(callback).ToInt32()));
         bytes.AddRange(new byte[] { 0xff, 0xe0 }); Write(at, bytes.ToArray());
     }
-    static int[] Fixture(string name) {
+    protected static int[] Fixture(string name) {
         int[] grid = new int[100];
         if (name == "masked") for (int i = 0; i < 100; i++) grid[i] = i % 3 == 0 ? 0 : i % 3 == 1 ? 2 : 4;
         else if (name == "exhausted" || name == "sparse") {

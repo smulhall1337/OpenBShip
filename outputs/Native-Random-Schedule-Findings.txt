@@ -61,3 +61,5 @@ workspace output directory. outputs/Native-Random-Call-Candidates.csv is the
 checked static census; the source bytes remain in the supplied original copy.
 
 Checkpoint 39 supersedes the target-stub boundary above. Real native target selection now runs after the firing pair on the same original CRT state in 720 bounded probes (70,620 draws). Three helper processes reproduce identical traces; five rejection checks pass. See Native-Target-Order-Findings.txt. The following stage, fleet generation and full turn/session remain unestablished; runtime streams remain unchanged.
+
+Checkpoint 40 extends this boundary through the original phase controller and travel draw: 1,440 bounded cases / 141,960 native draws, admitted/unavailable recursion and phase/side handoff agree. Media/view/impact remain stubs; timing boundaries are harness-supplied. See Native-Stage-Order-Findings.txt. No runtime stream changes.

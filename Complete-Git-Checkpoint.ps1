@@ -1,4 +1,4 @@
-param([string]$Message='Checkpoint v0.30 media flows and native target-order evidence')
+param([string]$Message='Save tested Battleship checkpoint')
 $ErrorActionPreference='Stop'
 if([string]::IsNullOrWhiteSpace($Message)){throw 'A meaningful checkpoint message is required.'}
 Set-Location -LiteralPath $PSScriptRoot
@@ -22,16 +22,6 @@ $commit=git @gitContext rev-parse HEAD
 if($LASTEXITCODE -ne 0){throw 'Checkpoint commit inspection failed.'}
 $branch=git @gitContext branch --show-current
 if($LASTEXITCODE -ne 0){throw 'Checkpoint branch inspection failed.'}
-@("Local source checkpoint: $commit","Branch: $branch","Requested checkpoint message: $Message",'Automatic local commits requested by the user at each tested checkpoint.','Author on new commits: Codex <codex@localhost> (per-command identity; global configuration unchanged).','Original media, generated builds, ZIPs, settings and scratch files excluded.','No remote configured or publication performed by this script.','Frozen v0.30: source-only restoration passed 136 model checks, 88 real-form checks, 48 shutdown cases and the separate SILENT waveOut device check.','Separate checkpoint 39 research: 720 bounded native chained probes, 70,620 draws, five negative checks; no runtime behavior change.') | Set-Content -LiteralPath outputs\Git-Checkpoint.txt -Encoding UTF8
+@("Local source checkpoint: $commit","Branch: $branch","Requested checkpoint message: $Message",'Automatic local commits requested by the user at each tested checkpoint.','Author on new commits: Codex <codex@localhost> (per-command identity; global configuration unchanged).','Original media, generated builds, ZIPs, settings and scratch files excluded.','No remote configured or publication performed by this script.','Frozen v0.30: source-only restoration passed 136 model checks, 88 real-form checks, 48 shutdown cases and the separate SILENT waveOut device check.','Latest research checks and their scope are recorded in outputs/Current-Status.txt and its linked evidence reports; they are separate from production gameplay checks.') | Set-Content -LiteralPath outputs\Git-Checkpoint.txt -Encoding UTF8
 git @gitContext status --short
 Get-Content -LiteralPath outputs\Git-Checkpoint.txt
-
-
-
-
-
-
-
-
-
-

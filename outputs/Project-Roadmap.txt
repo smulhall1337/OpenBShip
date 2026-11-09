@@ -10,13 +10,14 @@ production route reaches victory, Watch result, title and confirmed Quit through
 112SILENT buffers without skipped movies. Source/portable/API evidence retains
 its stated limits; audible playback and physical focus/input need user feedback.
 
-Reconstruction checkpoint 39: a bounded native firing-pair/real-target chain
-matches all 720 numerical probes and all 70,620 native draws. Repeatability and
-five evidence/identity rejection checks pass. Runtime streams remain independent.
-See Native-Target-Order-Findings.txt. Next, connect the existing native phase
-controller and travel draw, with media/impact boundaries explicit; then establish
-both fleet passes and seed/initialization order before a shared-stream mode.
-A matching numerical prefix does not establish a full original turn or session.
+Reconstruction checkpoint 40: original opponent, target and phase controller
+match 1,440 bounded cases / 141,960 native draws, with admitted/unavailable travel
+paths and native recursion. Three-process repeatability, eight negative checks
+and unchanged checkpoint39 regression pass. Media/view/impact endpoints remain
+stubs; completion boundaries are harness inputs. See Native-Stage-Order-Findings.txt.
+Next: bounded real impact handling with miss/hit/sink/repeat fixtures and shared
+miss-variant draws. Then player entry, both fleet passes and seed/setup boundaries
+before an optional shared-stream mode. Runtime independent streams remain baseline.
 
 Reference next: extend the working original main-menu/Quit baseline into one
 repeatable native Classic battle scenario. Modern rebuild checks do not establish
@@ -55,4 +56,3 @@ Do not apply a global25fps assumption to intro/attract/tutorial playback.
 
 
 User preference, November 8: automatically make a local Git commit after each completed, tested checkpoint. Commit identity is recorded in outputs/Git-Checkpoint.txt; no push is requested.
-
