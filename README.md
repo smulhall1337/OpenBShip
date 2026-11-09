@@ -30,6 +30,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 
 Close that build before rebuilding it. Settings are stored locally in `build\current\UserData\settings.txt`.
 
+`Launch.cmd` waits for a key if setup or required assets are missing. Other startup failures show an error dialog and write details to `build\current\UserData\last-error.txt`.
+
 ## Playing
 
 Use **Auto-place → Start battle**, or **Original menu → Solo → Classic → Start Game → Fleet Configuration → Start Game**.
