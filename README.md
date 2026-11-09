@@ -43,7 +43,7 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 
-Local numerical comparisons now connect original fleet reset, creation and both placement passes to an opponent shot: 560 controlled cases agree on targeting, damage, presentation selection and random history. The original UI/frame lifecycle and complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
+Local numerical comparisons now connect original fleet creation to player selection, firing and an opponent response. Tests cover 900 controlled input cases, including 768 complete first exchanges, and a separate 560-case opponent study. Original UI/frame timing and the complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
 
 ## Repository layout
 
