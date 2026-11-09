@@ -1,8 +1,0 @@
-v0.21 relocated production validation - 2026-11-07
-PASS frozen ZIP extracted into fresh work/portable-v21;1134manifest records.
-PASS102model/format +58form groups =160focused checks;20shutdown cases.
-PASS separate SILENT actual waveOut check. No audible/physical input claim.
-The relocated packaged executable was tested; this was not a helper-only build.
-Log:work/reconstruction-v21/portable-validation.log.
-ZIP/byte-length/hash verification:Battleship-v021-Archive-Check.txt.
-No settings are included in the ZIP; existing versioned packages are retained.

@@ -1,9 +1,0 @@
-v0.22 portable production check - 2026-11-08
-PASS1149manifest records and relocated packaged executable.
-PASS103model/format +62form groups=165focused checks;23shutdown cases.
-PASS separate SILENT actual waveOut lifecycle. No audible/physical input claim.
-Raw:work/reconstruction-v22/portable-validation.log. Independent ZIP/length/SHA256
-check:Battleship-v022-Archive-Check.txt;1150ZIP entries including manifest.
-ZIP SHA256:0929FEC48D1874B0E68CD77894B45A5E5D8D33730EE4B01456879B5EBFF7D636.
-EXE SHA256:78EC7B51EC075117E085DEDC511FB1C4494A300897F64D3F818C0CBB7006228B.
-No user settings in ZIP; prior versions and original reference remain unchanged.

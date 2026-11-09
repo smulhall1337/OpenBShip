@@ -1,8 +1,0 @@
-﻿Authored-source checkpoint 34 - 2026-11-08T13:18:01.3853035Z
-Archive: C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Battleship-Source-Checkpoint-34.zip
-Authored/source fixture files: 3816; ZIP entries: 3817.
-SHA256: 2B6739BF4E6B577329663A6CAB517DC6D867F64220AC87DB04C5E2BC5EEF7C56
-PASS every entry verified against source SHA256; Source-Manifest.csv included.
-Supplied original assets/executables, generated builds/media, settings, scratch and Git metadata are excluded. The sixty-byte recorded modern Windows palette fixture is intentionally retained.
-Restore latest with Restore-Workspace.ps1 and the supplied exact original RIP; README.txt provides flags. This source archive records no Git commit. The initialized local repository and prepared Complete-Git-Checkpoint script remain available.
-No remote, publication or upload performed.

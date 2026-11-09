@@ -1,6 +1,0 @@
-﻿Removed 1 additional old build versions and remaining retired ZIPs/launchers; 5 targets.
-Removed 4214 files, 816279934 bytes before preserving records.
-Kept ten tested builds: Battleship-Lab-v0.27, Battleship-Lab-v0.26, Battleship-Lab-v0.25, Battleship-Lab-v0.24, Battleship-Lab-v0.23, Battleship-Lab-v0.22, Battleship-Lab-v0.21, Battleship-Lab-v0.20, Battleship-Lab-v0.19, Battleship-Lab-v0.18.1.
-Preserved 1201 source/report/settings files in C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Retired-Build-Records-20261108-v027.zip
-Every archived entry verified by SHA256. Original material, reference baseline, authoring directories, Git history and source checkpoint archives retained.
-Records archive SHA256: C04CA1DB3800D7BE9CAAE1DF867DD3B7D291011FA16A73ED7D026EF0F807CC74

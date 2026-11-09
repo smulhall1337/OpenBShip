@@ -1,6 +1,0 @@
-PASS 1,440 bounded native opponent/target/phase probes: 720 admitted-travel and 720 unavailable-travel paths.
-PASS 141,960 actual native CRT draws, including 138,360 target draws and 720 gun-travel draws; per-draw values/states and caller positions agree.
-PASS delivered pure firing/target/travel selectors replay one stream and match movie IDs, target, call counts and final state.
-PASS exact callback order and phase/side trace 4 -> 5 -> 6 -> 7 -> 0; one impact endpoint, correct target/owner/fleet arguments, side-specific sentinel and view requests.
-PASS unavailable travel recurses to the impact endpoint before the firing-completion call returns; admitted travel waits for the harness travel-completion boundary.
-Scope: source-identity-locked copied numerical code. Media admission, view and impact endpoints are stubs; completion boundaries, grids and shooter are harness inputs. No native frame clock, actual damage, initialization, fleet generation or full native gameplay/session is established. Production v0.30 streams are unchanged.

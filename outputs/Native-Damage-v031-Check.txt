@@ -1,4 +1,0 @@
-PASS 2,496 bounded original phase/impact/feedback/cleanup cases; HP, cells, removal, active slot, terminal endpoint and callback write ordering agree.
-PASS 120 actual native miss-variant CRT draws and states.
-PASS delivered feedback/random consumption agrees in all 2,496 cases.
-Scope: synthetic valid-axis fixtures enter phase 6; media/message/terminal callbacks are stubs. Firing/target/travel initialization, complete battle lifecycle and audiovisual acceptance are outside this comparison.

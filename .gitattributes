@@ -1,3 +1,2 @@
-# Preserve fixture CSV bytes and historical source exactly across local checkouts.
+# Preserve source and manifest bytes exactly across Windows checkouts.
 * -text
-*.rgb binary

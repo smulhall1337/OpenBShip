@@ -1,6 +1,0 @@
-PASS one scripted perfect-target duel entered through original title -> Solo Practice -> Classic -> Fleet Configuration -> loading fade -> Start Game, using production form/timers, natural movie completion and original opponent level 1.
-Detail=160x120, audio=muted visual clock.
-Player shots=19, movie stages=111, elapsed seconds=431, max observed GDI handles=51.
-Actual-device buffer starts=0, pause calls=0, resumes=0.
-Pause froze frame and damage; current native messages match every firing/travel/sink stage; non-sinking hit/miss stays icon-only. Hit/sink captures and terminal victory completed. No stages were skipped.
-Form offscreen. Targets use hidden-board knowledge for testing. No physical-input, audible-playback or full original-gameplay acceptance claim.

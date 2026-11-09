@@ -1,7 +1,0 @@
-PASS all883final ZIP entries match current package byte for byte.
-PASS all882final relocated manifest files match SHA256.
-PASS final relocated executable matches earlier110check-tested portable module and natural-run modules.
-PASS final relocated owned startup/clean exit0 and actual SILENT waveOut lifecycle.
-UserData excluded; final archive frozen.
-ZIP SHA256: 9FC3E24F0631DD477801903E2843230726CC046317A03D6982AAF17CD9FC6A91
-EXE SHA256: 4643C4A86005931FDC20F2995D3D3999F6015DE1108CE5BB7061579E958132F1

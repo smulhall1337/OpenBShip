@@ -1,6 +1,0 @@
-Current build retention - v0.31 - November 8, 2026
-Retired versions: 23. Ten tested builds retained: v0.22 through v0.31.
-Removed generated package/validation files: 50681; bytes before preserving records: 8351890138.
-Preserved record archive bytes: 75327524; net removed bytes: 8276562614.
-Every retirement batch preserves source, reports and settings in entry-verified archives. Originals, reference setup, authoring source, Git history and source checkpoints remain.
-Latest batch: Build-Cleanup-20261108-v031.txt. Detailed identities: Retired-Builds.csv and retirement manifests. Historical compiled-build links can point to retired versions.

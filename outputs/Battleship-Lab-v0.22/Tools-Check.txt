@@ -1,5 +1,0 @@
-PASS 827 original asset/Program/evidence files byte-match clean source restoration.
-533original assets;10Program files;284evidence files.282native-derived fixtures regenerate from absence;2recorded modern palette inputs retained.
-PASS source-restored91model+50form checks and16shutdown cases; actual SILENT waveOut lifecycle.
-Native Solo oracle rebuilt with image/sprite identity and all8relocation guards; no original full-game/text/device/input polling executed.
-See work/reconstruction-v17/restore-validation.log.

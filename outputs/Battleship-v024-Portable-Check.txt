@@ -1,3 +1,0 @@
-PASS v0.24 relocated package verified1212manifest records;114model/73form/33shutdown and SILENT waveOut checks passed.
-Frozen executable595446698BA4DAE558022E692A4B6B8BC3E5017ABA4CCA7938443433A0A5A342.
-Portable copy: work\portable-v24\Battleship-Lab-v0.24. No audible/physical confirmation.

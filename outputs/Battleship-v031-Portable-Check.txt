@@ -1,4 +1,0 @@
-PASS relocated v0.31 ZIP: 2315 manifest records match; 137 model/format,88real-form,48shutdown and2496native-damage cases pass.
-SILENT actual waveOut device check passes; audible/physical input acceptance is separate.
-Fresh relocated package: work/portable-validation-v31/Battleship-Lab-v0.31
-Executable/ZIP unchanged from the frozen validated identities.
