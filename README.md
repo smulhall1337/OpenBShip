@@ -47,7 +47,7 @@ Restart asks for confirmation and restores the actual starting fleets, rule pres
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 
-Local numerical comparisons now connect original fleet creation to player selection, firing, multiple turns, sinks and terminal callbacks. Tests cover 32 continuous numerical battles with two scripted player policies, 900 controlled input cases including 768 first exchanges, and a separate 560-case opponent study. One battle policy deliberately uses known enemy positions as test input. Original UI/frame timing and the complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
+Local numerical comparisons now connect original fleet creation to player selection, firing, multiple turns, sinks and terminal callbacks. Tests cover 32 continuous numerical battles with two scripted player policies, also replayed through the original frame dispatcher with controlled decoder/clock/UI endpoints. Earlier studies cover 900 controlled input cases including 768 first exchanges and a separate 560-case opponent study. One battle policy deliberately uses known enemy positions as test input. Actual original frame pacing, media/device callbacks and the complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
 
 ## Repository layout
 
