@@ -43,6 +43,8 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 
+Local numerical comparisons now cover original fleet reset, ship creation and both auto-placement passes: 70 controlled-seed fixtures agree with the reconstructed placement code. The original UI/frame lifecycle and complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
+
 ## Repository layout
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
