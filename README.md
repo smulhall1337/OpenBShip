@@ -22,7 +22,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 
 Replace `C:\Games\Battleship` with the extracted game folder. Setup copies the required assets, verifies their hashes, extracts the runtime programs and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. No ISO mount, original installer, registry configuration or additional game engine is needed to run the rebuild.
 
-After setup, double-click **Launch.cmd** to play. To rebuild after editing the source:
+After setup, double-click **Launch.cmd** to play. Local `outputs/Inspect-*.cmd` tools display diagnostic reports. To rebuild after editing the source:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
