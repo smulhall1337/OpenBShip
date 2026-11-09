@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is based on the tested v0.31 build.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.32.
 
 ## Requirements
 
@@ -37,9 +37,13 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 | Control | Action |
 | --- | --- |
 | Mouse, or arrows + Enter | Choose a target |
+| Click a friendly ship or its roster entry | Select the firing ship |
 | P / Escape | Pause or resume battle |
 | Space / Skip stage | Advance the current movie stage |
 | F2 | Start a new battle |
+| Options → Restart this battle… | Restore this battle's starting deployment |
+
+Restart asks for confirmation and restores the actual starting fleets, rule preset, opponent setting and random streams, including manually placed fleets and repeated shuffles. Repeating the same actions reproduces the same gameplay and movie choices. This snapshot lasts for the current battle while the app is open; display and audio preferences keep their current values.
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 

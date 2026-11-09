@@ -134,6 +134,7 @@ namespace FleetLab {
     // Native RNG streams are isolated deliberately; presentation timing and UI
     // remain modern. Optional firing, travel and impact movies are decoded and played separately.
     public sealed class Game {
+        public readonly int Seed;
         public readonly RuleProfile Rules;
         public readonly OpponentKind Opponent;
         public readonly int OpponentLevel;
@@ -155,11 +156,18 @@ namespace FleetLab {
         internal uint PlacementState{get{return classicPlacementRandom.State;}}internal int PlacementCalls{get{return classicPlacementRandom.Calls;}}
         readonly NativeRandom presentationRandom;
         readonly NativeRandom travelRandom;
+        Board startingPlayer,startingEnemy;
+        NativeRandom startingPlacement;
+        string startingMessage;
+        string[] startingEvents;
+        int startingPlayerShooter,startingEnemyShooter;
+        bool startingVertical;
         readonly Queue<Point> hunt=new Queue<Point>();
         public Game(int seed) : this(seed,RuleProfile.Recovered) { }
         public Game(int seed,RuleProfile rules) : this(seed,rules,rules!=null&&rules.FixedY?OpponentKind.Original:OpponentKind.Prototype,0) { }
         public Game(int seed,RuleProfile rules,OpponentKind opponent,int level) : this(seed,rules,opponent,level,false) { }
         public Game(int seed,RuleProfile rules,OpponentKind opponent,int level,bool movieTurns) {
+            Seed=seed;
             if(rules==null)throw new ArgumentNullException("rules");
             Rules=rules;MovieTurns=movieTurns&&rules.FixedY;
             if(opponent==OpponentKind.Original) {
@@ -271,7 +279,35 @@ namespace FleetLab {
             Message="Your turn: choose a square on the upper-right board.";
             Events.Add("Battle started. Your shot first.");
             Events.Add(Opponent==OpponentKind.Original?"Opponent: original setting "+(OpponentLevel+1)+".":"Opponent: prototype pursuit.");
+            CaptureBattleStart();
             return true;
+        }
+        // Modern comparison aid. Capture actual deployment rather than assuming
+        // that a seed alone describes manual placement or repeated shuffles.
+        void CaptureBattleStart() {
+            startingPlayer=CopyBoard(Player);startingEnemy=CopyBoard(Enemy);
+            startingPlacement=classicPlacementRandom.Copy();startingMessage=Message;
+            startingEvents=Events.ToArray();startingPlayerShooter=PlayerShooter;
+            startingEnemyShooter=EnemyShooter;startingVertical=Vertical;
+        }
+        static Board CopyBoard(Board source) {
+            var copy=new Board();
+            foreach(Ship ship in source.Ships) {
+                if(ship.Cells.Count==0)throw new InvalidOperationException("Cannot capture an empty ship.");
+                Point first=ship.Cells[0];bool vertical=ship.Cells.Count==1||ship.Cells[1].X==first.X;
+                if(!copy.Place(first,ship.Cells.Count,vertical,ship.Name,ship.SourceType))throw new InvalidOperationException("Cannot capture this fleet layout.");
+            }
+            for(int x=0;x<10;x++)for(int y=0;y<10;y++)if(source.Shots[x,y])copy.Shoot(new Point(x,y));
+            return copy;
+        }
+        public bool CanRestartBattle {get{return Phase!=Phase.Placement&&startingPlayer!=null&&startingEnemy!=null;}}
+        public Game RestartBattle() {return CanRestartBattle?new Game(this):null;}
+        Game(Game previous):this(previous.Seed,previous.Rules,previous.Opponent,previous.OpponentLevel,previous.MovieTurns) {
+            Player=CopyBoard(previous.startingPlayer);Enemy=CopyBoard(previous.startingEnemy);
+            classicPlacementRandom=previous.startingPlacement.Copy();
+            PlayerShooter=previous.startingPlayerShooter;EnemyShooter=previous.startingEnemyShooter;
+            Vertical=previous.startingVertical;Phase=Phase.PlayerTurn;Message=previous.startingMessage;
+            Events.AddRange(previous.startingEvents);CaptureBattleStart();
         }
         public bool CanSelectShooter {
             get { return Rules.FixedY&&!Paused&&Pending==null&&Phase==Phase.PlayerTurn; }

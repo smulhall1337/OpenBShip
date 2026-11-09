@@ -36,6 +36,7 @@ namespace FleetLab {
         bool validationFailMovieLoad; // Only --ui-check injects a failed loader; no user setting.
         readonly ToolStripMenuItem movies=new ToolStripMenuItem("Battle movies (experimental)");
         readonly ToolStripMenuItem highMovies=new ToolStripMenuItem("High-detail original movies (320×240)");
+        readonly ToolStripMenuItem restartBattle=new ToolStripMenuItem("Restart this battle...");
         readonly ComboBox rules=new ComboBox();
         readonly ComboBox opponent=new ComboBox();
         readonly ContextMenuStrip displayMenu=new ContextMenuStrip();
@@ -81,7 +82,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.31 — Original repeated-shot feedback";
+            Text="Battleship Fleet Lab 0.32 — Repeatable battle restart";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -110,13 +111,16 @@ namespace FleetLab {
             };
             header.Controls.Add(title,0,0);
             header.Controls.Add(subtitle,0,1);
-            var display=displayButton;display.Text="Display";display.Width=105;display.Height=33;display.Anchor=AnchorStyles.Top|AnchorStyles.Right;display.FlatStyle=FlatStyle.Flat;display.BackColor=panel;display.ForeColor=gold;
+            var display=displayButton;display.Text="Options";display.Width=105;display.Height=33;display.Anchor=AnchorStyles.Top|AnchorStyles.Right;display.FlatStyle=FlatStyle.Flat;display.BackColor=panel;display.ForeColor=gold;
             header.Controls.Add(display,1,0);
             display.Click+=delegate {displayMenu.Show(display,0,display.Height);};
             displayMenu.Items.Add(acceptedColors);displayMenu.Items.Add(recoveredColors);displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(motion);
             displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(movies);
             movies.Click+=delegate{if(State.Phase!=Phase.Placement&&State.Phase!=Phase.Finished)return;preferences.MovieTurns=!preferences.MovieTurns;SavePreferences();NewGame();};
             displayMenu.Items.Add(highMovies);highMovies.ToolTipText="Original higher-detail assets. Change before battle; available in the clip library too.";
+            displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(restartBattle);
+            restartBattle.ToolTipText="Restore this battle's starting deployment for another attempt.";
+            restartBattle.Click+=delegate{RequestBattleRestart();};
             highMovies.Click+=delegate{SetMovieDetail(!preferences.HighMovies,true);};
             acceptedColors.Click+=delegate {SelectColors(false,true);};
             recoveredColors.Click+=delegate {SelectColors(true,true);};
@@ -449,7 +453,7 @@ namespace FleetLab {
         void OpenFleet(){if(disposed)return;int ai=rules.SelectedIndex==1?recoveredOpponent:opponent.SelectedIndex;var draft=new Game(seed,RuleProfile.Recovered,ai==4?OpponentKind.Prototype:OpponentKind.Original,ai<4?ai:0,preferences.MovieTurns);draft.AutoPlace();solo.Pause();solo.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Begin(draft);SuppressHeldControls();UpdateView();}
         void OpenEntry(){if(disposed||entry.HasOpened||fleet.Draft==null||fleet.SelectedShip>=0)return;fleet.Pause();fleet.Visible=false;entry.Visible=true;entry.BringToFront();entry.Begin();SuppressHeldControls();UpdateView();}
         void CommitFleet(){if(disposed||fleet.Draft==null||fleet.SelectedShip>=0)return;var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);Game accepted=fleet.Draft;if(rules.SelectedIndex!=0)rules.SelectedIndex=0;else NewGame();State=accepted;board.Game=State;if(!State.Start())throw new InvalidOperationException("Fleet commit failed");board.KeyboardCell=new Point(0,0);UpdateView();board.Focus();SuppressHeldControls();foreach(Keys key in heldKeys)down.Add(key);}
-        void NewGame() {
+        void ClearBattlePresentation() {
             pauseActions.CancelConfirmation();returnConfirmationGame=null;
             if(creditsPage!=null){creditsPage.Reset();creditsPage.Visible=false;}if(startupPage!=null){startupPage.Reset();startupPage.Visible=false;}
             if(prefsPage!=null){prefsPage.Reset();prefsPage.Visible=false;}
@@ -459,9 +463,28 @@ namespace FleetLab {
             if(front!=null)front.Reset();
             if(archive!=null)archive.Reset();if(clip!=null)clip.Reset();if(ending!=null)ending.Cancel();
             board.MovieFrame=null;battleMovie.CancelPlayback();battleMovie.Visible=false;shownPending=null;shownGame=null;battleFailure=false;
-            CreateBattleState();
+        }
+        void NewGame() {
+            ClearBattlePresentation();CreateBattleState();
             tabs.SelectedIndex=0;
             UpdateView();
+        }
+        void RequestBattleRestart() {
+            if(disposed||tabs.SelectedIndex!=0||!State.CanRestartBattle)return;
+            Game expected=State;
+            if(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn){State.Paused=true;UpdateView();}
+            var answer=MessageBox.Show(this,"Restart this battle from its original fleet deployment? Your current progress will be cleared.","Restart this battle",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
+            if(!disposed&&answer==DialogResult.Yes)RestartBattleConfirmed(expected);
+            SuppressHeldControls();
+        }
+        bool RestartBattleConfirmed(Game expected) {
+            if(disposed||tabs.SelectedIndex!=0||!object.ReferenceEquals(State,expected)||!State.CanRestartBattle)return false;
+            Game restarted=State.RestartBattle();
+            var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);
+            ClearBattlePresentation();battleMovie.UnloadBattle();State=restarted;State.Message="Battle restarted from its original deployment.";board.Game=State;board.KeyboardCell=new Point(0,0);
+            effectClock.Reset();board.DamageTick=0;visualLast=visualTime.ElapsedMilliseconds;
+            tabs.SelectedIndex=0;UpdateView();board.Focus();SuppressHeldControls();
+            foreach(Keys key in heldKeys)down.Add(key);return true;
         }
         void CreateBattleState(){
             bool legacy=rules.SelectedIndex==1;
@@ -531,6 +554,7 @@ namespace FleetLab {
         }
         void UpdateView() {
             if(disposed)return;
+            restartBattle.Enabled=tabs.SelectedIndex==0&&State.CanRestartBattle;
             bool showPauseActions=tabs.SelectedIndex==0&&State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn);
             pauseActions.SetAvailable(showPauseActions);battleSidebar.RowStyles[3].Height=showPauseActions?76:0;
             battleSidebar.RowStyles[4].Height=showPauseActions?48:92;hint.Height=showPauseActions?44:82;
@@ -553,7 +577,7 @@ namespace FleetLab {
             hint.Text=placement?(State.Rules.FixedY?"Click the lower-left board at each ship's center. Ships follow the original fixed axis. Or use Auto-place, then Start battle.":"Click the lower-left board to place ships. Rotate with R. Or choose Auto-place, then Start battle."):State.Rules.FixedY?"Select a firing ship below or click your ship. Fire on the upper-right board (arrows + Enter). One cell per shot. P pauses; F2 resets.":"Click the upper-right board to fire. Arrows + Enter also work. Each shot ends your turn. P pauses; F2 starts over.";
             if(State.Pending!=null)hint.Text="Firing → travel → damage. Skip stage / Space advances once. P pauses; F2 resets. Movies stay behind the board.";
             else if(State.Phase==Phase.Finished)hint.Text="Watch result sequence (VICTORY/LOSE), or use New battle (F2).";
-            else if(placement&&State.Rules.FixedY)hint.Text+=" Display offers optional battle movies.";
+            else if(placement&&State.Rules.FixedY)hint.Text+=" Options offers optional battle movies.";
             if(showPauseActions)hint.Text="P or Escape resumes. End battle returns to title after confirmation.";
             hint.LinkArea=State.Phase==Phase.Finished?new LinkArea(0,21):new LinkArea(0,0);
             updatingFleet=true;firingFleet.BeginUpdate();firingFleet.Items.Clear();
@@ -1210,6 +1234,18 @@ namespace FleetLab {
             });
             check("Credits skip snapshots advance once and fade indexed colors with native truncation",delegate{
                 foreach(bool paused in new[]{false,true}){NewGame();tabs.SelectedIndex=4;front.FinishReveal();front.Activate(2);prefsPage.FinishReveal();var card=prefsPage.SnapshotIndexed();prefsPage.Activate(10);creditsPage.Begin(card,false,731u);creditsPage.FinishEntry();creditsPage.Advance(100);if(paused)creditsPage.Pause();startupPage.Pause();long ticks=creditsPage.Roll.Ticks;int frame=creditsPage.Movie.Timeline.Frame;var expected=CreditsPresentation.Scale(creditsPage.Movie.IndexedFrame(paused?frame:CreditsPresentation.SkipFrame(frame,creditsPage.Movie.RawFrameCount)));var roll=new CreditsRoll(creditsPage.Roll.Text);roll.Advance((ticks+(paused?0:1))*50);using(var font=new ClassicSpriteFont(Path.Combine(assets,"Graphics"),ClassicPalette.Gameplay(File.ReadAllBytes(Path.Combine(assets,"Graphics","ISLAND.COL"))),true)){foreach(var line in roll.Commands(font))font.RasterInto(expected.Pixels,640,480,line.At.X,line.At.Y,line.Text,4);}creditsPage.BackButton.PerformClick();require(creditsPage.Stage==2&&creditsPage.Roll.Ticks==ticks+(paused?0:1),"Skip/pause text tick");for(int i=0;i<expected.Pixels.Length;i++)require(creditsPage.CurrentIndexed.Pixels[i]==expected.Pixels[i],"Skip final source frame");creditsPage.Advance(320);creditsPage.Pause();startupPage.Pause();require(creditsPage.Factor==32&&creditsPage.CurrentIndexed.Palette[10].R==127,"Indexed fade rounded255half to128");var palette=ClassicPalette.FadeDisplay(expected.Palette,32);for(int i=0;i<256;i++)require(creditsPage.CurrentIndexed.Palette[i]==palette[i],"Indexed exit palette mismatch");}
+            });
+            check("Restart restores the existing battle without consuming the next fresh seed",delegate {
+                rules.SelectedIndex=0;preferences.MovieTurns=true;NewGame();require(!restartBattle.Enabled,"Restart enabled during deployment");auto.PerformClick();start.PerformClick();UpdateView();require(restartBattle.Enabled,"Started battle cannot restart");
+                var previous=State;int nextSeed=seed;Point own=State.Player.Ships[0].Cells[0],enemyCell=State.Enemy.Ships[0].Cells[0];State.SelectShooter(3);State.Fire(enemyCell);UpdateView();var old=State.Pending;State.Paused=true;UpdateView();require(battleMovie.Timeline!=null,"Pending restart fixture missing movie");
+                down.Add(Keys.Enter);require(RestartBattleConfirmed(previous),"Confirmed restart rejected");require(State!=previous&&State.Seed==previous.Seed&&seed==nextSeed&&State.Phase==Phase.PlayerTurn&&!State.Paused&&State.Pending==null&&State.PlayerShooter==1&&firingFleet.SelectedIndex==1,"Restart state/seed/shooter mismatch");
+                require(State.Player.Ships[0].Cells[0]==own&&State.Enemy.Ships[0].Cells[0]==enemyCell&&State.Enemy.Ships[0].Hits==0&&board.KeyboardCell==Point.Empty,"Restart changed deployment or retained damage/cursor");
+                require(board.MovieFrame==null&&!board.CinematicBackdropActive&&battleMovie.Timeline==null&&!battleFailure&&!State.CompleteMovie(old,old.Stage),"Restart retained old playback/token");
+                OnKey(this,new KeyEventArgs(Keys.Enter));require(State.Pending==null&&State.LastPlayerShot==null,"Held confirmation fired after restart");OnKeyUp(new KeyEventArgs(Keys.Enter));
+                var current=State;require(!RestartBattleConfirmed(previous)&&State==current,"Stale confirmation restarted a different battle");down.Remove(Keys.F2);OnKey(this,new KeyEventArgs(Keys.F2));OnKeyUp(new KeyEventArgs(Keys.F2));require(State.Phase==Phase.Placement&&State.Seed==nextSeed&&!restartBattle.Enabled,"F2 fresh battle was replaced by replay");
+            });
+            check("Restart is scoped to the duel and preserves settings",delegate {
+                preferences.MovieTurns=false;NewGame();auto.PerformClick();start.PerformClick();UpdateView();var previous=State;string settings=preferences.Serialize();tabs.SelectedIndex=5;UpdateView();require(!restartBattle.Enabled&&!RestartBattleConfirmed(previous),"Archive restarted a battle without duel context");tabs.SelectedIndex=0;State.Phase=Phase.Finished;UpdateView();require(restartBattle.Enabled&&RestartBattleConfirmed(previous)&&State.Phase==Phase.PlayerTurn&&preferences.Serialize()==settings,"Finished replay changed settings or lost starting fleet");
             });
             results.Add("UI checks passed="+(results.Count-failed)+" failed="+failed);
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");

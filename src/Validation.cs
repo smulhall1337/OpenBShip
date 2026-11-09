@@ -1100,6 +1100,28 @@ namespace FleetLab {
                     Require(found,"Anchor does not meet the original board border");
                 }
             });
+            check("Battle restart restores manual deployment and all isolated histories",delegate {
+                foreach(var profile in new[]{RuleProfile.Recovered,RuleProfile.Legacy})foreach(bool cinematic in new[]{false,true}) {
+                    var g=new Game(731,profile,profile.FixedY?OpponentKind.Original:OpponentKind.Prototype,0,cinematic);
+                    Require(!g.CanRestartBattle&&g.RestartBattle()==null,"Deployment was restartable");
+                    g.AutoPlace();g.AutoPlace();g.AutoPlace();
+                    if(profile.FixedY){Point before=g.Player.Ships[0].Cells[0];bool moved=false;for(int x=0;x<10&&!moved;x++)for(int y=0;y<10&&!moved;y++)if(g.MovePlacedShip(0,new Point(x,y))&&g.Player.Ships[0].Cells[0]!=before)moved=true;Require(moved,"Manual deployment fixture did not move");}
+                    Require(g.Start()&&g.CanRestartBattle,"Start snapshot missing");string start=RestartBoardKey(g);int calls=g.PlacementCalls;uint state=g.PlacementState;
+                    string history=RestartHistory(g,16);g.Paused=true;string old=RestartBoardKey(g);Game replay=g.RestartBattle();
+                    Require(replay!=g&&replay.Seed==731&&replay.Rules==profile&&replay.Opponent==g.Opponent&&replay.OpponentLevel==0&&replay.MovieTurns==g.MovieTurns,"Restart configuration");
+                    Require(replay.Phase==Phase.PlayerTurn&&!replay.Paused&&replay.Turn==1&&replay.Pending==null&&replay.LastPlayerShot==null&&replay.LastEnemyShot==null,"Restart retained battle progress");
+                    Require(RestartBoardKey(replay)==start&&RestartBoardKey(g)==old&&replay.PlacementCalls==calls&&replay.PlacementState==state,"Initial fleet/RNG snapshot changed");
+                    Require(!object.ReferenceEquals(g.Player,replay.Player)&&!object.ReferenceEquals(g.Enemy.Ships[0].Cells,replay.Enemy.Ships[0].Cells),"Restart shares mutable board data");
+                    Require(RestartHistory(replay,16)==history,"Restart random/presentation/target history differs");
+                    var again=replay.RestartBattle();Require(RestartBoardKey(again)==start&&RestartHistory(again,16)==history,"Second attempt mutated its starting snapshot");
+                }
+            });
+            check("Battle restart detaches old pending shots and preserves finished snapshots",delegate {
+                var g=new Game(-2147483648,RuleProfile.Recovered,OpponentKind.Prototype,0,true);g.AutoPlace();g.Start();string start=RestartBoardKey(g);g.SelectShooter(3);Require(g.Fire(g.Enemy.Ships[0].Cells[0]),"Pending fixture");var old=g.Pending;g.Paused=true;
+                var replay=g.RestartBattle();Require(RestartBoardKey(replay)==start&&replay.PlayerShooter==1&&replay.EnemyShooter==1&&!replay.CompleteMovie(old,old.Stage)&&g.Pending==old&&g.Paused,"Old shot crossed restart boundary");
+                g.Paused=false;DrainMovies(g);Require(RestartBoardKey(replay)==start,"Old game completion changed restarted game");
+                RestartHistory(replay,100);Require(replay.Phase==Phase.Finished,"Finished restart fixture did not end");var finished=replay.RestartBattle();Require(finished.CanRestartBattle&&finished.Phase==Phase.PlayerTurn&&RestartBoardKey(finished)==start,"Finished outcome lost original deployment");
+            });
             foreach(string name in new[] {
                 "KEYCLIK2.WAV","CANNON1.WAV"
             })check("Original PCM fixture "+name,delegate {
@@ -1109,6 +1131,23 @@ namespace FleetLab {
             output.Add("These checks do not establish original gameplay fidelity, audible playback or physical keyboard/focus behavior.");
             File.WriteAllLines(report,output.ToArray());
             return failed==0?0:1;
+        }
+        static string RestartBoardKey(Game game) {
+            var text=new StringBuilder();foreach(Board b in new[]{game.Player,game.Enemy}){foreach(Ship ship in b.Ships){text.Append(ship.Name).Append(':').Append(ship.SourceType).Append(':').Append(ship.Hits).Append(':');foreach(Point p in ship.Cells)text.Append(p.X).Append('/').Append(p.Y).Append(';');text.Append('|');}for(int x=0;x<10;x++)for(int y=0;y<10;y++)text.Append(b.Shots[x,y]?'1':'0');text.AppendLine();}return text.ToString();
+        }
+        static string RestartHistory(Game game,int maximumTurns) {
+            var history=new StringBuilder();for(int turn=0;turn<maximumTurns&&game.Phase!=Phase.Finished;turn++){
+                if(game.Rules.FixedY){int slot=turn%game.Player.Ships.Count;for(int i=0;i<game.Player.Ships.Count&&game.Player.Ships[slot].Sunk;i++)slot=(slot+1)%game.Player.Ships.Count;Require(game.SelectShooter(slot),"Replay shooter choice");}
+                Point cell=new Point(-1,-1);for(int y=0;y<10&&cell.X<0;y++)for(int x=0;x<10&&cell.X<0;x++)if(!game.Enemy.Shots[x,y])cell=new Point(x,y);
+                Require(game.Fire(cell),"Replay player action");RestartMovies(game,history);
+                if(game.Phase==Phase.OpponentTurn){Require(game.AdvanceOpponent(),"Replay opponent action");RestartMovies(game,history);}
+                history.Append(game.Phase).Append('/').Append(game.Turn).Append('/').Append(game.PlayerShooter).Append('/').Append(game.EnemyShooter).AppendLine();
+                if(game.LastEnemyShot!=null)history.Append(game.LastEnemyShot.Description).AppendLine();history.Append(RestartBoardKey(game));
+            }return history.ToString();
+        }
+        static void RestartMovies(Game game,StringBuilder text) {
+            int count=0;while(game.Pending!=null){var p=game.Pending;text.Append(p.Opponent?'E':'P').Append(':').Append(p.Stage).Append(':').Append(p.MovieName).Append(':').Append(p.Firing.WeaponId).AppendLine();Require(game.CompleteMovie(p,p.Stage),"Replay movie completion");if(++count>3)throw new Exception("Replay movie sequence did not end");}
+            if(game.LastPlayerFire!=null)text.Append(game.LastPlayerFire.MovieId).AppendLine();if(game.LastEnemyFire!=null)text.Append(game.LastEnemyFire.MovieId).AppendLine();
         }
         static string WaveInfo(string path) {
             byte[] b=File.ReadAllBytes(path);

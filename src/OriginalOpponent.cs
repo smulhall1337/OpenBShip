@@ -7,6 +7,7 @@ namespace FleetLab {
         public uint State { get; private set; }
         public int Calls { get; private set; }
         public NativeRandom(uint seed) { State=seed; }
+        internal NativeRandom Copy() { return new NativeRandom(State) {Calls=this.Calls}; }
         // Bs.exe 0x439790: exact 32-bit wraparound and 15-bit result.
         public int Next() {
             State=unchecked(State*214013u+2531011u);
