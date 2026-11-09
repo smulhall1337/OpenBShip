@@ -1,6 +1,6 @@
-Current build retention - v0.30 - 2026-11-08
-Retired versions: 22. Kept ten tested builds: Battleship-Lab-v0.21, Battleship-Lab-v0.22, Battleship-Lab-v0.23, Battleship-Lab-v0.24, Battleship-Lab-v0.25, Battleship-Lab-v0.26, Battleship-Lab-v0.27, Battleship-Lab-v0.28, Battleship-Lab-v0.29, Battleship-Lab-v0.30.
-Removed generated package/validation files: 47378; bytes before record preservation: 7701756236.
-Preserved record archive bytes: 71157986; net removed bytes: 7630598250.
-Source/reports/settings are preserved in entry-verified retirement archives. Source snapshots, authoring/Git history, original supplied material and reference baseline remain.
-See Retired-Builds.csv and the six Build-Cleanup batch reports for exact targets and hashes. Historical links to removed compiled packages now refer to retired builds.
+Current build retention - v0.31 - November 8, 2026
+Retired versions: 23. Ten tested builds retained: v0.22 through v0.31.
+Removed generated package/validation files: 50681; bytes before preserving records: 8351890138.
+Preserved record archive bytes: 75327524; net removed bytes: 8276562614.
+Every retirement batch preserves source, reports and settings in entry-verified archives. Originals, reference setup, authoring source, Git history and source checkpoints remain.
+Latest batch: Build-Cleanup-20261108-v031.txt. Detailed identities: Retired-Builds.csv and retirement manifests. Historical compiled-build links can point to retired versions.

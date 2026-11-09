@@ -1,0 +1,1 @@
+PASS actual production form: Firing:BATFIRE2 -> Travel:S_FLY3 -> Feedback:SHELMISC; no skipped/accelerated movies;300ms feedback pause; no new damage; next player turn; clean close. ElapsedMs=9703;seed=7;feedback=80;SILENT=True;deviceStarts=3;ThreadException=0. Synthetic pre-shot board; simulated controls, not physical or audible acceptance.

@@ -1,23 +1,24 @@
-Battleship roadmap - current v0.30 - 2026-11-08
+Battleship roadmap - current v0.31 - 2026-11-08
 
 Current playable milestone: Classic fleet setup/loading/duel, native targeting,
 weapons, HUD/messages and original movies; original title/Preferences/Credits/
 Quit; explicit Hasbro/NMS/English intro replay; result card/movie/fade/title
 handoff; complete137movie archive. Approved30%board-surface transparency,
 P/Escape battle pause, F2 and preserved configuration remain accepted behavior.
-224focused groups and48shutdown cases pass. A complete Master/high-detail
+225focused groups and48shutdown cases pass. At v0.30, a complete Master/high-detail
 production route reaches victory, Watch result, title and confirmed Quit through
 112SILENT buffers without skipped movies. Source/portable/API evidence retains
 its stated limits; audible playback and physical focus/input need user feedback.
 
-Reconstruction checkpoint 40: original opponent, target and phase controller
-match 1,440 bounded cases / 141,960 native draws, with admitted/unavailable travel
-paths and native recursion. Three-process repeatability, eight negative checks
-and unchanged checkpoint39 regression pass. Media/view/impact endpoints remain
-stubs; completion boundaries are harness inputs. See Native-Stage-Order-Findings.txt.
-Next: bounded real impact handling with miss/hit/sink/repeat fixtures and shared
-miss-variant draws. Then player entry, both fleet passes and seed/setup boundaries
-before an optional shared-stream mode. Runtime independent streams remain baseline.
+Reconstruction checkpoint 41: original phase/impact/feedback/sink-cleanup code
+matches 2,496 bounded cases. The v0.30 baseline revealed two repeated-shot routing
+issues; v0.31 matches feedback and random consumption in all cases. A controlled
+production-form repeated-sunk shot completes firing/travel/feedback with no new
+damage and a clean next-turn handoff. See Native-Damage-Order-Findings.txt.
+The comparison enters phase 6 with prepared fleet data; media/message/terminal
+callbacks are stubs. Next, join a valid initialized fleet and shot to the shared
+firing/target/travel prefix, then player entry and both seed/fleet passes before
+an optional shared-stream mode. Keep the independent-stream baseline available.
 
 Reference next: extend the working original main-menu/Quit baseline into one
 repeatable native Classic battle scenario. Modern rebuild checks do not establish

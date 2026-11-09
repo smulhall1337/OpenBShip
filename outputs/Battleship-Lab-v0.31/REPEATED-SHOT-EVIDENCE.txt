@@ -1,0 +1,91 @@
+Original impact and repeated-shot evidence - v0.31 / checkpoint41
+November 8, 2026
+
+Confirmed original code
+Bs.exe SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569,
+PE32/x86 imagebase00400000. New copied spans: impact423FB0..42412E(382bytes,
+13absolute relocations); sink cleanup424130..4241C2(146bytes,3relocations).
+They execute under the already checked phase controller423540(+900bytes,
+40relocations). Original hit419CE0(+1329bytes,22), miss4177A0(+481bytes,21)
+and sink419270(+318bytes,18) selectors and original CRT rand/srand also run.
+Exact span identities are in Evidence/Native-Damage-Order-Provenance.csv.
+
+The impact handler scans six fleet pointers and ship geometry, requires cell2
+for a fresh occupied hit, decrements HP and writes outcome1/2for hit/sink.
+A repeat on a still-active occupied ship returns before feedback/RNG. A sink
+requests its movie, clears the native type and fleet pointer, advances the
+active slot if a survivor exists, and otherwise calls the terminal endpoint.
+On a later shot, the removed ship is absent from the scan: even cell8takes
+the miss path. This is why retained modern ship metadata must check Sunk.
+The miss branch preserves existing nonzero cell markers while requesting feedback.
+
+Source order: HP changes before hit/sink movie request. Cell8is written after
+the request/cleanup returns. Miss marker1is written before miss feedback. The
+probe verifies these callback-time states; the rebuild's logical damage/marker
+commit remains atomic before playback, an existing modern presentation boundary.
+Miss/hit/sink selection parity does not establish original camera or board timing.
+
+Recovered fields / conventions
+Fleet+0kind1; +4viewer index(short); +6owner(short); +0x10six ship pointers;
++0x40X-major10x10int observation cells; +0x1D4active slot(byte). Ship+0type(int),
++6owner(short), +8X(short), +0x0AY-start(short), +0x0Cfleet index(short),
++0x0Elength(short), +0x10remaining HP(short). Target(6,3)uses X number7and
+Y letterD in the game's labels. Diagnostic inspectors were corrected to match
+Shot.Coordinate; raw native coordinates and previous numeric fixtures are unchanged.
+Outcome is5AE67C, captured sunk type5AE678, owner hit flags4E3818/4E381A.
+These addresses apply only to the exact supplied executable identity.
+
+Experiment / independent comparison
+2496bounded cases:4seeds x4levels x5Classic ship types x4weapons x8outcomes,
+excluding64impossible later-surviving-hit fixtures for the2-cell destroyer.
+Outcomes:miss,repeat-miss,first-hit,later-hit,sink,sink-final,repeat-hit,repeat-sunk.
+Weapons14/20/26/29cover guns, two missile families and torpedoes. Phase6and
+synthetic consistent-axis fleet/HP/grid data are supplied by the harness. Original
+phase/impact/selectors/cleanup execute; media/message/terminal callbacks record.
+No original game process, registry, graphics or sound device runs in this probe.
+
+2496native HP/cell/outcome/roster/terminal results and callback ordering agree
+with the independent normalized checks.120actual native miss-variant draws match
+CRT output/state at4177FA(guns)or41787A(torpedoes). Three owned helper processes
+produce identical case/event files. Eight negative checks reject HP/cell/state/
+phase/order/boundary corruption and wrong original/helper identities. The
+checkpoint40phase regression remains unchanged after sharing its copy helper.
+
+Baseline comparison found360v0.30differences:40unnecessary draws on live repeats
+and320suppressed feedback cases on previously sunk cells. This is a bounded
+matrix result, not360observed player failures; reachability of every synthetic
+repeat-live case is not claimed. A legal-axis exhausted-search fixture establishes
+a repeated-sunk shot through the modern opponent and actual production timers.
+v0.31agrees on feedback and random consumption in all2496cases.
+
+New runtime behavior
+ClassicImpact.NeedsRandom now gates on retained ship's live/sunk state and weapon
+family; Game.CompleteMovie uses this single decision. ClassicImpact.Select blocks
+repeat feedback only for surviving ships. No damage is reapplied; feedback follows
+original miss rules for sunk cells. Other streams and accepted controls remain.
+
+Validation
+225focused production groups(137model/format +88real-form)and48shutdown cases pass.
+The new model scenario drives the public opponent/movie actions to a repeated-sunk
+cell, checks the seeded miss variant, no new damage, stale callback rejection,
+pause/resume and next turn. A separate natural real-form run uses actual timers:
+BATFIRE2 ->S_FLY3 ->SHELMISC,9703ms,300msfeedback pause, three SILENT waveOut
+buffers, no skips/accelerated time, no new damage, next player turn and clean close.
+ThreadException count0. Its screenshot is a synthetic diagnostic board, not an
+original capture. Audible/physical/native-live-gameplay acceptance is not inferred.
+Fresh source-only restore matches1485assets/27programs/447evidence files and
+passes the production, native comparison and SILENT device checks. An owned
+no-argument packaged startup reaches its message loop and exits0after WM_CLOSE.
+
+Case hash C42024AE6AB254B4371B116F17179AD9F8253E1FF9640EB0971FFB83E189FEFE.
+Event hash59F5CB9972C811393F8CCD7CB6653EA75214A1BB49541B6F320A21B2816BBEC1.
+Source tools/fixtures are retained; original media is byte-identical to the RIP.
+
+Remaining
+This probe enters phase6; prior firing/target/travel generation and natural
+completion callbacks are not connected to these prepared impact fixtures.
+Terminal endpoint records winner1without running the native game-over lifecycle.
+Message/media/view/camera and animation waits remain bounded or modern. Next:
+connect one valid initialized fleet/shot to the earlier shared-RNG prefix and
+phase probe, then player entry and seed/both fleet passes before any shared-RNG
+mode. Preserve v0.30and the independent-stream comparison build.

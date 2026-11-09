@@ -1,0 +1,23 @@
+v0.31 / checkpoint 41 validation index - November 8, 2026
+
+Frozen executable: outputs/Battleship-Lab-v0.31/BattleshipLab.exe.
+Launcher: outputs/Launch-Reconstruction.cmd.
+Production 137 model/format +88 real-form=225 groups,48shutdown cases:
+package Self-Check.txt, UI-Check.txt, Shutdown-Check.txt.
+Independent original impact cases: package Damage-Check.txt and three
+Evidence/Native-Damage-Order CSVs (2,496 cases /120actual CRT draws).
+v0.30 baseline360differences: outputs/Native-Damage-v030-{Baseline.txt,Differences.csv}.
+Eight negative checks: outputs/Native-Damage-Guards.txt.
+Natural actual-form repeated-sunk shot, three stages /SILENT buffers:
+outputs/Battleship-v031-Natural-Repeat.txt, package Natural-Repeat-Check.txt and
+Repeated-Sunk-Feedback.png (synthetic diagnostic board).
+Fresh source-only restore: work/reconstruction-v31/source-restore.txt;
+1,485Assets /27Programs /447Evidence files byte-match delivery.
+Archive integrity: outputs/Battleship-v031-Archive-Check.txt.
+Relocated production/device checks: outputs/Battleship-v031-Portable-Check.txt.
+Owned no-argument startup/WM_CLOSE: package Owned-Launch-Check.txt.
+Original reference and old frozen-build integrity: work/reconstruction-v31/history-integrity.txt.
+Frozen hashes: work/reconstruction-v31/delivered-hashes.json.
+Detailed reconstruction/modern boundaries: outputs/Native-Damage-Order-Findings.txt.
+Checkpoint: work/checkpoint-41-handoff.txt. Source archive/hash: Source-Checkpoint-41.txt.
+Physical/audible/native-live-gameplay acceptance is separate; no push is requested.

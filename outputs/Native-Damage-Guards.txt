@@ -1,0 +1,9 @@
+PASS comparison rejects altered-HP.
+PASS comparison rejects altered-state.
+PASS comparison rejects missing-final-boundary.
+PASS comparison rejects altered-cell.
+PASS comparison rejects altered-final-phase.
+PASS comparison rejects premature-impact.
+PASS wrong original identity rejects before output/helper allocation.
+PASS debugger rejects a non-owned helper path before launching or creating output.
+Eight failure-path checks; no existing game was started, attached to or terminated.

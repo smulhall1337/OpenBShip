@@ -1,0 +1,23 @@
+v0.26 catalog/archive validation
+PASS122model/format +79real-form groups =201focused checks;39shutdown cases.
+Native numerical data:274resource requests,30358decoded frames,274independent
+first-frame cases,2050declared cues across274low/high sequence cases. Fixtures
+are grouped numerical sweeps, not separate gameplay scenario totals.
+Model checks compare every frame/offset/payload, table identity/ID/path boundaries,
+source sequence identities/onsets/failure handles and missing-file mix samples.
+Real-form checks cover archive selection/playback, both sizes, quality/frame
+retention, shared volume/mute, warning persistence/clear, focus/tab/F2, paused
+battle ownership and incomplete-source Credits progression/return/unload.
+Shutdown cases include active/paused/partial archive, incomplete Credits and
+actual SILENT waveOut buffers. The incomplete archive movie naturally completes
+its20fps finite buffer after pause/resume while preserving the cue warning.
+No audible-output or physical-controller confirmation is inferred.
+Normal/minimum archive and deterministic Credits previews visually inspected.
+Fresh source restore, archive integrity and relocated results are recorded
+separately before the default launcher is promoted. Historical v0.25natural
+duels remain relevant to the unchanged Classic simulation; its extended level1
+run timed out and level2was not reached. No new full difficulty-matrix claim.
+
+PASS fresh source-only restoration:1439Assets/23Programs/385Evidence files
+byte-match.383native-derived files regenerated,2modern palette inputs retained.
+PASS actual SILENT device check and owned no-argument startup/WM_CLOSE exit0.

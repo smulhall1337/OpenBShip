@@ -4,7 +4,7 @@ param(
  [switch]$AudioDeviceCheck
 )
 $ErrorActionPreference='Stop'
-$package=Join-Path $PSScriptRoot 'outputs\Battleship-Lab-v0.30'
+$package=Join-Path $PSScriptRoot 'outputs\Battleship-Lab-v0.31'
 $original=(Resolve-Path -LiteralPath $OriginalRoot).Path
 $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 if(!(Test-Path -LiteralPath $compiler)){throw 'The existing Windows .NET Framework compiler is required.'}
@@ -36,6 +36,8 @@ $tools=Join-Path $package 'Tools';$evidence=Join-Path $package 'Evidence';$exe=J
 & (Join-Path $tools 'Extract-QuitEvidence.ps1') -Executable $exe -Destination $evidence -ProgramsDirectory (Join-Path $package 'Programs') | Out-Null
 & (Join-Path $tools 'Extract-StartupEvidence.ps1') -Executable $exe -Destination $evidence -ProgramsDirectory (Join-Path $package 'Programs') | Out-Null
 if($WithChecks){
+ & (Join-Path $tools 'Extract-DamageOrderEvidence.ps1') -Executable $exe -Destination $evidence | Out-Null
+ if($LASTEXITCODE -ne 0){throw 'Damage-order evidence extraction failed.'}
  $exe=Join-Path $original 'Bs.exe';$graphics=Join-Path $original 'GRAPHICS';$evidence=Join-Path $package 'Evidence';$tools=Join-Path $package 'Tools'
  foreach($name in @('Extract-ClassicEvidence.ps1','Extract-ClassicOpponent.ps1','Extract-ClassicDisplay.ps1','Extract-ClassicWeapons.ps1','Extract-ClassicPat.ps1','Extract-ClassicSound.ps1','Extract-ClassicShot.ps1','Extract-ClassicImpact.ps1','Extract-ClassicLifecycle.ps1','Extract-ClassicHud.ps1','Extract-ClassicInput.ps1','Extract-CreditsSeamEvidence.ps1','Extract-ResultSeamEvidence.ps1','Extract-PlacementEvidence.ps1','Extract-NavigationEvidence.ps1','Extract-EndingEvidence.ps1')){& (Join-Path $tools $name) -Executable $exe -Destination $evidence | Out-Null}
  & (Join-Path $tools 'Extract-ClassicPresentation.ps1') -Executable $exe -Graphics $graphics -Destination $evidence | Out-Null
@@ -87,17 +89,8 @@ if($WithChecks){
  & (Join-Path $tools 'ClassicImpactOracle.exe') $exe $evidence;if($LASTEXITCODE -ne 0){throw 'Impact selector oracle failed'}
 }
 & (Join-Path $package 'Build.cmd');if($LASTEXITCODE -ne 0){throw 'Game build failed'}
-if($WithChecks){& (Join-Path $package 'Verify.cmd');if($LASTEXITCODE -ne 0){throw 'Validation failed'}}
+if($WithChecks){
+ & (Join-Path $tools 'Extract-DamageOrderEvidence.ps1') -Executable $exe -Destination $evidence | Out-Null
+ if($LASTEXITCODE -ne 0){throw 'Damage-order evidence extraction failed.'}& (Join-Path $package 'Verify.cmd');if($LASTEXITCODE -ne 0){throw 'Validation failed'}}
 if($AudioDeviceCheck){$process=Start-Process -FilePath (Join-Path $package 'BattleshipLab.exe') -ArgumentList '--audio-check',('"'+(Join-Path $package 'Audio-Device-Check.txt')+'"') -WindowStyle Hidden -Wait -PassThru;if($process.ExitCode -ne 0){throw 'Silent device check failed'}}
 "Ready: $package\BattleshipLab.exe"
-
-
-
-
-
-
-
-
-
-
-

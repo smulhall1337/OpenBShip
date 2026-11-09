@@ -1,0 +1,75 @@
+Checkpoint 41 handoff - v0.31 - November 8, 2026
+
+Read outputs/Current-Status.txt and Native-Damage-Order-Findings.txt. This is a
+runtime milestone: native evidence found two repeated-shot differences in v0.30;
+v0.31 fixes the narrow feedback/random gates while preserving board metadata,
+HP, accepted streams, settings and all controls. Default launcher points to v0.31
+once relocated validation completes; v0.30 stays available.
+
+Native slice: original phase6 ->423FB0..42412E impact (13 relocations),
+424130..4241C2 cleanup (3), existing hit419CE0/miss4177A0/sink419270 selectors
+(22/21/18), original CRT rand/srand. ClassicDamageOrderOracle derives from the
+shared stage/target copy utilities. Source SHA remains B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Phase copying is protected for reuse; checkpoint40's 1440-case regression retains
+its exact trace hashes. All new root probe scripts use fresh owned directories.
+No original game process, graphics/registry or source material was modified.
+
+2,496 cases = 4 seeds x4 levels x5 ship types x4 weapons x8 outcomes, less64
+impossible later-surviving hits on two-cell destroyers. Source damage, grid and
+roster fields are documented in the evidence report. Callback-time HP/cell/order
+are checked; miss marker precedes feedback, hit marker8 follows movie/cleanup.
+120 native miss-variant draws agree. Three helper processes reproduce identical
+case/events; 8 negative checks pass. Original terminal routine is a winner-recording
+stub, not completed game-over behavior. Initial phase6/ships/grid are fixtures.
+
+Baseline delta: 40 live-repeat rows consume an unnecessary draw, 320 repeated-sunk
+rows suppress feedback (360 total). The native sink clears the record/pointer,
+so a later shot at its cell takes the miss branch. The modern board retains ships
+for roster/observations; ClassicImpact.Select must suppress repeats only when
+ship!=null && !ship.Sunk. NeedsRandom now takes setting/shot/ship/weapon and applies
+the same live-repeat gate. Game.CompleteMovie uses this unified decision. The
+new production model test exercises public opponent/movie actions through a
+repeated-sunk target, exact first miss variant, pause and next-turn handoff.
+
+Production:137model+88real-form=225groups,48shutdown cases. Separate DamageCheck
+compares all2496cases. Controlled natural form run: BATFIRE2 ->S_FLY3 ->SHELMISC,
+9703ms,300msfeedback pause,3SILENT buffers,no new damage,next player turn,close0,
+ThreadException0. Screenshot is synthetic diagnostic board, not original capture.
+Inspect-Native-Impact.cmd only reads fixtures. Earlier target/stage inspectors
+now display the game convention: Y letter / X number; arrays stay X-major.
+
+Source restore:1485Assets/27Programs/447Evidence byte-match. New damage fixture
+extractor rebuilds three CSVs via an owned bounded helper. Build.cmd compiles
+DamageCheck.exe; Verify.cmd includes it. All49authoring C# files match frozen source.
+New optional natural shot helper/scripts are in package Tools and root analysis.
+Owned no-argument production launch reaches form and exits0 on WM_CLOSE. ZIP
+manifest2315records/2316entries passes independent archive checking. Relocated
+checks are recorded under outputs/Battleship-v031-Portable-Check.txt.
+
+EXE SHA256 0D12C9C5BD5EF2BE9ACC0B90EDBB120185C7AAB7AD93D09972451310FDC54A86.
+ZIP SHA256 131C9FECED66A5E25F94A2B4581907E28E0944FE8D5281079D9C1B88A9215AF2.
+Native case C42024AE6AB254B4371B116F17179AD9F8253E1FF9640EB0971FFB83E189FEFE.
+Native events59F5CB9972C811393F8CCD7CB6653EA75214A1BB49541B6F320A21B2816BBEC1.
+
+Final native runs:work/native-damage-order-41-{baseline,final,guards}; baseline
+has the360difference CSV, final strict comparison has none. Source restoration:
+work/source-restore-v31. Controlled natural report/image:
+work/natural-v31-repeated-shot-final/Report. Frozen archive and identities:
+work/reconstruction-v31/delivered-hashes.json. Do not edit frozen package.
+
+Retention:10tested builds22..31. Retired21after verifying970source/report/settings
+records, archiveFF02F0E4F1E97B6C0A1C9195B981DBDB1F9145BB1DEBF83674D7A1426B3B5180.
+23retired versions total; net8,276,562,614bytes removed across batches. Originals,
+reference, authoring/source snapshots and Git history retained. No user game killed.
+
+Next experiment: combine prepared valid fleet/impact with checkpoint40's native
+opponent/firing/target/travel shared-CRT prefix. Do not plant contradictory HP/grid
+after selection and claim original initialization. Then recover actual player entry,
+seed boundary and both fleet passes before adding any shared-RNG gameplay mode.
+Native original reference is only main menu/Quit; broad lifecycle, physical input,
+audible playback, campaigns/network/tutorials/radar/controllers remain incomplete.
+SG-01 AI upscale is backlog. Do not run supplied START THE GAME.bat (kills Explorer).
+
+Automatically commit each completed tested checkpoint locally per user instruction
+in AGENTS.md. The generic helper records commit in ignored outputs/Git-Checkpoint.txt.
+Source checkpoint41 independently preserves this milestone. No push/publication.

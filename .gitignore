@@ -78,6 +78,7 @@ work/analysis-tools/*
 !outputs/Native-Target-Order-Provenance.csv
 !outputs/Native-Stage-Order-Cases.csv
 !outputs/Native-Stage-Order-Provenance.csv
+!outputs/Native-Damage-v030-Differences.csv
 !outputs/Retired-Build-Records-Manifest-*.csv
 !outputs/Battleship-Lab-v*/Programs/CreditsMovies-Provenance.csv
 !outputs/Battleship-Lab-v*/Programs/Quit-Provenance.csv

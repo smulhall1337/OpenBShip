@@ -19,7 +19,7 @@ class ClassicStageOrderOracle : ClassicTargetOrderOracle {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Movie(int id, IntPtr owner);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int View(int id);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void Impact(int weapon, IntPtr shooter, IntPtr fleet, int x, int y);
-    void CopyPhase() {
+    protected void CopyPhase() {
         byte[] bytes = Read(0x423540, 0x384); int changes = 0;
         var globals = new HashSet<uint>(new uint[] { 0x4fb6ec, 0x4e41ec, 0x4e41ee, 0x4b4794, 0x4fb6f4, 0x4ae818, 0x4ae81a, 0x4fbc4c, 0x4e375c, 0x4e3818, 0x4e381a, 0x4e42d0, 0x4238a4 });
         for (int at = 0; at <= bytes.Length - 4; at++) {

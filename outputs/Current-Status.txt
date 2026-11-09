@@ -1,44 +1,54 @@
-Battleship current status - checkpoint 40 - November 8, 2026
-Playable build: v0.30. New work: bounded native shot-stage order.
+Battleship current status - v0.31 / checkpoint 41 - November 8, 2026
 
-Run outputs/Launch-Reconstruction.cmd. The accepted Classic setup/loading/battle,
-intro replay, Credits, Quit and result movies remain available. Movies stay behind
-the board with approved 30% surface transparency and opaque ships/grid/markers/HUD.
-P/Escape pauses battle; F2 resets. No runtime source or settings changed here.
+Launch outputs/Launch-Reconstruction.cmd. v0.31 corrects repeated-shot feedback:
+a repeated shot at a sunk ship receives the original miss movie without new
+damage; a repeat on a surviving ship consumes no feedback random draw. HP,
+target/firing/travel streams, controls and accepted configuration are preserved.
+v0.30 remains available for comparison.
 
-Checkpoint 40 connects the real original phase controller to checkpoint 39's
-opponent firing/target/shared-CRT probe. All 1,440 bounded numerical cases match:
-720 admitted-travel and 720 unavailable-travel paths. Every one of 141,960 native
-draws/states agrees, including 720 gun-travel draws after target selection.
-Phase/side order, one impact endpoint, arguments, view requests and side-specific
-sentinel match. Unavailable travel recursively reaches impact before the current
-completion call returns. Admitted travel waits for the next supplied completion.
+Evidence: Native-Damage-Order-Findings.txt. Original phase, impact, feedback and
+sink-cleanup code executes in a source-identity-locked numerical helper. All
+2,496 bounded cases agree with v0.31; the v0.30 baseline has 360 differences in
+this matrix. The 120 actual miss-variant draws, HP/cell changes, roster removal,
+terminal endpoint and callback ordering are checked. Three helper processes
+produce identical traces; eight failure-path checks pass. These are numerical
+fixtures, not 2,496 played games or evidence of the full native lifecycle.
 
-Review: outputs/Inspect-Native-Stage-Order.cmd.
-Evidence, exact identities, reproduction and limits:
-outputs/Native-Stage-Order-Findings.txt.
-Media, view and impact endpoints remain stubs; completion boundaries, grid and
-shooter are harness inputs. No frame clock, actual damage, complete native turn,
-initialization or fleet generation is established. Runtime streams remain separate.
+Production checks: 137 model/format + 88 real-form = 225 focused groups, plus
+48 shutdown cases. A controlled production-form shot plays BATFIRE2 -> S_FLY3
+-> SHELMISC naturally in 9,703 ms, with a 300 ms feedback pause, no new damage,
+next-player handoff and clean close. Three SILENT waveOut buffers were used.
+Audible/physical input acceptance is not inferred. Owned no-argument startup
+also reaches the form and exits 0 after WM_CLOSE.
 
-Three stage helper processes produced identical traces. Eight failure-path checks
-pass. Checkpoint 39's 720-case regression retains exact hashes. Both actual review
-launchers now pass their console smoke checks; a trailing-backslash quoting bug
-was corrected. No original game process was started or existing game terminated.
-These research checks are separate from production/gameplay checks.
+Fresh source restore matches 1,485 assets, 27 programs and 447 evidence files;
+445 native-derived outputs regenerated, two modern palette observations retained.
+All 49 authored C# files match frozen package source. Archive integrity passes
+2,315 manifest records / 2,316 ZIP entries. Final relocated-package validation
+is recorded separately in Battleship-v031-Portable-Check.txt.
 
-Frozen v0.30 validation remains 224 focused groups and 48 shutdown cases. Its
-source-only restore, portable checks and complete Master/high-detail route through
-victory, Watch result, title and Quit passed at checkpoint 38. Executable and ZIP
-identities remain unchanged. Audible output and physical controls/focus still need
-hands-on checks. Original reference acceptance is main menu and clean Quit only.
-Campaign, network, tutorials, radar, controllers and full lifecycle remain incomplete.
-Optional AI upscale remains SG-01 backlog. Ten builds v0.21..v0.30 remain available.
+Classic setup/loading/battle, original intro/Preferences/Credits/Quit/results
+and the 137-movie archive remain. P/Escape pauses; F2 resets; mouse/arrows+Enter
+target; Space/Skip advances a stage. Movies remain behind the board, surfaces
+30% transparent during cinematics, with ships/grid/markers/HUD opaque.
+Diagnostic coordinate labels now match game Y-letter/X-number conventions.
+Review source behavior with outputs/Inspect-Native-Impact.cmd.
 
-Automatic local commits are required at each tested checkpoint by user preference
-in AGENTS.md. Commit identity: ignored outputs/Git-Checkpoint.txt. Source archive
-and hash: outputs/Source-Checkpoint-40.txt. No push or publication is requested.
+Native damage fixtures start at phase 6 with prepared data; firing/target/travel
+initialization and actual decoder-completion callbacks are outside that test.
+Media/message/terminal endpoints are stubs. The game deliberately keeps separate
+RNG streams. Campaign/network/tutorials/radar/controllers and full lifecycle
+remain incomplete. Original reference acceptance is main menu plus clean Quit.
+AI upscale remains SG-01 backlog, with no models or processing added.
 
-Next: replace the impact stub with bounded real miss/hit/sink/repeat handling,
-using existing source spans/selectors; preserve explicit animation/terminal limits.
-Player-side entry and seed/setup/both fleet passes remain before a shared-RNG mode.
+Ten tested builds v0.22..v0.31 are retained. v0.21 source/reports/settings were
+archived and entry-verified before generated copies retired; 23 older versions
+are now retired. Originals, reference, authoring source and Git history remain.
+Latest source archive/hash record: Source-Checkpoint-41.txt. Automatic local
+commits are required by AGENTS.md; commit ID is in ignored Git-Checkpoint.txt.
+No push or publication is requested.
+
+Next: join a valid initialized fleet and impact to the earlier shared-RNG prefix,
+then player-side entry and seed/both fleet passes before any shared-stream mode.
+Next hands-on check: use v0.31 for a normal Classic battle and Watch result/Quit;
+audio and physical controls still need that confirmation.

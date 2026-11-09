@@ -1,52 +1,44 @@
-Battleship reconstruction - playable v0.30 / evidence checkpoint 40
+Battleship reconstruction - playable v0.31 / checkpoint 41
 
-Run outputs/Launch-Reconstruction.cmd. Detailed scope, evidence and pending
-hands-on checks: outputs/Current-Status.txt. Source and controls are packaged
-under outputs/Battleship-Lab-v0.30. This is a runnable partial reconstruction.
+Run outputs/Launch-Reconstruction.cmd. This is a runnable partial rebuild for
+modern Windows x64 using the existing .NET Framework, WinForms, GDI+ and WinMM.
+Build.cmd and Verify.cmd are in outputs/Battleship-Lab-v0.31.
 
-Playable Classic route: Original menu > Solo > Classic > Start Game > Fleet
-Configuration > Start Game > loading > battle. Direct Auto-place/Start works.
-P/Escape pauses battle; F2 resets. Cinematics remain behind the board, with the
-approved30%surface transparency and opaque ships/grid/markers/HUD.
+New: repeated shots at sunk-ship cells now receive the original miss feedback
+without new damage. Repeated hits on surviving ships consume no feedback random
+draw. Evidence comes from executing the original phase, impact, feedback and
+sink-cleanup code in owned numerical helpers. The playable v0.30 remains available.
 
-Original menu > Replay intro plays the Hasbro/NMS/English startup sequence.
-Preferences > Credits and the137movie archive expose the original media.
-Original Quit shows its native artwork/default Back and closes after its fade.
-Watch result after victory/defeat uses confirmed frame0/EOF/skip/fade behavior.
-Source identities, formats, confidence and intentional modern differences are
-documented in STARTUP-EVIDENCE.txt and ENDING-SEAMS-EVIDENCE.txt in the package.
+Classic route: Original menu > Solo > Classic > Start Game > Fleet Configuration
+> Start Game > loading > battle. Auto-place and Start also work directly. P/Escape
+pauses, F2 resets, mouse/arrows+Enter targets, Space/Skip advances a movie stage.
+Movies stay behind the board with approved 30% surface transparency; ships, grid,
+markers and HUD remain opaque. Existing settings and bindings are preserved.
+Original intro replay, Preferences/Credits, Quit, result movies and the 137-movie
+archive remain. Source evidence and deliberate modern choices are documented.
 
-Validation:136model/format +88real-form=224focused groups;48shutdown cases.
-Master/high-detail full Classic -> victory -> Watch result -> title -> Quit
-passes through production timers without movie skips:19shots/111battle stages,
-112SILENT audio buffers,485seconds and maximum51GDI handles. Four additional
-natural result runs cover both outcomes muted and with SILENT waveOut. These
-checks establish API/behavior, not audible or physical-input acceptance.
-Fresh source restoration matches1485Assets/27Programs/444Evidence files.
+Current production checks: 137 model/format + 88 real-form = 225 focused groups,
+plus 48 shutdown cases. The separate damage comparison matches 2,496 bounded
+native cases. A controlled shot plays firing/travel/feedback through production
+timers and SILENT device buffers, pauses, ends its turn and closes cleanly.
+These checks do not establish audible output, physical input or full native play.
+Read outputs/Current-Status.txt and Native-Damage-Order-Findings.txt for scope.
 
-Build.cmd/Verify.cmd use the existing Windows .NET Framework compiler and x64
-WinForms/GDI+/WinMM. The modern runtime needs no mount/registry/original EXE.
-Source-only restore, with the exact supplied RIP:
+Fresh source-only restore, with the exact supplied RIP:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Restore-Workspace.ps1 -OriginalRoot "<supplied RIP root>" -WithChecks -AudioDeviceCheck
+The modern game requires no original EXE, mount or registry configuration to run.
+Research tools require the exact supplied Bs.exe. Source checkpoint/hash record:
+outputs/Source-Checkpoint-41.txt. Original game media is excluded from source ZIPs.
 
-Evidence checkpoint 40 adds a runnable bounded opponent/target/phase probe:
-1,440 cases match the original firing, target and travel sequence, including
-unavailable-media recursion. Review outputs/Inspect-Native-Stage-Order.cmd;
-reproduction and limits: outputs/Native-Stage-Order-Findings.txt. The playable
-v0.30 streams are unchanged. The earlier target inspector is also retained.
+Per user instruction, automatically commit each completed tested checkpoint locally.
+AGENTS.md records the policy. Complete-Git-Checkpoint.ps1 accepts -Message and
+records commit identity in ignored outputs/Git-Checkpoint.txt. No push is requested.
 
-Source checkpoint 40 ZIP/hash record: outputs/Source-Checkpoint-40.txt.
-Per user instruction, automatically make a local Git commit after each completed,
-tested checkpoint. AGENTS.md records this preference; Complete-Git-Checkpoint.ps1
-accepts -Message and writes commit identity to outputs/Git-Checkpoint.txt.
-No remote, publication or upload is performed by this project workflow.
+Ten tested builds are retained, v0.22 through v0.31. Older generated copies retire
+after verified source/report/settings archival. Original material, reference setup,
+authoring/Git history and source snapshots remain. See Build-Cleanup-Summary.txt.
 
-Ten recent tested builds are retained. Older generated packages and validation
-copies retire after verified source/report/settings archival. Supplied material,
-original reference, authoring/Git history and source checkpoints remain intact.
-The ledger is outputs/Retired-Builds.csv; Build-Cleanup-Summary.txt is current.
-
-Remaining: native live-gameplay reference, campaign/network/tutorials/radar,
-controllers and full native lifecycle/RNG schedule. Source reference acceptance
-is menu plus clean Quit only. Optional AI movie upscale remains SG-01backlog;
-no models or processing run. outputs/Project-Roadmap.txt records next steps.
+Still incomplete: original live-gameplay reference, complete lifecycle and shared
+RNG schedule, campaign/network/tutorials/radar, controllers and save formats.
+Original reference acceptance is main menu and clean Quit only. AI movie upscale
+remains stretch goal SG-01; no model download or processing has occurred.
