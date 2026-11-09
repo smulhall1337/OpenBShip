@@ -1,0 +1,5 @@
+﻿PASS 1212 working manifest files and 1213 ZIP entries, including the manifest, match SHA256 and byte lengths.
+No unexpected/duplicate entries or user settings; frozen production executable matches validated hash.
+Archive: C:\Users\Sean\Documents\Codex\2026-11-06\yes\outputs\Battleship-Lab-v0.24.zip
+ZIP SHA256: 7BFA4A637EC5A28944B69796BB3ED78C8190CFE9B647F0B0E19824B1E3B411ED
+EXE SHA256: 595446698BA4DAE558022E692A4B6B8BC3E5017ABA4CCA7938443433A0A5A342

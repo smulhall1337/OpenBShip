@@ -1,0 +1,70 @@
+Checkpoint34 - full137Credits movies / archive / reported audio gaps / build retention
+
+Battleship current status - checkpoint34 - v0.26 - 2026-11-08
+
+Launch outputs\Launch-Reconstruction.cmd. New: Movie archive selects and plays
+all137original Credits movies at20fps with pause/restart/frame stepping. The
+original Preferences > Credits now chooses among the complete source catalog
+using the recovered native random rule. Low/high movies retain native160x120/
+320x240decoded geometry. Combat remains25fps in its separate view.
+
+Source ISL_DSHS lacks SHELIN_A/FIRE45F/EXP01/EXP02WAV files in RIP, extracted
+and mounted media. The runtime names the gap and retains other effects at their
+source queue offsets(32/36/44/66). No replacement audio copied or synthesized.
+Warnings persist across playback/gain/pause/restart, then clear on healthy media.
+
+Playable Classic route: Original menu > Solo > Classic > Start Game > Fleet
+Configuration > Start Game > loading > battle. Direct Auto-place/Start also
+works. Native fixed-axis fleet generation/targeting/weapon selection, HUD,
+messages and hit/miss/sink movies remain within their documented scopes.
+P/Escape battle pause; confirmed End battle returns to title; F2 resets.
+Movies remain behind board surfaces at approved30%transparency. Ships/grid/
+markers/HUD/text stay opaque. Preferences Save persists, Back keeps session
+changes; quality/difficulty lock in active battle; volume0is silent, Sound
+separate. Archive/Credits pause and preserve a pending battle; global F2 resets.
+
+Validation:122model/format +79real-form groups=201;39shutdown cases. Native
+fixtures compare274resource requests,30358decoded frames,274independent first
+frames and2050declared cues across274scene/detail cases. These are grouped
+numerical sweeps, not gameplay scenario totals. Real-form checks cover playback,
+quality/volume/mute, warning lifetime, focus/tab/F2 and shutdown. Actual SILENT
+waveOut completes the incomplete-source20fps movie after pause/resume.
+Fresh source-only restoration matches1439Assets/23Programs/385Evidence files;
+383native-derived outputs regenerated with2modern palette observations retained.
+Normal/minimum archive and deterministic Credits previews visually inspected.
+Archive/relocated records: outputs/Battleship-v026-{Archive,Portable}-Check.txt.
+Frozen identities: work/reconstruction-v26/delivered-hashes.json.
+Source backup34and its hash record are in outputs/Source-Checkpoint-34.txt.
+
+User requested retirement beyond ten recent tested builds. Older package ZIPs,
+compiled folders and disposable validation copies are removed after archival
+and integrity checks. Source/reports/settings are preserved in retirement
+archives; original supplied material/reference and authoring/Git history remain.
+Current retention ledger: outputs/Retired-Builds.csv. Completed reports:
+outputs/Build-Cleanup-20261108.txt and Build-Cleanup-20261108-v026.txt.
+
+Partial rebuild: campaign/network/tutorials/radar/physical controllers and full
+native lifecycle remain absent. RNG choice rules are reconstructed but streams
+remain independent modern streams; original whole-session schedule is unknown.
+Fades, GDI+display scaling, finite completion/clear seams and audio gap policy
+retain explicit modern boundaries. Audible playback/physical focus need user
+checks. Native reference accepted only through main menu and clean Quit.
+Optional AI upscale remains SG-01backlog; no AI models or processing installed.
+Historical v0.25natural Master/high and novice/low duels passed; extended level1
+timed out and level2was not reached. No full difficulty-matrix claim.
+
+Git has an earlier local commit; current changes are uncommitted because this
+agent has read-only .git access. Complete-Git-Checkpoint.cmd is prepared for a
+local source commit using per-command exact-path trust. No remote/upload.
+
+Next reconstruction slice: verify exact Credits completion/clear/palette seams
+against the bounded native dispatcher, preserving accepted input/board behavior.
+Next hands-on check: Movie archive select/play; Preferences > Credits; verify
+audible surviving effects and clean Quit. No physical acceptance inferred.
+
+ZIP SHA256 3A7B5AAEE9D3AE882DD3B409DED86275DC0F36BB1A29D46218FAAC5A5A4DB252
+EXE SHA256 E711205FA56193966F0F374196BAC53384EDFE776BBE41B4A74CE95D8F98B1EC
+2151ZIPentries verified; source-only and relocated201/39/SILENT passed.
+Ten tested builds retained;18older versions and validation copies retired.
+Source/reports/settings preserved in two entry-verified retirement archives.
+Source checkpoint34record: outputs/Source-Checkpoint-34.txt.

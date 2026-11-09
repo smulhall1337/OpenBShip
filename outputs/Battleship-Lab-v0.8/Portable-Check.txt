@@ -1,6 +1,0 @@
-PASS extracted portable ZIP: 414 manifest entries matched.
-PASS relocated x64 app: 55 focused checks and 19 real-form checks, exit 0.
-PASS relocated actual x64 waveOut device lifecycle check with SILENT samples, exit 0.
-The decoder/sequence grids, 71 WAV sample counts, finite mixer, library selection and simulated device-clock/mute/seek/failure controls pass after relocation.
-Actual audible output, perceived synchronization and user-desktop physical input remain separate checks.
-Normal no-argument startup/clean close passed separately on the agent desktop. Original registry/media/wrapper and optional x86 tools are not runtime dependencies.

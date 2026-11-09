@@ -1,4 +1,0 @@
-PASS extracted package: 200 manifest files matched.
-PASS relocated x64 executable: 38 focused checks and 9 real-form checks, exit 0.
-PASS native damage resources, live visual timer, display swaps, keyboard routing and preference round-trip after relocation.
-The game uses its bundled assets and managed code; optional numerical oracles, original registry/media and graphics wrapper are not runtime dependencies.

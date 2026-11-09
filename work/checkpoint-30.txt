@@ -1,0 +1,99 @@
+Checkpoint30 - original Preferences / sound level
+
+Battleship current status - checkpoint30 - v0.23 - 2026-11-08
+
+Run outputs\Launch-Reconstruction.cmd; close an older window yourself first.
+New: Original menu > Preferences uses supplied E_PREFS/EO_PREFS artwork and
+native13button geometry. Low/High selects existing movie detail. Novice..Master
+maps recovered Classic targeting (other native AI systems remain incomplete).
+Quality/difficulty lock during active battles. Difficulty resets deployment;
+quality preserves it. Radar is stored; radar views are not rebuilt. Credits
+reports its unsupported boundary, pending the next milestone.
+
+Volume bar and percentage cycling match native controls: left increments5and
+wraps100toOff; right decreases5. Keyboard navigation is added; left/right volume
+clamps.0is deliberately silent. Sound remains a separate mute. Native DirectSound
+cinematic requests4*percent ->40*percent-4000hundredths dB are recovered; native0
+was-40dB. Software gain follows that curve for1..100before final saturation;
+rounding, zero mute and common short-effect control are modern adaptations, not
+bit-identical native mixing. Existing settings migrate at100(unity), preserving
+accepted loudness. Source native factory80is recorded rather than imposed.
+
+Save Settings as Default writes this version's UserData/settings.txt and returns
+to title. Back/Escape retains session changes without writing. Existing toolbar
+settings keep prior save behavior and can also persist current values. Unknown
+keys/bindings survive. Failed Save stays visible and preserves the old file;
+actual file-lock/save/cold-reload checks pass. All controls are keyboard reachable.
+Native movie/turn timing is unchanged; volume changes retain cached pre-clipping
+mixes, video frames and exact audio offsets, including sample1001without rounding.
+KEYCLIK2(22050/16bit) and CANNON1(11025/8bit) rates/metadata are preserved.
+
+Evidence
+Exact Bs.exe B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Preferences script450EC8..451250904bytes SHA256:
+04B5AF428E3B3226AF229882D12AC697B2F8F3383CB46A8300A794220FE37887.
+Bounded reader retains all bytes, rejects altered templates/unsupported variants;
+no general VM claim. PreferencesOracle uses guarded copied code with callbacks
+for original devices/IO/save/polling substituted.1120action,1188pointer,
+263bar,320indexed-composite and101gain cases are grouped numerical fixtures,
+not played games. Raster canaries pass. Native Back/Save reaches full title.
+Source spans, CSVs, curve units/reference and modern boundaries are documented
+in PREFERENCES-EVIDENCE.txt; production never executes Bs.exe.
+
+Validation and delivery
+110model/format +69form groups=179focused checks;28shutdown cases. Real app tests
+cover menu routing, locks, high-detail battle, targeting reset, both window sizes,
+actual pointer messages, keyboard/held edges, stale entry, focus/tab/fade/F2,
+Save/Back/error/cold reload, preserved binding and gain/reload/offset failures.
+SILENT actual waveOut requeue observes attenuated input PCM and preserved device
+position, then closes the active buffer on exit. No audible/physical acceptance
+inferred. Owned final launch/main-form/WM_CLOSE exits0. Both layouts inspected.
+Native helper development fault(executable page27000) and blocking-wait accounting
+were corrected; owned diagnostics exit0. Only that faulted owned helper was
+stopped; no user game/process touched. No game exception/JIT suppression.
+
+Clean source restore passes179/28/SILENT.541original assets+19Programs+
+353Evidence files byte-match (913total),351native-derived files regenerated from
+absence,2modern palette inputs retained. Runtime script exports without -WithChecks.
+Raw:work/reconstruction-v23/restore-validation.log. Frozen/portable records:
+outputs/Battleship-v023-Archive-Check.txt and Battleship-v023-Portable-Check.txt.
+ZIP1184entries/1183manifest files verified SHA256/lengths; settings excluded.
+ZIP SHA256:00EDC3BF1B4A735FD95A144262FD62A671EA7D854826FFE43C1D41632940BAA0.
+EXE SHA256:273AC32787BCCB2801C95F09E230781D86D73376E4ECD76539FF83237B50637E.
+Source:work/reconstruction-v23/src and packaged Source. Source-only backup:
+Battleship-Source-Checkpoint-30.zip / Source-Checkpoint-30.txt. Old builds,
+reference baseline and original material preserved. Simulation/AI core and
+approved30percent cinematic board surfaces/opaque overlays remain unchanged.
+No full natural duel rerun; v0.20's111stage duel remains historical evidence.
+
+Autonomous continuation / next
+User authorized continuation through2026-11-08T08:45:28Z(03:45:28NewYork), stopping
+at a nearby tested checkpoint or an earlier required decision. Keep working;
+work/autonomous-run-20261108.json is the durable allowance/deadline record.
+Next: native Credits from Preferences action10/op41, then original fleet layout
+RNG41B820. Credits text/credits.mf both1814bytes with identical source hash
+E6A8140E616CE97E96DF427D3FFE4AA00F5B8D75CEB8802468867755E26C33A0.
+Source Credits scrolling41state42F4C7..42F60E:50msminimum polls, style4,35rows at
+14px spacing, yoffset-2each tick, lineadvance at-14then0, wrap at native linecount.
+Native text loader430520postread scan4305CB..4305EEneeds bounded fixture before
+choosing linecount (trailing blank handling); native count may be210rather than
+Get-Content211. Direct font427070uses style4spacing and clips; verify independently.
+Original background movie selection is rand()%137+1;402830advances one frame per
+poll. Credits therefore polls background at20fps, not combat25fps. Existing
+61Classic clips are a declared possible subset; do not imply full137selection.
+Static prep stays work/reconstruction-v22/analysis/preferences*.txt and source
+addresses above; new work should be in v0.24, keeping frozenv0.23untouched.
+
+Original live baseline remains mainmenu/clean Quit only. Full mode14lifecycle,
+other modes/campaigns, radar, saves/network/controllers unfinished. AI upscale
+optionalSG-01; no enhancement/model download. Primary Microsoft SetVolume docs
+were consulted read-only for units; no assets uploaded. Git main30264f0471cf64d9208b7b58e957439e08cd99ac
+remains; later changes are working edits, metadata read-only to agent. Source
+backup is not a new Git commit. Prepared completion script updated for179/28.
+PASS relocated179/28/SILENT;1183manifest files/1184ZIP entries checked. Defaultv0.23.
+Next-font correction: FES loads FEFONT.SPH at42EFFA(slot9), not GAMEFONT.SPH.
+FEFONT count565(564glyphs+null); style4height11, fitting14pixel Credits rows.
+FEFONT SHA256:8AC9A62A61EB8C50256491CD40E08129D90A8044F8FF1AE5E9A992CC450B5313.
+Do not reuse the32pixel GAMEFONT pause glyphs for Credits. Both CREDITS.TXT and
+credits.mf are supplied-identical; the latter is existing input, not our change.
+

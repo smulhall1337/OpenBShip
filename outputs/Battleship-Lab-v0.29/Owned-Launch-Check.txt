@@ -1,0 +1,4 @@
+﻿PASS owned packaged no-argument startup reached form/message loop.
+Owned PID 1692 main form found: Battleship Fleet Lab 0.29 — Original startup movie sequence; WM_CLOSE posted=True
+Closed=True, exit=0.
+Only this newly started hidden process was closed; no user game terminated. Physical input/audible playback separate.

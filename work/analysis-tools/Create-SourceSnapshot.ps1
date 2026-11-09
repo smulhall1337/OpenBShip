@@ -8,7 +8,7 @@ Set-Location -LiteralPath $taskWorkspace
 $archive=Join-Path $taskWorkspace "outputs\Battleship-Source-Checkpoint-$Checkpoint.zip"
 $recordRelative="outputs/Source-Checkpoint-$Checkpoint.txt"
 if(Test-Path -LiteralPath $archive){throw 'Source archive exists; retain it and use another checkpoint number.'}
-$paths=@(git ls-files --cached --others --exclude-standard | Where-Object {$_ -ne $recordRelative})
+$paths=@(git ls-files --cached --others --exclude-standard | Where-Object {$_ -ne $recordRelative -and (Test-Path -LiteralPath (Join-Path $taskWorkspace $_) -PathType Leaf)})
 if($LASTEXITCODE -ne 0){throw 'Read-only source inventory failed.'}
 $unexpected=@($paths | Where-Object {$_ -match '(^|/)(\.git|Assets|UserData|reference-[^/]+)/|\.(exe|dll|pdb|zip|iso|png|wav|pat|pal|idx|bin|dmp)$'})
 if($unexpected.Count){throw ('Unexpected media/generated/metadata paths: '+($unexpected -join ', '))}

@@ -1,0 +1,51 @@
+Battleship v0.30 validation index - checkpoint38 - 2026-11-08
+
+Primary Windows x64 package: outputs/Battleship-Lab-v0.30.
+Launch: outputs/Launch-Reconstruction.cmd.
+
+Production checks:136model/format groups +88real-form groups=224focused groups.
+Shutdown:48cases(45owned form states +3component lifecycle cases), no reported
+ThreadException. Reports are Self-Check.txt, UI-Check.txt and Shutdown-Check.txt
+inside the frozen package. Grouped sweeps are not individual played scenarios.
+
+Source-only restoration:1485Assets/27Programs/444Evidence byte-match.442native-
+derived outputs regenerated from absence;2modern palette observation inputs
+retained. The delivered source compiles with the existing .NET Framework compiler.
+Source-Restore-Check.txt records scope and exact fresh destination.
+
+Archive:2297manifest records and2298ZIP entries including the manifest verified
+for size/SHA256; no unexpected/duplicate entries or UserData. Relocated package
+checks also pass with actual SILENT waveOut. External archive/portable reports:
+outputs/Battleship-v030-{Archive,Portable}-Check.txt.
+
+Full Master/high-detail production route: original Solo/Fleet/loading, perfect-
+target scripted duel, victory, Watch result, title and confirmed palette-faded
+Quit.19player shots,111battle movie stages,112SILENT device buffers,485seconds,
+maximum51GDI handles. Pause freezes frame/damage; source message/icon policy is
+checked throughout. No movies/stages skipped or accelerated. Targets use hidden
+board knowledge; this is an explicit diagnostic, not a human gameplay scenario.
+Reports: outputs/Battleship-v030-{Classic-Route,Complete-Route}.txt.
+
+Four natural result runs cover victory/defeat in muted and actual SILENT output
+modes, hold/movie pauses,54source-prefix events, source EOF snapshots and final
+clear. Reports: outputs/Battleship-v030-Natural-Results-{Muted,Silent}.txt.
+Natural full startup completion, pause/settings/focus/tab/reset/disposal remain
+covered in the production checks. Normal/minimum relevant previews and natural
+high-detail battle/result captures were visually inspected. An owned no-argument
+production launch reaches its form and exits0through WM_CLOSE.
+
+Separate research:40bounded shared-CRT weapon/movie probes,80native draws, all
+matching the delivered pair under the same seeds. Native opponent ordering is
+partially confirmed; target/next-stage/media are stubs. This does not change the
+224/48production totals or establish a full native turn/session.
+
+ZIP SHA256:47C8FC147CEF8F5AAB028A125EE87774F17E7FC0C3248A71778DDD39FED2F88D
+EXE SHA256:39EFC1F9C95116325212413C2E37D842E7999EC21F471A7CEB317D68A4FFFC9F
+All1485original assets match their supplied source identities. Original reference
+baseline and the ten retained frozen releases passed their integrity audit.
+
+Limits: audible playback/physical input/desktop focus still need user feedback;
+silent buffers establish API behavior only. Original full-gameplay acceptance is
+not established; its accepted baseline remains main menu plus clean Quit. Other
+modes/campaign/network/tutorials/radar/controllers/full lifecycle remain partial
+or absent. Source/global RNG schedule and real native conversion are incomplete.

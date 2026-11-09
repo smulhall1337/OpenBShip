@@ -1,7 +1,0 @@
-Natural v0.14 playback results are in Playback-Validation.txt. Existing61combat
-movies pass bothquality catalog sweeps. Original ending VICTORY/LOSE pass both
-quality-preference sweeps at native320x240/20fps, with 2once-only completions,
-pause/resume and reset per sweep. One mode uses actual SILENT waveOut, the other
-is muted. Nominal duration checks allow100msdevice/sampling tolerance, not an
-assertion of audible latency or physical sync. All raw movie/duel reports remain
-under workspace work directories. No AI processing was used.

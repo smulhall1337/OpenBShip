@@ -1,0 +1,81 @@
+Classic battle messages/font evidence — v0.20 — 2026-11-07
+
+All addresses refer only to supplied Bs.exe,397824bytes, PE32/x86, base00400000,
+SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Do not transfer addresses to another build. No recovered original source claim.
+
+Startup/controller context
+Mode14tick422F20calls23210in its active state; the latter calls4241D0for messages.
+Initialization42A850loads ENGLISH.TXT at42A985/42A9A2with131entries into55E830,
+GAMEFONT.SPH into slot9/5630B4at42AA98, then42B8E0initializes font metrics via
+42B0D4. Ship names come from fixed26byte records at44C6C0; supported runtime
+name prefix covers types0..12(338bytes), preserving all original record bytes.
+Native firing/sinking model already recovers initial slot1and surviving fallback;
+that gameplay is unchanged. This slice reconstructs message output only.
+
+English reader
+430450opens using mode r at4474C0(CRT text mode). CRLF becomes LF before the
+4304FDline-splitting loop replaces each LF with NUL and stores a pointer. C#
+validates ASCII/line bounds/count, preserves trailing spaces and normalizes CRLF
+or LF without Trim. Non-ASCII/NUL/strayCR/truncated records fail clearly.
+English131line fixture matches native parser output byte length and SHA256.
+Original ENGLISH.TXT SHA256:
+650B25A72FB9DE73F7358A13BE5AA7AE4BF61D72E9D7D5B0F5F5A2C0D793F5F4
+Required Classic templates107..114are validated exactly; other lines retained.
+
+Message dispatch4241D0..42450E
+Local player index4AA7FC and phase4B4794select a16entry jump table. Local0:
+0 Select Target Square;1/2 Your ship firing at other;3 sinking announcement only;
+4 other targeting you;5/6 other firing at you;7 other sinking your ship only.
+Non-sinking phases3/7produce NO text; existing EO_CLASS hit/miss icons carry that
+feedback. Local1is the same semantic cycle offset by4. Both cases are model/
+oracle coverage; runtime remains local Solo0, with native The Computer name.
+Sinking requires5AE67C=2and type5AE678; active shooter type comes from4E3814.
+Templates preserve Targetting spelling, capitalization and apostrophes.
+Native player records have44byte stride, not176. A first controlled fixture
+put the second name at the wrong stride and exposed an empty other name; corrected
+before final fixtures. This was oracle input setup, not a game behavior change.
+
+Font3and text layout
+Text commands use style3. Local0starts(12,11); local1starts(276,442). Up to40
+characters draws one line. Longer text splits on the last space at/before index30,
+then draws the remainder17pixels below. C# rejects a long unbreakable input
+instead of reproducing native underflow; supported original names have spaces.
+The table contains13native ship names; OriginalNameRecords retains unresolved
+padding. Modern custom naming/localization is not implemented.
+
+GAMEFONT.SPH SHA256:
+4BB32B7678CEBE96935D0C509CC76F121AD92BE022F6BC4E94E606AE07103527
+567decoded entries include566frames and a null sentinel. Native42B8E0initializes
+only564metrics:6styles of94glyphs. Source width/height are byte-sized there;
+all used values fit. Runtime uses style3/frames282..375, ASCII33..126; space
+advances by E-glyph width(frame318), per42736C. Character map427660is identity.
+427300records frame=style*94+character-33, source advances,100percent,mode byte0.
+The mode is one byte; the adjacent uninitialized stack bytes are not part of it.
+An initial diagnostic read32bits and was corrected to byte before final fixtures.
+Native unscaled raster407950/4339F3keys palette index0transparent; stored-run
+visibility is also respected. Font origins are not applied in this top-left path.
+
+Oracle and checks
+MessageOracle uses private4MiB x86 memory, guards executable/English/font hashes,
+asserts relocations38/4/6/3/0/0plus raster10, relocates the dispatch jump table,
+marks code pages RX and frees allocation. File I/O, bounded sprintf formatting
+and first-pass text/glyph submissions use controlled callbacks. Native metrics,
+line split/message dispatch and second-pass glyph raster code are executed.
+No original game, graphics/audio device, registry or network call is invoked.
+131line hashes,564metrics,1200controlled local/phase/type/result combinations,
+5glyph placement/pixel samples are exported as CSV. Printable ASCII sample
+crosses the right edge, exercising native clipping. It is not1200played games.
+
+Implementation limits
+C# ClassicMessages/ClassicSpriteFont keep loading/formatting/layout separate from
+simulation. Current board data supplies phase, shooter and impacted ship identity;
+no mutation of Game/AI/movie/ending logic. Font glyph caches rebuild on palette
+changes and are disposed before form teardown. Labels/settings outside the
+message area, pause/result overlay and lower Opponent label stay modern. Legacy
+comparison labels retained. Active captions stay opaque over cinematic surfaces.
+Native palette indices/source glyphs are used; modern Windows reserved palette
+observations retain their prior provenance. Normal/minimum previews inspected;
+fractional GDI+ viewport sampling is not claimed native whole-frame pixel fidelity.
+No general/native menu-font renderer, full mode14world loader or new language
+support is claimed. Original live Classic gameplay still needs a comparison.

@@ -1,0 +1,3 @@
+PASS v0.25 relocated1228manifest records;118model/74form/33shutdown and SILENT waveOut checks.
+Frozen executable583A817A1C363045D3AF345547D2E8F4540804CC8F70F9A045C305E586D1A101.
+Fresh portable copy: work\portable-v25\Battleship-Lab-v0.25. Audible/physical checks separate.

@@ -1,0 +1,23 @@
+Current v0.19 validation — 2026-11-07
+PASS97model/format +56real-form groups =153focused checks;20shutdown cases.
+New groups verify all44native words/malformed prefixes/nonlocal rejection,
+local card/factor/state/callback fixtures, clock partitions, pause and complete-
+frame hold, draft isolation/cancel, focus/tab pauses, explicit resume, reset,
+minimum layout, result handoff and bitmap lifetime. Native message checks retain
+the displayed Fleet Start/first-shot regression at normal/minimum window size.
+
+Initial asynchronous handoff regression failed held-confirm suppression. Final
+CommitFleet snapshots known down keys through the ready/reset/focus transition
+and retains them until KeyUp. Final held Enter cannot fire; release can fire.
+No blanket exception suppression or global input/system settings changes.
+
+Shutdown20cases:18owned form states plus2component cases, adding paused and
+resumed loading entry. Late Deactivate/repeated Dispose and actual SILENT waveOut
+buffer lifecycle pass. Owned final no-argument startup/message loop/WM_CLOSE exit0
+passes. Normal/minimum loading previews inspected. Physical input/audio separate.
+
+NaturalSoloDuelCheck now waits for the production loading timer before battle;
+it does not fast-forward this entry. The full-duel result is recorded separately
+in workspace outputs/Battleship-v019-Natural-Check.txt and raw work/reconstruction-
+v19/natural-entry-high/Level-0. A fixture count is not a count of played games.
+Source restoration/portable/integrity reports state their own measured scope.

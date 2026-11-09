@@ -1,5 +1,0 @@
-PASS 162 original-derived and constructed-fixture code/data/CSV files reproduced exactly with six extractors and four isolated original-code oracles.
-PASS two recorded modern endpoint observations match v0.6 separately.
-PASS PAT native fixtures reproduce all 46 frame hashes, exact consumed bytes, three complete index surfaces, 256 quartet patterns and a two-frame all-13-opcode case.
-Numerical/decoder fixture rows are grouped comparisons, not independent gameplay scenarios.
-No original process, registry, desktop palette or supplied file was modified. Optional tools are not game runtime dependencies.

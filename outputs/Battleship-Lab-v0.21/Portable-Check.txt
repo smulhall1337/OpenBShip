@@ -1,0 +1,8 @@
+Current v0.20portable checks refer to frozen executable:
+E755AF1BD44FEBB6A91D6F762EBEE26E0CBD5931D400E3F9636FDFBB8B470235
+Fresh relocated model/form/shutdown/SILENT checks run before default switch.
+Workspace records: outputs/Battleship-v020-Portable-Check.txt and
+outputs/Battleship-v020-Archive-Check.txt. Source restoration passes157focused
+checks/20shutdown,539assets/17Program/322Evidence matches. Physical input/audio
+and original full-gameplay acceptance remain separate. Natural duel summary is
+workspace outputs/Battleship-v020-Natural-Check.txt when complete.

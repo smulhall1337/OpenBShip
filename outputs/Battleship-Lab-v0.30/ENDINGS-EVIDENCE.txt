@@ -1,0 +1,70 @@
+Ending media reconstruction evidence - v0.14 - 2026-11-07
+
+Exact Bs.exe identity for every address:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+The optional x86 oracles copy guarded fragments with recording stubs. No original
+full game, window, sound or network was run by these tools.
+
+Confirmed media and route evidence
+- Name table44E288+9*139=VICTORY, +9*140=LOSE. Both supplied PAT/PAL pairs are in
+  HWEBS only. Headers40,30,2,2 yield320x240. VICTORY661frames,11082629bytes; LOSE
+  680frames,15831007bytes. PAT identities are whitelisted in EndingPatOracle.cs.
+- Original scripts at4512D8/451318 contain movie opcode6and operands139/140 at
+  word8/9. The native opcode implementation42F6C6..42F6F4 loads its operand through
+  the front-end helper and sets waiting state6. That state's42F4C7 limiter compares
+  elapsed timeGetTime ticks against0x32(50ms): nominal20fps. Classic combat uses
+  40ms, so a global25fps assumption would be incorrect for these ending contexts.
+-4196F0..41978F selects script4512D8when winner equals local player4AA7FC, else
+  451318, guarded by scene modes3/14; special scenario branches can request NUKE.
+  Classic sink/fleet-exhaustion path424130..4241C2 calls42E5D0, which delegates
+  to4196F0. Network notification, complete scripts/cards and exact transition
+  ordering are not reconstructed by the current standalone study player.
+- Raw script words and seven source spans are exported by Extract-EndingEvidence.
+  The script contains e_succed/e_fail background references, fade/common runtime
+  operations, a5000mswait and menu pointer changes. Exporting these words is not
+  an interpreter or a claim of complete original script execution.
+- EndingPatOracle executes the same bounded original high decoder as the prior
+  combat oracle, with only these two whole-file hashes trusted.1341frames match
+  exact consumed spans, output canaries and independent first-frame initialization.
+- EndingSequenceOracle runs copied polling/close with dummy successful sound
+  handles:60starts and60cleanup events. Tied onsets advance at most one cue per
+  source frame. End fields remain intact; valid handles are not stopped by that
+  native end-threshold branch.26supplied waves are11025Hzmono8-bit PCM.
+- Original SFX/LOSE/README.TXT explicitly calls TUNE1/2/3optional. This is supplied
+  material dated1996, not an agent alteration. No cues/music were edited out.
+
+Implementation and modern policies
+MovieCatalog adds two high-only ending descriptors, each50ms/frame. The61combat
+names/order stay unchanged; the UI appends endings and says Combat movies.
+No automatic ending-script execution is claimed. Duel victory/loss timing remains
+its previously delivered finite-feedback policy. Endings are selected explicitly.
+Native higher detail is supplied media, not AI enhancement or a generated low copy.
+
+ClipTimeline supports only the observed40/50mscadences. The PAT/SEQ/mix defensive
+bound rises from512to1024frames to admit661/680while retaining a finite limit.
+PCM sample offsets use floor(frame*11025*frameMilliseconds/1000), not repeated
+rounding of551.25samples. VICTORY's finite audio has364376samples; the theoretical
+endpoint has a quarter-sample fraction. Completed finite buffers explicitly map
+to visual duration33050ms, avoiding a false two-second stalled-device fallback.
+
+ClipFrames keeps decoded index surfaces and realizes one current colour bitmap.
+The outgoing bitmap stays valid through FrameChanged; release follows the callback.
+Clip changes dispose their preceding owner after the new frame is published. Pause
+keeps the same bitmap. Counts are bounded to one settled/two handoff colour images,
+not one frame of total process memory. Raw LOSEindices=680*76800=52224000bytes;
+old all-colour realization would require208896000pixel bytes, apart from overhead.
+Source reader input/audio, managed GC, UI and temporary loads add memory. Native
+PAT streaming, full-frame retention policy and modern bitmap ownership are distinct.
+
+Validation and limits
+81model checks include all1341native frame hashes,60native cue starts/cleanup,
+26PCM sample counts, source catalog/clock bytes, fractional sample placement,
+20fpspartitions/last-frame hold and all680cache handoffs.38form checks include
+ending quality independence, preserved deployment/frame, borrowed-frame lifetime,
+finite20fpsaudio endpoints, once-only completion, reset and existing battle/alpha
+regressions. Saved user settings initially exposed test-default assumptions; checks
+now use unsaved defaults, while normal app preference behavior remains unchanged.
+Real-device SILENT, natural playback, source restoration, portable and owned launch
+checks are recorded separately. These do not establish audible sync, physical
+input/focus, whole original end scripts or complete native gameplay. General v0.13
+visual approval is recorded; specific ending/audio acceptance is still pending.

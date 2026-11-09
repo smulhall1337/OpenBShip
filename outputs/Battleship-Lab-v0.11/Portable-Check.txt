@@ -1,6 +1,0 @@
-PASS relocated ZIP: 752 manifest entries match.
-PASS relocated x64 app: 68 model/format and30real-form checks, exit0.
-PASS relocated actual x64 waveOut lifecycle using SILENT PCM, exit0.
-PASS separate source-only restore; all201evidence files reproduce, same68/30 checks and silent-device check.
-PASS owned packaged no-argument form/startup/clean exit0. User-desktop controls and audible playback remain separate.
-Final report-only archive changes will be byte-compared; executable/source/assets remain identical.

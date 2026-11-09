@@ -1,0 +1,63 @@
+Stopped checkpoint33 / handoff - 2026-11-08
+Last validated release is v0.25/checkpoint32. Default launcher and root source
+restore point to it. Frozen v0.25ZIP and verified source backup32are retained.
+192focused checks/33shutdown cases, clean source and relocated checks passed.
+Natural high Master:19shots/111stages/444s; natural low level0:19/111/354s.
+Extended low level1timed out at6379s/5shots/27stages; level2not run. Inspect
+outputs/Autonomous-Run-20261108.txt. No game/check process remains from the run.
+A clock discontinuity from about06:47to12:48UTCwas observed; cause unknown.
+The08:45:28UTCwork window was past when observed, so feature work stopped.
+
+Current evidence: outputs/Current-Status.txt and v0.25/PLACEMENT-EVIDENCE.txt.
+Source archive32hash1F2E65DFFA26A18C0D14A6F796E55D6FEF9861681CAB1047B46198ACCDF82AC6.
+Git .gitremains read-only; no new commit/remote/ownership/trust change by agent.
+Source snapshot32predates a copied-status prose correction, recorded at the end
+of checkpoint32. Its code and subsystem evidence describe native placement.
+
+v0.26DRAFT, not promoted or fully tested:
+Authoring work/reconstruction-v26/src; outputs/Battleship-Lab-v0.26marked DRAFT.
+Original1439assets copied unchanged (407778788bytes); table138x9at44E288,
+SHA9E51D032AD352CE3EDEF862C0A804D556DD2D35896C35DA13713903EBF11811D.
+CreditsCatalog.cs reads that table, selects rand()%137+1from a separate native
+RNG stream. CreditsPage now requests that catalog. ClipStudy adds catalog paths,
+archive20fps mode and persistent cue warnings. ClipSound.LoadMixWithGaps retains
+cue onsets/queue order while reporting missing files; no replacement synthesized.
+MainForm adds Movie archive tab5and common sound/detail/volume/pause/reset/exit
+integration. Code compiles, but new runtime checks have NOT been implemented/run.
+Root Restore-Workspace still v0.25; do not switch it/default launcher yet.
+
+Native v0.26tools already run:
+CreditsCatalogPatOracle: guarded274low/high resources,30358full frame hashes,
+274independent first-frame checks with exact consumed lengths and canaries.
+Candidate decoder's first/last hashes matched native for all274resources.
+CreditsCatalogRequestOracle:274native ID/directory/name requests.
+CreditsCatalogSequenceOracle:2050cues across137movies/two details; file existence
+sets dummy handle -1on missing cues, normal handles otherwise. Other starts and
+cleanup continue. These are numeric fixtures, not full original gameplay.
+Extract-CreditsCatalogEvidence.ps1 creates Programs/CreditsMovies.seqbin and
+provenance plus five bounded context spans. New tools/data live in draft package.
+
+Corrected missing-audio finding: initial probe stopped at first missing file.
+Full sequence has FOUR absent names in ISL_DSHS: SHELIN_A, FIRE45F, EXP01, EXP02.
+All four are absent in RIP, extracted disc and mounted E:source; twelve explicit
+existence observations in work/reconstruction-v26/analysis/missing-cue-
+observations-complete.csv. Other clips contain similarly named files; none was
+copied into this directory. Source SEQ is unchanged. One affected movie, six
+failed start requests out of ten due to repeated FIRE45F, four valid SMLEXP3
+starts. Draft tolerant loader preserves those remaining starts and warns.
+
+Next steps when user continues:
+1. Add model checks for catalog bounds/identity,274native requests,30358frame
+hashes and2050cue chronology, plus missing-cue queue/onset/mix behavior.
+2. Add actual form/archive controls, volume/quality, focus/tab/F2 and warning-
+persistence checks; extend shutdown coverage to active/paused/partial/SILENT
+archive and full-catalog Credits. Make previews deterministic and inspect them.
+3. Connect new extractors/oracles to a v0.26source restore only after readiness;
+regenerate manifest/provenance, run clean-source and portable checks. Current
+Programs should become23files. Native evidence counts must be measured anew.
+4. Write current v0.26docs explicitly separating native random/movie selection
+from independent modern RNG, chosen fades, finite player completion seams and
+reported missing-audio policy. Full modes/tutorials/controller/audio acceptance
+remain incomplete. Preserve board30%transparency, P/Escape and saved bindings.
+5. Freeze a side-by-side archive, verify prior identities, update default only
+once validated; create next source backup. Keep original/reference unchanged.

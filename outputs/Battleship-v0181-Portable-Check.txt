@@ -1,0 +1,7 @@
+PASS relocated final v0.18.1:1077manifest records SHA256 verified.
+PASS95model/54form/18shutdown and separate SILENT actual-device checks.
+Native pointer test clicks the visible Fleet Start at normal/minimum size and fires the first shot.
+EXE SHA256:6622EB9FA4E84093B66F8F75415B5F089804B30B9AA2FD8E85E9A19E8586E48F
+Source restoration535assets/13Program/300Evidence files matches; rendering hotfix leaves simulation/movie logic unchanged.
+Physical hotfix mouse/audio/exit confirmation pending. Prior v0.18full duel remains historical.
+Log:work/reconstruction-v18.1/portable-validation.log; archive integrity:Battleship-v0181-Archive-Check.txt.

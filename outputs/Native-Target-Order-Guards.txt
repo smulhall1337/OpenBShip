@@ -1,0 +1,6 @@
+﻿PASS comparison rejects altered-target.
+PASS comparison rejects altered-state.
+PASS comparison rejects missing-final-boundary.
+PASS wrong original identity rejects before output/helper allocation.
+PASS debugger rejects a non-owned helper path before launching or creating output.
+Five failure-path checks; no existing game was started, attached to or terminated.

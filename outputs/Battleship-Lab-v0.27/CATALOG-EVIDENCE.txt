@@ -1,0 +1,78 @@
+v0.26 full Credits movie catalog / archive - evidence
+
+Source identity
+Bs.exe PE32/x86 SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Movie names:138nine-byte records at0044E288. Record0is NOWEB; Credits uses1..137.
+Programs/CreditsMovies.seqbin:1242bytes, SHA256
+9E51D032AD352CE3EDEF862C0A804D556DD2D35896C35DA13713903EBF11811D.
+The bounded reader retains source bytes and rejects unknown table identities,
+lengths, IDs and paths. The table is data, not a general executable/script VM.
+139/140VICTORY/LOSE remain in the separate result player; not part of Credits.
+All1439packaged original assets match supplied RIP bytes; no source was altered.
+
+Confirmed reconstruction
+Credits initialization42FD01 and completion42F4C7 use native rand()%137+1.
+The native CRT formula, modulo bias and possibility of repeated movies are
+retained. The old61movie subset is replaced with all137source choices.
+Admission402460 chooses LWEBS for quality1, HWEBS for2and uses the original
+nine-byte name lookup.274recording fixtures independently confirm each ID/name/
+directory pair. Original device/file/context callbacks are substituted.
+
+Both137movie detail sets decode with the existing bounded PAT variants:
+160x120(scale4) and320x240(scale2). CreditsCatalogPatOracle.cs whitelists all274
+original PAT hashes, executes only guarded copied decoder arithmetic in its own
+x86 allocation, checks consumed lengths/canaries and captures30358frame hashes.
+The modern reader matches EVERY frame's indexed pixels, source offset/payload
+and frame count.274first frames also match from clean and dirty input surfaces.
+These are numerical fixtures, not30358played scenes or original-game sessions.
+Palette boundary checks retain six-bit source RGB conventions; GDI+ presentation,
+window scaling and reserved system-color observations remain modern boundaries.
+
+Credits uses50ms/20fps; Classic battle remains40ms/25fps. The Movie archive tab
+is an added inspection view of all137clips at the known Credits cadence; this
+is not a claim that every original game mode used20fps. Separate combat/result
+views retain their previous scope/timing. Archive includes play/pause, restart,
+frame stepping and finite completion, selecting quality through Preferences.
+
+Sound and missing supplied resources
+137original SEQs define1025cues;274low/high scheduling cases total2050declared
+cues. Native4029F0poll/402980cleanup recording fixtures confirm actual one-cue-
+per-frame onset order. Equal onsets serialize: max(requested, previous+1).
+Source SEQ/WAV format bounds remain enforced; malformed data is not silently
+accepted as a missing-file gap. Original cue names, End fields and onsets remain.
+
+ISL_DSHS.SEQ refers to four files absent from the supplied RIP, extracted disc
+and mounted disc: SHELIN_A.WAV, FIRE45F.WAV, EXP01.WAV, EXP02.WAV. This is one
+affected movie, six failed requests across ten cues because FIRE45F repeats.
+Native scheduling still progresses when the recording sound callback returns-1.
+Four remaining SMLEXP3requests occur at frames32/36/44/66. Filtering the missing
+records BEFORE serializing would incorrectly move the first survivor to30.
+The new explicit gap loader preserves32/36/44/66and mixes surviving original
+samples. A full independent47407sample fixture confirms these offsets and20fps
+fractional endpoint. For ordinary complete clips it preserves existing PCM.
+A persistent warning names all four missing files; successful device startup,
+pause/resume, gain, stepping and restart do not erase it. Another healthy clip
+clears the warning. No substitute files were copied from other movie folders.
+Missing files are reported/skipped for Credits/archive; video/text continue.
+The finite software mix, warning/recovery policy and silence-at-zero gain are
+modern adaptations. Native missing-file dialog/device behavior is not claimed.
+
+Modernization and remaining limits
+Credits random selection uses an isolated native-formula stream, initially seeded
+from modern Environment.TickCount. A fixed seed is available internally for
+repeatable diagnostics/previews. Native global menu/AI/movie RNG consumption
+and original session seed/timing remain incompletely reconstructed. Thus the
+choice rule is recovered, but a whole original play-session sequence is not.
+Text roll/font semantics remain confirmed by CREDITS-EVIDENCE.txt (historical
+v0.24report). Its61movie limitation is superseded here. Finite player completion
+seams, chosen40ms fades, ARGB exit fade, bounded500ms catch-up and focus/tab/P
+pause remain documented modern behavior. Full native palette/clear seams are
+not claimed. Space/left-click returns; Escape Back and accessible toolbar added.
+
+Archive and Credits pause an active duel without changing its pending shot,
+frame or RNG. Shared quality/volume/mute apply; F2 resets; shutdown releases all
+owned frames/buffers. Source implementation remains a partial Classic rebuild.
+Other modes/campaign/network/tutorials/radar, physical controllers, complete
+original lifecycle and AI-upscaled assets remain absent. Native reference is
+user-confirmed at main menu/clean Quit only. Actual WinMM checks submit SILENT
+samples; audible playback and physical input/focus still require user feedback.

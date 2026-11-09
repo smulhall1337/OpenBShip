@@ -1,3 +1,0 @@
-PASS extracted portable package: 59 manifest files matched.
-PASS relocated packaged executable: 20 model/reader checks and 4 form checks, exit 0.
-PASS relocated Verify.cmd launcher completed without relying on the original ISO, registry keys or source workspace paths.

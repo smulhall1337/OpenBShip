@@ -1,0 +1,43 @@
+﻿Battleship current status - checkpoint35 - v0.27 - 2026-11-08
+
+Launch outputs/Launch-Reconstruction.cmd. Original menu > Preferences > Credits
+now uses confirmed initial frame, same-poll EOF/clear/replacement, partial movie
+palette and indexed exit-fade behavior. Movie archive keeps all137movies/all
+raw frames as a separate modern inspection aid. Missing source audio remains
+reported; surviving cues retain source offsets. Details/limits:
+outputs/Battleship-Lab-v0.27/CREDITS-SEAMS-EVIDENCE.txt.
+
+Playable Classic route: Original menu > Solo > Classic > Start Game > Fleet
+Configuration > Start Game > loading > battle. Direct Auto-place/Start works.
+P/Escape battle pause; confirmed End battle returns to title; F2 resets.
+Cinematics remain behind board surfaces at approved30%transparency. Ships/grid/
+markers/HUD/text stay opaque. Preferences Save persists, Back keeps session
+changes; quality/difficulty lock during battle. Archive/Credits preserve a
+paused battle; global F2 resets. No accepted controls were reassigned.
+
+Validation:126model/format +81real-form=207focused groups,40shutdown cases.
+New guarded native code cases cover movie/palette/skip/clear ordering, using
+synthetic recording media. Existing274resource requests,30358decoded frames,
+274independent first frames and2050declared cues remain regression fixtures,
+not thousands of gameplay scenarios. Source-only restoration matches1439Assets/
+23Programs/394Evidence;392native-derived outputs regenerated with2modern
+palette observation inputs retained. SILENT actual waveOut transitions movies;
+no audible or physical-input acceptance inferred. Previews visually inspected;
+owned packaged launch exits cleanly. Archive/relocated reports and identities
+are under outputs/Battleship-v027-* and work/reconstruction-v27.
+
+Partial rebuild: campaign/network/tutorials/radar/physical controllers, complete
+native mode lifecycle and whole-session RNG scheduling remain absent/unknown.
+Independent RNG streams, pause/focus/load-error policy, fades40ms and bounded
+catch-up are explicit modern choices. Original reference acceptance remains
+main menu plus clean Quit only. AI upscale remains SG-01backlog; no models run.
+
+Ten recent tested builds retained. Older generated packages/validation copies
+are retired after verified source/report/settings archival; originals/reference,
+authoring/Git history and source checkpoints remain. Ledger Retired-Builds.csv.
+Git changes remain uncommitted under read-only .git access; the prepared local
+Complete-Git-Checkpoint.cmd uses exact-path per-command trust. No publication.
+
+Next reconstruction slice: original Quit confirmation artwork, hotspots and
+return/exit flow. Next hands-on check: Credits motion/text/pause/return and
+audible surviving effects. Two-hour run continues until its recorded deadline.

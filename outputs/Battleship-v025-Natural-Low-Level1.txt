@@ -1,0 +1,5 @@
+FAIL System.Exception: Twenty-minute scenario timeout
+   at NaturalSoloDuelCheck.Main(String[] args)
+ElapsedSeconds=6379
+PlayerShots=5
+MovieStages=27

@@ -1,0 +1,46 @@
+Battleship current status - checkpoint 39 - November 8, 2026
+Playable build: v0.30. New work: bounded native target-order evidence.
+
+Run outputs/Launch-Reconstruction.cmd. Classic setup/loading/battle, original
+intro replay, Credits, Quit and victory/defeat movies remain available. Movies
+play behind the board; approved 30% surface transparency and opaque ships,
+grid, markers and HUD remain. P/Escape pauses battle; F2 resets.
+
+Checkpoint 39 executes the original opponent firing pair followed by the real
+original target selector using one shared CRT state in a newly owned helper.
+All 720 bounded numerical probes agree with a chained replay of the delivered
+selectors. All 70,620 native draws/states match; all four target RNG call sites
+are covered. Three processes produce identical traces; five negative checks
+reject altered evidence and wrong executable/helper identities. These are
+separate research checks, not additional full-gameplay test counts.
+
+Review: outputs/Inspect-Native-Target-Order.cmd.
+Evidence, addresses, hashes, limits and reproduction:
+outputs/Native-Target-Order-Findings.txt.
+Media admission and the following stage remain stubs. Native initialization,
+fleet generation and complete turn/session scheduling are not established.
+The game's independent random streams remain unchanged.
+
+Frozen v0.30 validation remains 136 model/format + 88 real-form = 224 focused
+groups, plus 48 shutdown cases. Source-only restore, ZIP and relocated checks
+passed at checkpoint 38. Its full Master/high-detail route reached victory,
+Watch result, title and original Quit: 19 shots, 111 battle stages, 112 SILENT
+buffers, 485 seconds, maximum 51 GDI handles. Four natural result runs covered
+both outcomes muted and with SILENT waveOut. No audible or physical acceptance
+is inferred. The executable and ZIP hashes are unchanged at checkpoint 39.
+
+Partial rebuild: campaign, network, tutorials, radar, controllers and complete
+native lifecycle remain incomplete. Original reference is user-confirmed only
+through main menu and clean Quit. AI upscale remains stretch goal SG-01.
+Ten builds v0.21..v0.30 remain. Originals, reference and archival records remain.
+
+User preference: automatically commit each completed, tested checkpoint locally.
+AGENTS.md records that instruction. Complete-Git-Checkpoint.ps1 accepts a custom
+message and records successful commit identity in ignored outputs/Git-Checkpoint.txt.
+Source checkpoint 39 is independent of Git; see Source-Checkpoint-39.txt.
+No push, upload or publication is part of this workflow.
+
+Next: chain the existing original phase dispatcher and travel draw into this
+probe, then establish initialization/fleet passes before a shared-RNG mode.
+Next hands-on comparison remains Replay intro / Classic / Watch result / Quit;
+checkpoint 39 itself makes no audiovisual or control changes.

@@ -1,0 +1,25 @@
+﻿PASS accepted original reference executable, wrapper, configuration and launcher match menu-baseline-001.
+PASS 29 accepted v0.1 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 61 v0.2 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 90 accepted v0.3 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 107 v0.4 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 200 v0.5 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 226 v0.6 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 258 v0.7 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 414 v0.8 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 475 v0.9 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 748 v0.10 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 752 v0.11 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 838 v0.12 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 882 v0.13 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 944 v0.14 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 968 v0.15 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 973 v0.15.1 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1008 v0.16 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1042 v0.17 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1073 v0.18 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1077 v0.18.1 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1098 v0.19 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS 1124 v0.20 manifest files and delivered exe/ZIP hashes are unchanged.
+PASS delivered v0.21 game executable is PE32+ machine 0x8664 (Windows x64).
+PASS 539 packaged original assets match the user-supplied original files byte for byte by SHA-256.

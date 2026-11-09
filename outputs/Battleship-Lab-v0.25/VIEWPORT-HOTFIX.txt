@@ -1,0 +1,41 @@
+Fleet viewport / Start Game hotfix — v0.18.1 — 2026-11-07
+
+User report: menu and Fleet Configuration open; clicking the original lower-left
+Start Game does nothing. Git setup now succeeds; commit30264f0verified on main.
+
+Cause established from actual supplied EC_FLEET.PCX header:640x512 storage.
+FleetSetup.Render created a full512line bitmap, then FleetCanvas drew it into a
+640x480 rectangle. Buttons used native coordinates without that squeeze. Thus
+source button center(60,445) appeared at native viewportY417but hit atY445.
+Source geometry/table/native asset bytes were correct; display cropping was wrong.
+
+Reproduction: Check-FleetPointer.cs selects the screen on an owned offscreen
+form, obtains the actual rendered bitmap dimensions and maps the artwork button
+center through the rendered image. It sends WM_LBUTTONDOWN/UP only to its own
+canvas. v0.18 produces Image640x512, inputY416, button-1, Started=False.
+Corrected build produces Image640x480, inputY444, button2, Started=True.
+Fleet-Click-v018-Reproduction.txt and Fleet-Click-Check.txt retain both traces.
+The pixel's one-line truncation depends on canvas sizing; both lie within the
+correct button after the crop. No capture/input-policy workaround was needed.
+
+Correction: FleetProgram.Viewport validates640wide/480..512high source bounds,
+then copies the first307200indexed pixels and palette into a640x480 surface.
+FleetSetup draws ships/grid cursor/footprints onto that cropped surface before
+scaling it. Original PCX and native hit regions remain unchanged. Visibility is
+preserved if present; malformed/truncated backgrounds fail clearly.
+
+Regression evidence: original-file fixture confirms640x512and every output
+pixel matches its top480source rows. A real-form regression uses rendered image
+size to click the displayed Start through native Windows mouse messages, at
+normal and minimum window sizes; battle starts unpaused and accepts its first
+shot. Earlier tests clicked expected hit coordinates instead of the displayed
+button center and therefore missed this bug. Their viewport/alignment claim is
+superseded. Normal/minimum hotfix previews inspected. Physical hotfix acceptance
+remains pending. Earlier v0.18full cinematic duel evidence remains historical;
+this rendering-only hotfix does not claim a fresh full natural cinematic duel.
+
+Original Bs.exe identity for retained reconstruction fixtures:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Native roster/AI/simulation/movies/ending/input actions are unchanged. Existing
+30percent cinematic board transparency and opaque overlays remain tested.
+Hotfix is side by side; the user's v0.18process is not terminated or replaced.

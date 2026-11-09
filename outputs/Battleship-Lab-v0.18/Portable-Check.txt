@@ -1,8 +1,0 @@
-PASS v0.18 relocated draft ZIP:1073manifest records match SHA256.
-PASS relocated94model +53form checks,18shutdown cases and SILENT waveOut lifecycle.
-Owned no-argument startup/message loop and clean exit0 pass. Final report/image-only
-archive refresh receives separate byte verification; executable remains:
-812B73766A8CA9C7AE26D7BC0A381F18C077FCEB367BFD53033E8CF0F4CEA749.
-Clean restoration matches535original assets,13Program files and300evidence files.
-Runtime-only restore also renders Fleet Configuration. Physical input/audible
-output/native full-gameplay acceptance remain separate. No user process closed.

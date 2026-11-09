@@ -1,0 +1,15 @@
+Current v0.18.1 validation — 2026-11-07
+PASS95model/format +54real-form groups =149focused checks;18shutdown cases.
+New crop fixture checks original512line storage and exact480line output pixels.
+New native window-message regression clicks the DISPLAYED Start button at normal
+and minimum size, starts unpaused battle and fires its first shot. Prior synthetic
+pointer tests used expected hit coordinates and did not establish this alignment.
+
+PASS separate owned native mouse-message probe reproduces v0.18failure and
+v0.18.1success. No input sent to user windows; no physical mouse acceptance claim.
+PASS owned final executable no-argument startup, actual main-form/message loop,
+WM_CLOSE and clean exit0. Shutdown includes an actual SILENT waveOut buffer.
+Normal/minimum hotfix previews inspected. Game/AI/movie/ending source unchanged.
+See Source-Restore-Check.txt and Portable-Check.txt for packaging validation.
+Prior version reports/full cinematic duel measurements are historical, not a
+new full-duel test of this hotfix. VIEWPORT-HOTFIX.txt supersedes v0.18alignment.

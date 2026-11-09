@@ -1,0 +1,68 @@
+Checkpoint32 - original fleet generation
+
+Battleship current status - checkpoint32 - v0.25 - 2026-11-08
+
+Launch: outputs\Launch-Reconstruction.cmd. Close older windows yourself when
+ready to compare; no running user game is replaced or terminated.
+Original menu > Preferences > Credits now plays the supplied text/front-end
+font over original movies. P pauses; Space/Escape/left click returns to title.
+Native210line parsing,35rows/14pixel pitch,2pixel steps at50ms and full73.5s
+loop match executable-derived fixtures. Backgrounds are a declared61movie
+subset of137native selections; exact global RNG/palette/handoff seams remain
+incomplete. Fade cadence, pause/focus handling and toolbar are modern behavior.
+
+Preserved gameplay: Solo > Classic > Start Game > Fleet Configuration > Start
+Game shows loading before a Classic duel; direct Auto-place/Start also works.
+Hit/miss/sink movies, selected firing ships, original weapon lists/weighted
+choices, target selector, damage/HUD/messages and pause font are reconstructed
+within their documented scopes. Most original modes, missions, network,
+tutorials, radar screens and complete original lifecycle remain absent.
+Classic fleet random placement still uses a documented System.Random substitute;
+next step is original41B820and MSVCRT RNG. Independent modern random streams,
+UI/timing and error recovery prevent claims of whole-game equivalence.
+
+Preferences uses original geometry/art. Quality/difficulty lock in battle;
+difficulty resets deployment, quality preserves it. Volume0is silent, Sound
+is a separate mute; Save persists, Back keeps session changes. Native volume
+request/1..100software curve are documented;0mute is a deliberate adaptation.
+P/Escape battle pause remain unchanged; End battle asks before returning to
+menu; F2 resets. Cinematics remain behind board surfaces with approved30%
+transparency; ships/grid/markers/HUD/text remain opaque. SG-01AI upscale stays
+optional backlog; no AI model or asset processing has been installed/run.
+
+Validation:118model/format +74real-form groups=192;33shutdown cases. Native
+Credits fixtures cover210lines,564glyph metrics,1471roll states,14rasters,
+6initialization and4media statuses. Numeric fixtures are grouped, not distinct
+gameplay totals. Clean source restore regenerates372native-derived files with
+2modern palette observations retained.543Assets/21Programs/374Evidence files
+byte-match delivery. Actual SILENT waveOut checks, no-argument owned startup
+and clean WM_CLOSE exit pass. Normal/minimum previews visually inspected.
+Archive/relocated results: outputs\Battleship-v025-{Archive,Portable}-Check.txt.
+
+Evidence/readme: outputs\Battleship-Lab-v0.25\PLACEMENT-EVIDENCE.txt and README.txt.
+Frozen old builds, originals and native reference baseline are preserved.
+Native reference user-confirmed: main menu and clean Quit only. Audible modern
+playback, physical input/focus and new Credits desktop appearance remain user
+checks. No physical controller or native live-battle acceptance is inferred.
+
+Git repository exists at verified30264f0471cf64d9208b7b58e957439e08cd99ac(main).
+Later work remains uncommitted; .gitmetadata is read-only for this agent.
+Complete-Git-Checkpoint.cmd stages source/documents locally with per-command
+exact-path trust, not a global safe.directory change. Source-only checkpoint31
+ZIP and its independent hash record are prepared at this checkpoint.
+
+Autonomy: continue until2026-11-08T08:45:28Z, then stop at a suitable checkpoint
+or earlier if a required user decision arises. Last completed v0.25/checkpoint32.
+Next: guarded native fleet placement/RNG fixtures, maintainable implementation,
+production fleet/Solo/game regression and preserved side-by-side build.
+
+ZIP SHA256 EC5F2BC8A047A453EB9376F81BD838089DCEA685EE80ACE9CB45198BCB56D128
+EXE SHA256 583A817A1C363045D3AF345547D2E8F4540804CC8F70F9A045C305E586D1A101
+Archive1229entries verified;192focused/33shutdown restored+portable passed.
+Native numeric cases297; forced restart/traces/occupancy independently checked.
+Source backup: outputs/Source-Checkpoint-32.txt.
+
+Correction to copied status prose: current native placement is implemented, not
+a System.Random substitute. Current-Status.txt now states the v0.25behavior and
+v0.26full catalog next step. Source snapshot32predates this prose correction;
+its code and PLACEMENT-EVIDENCE.txt accurately describe the implemented algorithm.

@@ -1,0 +1,13 @@
+Native shared-RNG probe provenance - 2026-11-08
+Original Bs.exe SHA256: B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Delivered pair reference: v0.30 runtime SHA256 39EFC1F9C95116325212413C2E37D842E7999EC21F471A7CEB317D68A4FFFC9F.
+Copied source: seed439780+10bytes/1relocation; rand439790+42/2; player selector423EDE+66/4; full opponent prefix41C8C0+123/11; firing dispatcher416640+946/24; source weapon lists44D730+72bytes.
+The seed span includes RET at439789; do not shorten it to9bytes. Source identity and relocation counts are mandatory.
+Inputs: seeds0,1,731,4294967295; ship types7,1,2,12,4. Twenty native opponent-prefix probes, twenty harness-ordered player selector/dispatcher pairs.
+Native target, stage and media callbacks are recording substitutions. No full original process, graphics/audio API or original file mutation occurs.
+Actual shared CRT state/draws and source function outputs are compared against the frozen delivered pure weapon/movie pair. Runtime streams remain independent.
+work\analysis-tools\ClassicRandomOrderOracle.cs SHA256 86EF2EEB276AA9F316F2F527C9EADFEF4D2BCC5A3A7F094C0664D5CB290BCC91
+work\analysis-tools\RandomOrderTrace.cs SHA256 4511AC286D3EC4FD0D153B3BEA0C25399A7D72959243323326B59A77A3E09A44
+work\analysis-tools\Check-WeaponRandomTraces.cs SHA256 A8CA1502E738F0357AF1A1E97279847B3355898BB7B10CFCC1BEEA5ED7DDAB3E
+outputs\Native-Weapon-Random-Traces.csv SHA256 F668B3DF3B6F1EC53CF4A70C89EF935B19156E5180D26D6CB9EE8C5A52FA46F8
+outputs\Native-Weapon-Random-Check.txt SHA256 EEB7D37BEF4E200D18A29777848BD9C534F170B6E9E508C2020DD4C7470519F7

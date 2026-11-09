@@ -1,0 +1,2 @@
+PASS natural Classic victory -> Watch result -> original54event result prefix and final frame fade -> title; terminal state preserved, ending media unloaded. Ending elapsedMs=40751. Original confirmation Quit is checked next.
+PASS original confirmation and natural palette-faded Quit closed the same production form cleanly. No movie/stage skips or accelerated time.

@@ -1,0 +1,6 @@
+PASS relocated1124manifest records and final157focused/20shutdown/SILENT checks.
+EXE SHA256:E755AF1BD44FEBB6A91D6F762EBEE26E0CBD5931D400E3F9636FDFBB8B470235
+Native text/metrics/1200message cases/5glyph pixel samples match original-code fixtures.
+Ready/fire/travel/sink and palette/cache lifetime regressions pass; physical readability/audio separate.
+Full high/SILENT duel checks111stage captions and icon-only nonsinking feedback through victory.
+Log:work/reconstruction-v20/portable-validation.log. Archive/Natural checks record their identities/scopes.

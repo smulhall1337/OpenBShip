@@ -1,0 +1,88 @@
+Solo Practice reconstruction evidence — v0.17 — 2026-11-07
+
+Every address belongs to exact supplied Bs.exe SHA256:
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+EO1_SOLO.SPH C944009066505B63648411F822CA4D6A1B113BCC911B1B7B9E8DA4CC680EFD1D
+EO2_SOLO.SPH AE092979A9610B7AF89DA5F4A43E44DC6A6DB28F4E93524130953C65B9088BAA
+EO4_SOLO.SPH 805F6720AC80C6AC79EAE44ABB1F9A0037C65C073013DB68A812F298C26409C1
+
+Correction to prior address labels
+The native42F200label scanner on full title script44EFC0 yields:
+Action1 labelPC44F09C ->transfer operand44F0D4 ->44F3F8 (Solo).
+Action2 labelPC44F078 ->transfer operand44F090 ->44F208 (Multiplayer selector).
+Action5 labelPC44F0E0 ->450EC8 (Preferences); action4 labelPC44F108 ->44F148(Quit).
+Earlier v0.16reports swapped Solo/Multiplayer destination names by misreading
+labels1/2. They did not run either destination, and their modern bridge behavior
+was clearly stated. Native label results plus raw destination operands now form
+an independent regression fixture. Existing frozen records are retained history;
+current MENU-EVIDENCE copy is corrected. E_MLTSEL artwork independently confirms
+that44F208is the multiplayer selector, not Solo.
+
+Supported original data and state
+Solo entry44F3F8..44F440 (72bytes) calls4321B0, loads e2_solo, copies/fades and chains
+to44F440. Supported Practice initialization44F440..44F5C4 (388bytes) sets menu-kind
+456A18=2, game type4E3868=1, point/scroll fields0, loads e2_solo, defines14buttons,
+draws via432490 and enters wait39. The full792byte Practice script remains evidence;
+production does not implement the entire script VM or downstream gameplay loader.
+Title reset establishes two players. Runtime setup begins Type1/Players2 (Clash At
+Sea, one opponent); this is not a fabricated Classic-default screen.
+
+Button records from original op38 (x,y,frame,group,action):
+15,101,0,28,99;118,100,1,28,21;238,100,2,28,22;
+15,179,3,28,23;124,179,4,28,24;232,179,6,28,25;
+462,71,0,29,26;462,160,1,29,1;462,248,2,29,2;462,336,3,29,3;
+15,431,4,29,27;498,431,5,29,28;232,221,11,38,29;314,221,12,38,30.
+Group28=EO1_SOLO,29=EO2_SOLO,38=EO4_SOLO per42EF0A..42EF9D. Loader430820 and
+433140derive dimensions from raw SPH. Practice mode2 uses actual sprite widths,
+without the title screen's extra200click pixels. Half-open/first-match semantics
+match the exact4302D6branch. Full keyboard/input polling is not executed by oracle.
+
+Original game-type IDs:1Clash At Sea,2Air Superiority,3Capture The Islands,
+20Classic. Opponent actions23/24/25store total players2/3/4. Original clamp4321D0
+reads451630[type] and resets player count to2if above that limit. The21-entry table
+has max2for types8,18,19,20 and max4elsewhere. Thus Classic supports one opponent;
+selecting Classic after three opponents resets to one. Production supports only
+valid UI counts2..4and the four Practice IDs. It never invents multi-opponent Classic.
+
+Native sprite prefix432490..432604 draws Practice selection, selected player count,
+extra disabled2/3-opponent overlays for max2missions, and selected Practice mission.
+Classic uses button6; other Practice IDs use type+6. Hover draws Start/Back only.
+Mode0/100percent/no origin adjustment, transparent stored index0. Exact native
+sprite commands and full indexed raster hashes are compared on a deterministic
+synthetic background. Original PCX pixels and palettes are unchanged. Protected
+20palette endpoints retain recorded modern Windows observations; not1997capture.
+
+SCENARIO.TXT and SCNTEXT.TXT each contain21original entries; Classic is index20.
+Description source dispatch432604selects SCNTEXT[type] then wraps into a native
+text buffer through4201F0. That font/wrapping engine is not reconstructed here.
+SoloSetup uses original text with modern Segoe UI, clipped word-wrap and bounded
+pixel scrolling. Gold keyboard focus outline, fresh press/release, fade pause,
+40msfactor cadence and modern Back/Start bridges are intentional usability.
+
+Implementation boundary
+Exact entry/setup/player-limit data are validated by SoloProgram; every mutated
+word and unsupported length fails. Original unresolved/downstream script bytes
+remain exported, not silently interpreted. SoloState reproduces the confirmed
+player clamp. SoloSetup displays four Practice choices; only Classic Start can
+call MainForm. It selects recovered Classic rules and retains current AI/display
+settings. It does not execute native42B940or original fleet-setup flow. Other
+Practice modes can be inspected but cannot start. World Domination/Scenario report
+unavailable without pretending to implement their screens. Back/opening preserve
+the paused game; supported Start replaces it. F2 clears setup/frames. Tab/focus
+loss pauses; held key state survives the menu-to-game transition until release.
+
+Native oracle and checks
+SoloOracle copies label scanner, button loader/dimensions, click branch, unscaled
+raster/zero-key copy, bounded sprite prefix and player clamp. Exact source/sprite
+hashes, relocation counts3,3,4,10,10,0,35,4, private writable data/executable pages,
+and raster canaries are guarded. Text, device, networking, original windows and
+full input polling are not invoked. Label routing,14buttons,3360grouped boundary
+samples and12clamp/draw/raster states (42commands) are independent fixtures.
+Classic count3/4inputs intentionally collapse to2and duplicate that raster; these
+are grouped parameter cases, not12distinct missions or3360played sessions.
+91model checks include three new groups for strict prefixes/corrected routing,
+state/raster/draw equivalence and native button hits.50form checks add defaults,
+unsupported gates, Classic Start/rule restoration, held confirmation, pointer epoch,
+focus/tab pause, minimum layout, F2 and lifetime.16shutdown cases include Solo setup
+and post-Start cleanup. Natural, restored, portable/device and physical scopes are
+recorded separately in Solo-Validation.txt. This remains a partial modernization.

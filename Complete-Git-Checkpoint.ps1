@@ -1,4 +1,6 @@
+param([string]$Message='Checkpoint v0.30 media flows and native target-order evidence')
 $ErrorActionPreference='Stop'
+if([string]::IsNullOrWhiteSpace($Message)){throw 'A meaningful checkpoint message is required.'}
 Set-Location -LiteralPath $PSScriptRoot
 if(!(Test-Path -LiteralPath '.git')){throw 'The initialized local repository is missing.'}
 # The sandbox can own .git while Sean runs this script. Trust only this exact
@@ -9,17 +11,25 @@ $paths=@(git @gitContext ls-files --cached --others --exclude-standard)
 if($LASTEXITCODE -ne 0){throw 'Source snapshot inspection failed.'}
 $unexpected=@($paths | Where-Object {$_ -match '(^|/)(Assets|UserData|reference-[^/]+)/|\.(exe|dll|pdb|zip|iso|png|wav|pat|pal|idx|bin|dmp)$'})
 if($unexpected.Count){throw ('Refusing to stage unexpected media/generated files: '+($unexpected -join ', '))}
-git @gitContext add -- .gitignore .gitattributes README.txt Restore-Workspace.ps1 Complete-Git-Checkpoint.ps1 outputs work
+git @gitContext add -- .gitignore .gitattributes AGENTS.md README.txt Restore-Workspace.ps1 Complete-Git-Checkpoint.ps1 outputs work
 if($LASTEXITCODE -ne 0){throw 'Git staging failed. No commit or publication was performed.'}
-git @gitContext -c user.name=Codex -c user.email=codex@localhost commit -m 'Checkpoint Classic duel, native HUD and original Solo Practice and Classic Fleet Configuration'
-if($LASTEXITCODE -ne 0){throw 'Git commit did not complete. Inspect git status before retrying.'}
+git @gitContext diff --cached --quiet
+if($LASTEXITCODE -eq 1){
+ git @gitContext -c user.name=Codex -c user.email=codex@localhost commit -m $Message
+ if($LASTEXITCODE -ne 0){throw 'Git commit did not complete. Inspect git status before retrying.'}
+} elseif($LASTEXITCODE -ne 0){throw 'Staged source inspection failed.'}
 $commit=git @gitContext rev-parse HEAD
 if($LASTEXITCODE -ne 0){throw 'Checkpoint commit inspection failed.'}
 $branch=git @gitContext branch --show-current
 if($LASTEXITCODE -ne 0){throw 'Checkpoint branch inspection failed.'}
-@("Local source checkpoint: $commit","Branch: $branch",'Author: Codex <codex@localhost> (per-command identity; global configuration unchanged).','Original media, generated builds, ZIPs, settings and scratch files excluded.','No remote configured or publication performed by this script.','Source-only restoration passed 94 model checks, 53 real-form checks, 18 shutdown cases and the separate SILENT waveOut device check.') | Set-Content -LiteralPath outputs\Git-Checkpoint.txt -Encoding UTF8
+@("Local source checkpoint: $commit","Branch: $branch","Requested checkpoint message: $Message",'Automatic local commits requested by the user at each tested checkpoint.','Author on new commits: Codex <codex@localhost> (per-command identity; global configuration unchanged).','Original media, generated builds, ZIPs, settings and scratch files excluded.','No remote configured or publication performed by this script.','Frozen v0.30: source-only restoration passed 136 model checks, 88 real-form checks, 48 shutdown cases and the separate SILENT waveOut device check.','Separate checkpoint 39 research: 720 bounded native chained probes, 70,620 draws, five negative checks; no runtime behavior change.') | Set-Content -LiteralPath outputs\Git-Checkpoint.txt -Encoding UTF8
 git @gitContext status --short
 Get-Content -LiteralPath outputs\Git-Checkpoint.txt
+
+
+
+
+
 
 
 

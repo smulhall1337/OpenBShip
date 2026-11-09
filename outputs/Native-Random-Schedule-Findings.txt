@@ -1,0 +1,63 @@
+Native random schedule survey - 2026-11-08
+
+Executable: supplied Bs.exe, PE32/x86, SHA256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+No original process or media was changed by this read-only survey.
+
+Confirmed: CRT rand at00439790 reads/writes shared state00454D50, whose file
+initializer is1. The already-reconstructed arithmetic is32bit wraparound
+state=state*214013+2531011; result=(state>>16)&32767. srand00439780 writes the
+same field. Direct references to the field are the seed write, rand read and
+rand write. This establishes a shared native state, not a complete call schedule.
+
+The checked linear-disassembly census finds108direct rand call candidates and
+2direct srand candidates. Each candidate's E8opcode, relative target and37byte
+context hash are verified against the original bytes. The CSV names overlaps
+with already-recovered source spans. It does not establish reachability from
+Classic mode, complete function boundaries, execution order or indirect calls.
+
+The seed calls0042A4C3and0042B788 are immediately preceded by calls004222A0
+and pass that return value. Their observed code contexts are initialization
+and battle rebuild/setup. Dynamic timing and all re-entry paths are unverified.
+Candidate consumers include recovered placement, target selection, weapon/movie
+selection and Credits random movie choice, plus many still-unclassified spans.
+Do not assign every candidate to Classic or assume one draw per displayed frame.
+
+Current modernization deliberately keeps independent placement/AI/presentation/
+Credits streams. This preserves a paused game's decisions while browsing media
+and avoids coupling simulation to incomplete presentation. No runtime stream or
+accepted behavior was changed by this survey. An exact shared-state comparison
+would need an additional evidence-backed baseline, with the original call order
+and seed boundaries established before enabling it.
+
+Bounded follow-up: ClassicRandomOrderOracle executes the original CRT leaf,
+weapon selectors, firing dispatcher and opponent prefix0041C8C0..0041C93B.
+Four seeds x five ship types x two contexts give40probes and80actual native
+CRT draws. Original opponent code requests its firing movie BEFORE calling the
+target selector, then calls the next-stage routine. Target, media admission and
+next-stage work are recording stubs; the current shooter is fixed by the harness.
+Player selector+dispatcher pairing is explicitly harness-ordered. These probes
+do not cover fleet generation, real target selection or the subsequent stage.
+
+Check-WeaponRandomTraces.cs independently checks each recorded state/draw and
+compares the delivered pure weapon/movie pair under the same seeds. All40pairs
+agree on weapon ID, movie ID, random-call count and final state. This confirms
+the scoped pair and a native opponent-prefix ordering boundary, not the whole
+turn. outputs/Native-Weapon-Random-{Traces.csv,Check.txt} retain the observations.
+The primary game/runtime streams remain unchanged. Game.AdvanceOpponent currently
+chooses its target before the independent presentation pair; original prefix
+0041C8C0requests the pair before its target. Replacing those streams with one
+object without reconstructing the caller order would therefore be incorrect.
+
+Next experiment: connect real bounded target selection to the seeded opponent
+prefix, then establish Classic initialization/both fleet-generation passes and
+the first complete player/opponent turn. Record reachable calls/retries in order,
+including downstream presentation. Match a fixed input/frame history and retain
+the independent-stream build. Do not infer whole-session fidelity from one turn.
+
+Reproduce using work/analysis-tools/Inspect-RandomSchedule.ps1 with the exact
+Bs.exe, the existing PeDisasm/Iced1.21.0 tool, current Evidence directory and a
+workspace output directory. outputs/Native-Random-Call-Candidates.csv is the
+checked static census; the source bytes remain in the supplied original copy.
+
+Checkpoint 39 supersedes the target-stub boundary above. Real native target selection now runs after the firing pair on the same original CRT state in 720 bounded probes (70,620 draws). Three helper processes reproduce identical traces; five rejection checks pass. See Native-Target-Order-Findings.txt. The following stage, fleet generation and full turn/session remain unestablished; runtime streams remain unchanged.

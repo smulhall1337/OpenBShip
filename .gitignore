@@ -3,6 +3,7 @@
 !/.gitignore
 !/.gitattributes
 !/README.txt
+!/AGENTS.md
 !/Restore-Workspace.ps1
 !/Complete-Git-Checkpoint.ps1
 !/outputs/
@@ -22,6 +23,10 @@ outputs/Battleship-Lab-v*/Programs/*
 !outputs/Battleship-Lab-v*/Programs/Menu-Provenance.csv
 !outputs/Battleship-Lab-v*/Programs/Solo-Provenance.csv
 !outputs/Battleship-Lab-v*/Programs/Fleet-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Entry-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Message-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Preferences-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Credits-Provenance.csv
 !outputs/Battleship-Lab-v*/Source/
 !outputs/Battleship-Lab-v*/Source/*.cs
 !outputs/Battleship-Lab-v*/Tools/
@@ -65,3 +70,15 @@ work/analysis-tools/*
 # Local package contents, executables, images, original assets, user preferences,
 # logs, scratch exports and portable-validation copies remain outside Git.
 /outputs/Git-Checkpoint.txt
+
+!outputs/Retired-Builds.csv
+!outputs/Native-Random-Call-Candidates.csv
+!outputs/Native-Weapon-Random-Traces.csv
+!outputs/Native-Target-Order-Cases.csv
+!outputs/Native-Target-Order-Provenance.csv
+!outputs/Retired-Build-Records-Manifest-*.csv
+!outputs/Battleship-Lab-v*/Programs/CreditsMovies-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Quit-Provenance.csv
+!outputs/Battleship-Lab-v*/Programs/Startup-Provenance.csv
+
+!outputs/Retired-Build-Records-Manifest.csv

@@ -1,0 +1,4 @@
+﻿PASS fresh source-only restoration; Assets=1485, Programs=27, Evidence=444 byte-match delivery.
+Native-derived evidence regenerated from absence; two modern palette observations retained.
+Production self/form/shutdown and SILENT actual waveOut checks passed. No audible or physical input confirmation.
+Restored package: C:\Users\Sean\Documents\Codex\2026-11-06\yes\work\source-restore-v30\outputs\Battleship-Lab-v0.30

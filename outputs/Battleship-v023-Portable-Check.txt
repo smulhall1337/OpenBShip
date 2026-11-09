@@ -1,0 +1,8 @@
+v0.23 portable production validation - 2026-11-08
+PASS1183manifest records/1184ZIP entries independently verified by SHA256/size.
+PASS relocated packaged executable:110model/format+69form=179focused groups,
+28shutdown cases and separate SILENT actual waveOut check. No audible/physical
+input confirmation. Raw:work/reconstruction-v23/portable-validation.log.
+ZIP SHA256:00EDC3BF1B4A735FD95A144262FD62A671EA7D854826FFE43C1D41632940BAA0.
+EXE SHA256:273AC32787BCCB2801C95F09E230781D86D73376E4ECD76539FF83237B50637E.
+Settings excluded from ZIP; previous versions/reference material retained.

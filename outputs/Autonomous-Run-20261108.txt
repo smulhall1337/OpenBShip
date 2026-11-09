@@ -1,0 +1,15 @@
+Final autonomous-run observation - 2026-11-08
+The intended stop was08:45:28UTC. Tool time changed from approximately06:47UTC
+to12:48UTCbetween adjacent calls. A cause is not established; do not attribute
+this to game code or assume a specific suspend/sleep event.
+Feature work stopped on observing the deadline was past. Last validated default
+is v0.25/checkpoint32; v0.26is an explicitly marked unvalidated draft.
+Additional natural low-detail level0passed19shots/111stages/354seconds with
+111actual SILENT buffers and pause/resume. Level1timed out after elapsed6379s,
+5shots/27stages; level2was not reached. These extended runs do not change the
+passed192focused/33shutdown/clean-restore/portable results. Do not claim the
+extended lower-level matrix passed. No game process remains from these checks.
+
+Draft catalog observation corrected: four distinct missing wave files in one
+movie's supplied SFX directory, rather than only the first file reported by
+the initial strict loader. All twelve disc/RIP/extracted existence checks false.

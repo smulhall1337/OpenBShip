@@ -1,0 +1,4 @@
+Case,NetworkSlot,Players,Mode,Remote,NetworkCount,LocalPlayer,CallbackResult,EntryFlag,MenuKind,InputState,ButtonCount
+VICTORY,-1,1,2,0,0,0,0,0,0,39,4
+LOSE,-1,1,2,0,0,0,0,0,0,39,4
+DirectNoFade,123,123,123,123,123,123,123,0,0,39,4

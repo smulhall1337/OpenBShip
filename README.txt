@@ -1,48 +1,52 @@
-Battleship reconstruction and modernization workspace — checkpoint24 / v0.18
+Battleship reconstruction - playable v0.30 / evidence checkpoint 39
 
-Run: outputs/Launch-Reconstruction.cmd
-Current scope/checks: outputs/Current-Status.txt
-Priorities/stretch goal SG-01: outputs/Project-Roadmap.txt
-Evidence/controls: outputs/Battleship-Lab-v0.18/FLEET-EVIDENCE.txt and README.txt
-Feedback: outputs/User-Feedback.txt
-Checkpoint history: work/checkpoint-*.txt and outputs/Reference-Checkpoint.txt
+Run outputs/Launch-Reconstruction.cmd. Detailed scope, evidence and pending
+hands-on checks: outputs/Current-Status.txt. Source and controls are packaged
+under outputs/Battleship-Lab-v0.30. This is a runnable partial reconstruction.
 
-Original menu → Start New Solo Game → Classic → Start Game opens Fleet
-Configuration. Move/review a complete fleet; its Start Game begins battle.
-Existing direct Classic duel/manual deployment remains available. This is a
-partial rebuild: recovered code/data evidence and modern choices are explicit.
-Earlier runnable versions and supplied originals remain preserved.
+Playable Classic route: Original menu > Solo > Classic > Start Game > Fleet
+Configuration > Start Game > loading > battle. Direct Auto-place/Start works.
+P/Escape pauses battle; F2 resets. Cinematics remain behind the board, with the
+approved30%surface transparency and opaque ships/grid/markers/HUD.
 
-Build and check the existing workspace:
-outputs/Battleship-Lab-v0.18/Build.cmd
-outputs/Battleship-Lab-v0.18/Verify.cmd
+Original menu > Replay intro plays the Hasbro/NMS/English startup sequence.
+Preferences > Credits and the137movie archive expose the original media.
+Original Quit shows its native artwork/default Back and closes after its fade.
+Watch result after victory/defeat uses confirmed frame0/EOF/skip/fade behavior.
+Source identities, formats, confidence and intentional modern differences are
+documented in STARTUP-EVIDENCE.txt and ENDING-SEAMS-EVIDENCE.txt in the package.
 
-Restore in a clean Windows source checkout with the existing .NET Framework:
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Restore-Workspace.ps1 -OriginalRoot "C:\path\to\Battleship_The_Classic_Naval_Warfare_Game"
-Add -WithChecks to regenerate native-derived fixtures and run validation.
-Add -AudioDeviceCheck for separate SILENT actual-device checks. The exact supplied
-RIP must contain Bs.exe, GRAPHICS, LWEBS, HWEBS and SFX. Every copied asset hash
-is checked; existing differing files are retained and running builds are not
-replaced. No downloads, registry edits, original installation or disc mount.
-Optional x86 fixture generators execute bounded hash-guarded copied code with
-explicit stubs; read the evidence reports. Production never executes Bs.exe.
-Optional PeDisasm/Iced dependency is licensed separately and not required to
-restore, generate fixtures, build or play the game.
+Validation:136model/format +88real-form=224focused groups;48shutdown cases.
+Master/high-detail full Classic -> victory -> Watch result -> title -> Quit
+passes through production timers without movie skips:19shots/111battle stages,
+112SILENT audio buffers,485seconds and maximum51GDI handles. Four additional
+natural result runs cover both outcomes muted and with SILENT waveOut. These
+checks establish API/behavior, not audible or physical-input acceptance.
+Fresh source restoration matches1485Assets/27Programs/444Evidence files.
 
-Latest authored-source backup: outputs/Battleship-Source-Checkpoint-24.zip
-Integrity record: outputs/Source-Checkpoint-24.txt. Older snapshots retained.
-The local repository is initialized, with first commit still pending because
-this session protects existing .git metadata. No commit or remote is claimed.
-To finish the prepared checkpoint from your own terminal, run:
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Complete-Git-Checkpoint.ps1
-Or double-click outputs\Complete-Git-Checkpoint.cmd. It audits exclusions and
-uses a per-command Codex identity, without global Git settings or publication.
+Build.cmd/Verify.cmd use the existing Windows .NET Framework compiler and x64
+WinForms/GDI+/WinMM. The modern runtime needs no mount/registry/original EXE.
+Source-only restore, with the exact supplied RIP:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Restore-Workspace.ps1 -OriginalRoot "<supplied RIP root>" -WithChecks -AudioDeviceCheck
 
-Git/source snapshots record authored source/build/analysis tools, provenance,
-reports and numerical fixtures. Supplied original media/executables, binaries,
-ZIPs, previews, user settings, scratch and Git metadata stay excluded. The
-recorded sixty-byte modern Windows palette input is intentionally retained.
-No external upload/publication/message performed. AI movie enhancement remains
-optional stretch goal SG-01; no model or enhancement has been downloaded/run.
+Evidence checkpoint 39 adds a runnable bounded opponent firing/target probe:
+720 numerical cases match the original chained selectors and all native draws.
+Review outputs/Inspect-Native-Target-Order.cmd; reproduction and limits are in
+outputs/Native-Target-Order-Findings.txt. The playable v0.30 streams are unchanged.
 
-Git ownership compatibility: Complete-Git-Checkpoint.ps1 passes safe.directory for this exact workspace on each Git command. This handles sandbox-owned .git when running as Sean without adding a global trust exception or changing ownership. Rerun outputs\Complete-Git-Checkpoint.cmd after an ownership-check failure; the script includes the fix in the checkpoint.
+Source checkpoint 39 ZIP/hash record: outputs/Source-Checkpoint-39.txt.
+Per user instruction, automatically make a local Git commit after each completed,
+tested checkpoint. AGENTS.md records this preference; Complete-Git-Checkpoint.ps1
+accepts -Message and writes commit identity to outputs/Git-Checkpoint.txt.
+No remote, publication or upload is performed by this project workflow.
+
+Ten recent tested builds are retained. Older generated packages and validation
+copies retire after verified source/report/settings archival. Supplied material,
+original reference, authoring/Git history and source checkpoints remain intact.
+The ledger is outputs/Retired-Builds.csv; Build-Cleanup-Summary.txt is current.
+
+Remaining: native live-gameplay reference, campaign/network/tutorials/radar,
+controllers and full native lifecycle/RNG schedule. Source reference acceptance
+is menu plus clean Quit only. Optional AI movie upscale remains SG-01backlog;
+no models or processing run. outputs/Project-Roadmap.txt records next steps.
+

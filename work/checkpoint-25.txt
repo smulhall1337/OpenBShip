@@ -1,0 +1,76 @@
+Checkpoint25 — v0.18.1 Fleet Start viewport hotfix — 2026-11-07
+
+Battleship current status — checkpoint25 — v0.18.1 — 2026-11-07
+
+Run outputs\Launch-Reconstruction.cmd. Close an older game window yourself and
+reopen the launcher; the hotfix title says0.18.1. Original menu → Solo → Classic →
+Start Game opens Fleet Configuration. Its lower-left Start Game begins battle.
+Your v0.18sound/display settings are copied byte-for-byte into the new version.
+Existing direct manual deployment and control bindings remain available.
+
+User report and correction
+User confirms Git setup succeeded and menu/fleet setup opens, but clicking the
+original Start Game does nothing. Reproduced the displayed-button failure in
+v0.18using native Windows mouse messages sent only to an owned offscreen form.
+EC_FLEET.PCX storage is640x512; v0.18stretched512rows into a640x480display while
+hit testing used native480line coordinates. The visible center missed its hit
+region. FleetProgram.Viewport now validates/crops the top640x480indexed pixels
+before rendering ships/overlays and scaling. Original assets, coordinates and
+input policies unchanged. Prior v0.18rendered alignment/visible-pointer claims
+are superseded. See VIEWPORT-HOTFIX.txt and old/new click traces in the package.
+
+Validation and limits
+95 model/format +54 real-form groups =149 focused checks;18shutdown cases pass.
+The new original-file fixture confirms512line storage, every output pixel in
+its480line crop and malformed dimensions/buffer rejection. A real-form native
+mouse-message check clicks the DISPLAYED button at normal/minimum window size,
+starts battle unpaused and fires the first shot. Standalone old/new probe:
+v0.18 Image640x512 / button-1 / Started=False;
+v0.18.1 Image640x480 / button2 / Started=True.
+Native message tests are separate from physical mouse acceptance, still pending.
+Normal hotfix preview inspected; existing shutdown/SILENT actual-device checks
+and owned no-argument startup/main-form/clean WM_CLOSE exit0 pass. No user game
+terminated or running executable overwritten. Source game/AI/movie/ending logic
+unchanged; original roster/collision/camera and approved30percent cinematic board
+transparency/opaque overlays retained. Layout RNG, transactional draft/shuffle,
+keyboard overlays and direct battle bridge remain explicitly modern. Other modes,
+shared RNG/ownership/timing, saves/network/controllers remain incomplete. Prior
+v0.18full111stage natural duel is historical; no fresh full duel claimed here.
+
+Clean source restoration passes149/18shutdown/SILENT.535original assets,
+13Program files and300Evidence files all848byte-match;298native-derived fixtures
+regenerate with2recorded modern palette inputs retained. Log:
+work/reconstruction-v18.1/restore-validation.log. Source:
+work/reconstruction-v18.1/src; matching packaged Source. The final source also
+includes the native pointer regression in --ui-check. No new dependencies.
+Relocated final ZIP passes149model/form checks,18shutdown and SILENT device;1077manifest records hash-match. See outputs\Battleship-v0181-Portable-Check.txt and work/reconstruction-v18.1/portable-validation.log.
+
+Frozen archive:1077manifest files /1078ZIP entries, all SHA256/size verified.
+ZIP SHA256:A9714DAB007E601CBD9FFD8FC9B7B35748305031813A8B6CA7CAC7F02B8DB233
+EXE SHA256:6622EB9FA4E84093B66F8F75415B5F089804B30B9AA2FD8E85E9A19E8586E48F
+See outputs\Battleship-v0181-Archive-Check.txt. Original reference and versions
+throughv0.18verified unchanged against their manifests/delivery hashes. Source
+checkpoint25 ZIP/Source-Checkpoint-25.txt records authored files/provenance/tools,
+excluding originals, builds/media, user settings, scratch and .git metadata.
+Earlier source snapshots are preserved. No upload/publication/system changes.
+
+Git setup confirmed
+User completed local main commit30264f0471cf64d9208b7b58e957439e08cd99ac.
+Current hotfix edits remain working changes after that commit. Exact-workspace
+per-command trust remains in Complete-Git-Checkpoint.ps1 for ownership differences;
+no global trust/ownership change or additional commit performed by this repair.
+The earlier initialized/noHEAD/pending-first-commit statements are superseded.
+
+Next hands-on check
+Reopen v0.18.1, click the visible original Fleet Start, fire and Quit. No new
+physical/audio/exit acceptance inferred. Original reference still confirmed only
+through mainmenu/clean Quit. Next reconstruction stays450E18 E_WAIT1/state6/wait/
+final opcode4 and outer-loop battle entry, after confirming the repaired setup.
+Keep original-code identity guards and modern RNG/transition boundaries explicit.
+AI movie enhancement remains optionalSG-01; no enhancement/model download run.
+
+
+Changed production only: FleetProgram.Viewport validates/crops PCX; FleetSetup.Render uses crop; MainForm version label. Diagnostics add95th model group and54th form group, including SendMessage calls restricted to owned canvas under --ui-check. Native game/AI/movie/ending/input-policy source unchanged.
+Old/native pointer reproduction: work/fleet-pointer-probe-v018/Visible-Button-Result.txt; new final trace packaged Fleet-Click-Check.txt. New form test clicks from ACTUAL bitmap dimensions and confirms first shot at normal/minimum sizes. Old tests wrongly targeted hit coordinates, so missed512-to480display squeeze.
+Next: obtain user physical Start/fire/Quit feedback; continue450E18/state6loading/wait/local battle entry with original executable identity guard. Preserve modern layout RNG/draft/direct bridge labels and approved cinematic transparency.
+Source snapshot25 includes the repaired Create-SourceSnapshot assembly load and per-command Git trust helper. Repo first commit30264f0confirmed; no new commit attempted by agent. Older packages/source archives remain immutable comparisons.

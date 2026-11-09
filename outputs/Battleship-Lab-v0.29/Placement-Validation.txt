@@ -1,0 +1,18 @@
+v0.25 validation - original fleet generation
+PASS118model/format +74real-form groups =192focused checks;33shutdown cases.
+New grouped checks compare297native layouts/RNG states/occupancy grids and
+2complete per-roll traces, invalid inputs, forced restart and bounded failure.
+Game checks compare consecutive Auto-place/re-roll/enemy-start native draws,
+roster order and RNG state for positive, negative and uint boundary seeds.
+The real Fleet Configuration Shuffle button keeps its draft and commits it
+through loading to a playable battle. Existing full deterministic battle,
+difficulty, movies, menus, settings, Credits, pause and exit regressions pass.
+Actual target API tests use SILENT waveOut; audible output remains unconfirmed.
+A separate naturally timed high-detail Master duel is running against the
+new layout generation; its completed report is recorded before final delivery.
+Clean-source and relocated-package results are recorded independently.
+No native live-battle or physical input acceptance is inferred from fixtures.
+
+PASS clean source-only restoration:543Assets/21Programs/374native evidence files
+byte-match.372native-derived files regenerated;2modern palette inputs retained.
+The natural timing CSV is a separate observation, not regenerated golden data.

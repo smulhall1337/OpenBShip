@@ -1,0 +1,8 @@
+PASS unchanged v0.16 source: Game.cs
+PASS unchanged v0.16 source: OriginalOpponent.cs
+PASS unchanged v0.16 source: Presentation.cs
+PASS unchanged v0.16 source: ClassicSequence.cs
+PASS unchanged v0.16 source: ClassicBackdrop.cs
+PASS unchanged v0.16 source: ClassicHud.cs
+PASS unchanged v0.16 source: ClipStudy.cs
+PASS unchanged v0.16 source: EndingPlayer.cs

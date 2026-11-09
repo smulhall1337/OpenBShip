@@ -1,7 +1,0 @@
-PASS relocated ZIP: 748 manifest entries match.
-PASS relocated app: 66 focused checks and 27 real-form checks, exit 0.
-PASS relocated actual x64 waveOut lifecycle using SILENT PCM, exit 0.
-PASS separate source-only export rebuilt assets/fixtures/app and passed the same checks; all 201 evidence files match.
-PASS normal no-argument owned-process startup/clean close, code 0, checked separately.
-Audible output, physical controls, perceived sync and full original gameplay remain separate checks.
-Final report-only packaging changes are checked against every archive entry; executable/assets/source are unchanged.

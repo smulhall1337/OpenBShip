@@ -1,6 +1,0 @@
-PASS extracted ZIP: 258 manifest files matched.
-PASS relocated Windows x64 executable: 49 focused checks and 15 real-form checks, exit 0.
-PASS PAT decoder fixtures, strict bounds, movie palette paths, live clip buttons/timer, battle isolation, focus-loss pause and bitmap disposal after relocation.
-Normal no-argument startup/clean close passed separately on the agent desktop (Launch-Check.txt).
-The game uses bundled assets/managed code; original media/registry/wrapper and optional x86 tools are not runtime dependencies.
-Input events are simulated offscreen; clip playback is silent and user-desktop input/perceived cadence remain hands-on checks.

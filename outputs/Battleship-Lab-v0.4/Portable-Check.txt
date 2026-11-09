@@ -1,4 +1,0 @@
-PASS extracted package: 107 manifest files matched.
-PASS relocated x64 executable: 32 focused model/reader checks and 7 form checks, exit 0.
-PASS original targeting oracle fixtures, four settings, repeat semantics and real-form controls work after relocation.
-Runtime uses relative bundled assets and managed targeting; no original ISO/registry or optional oracle/disassembler invocation is required.

@@ -1,0 +1,23 @@
+Current v0.20 validation — 2026-11-07
+PASS100model/format +57real-form groups =157focused checks;20shutdown cases.
+New groups compare131text lines, all564native font metrics,1200message cases,
+5glyph command/pixel samples, original source-record/encoding bounds and cache
+lifetimes. Full printable ASCII sample exercises right clipping. UI verifies
+ready/firing/travel/sinking, palette replacement/disposal and reset. Existing
+loading, visible Fleet Start/first shot, cinematic alpha and shutdown remain green.
+
+Controlled fixture corrections: native text other-player record stride is44;
+first input incorrectly used176. Font mode is one byte, not the whole32bit
+stack word. Both corrections precede final CSVs; earlier failed logs retained.
+Production formatting/font output matches final native fixtures. No exception
+suppression or input-policy changes. Native original callbacks/file I/O are stubs.
+
+Owned final startup/main-form/WM_CLOSE exit0and SILENT waveOut shutdown pass.
+Normal/minimum message previews inspected, showing original two-line submarine
+caption. Current native style3glyphs render in the top message area; hit/miss
+remains icons. Actual physical readability/audio/exit acceptance is separate.
+Full production high-detail duel now checks each shot-stage message binding and
+non-sinking empty text in addition to natural movies; summary is recorded at
+workspace outputs/Battleship-v020-Natural-Check.txt when complete. Source restore/
+portable/ZIP records have separate measured scopes; older package reports are
+historical. Original Game/AI/movie/ending-player source unchanged.

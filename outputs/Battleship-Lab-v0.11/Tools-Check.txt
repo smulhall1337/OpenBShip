@@ -1,4 +1,0 @@
-PASS all 201 inherited evidence files match clean source-only restoration.
-PASS source restoration builds and passes 68 model/format, 30 real-form and SILENT actual waveOut device checks.
-Original assets/compiled binaries were absent before restore; supplied assets copied only after SHA256 verification.
-Native subsystem stubs and earlier evidence limitations remain as documented; no new native format or game-fidelity claim.

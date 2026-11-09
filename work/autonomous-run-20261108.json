@@ -1,0 +1,9 @@
+{
+  "StartedUtc": "2026-11-08T04:45:28Z",
+  "StopAtUtc": "2026-11-08T08:45:28Z",
+  "Instruction": "Continue automatically for four hours, stop at nearest suitable checkpoint or earlier if user decision required.",
+  "Status": "stopped_at_tested_checkpoint_after_clock_advance",
+  "CurrentMilestone": "Stopped on v0.25/checkpoint32; v0.26 preserved as unvalidated draft",
+  "LastCompleted": "v0.25 / checkpoint32",
+  "ObservedStopUtc": "2026-11-08T12:49:47.0796816Z"
+}

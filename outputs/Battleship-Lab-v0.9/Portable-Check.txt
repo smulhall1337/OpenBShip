@@ -1,7 +1,0 @@
-PASS extracted portable ZIP: 475 manifest entries matched.
-PASS relocated x64 app: 61 focused checks and 25 real-form checks, exit 0.
-PASS relocated actual x64 waveOut device lifecycle check with SILENT samples, exit 0.
-PASS source-only export restored all required assets by hash, regenerated native fixtures, built and passed the same 61/25 checks plus silent device check.
-The source export used the Git exclusion rules; no original assets, generated binaries or raw executable spans were present before restore.
-Actual audible output, perceived synchronization and user-desktop physical input remain separate checks.
-Normal no-argument startup/clean close passed separately on the agent desktop. Original registry/media/wrapper and optional x86 tools are not runtime dependencies.

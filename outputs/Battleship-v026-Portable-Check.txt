@@ -1,0 +1,3 @@
+PASS v0.26 relocated2150manifest records;122model/79form/39shutdown cases and SILENT actual waveOut checks.
+Frozen EXE SHA256 E711205FA56193966F0F374196BAC53384EDFE776BBE41B4A74CE95D8F98B1EC.
+Portable copy: work\portable-v26\Battleship-Lab-v0.26. Audible/physical checks remain separate.

@@ -1,0 +1,6 @@
+PASS 720 bounded chained probes: 9 observation shapes x 4 difficulty levels x 4 seeds x 5 shooter types.
+PASS 70620 actual native CRT draws (69180 in target selection), every output/state and all four target call sites checked.
+PASS original opponent order: firing pair -> movie request -> real target selector -> following-stage stub.
+PASS delivered pure selectors replay the same shared stream and agree on weapon, movie, coordinates, call count and final state in all probes.
+Scope: copied hash-locked numerical code in a newly owned x86 helper; media admission/following stage are stubs; shooter and observation grid are harness inputs. No native startup, fleet generation, complete turn/session, physical input or audiovisual acceptance. Runtime streams are unchanged.
+Exhausted boards deliberately preserve native last-coordinate returns. Isolated hits with no open Y neighbor are excluded because original code can loop indefinitely.

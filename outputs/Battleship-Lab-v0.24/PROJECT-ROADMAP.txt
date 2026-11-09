@@ -1,0 +1,38 @@
+Battleship project roadmap — updated 2026-11-07
+
+Current checkpoint: v0.17
+Original Practice setup opens from Solo, with native artwork, mission choices,
+player limits/clamp, button rendering and original descriptions. Classic Start
+opens recovered deployment; other simulations remain previews.141model/UI checks
+and16shutdown cases pass; restoration/portable/natural scopes in Current-Status.txt.
+Approved30%board alpha/opaque overlays and existing bindings preserved. No new
+user visual/physical/audio acceptance inferred from 'continue'.
+
+Corrected native routing: Solo44F3F8, Multiplayer44F208. v0.16notes swapped these
+names; native label scanner now independently verifies actual route destinations.
+Frozen prior reports remain historical. Do not propagate that old address label.
+
+Next reconstruction priority
+Recover original Classic Start's42B940setup/deployment transition and resources
+before replacing the current modern deployment bridge. Practice setup's strict
+prefix/player-clamp/sprite behavior is supported; native text font/wrapping,
+World Domination/Scenario menus and other Practice simulations are unfinished.
+Keep mainmenu/Quit reference and establish observable original Classic gameplay
+for shared RNG/ownership/interruption/timing comparison. Existing target/rules
+reconstruction is partial; full campaigns, networking, save/controller support
+remain larger unfinished areas. Fade factors known;40msstep is explicitly modern.
+
+Stretch goal SG-01 - optional AI enhancement of combat movies
+Requested by the user; backlog, outside reconstruction baseline. Native HWEBS
+320x240 decoding is validated; no AI processing/model download has run.
+Pilot BATFIRE1: compare native original, ordinary scaling and candidate1280x960
+AI upscale with identical frame count, cadence, aspect ratio and audio. Inspect
+temporal shimmer, invented detail, hull/turret distortion, smoke/explosions and
+contrast. Benchmark available hardware before estimating batch compute. Earlier
+Intel UHD observation is not a measured processing benchmark. Video2X/Real-ESRGAN
+are candidates, not installed/selected dependencies. Record tool/model versions,
+licenses, source/parameter/output hashes and timing. If accepted, build optional
+Original/Enhanced pipeline and preserve originals. Planning estimate: a few hours
+for pilot, roughly1-2working days for integration, plus compute and user review.
+Cadence belongs to scene: Classic combat40ms/25fps; ending front-end50ms/20fps.
+Do not apply a global25fps assumption to intro/attract/tutorial playback.

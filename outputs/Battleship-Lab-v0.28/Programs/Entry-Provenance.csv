@@ -1,0 +1,2 @@
+"File","SourceVA","Bytes","SHA256","ExecutableSHA256","Scope"
+"BattleEntry.seqbin","00450E18","176","56C2913AB4115FC86E453EF37DFD86B065F35CF766151AA5ECB4D11047586A21","B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569","Post-fleet loading branch through opcode4; production supports only local Solo slot-1; network branches rejected"

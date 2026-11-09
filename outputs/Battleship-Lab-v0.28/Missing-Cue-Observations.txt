@@ -1,0 +1,13 @@
+Missing supplied cue observations - v0.26
+ISL_DSHS.SEQ SHA256 and its raw bytes are preserved in Asset-Provenance.csv.
+Observed absent in all three supplied paths (RIP, extracted disc, mounted E:):
+SFX/ISL_DSHS/SHELIN_A.WAV
+SFX/ISL_DSHS/FIRE45F.WAV
+SFX/ISL_DSHS/EXP01.WAV
+SFX/ISL_DSHS/EXP02.WAV
+Twelve explicit existence observations were false. Source files elsewhere were
+not moved/copied into these paths. Runtime reports each absent name and keeps
+the four available SMLEXP3cue requests at native frames32/36/44/66.
+The original SEQ has ten requests; repeated FIRE45F yields six failed handles
+in native recording fixtures, not four failed requests. No missing audio has
+been synthesized and no full original-device failure behavior is claimed.

@@ -1,5 +1,0 @@
-PASS packaged no-argument x64 startup reached its own main form and message loop.
-Owned PID 25916 main form found: Battleship Fleet Lab 0.10 — Classic impact and sinking movies; WM_CLOSE posted=True
-Normal close exited=True; Windows exit code=0.
-Only this new hidden owned smoke process was closed; no existing user game was closed.
-This establishes startup/close on the agent desktop, not visible user-desktop gameplay or audible output.

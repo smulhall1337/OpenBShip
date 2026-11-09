@@ -1,0 +1,8 @@
+Image=640x512
+Before capture=False pressed= button=-1 selected=-1 phase=Placement
+MouseDown capture=True pressed= button=-1 selected=-1 phase=Placement
+After WM_LBUTTONDOWN capture=True pressed={X=59,Y=416} button=-1 selected=-1 phase=Placement
+MouseUp capture=True pressed={X=59,Y=416} button=-1 selected=-1 phase=Placement
+CaptureChanged capture=False pressed= button=-1 selected=-1 phase=Placement
+After WM_LBUTTONUP capture=False pressed= button=-1 selected=-1 phase=Placement
+Started=False

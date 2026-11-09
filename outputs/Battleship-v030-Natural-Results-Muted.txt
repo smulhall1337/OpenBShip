@@ -1,0 +1,1 @@
+PASS two natural result sequences; audio=muted; elapsedSeconds=84. No skip, seek or accelerated time. Source-confirmed prefix order;40ms fade cadence is modern. Offscreen, not audible/physical acceptance or native menu execution.

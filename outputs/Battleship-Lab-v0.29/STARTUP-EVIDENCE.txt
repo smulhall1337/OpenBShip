@@ -1,0 +1,80 @@
+﻿Original startup movie replay - v0.29 - 2026-11-08
+
+Use Original menu > Replay intro. The native startup script orders HASBRO,
+NMSLOGO1, UK_INTRO, with a palette fade after each, then title entry. The modern
+app retains its direct title startup; replay is explicit. P pauses, Space or
+left click skips the current movie, Escape/Back returns, Restart starts over.
+Battle state/settings remain paused and intact; global F2 resets. Intro uses
+original HWEBS320x240 media irrespective of battle-detail preference.
+
+Confirmed executable identity for addresses: Bs.exe SHA256
+B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
+Script44EF48..44EF88 is64bytes: clear, movie141, fade, clear, movie142, fade,
+clear, movie138, fade, jump44EF88. The bounded reader validates every word.
+Native table44E288 maps138=UK_INTRO,139=VICTORY,140=LOSE,141=HASBRO,142=NMSLOGO1.
+The raw tail and native dispatcher/alias spans are retained in Evidence.
+
+Engine-context correction:407570/table407614 maps engine mode2 to40758F,
+which calls front-end42E9D0; engine mode4 maps to DestroyWindow4075A8. Some
+earlier synthetic script fixtures initialized mode4 only to drive isolated
+dispatch/fades; that was not a recovered live front-end context. v0.29Quit
+and startup fixtures now initialize mode2 and restore it after fades. This
+supersedes earlier Quit notes saying the real front end restores mode4.
+Geometry, indexed draw, palette factor order and return6 conclusions remain.
+
+Native palette402732 uses full10..245entries for engine2unless script state41
+(Credits), which updates20..137. Startup state0/6therefore uses the full palette.
+Nine actual-asset palette outputs from copied native code match byte for byte;
+the real-form startup palette is checked against these fixtures. Protected
+Windows endpoint colors remain the documented modern system observation.
+Startup initially uses the source patched ISLAND base. Palette identity and
+the distinction from Credits are guarded by regression checks.
+
+StartupPatOracle executes only trusted original decoder fragments: all1318raw
+frames(251Hasbro,109NMS,958English intro), exact consumed spans, output canaries,
+and3independent first-frame cases match the modern reader. Each source raw last
+frame decodes on EOF; the preceding N-1intervals last50ms each and the final raw
+image remains for exit fade. Source wrapper first polls immediately. Natural
+visible movie intervals total65.75seconds, plus the three fades/loading.
+Source skip polls once before stopping; paused skip preserves the current image
+as a deliberate pause extension. Native failure black screens are not recreated:
+the modern player pauses with an error and leaves Back/Restart available.
+
+The English intro aliases both SEQ and WAV directory UK_INTRO to INTRO, confirmed
+at40259Fand422356. Copied sequence polling compares52source cues:1Hasbro and51
+intro; all requested files exist. NMSLOGO1has no sequence in the supplied copy;
+the source loader tolerates that, and the player runs it silently.
+Hasbro requests JINGCD, originally44.1kHz stereo16bit PCM,12seconds. StartupSound
+preserves its source file and converts playback into the existing11025Hz mono
+16bit mixer using integer-ratio box averaging across frames/channels.11025,
+22050and44100Hz mono/stereo8/16bit PCM have explicit RIFF/chunk/alignment bounds.
+An incomplete final sample bucket uses the available frames. This conversion
+is modern design, not recovered native resampling or a claim of exact audible
+stereo reproduction. Existing combat readers/audio are unchanged. Original DOS
+EOF26is accepted only at the end of the startup sequence text.
+
+The three original PAT/PAL pairs and supplied audio/text remain byte-identical.
+Modern runtime adds pause/focus/tab/held-key suppression, reset, explicit replay,
+back/restart controls,40ms fade-factor cadence and bounded500ms catch-up.
+Decoded media releases between movies; exit fades retain only the indexed last
+image. No original executable, mount or registry settings are needed by replay.
+
+Validation:134model/format +86real-form=220focused groups;48shutdown cases
+(45owned form states,3component lifecycle cases), no ThreadException. The real
+production timer completes all three movies using three finite SILENT waveOut
+buffers, including the zero-valued NMS buffer, returns to title and releases
+media. These checks establish API use/completion, not audible playback.
+Normal/minimum intro and Hasbro previews inspected. Owned no-argument startup
+reaches the production form and exits0on WM_CLOSE. Source-only restoration
+regenerates native fixtures and matches1485Assets/27Programs/431Evidence files;
+429native-derived outputs plus2retained modern palette inputs.
+Separately, v0.28natural low-detail difficulty1and2duels completed:19player
+shots/111movie stages each,431/435seconds, no stage skips, terminal victory and
+pause/damage/message checks passed. These are two scripted perfect-target runs,
+not physical input or a full difficulty matrix on this build.
+
+Remaining: native whole-game comparison, campaign/network/tutorials/radar,
+controller work and global RNG lifecycle. The older result-sequence player
+still needs its own exact final-frame/skip lifecycle comparison. Native full
+reference acceptance remains menu plus clean Quit. AI upscale remains SG-01
+backlog; no models/downloads/processing run. Audible replay needs user feedback.

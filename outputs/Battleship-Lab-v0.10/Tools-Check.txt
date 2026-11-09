@@ -1,5 +1,0 @@
-PASS all 201 evidence/observation files match a source-only restoration with regenerated native fixtures.
-PASS all 189 inherited v0.9 evidence/observation files are unchanged.
-PASS new 252 controlled selector rows, 5641 original-decoder frame hashes, 404 sequence onsets/cleanup and 232 PCM paths.
-The copied selector/oracle code uses controlled stubs; it does not establish full original gameplay, routing, graphics or audible playback.
-All required fixture tools compile using the existing Framework compiler; Iced is optional for disassembly only.

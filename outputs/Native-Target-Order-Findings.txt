@@ -1,0 +1,86 @@
+Native opponent firing/target random-order evidence - November 8, 2026
+Analysis checkpoint 39; playable baseline remains v0.30.
+
+Confirmed scope
+The original opponent prefix 0041C8C0..0041C93A selects its weapon, asks the
+firing dispatcher 00416640 for a movie, calls target selector 0041C940, then
+calls 00423540. The newly implemented probe now executes the real target
+selector with the SAME original CRT random state as the firing pair. Its
+media request and following-stage callbacks still record rather than execute.
+
+720 bounded probes cover nine observation shapes, four difficulty levels,
+four seeds (0, 1, 731 and UINT_MAX), and five shooter types (7, 1, 2, 12, 4).
+Shapes: empty, masked 0/2/4, exhausted, sparse, single hit at either Y edge,
+hit chain in either extension direction, and a resolved-cell search pattern.
+They are numerical fixtures, not 720 independent gameplay sessions.
+
+Every native draw/output/state was checked: 70,620 draws, including 69,180
+inside the target selector. All four target call sites were observed:
+0041CA94, 0041CB4B, 0041CB5B, 0041CB8D. The delivered pure weapon/movie and
+target selectors, replayed consecutively with one managed NativeRandom,
+agree on weapon, movie, coordinates, random-call count and final state in all
+720 probes. Three newly owned helper processes produced byte-identical case
+and draw traces despite independent allocations. The production game retains
+its deliberately independent streams; this experiment adds no shared-RNG mode.
+
+Independent shape/budget assertions verify edge pursuit, hit-chain direction,
+masking and exhausted search budgets. On a fully resolved board, the original
+returns its last sampled coordinate. Isolated hits with no open Y neighbor
+are deliberately excluded: original code can retry indefinitely there. The
+modern runtime's explicit stall handling remains intentional.
+
+Executable identity / addressing
+Only Bs.exe SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569
+is accepted. Image base 00400000, x86 PE32. Original source is read only; it
+is never loaded as a game process. Span hashes are retained in the adjacent
+Native-Target-Order-Provenance.csv. Prefix relocations: 11; firing dispatcher:
+24. Target uses five validated absolute operands, four validated relative
+rand calls, and ten validated jump-table entries within its 0x348-byte span.
+Seed leaf is ten bytes including its RET. Original shared state is 00454D50.
+
+The original side flag 004E42D0 is set to 1 by the opponent prefix. Observation
+cells are 32-bit, X-major, at 004B47E0 + (x*10+y)*4 in the owned allocation;
+0/2/4 mask to unknown, 1 is resolved, 8 is unresolved hit. The prefix passes
+X at 004AE81A and Y at 004AE818; coordinates are zero-based 0..9. The inspector
+renders them A..J / 1..10. Shooter and grid are harness inputs, not recovered
+initialization or evidence of access to a live hidden fleet.
+
+Validation / artifacts
+Native-Target-Order-Check.txt records the chained comparison. Five additional
+failure-path checks reject altered target, altered state, missing boundary,
+wrong original executable and a non-owned helper path. Debugger creates only
+the exact newly compiled ClassicTargetOrderOracle helper. Fault/45-second
+timeout cleanup targets only that child. No user game was attached or closed.
+The test wrapper handles expected native stderr on Windows PowerShell 5.
+
+Case CSV SHA256:
+3ED7B70AE37089B8E4D99498CF5CFA599FCA3FB01F7F343CC6797230519EEB13
+Draw CSV SHA256:
+1006F9B900F9CA2BEDF3AB1D1686BF1DC40A0077DF256B8E22069F432C21D52D
+Full draw traces remain intermediate material in work/native-target-order-39-final.
+Compact cases and original-span provenance are retained under outputs and in
+the source checkpoint. Tool hashes are in the final work run's Tool-Hashes.csv.
+
+Reproduce from the workspace using a fresh destination:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File work\analysis-tools\Run-TargetOrderProbe.ps1 -Executable work\reference-rip\Bs.exe -Destination work\my-fresh-target-probe
+The existing .NET Framework compiler builds owned x86 oracle/debugger and an
+x64 comparison against the frozen v0.30 executable. No SDK download or media
+playback is needed. Guard checks: Test-TargetOrderGuards.ps1 -RunDirectory
+<completed run> -Destination <fresh guard directory>.
+
+Review without executing native code:
+outputs/Inspect-Native-Target-Order.cmd shows hit-chain example 6. To inspect
+another case, use Show-TargetOrderProbe.ps1 -RunDirectory outputs -Probe <0..719>.
+Add -Draws with the full work run as RunDirectory for the actual event list.
+
+Remaining boundary / next experiment
+This is not native startup, fleet generation, a complete shot/turn/session or
+original audiovisual acceptance. Following-stage 00423540 is still stubbed.
+Reuse ClassicPhaseOracle's 0x384-byte span / 40 validated relocations next,
+retaining actual shared CRT state. Establish entry phase 004B4794 and completion
+callbacks, and record gun-travel draws at 0042360B / 0042378D before impact.
+The local flight selector is already reconstructed; its actual chronological
+position in a combined turn is the unresolved part. Preserve media-admission
+return/recursion semantics and view/impact callback boundaries. Then establish
+both fleet-generation passes and seed boundaries before proposing a new
+configurable shared-stream comparison mode. Keep v0.30 as the accepted baseline.

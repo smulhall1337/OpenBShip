@@ -1,6 +1,0 @@
-PASS extracted package: 226 manifest files matched.
-PASS relocated packaged Windows x64 executable: 44 focused checks and 12 real-form checks, exit 0.
-PASS recovered firing choices, ship selection/sink fallback, target-history isolation, keyboard/mouse handlers and minimum-size layout after relocation.
-Normal no-argument startup/close on the agent desktop also passed separately; see Launch-Check.txt.
-The game uses bundled assets and managed code. Original registry/media, graphics wrapper and optional x86 tools are not runtime dependencies.
-Input tests are simulated offscreen; audible output and physical desktop input remain hands-on checks.

@@ -1,4 +1,0 @@
-PASS 141 original-derived code/data/CSV files reproduced byte-identically with five packaged extractors and three isolated numerical oracles.
-PASS two recorded modern endpoint-observation files match preserved v0.5 fixtures separately.
-PASS new original-code fixtures reproduce 500 weapon-list choices and 220 movie-dispatch outputs, including call counts; these are two grouped numerical grids.
-No original process, file, registry or desktop palette was modified; tools are not game runtime dependencies.

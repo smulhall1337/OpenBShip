@@ -1,0 +1,86 @@
+Checkpoint26 — v0.19 original local battle entry — 2026-11-07
+
+Battleship current status — checkpoint26 — v0.19 — 2026-11-07
+
+Run outputs\Launch-Reconstruction.cmd; close an older window yourself first.
+Original menu → Solo → Classic → Start Game opens the fleet. Its Start Game now
+shows the original Loading Game World card/fade, then automatically starts battle.
+P/Pause entry pauses or resumes. Focus/tab changes pause until Resume; Return to
+fleet/Escape cancels while retaining edits and the previous paused game. F2 resets.
+Held action keys cannot carry into an immediate shot after the timed handoff;
+release allows normal firing. Existing direct deployment/preferences preserved.
+
+Reconstructed boundary and limits
+Exact176byte450E18prefix is read with all44words validated. Local Solo(-1)
+uses E_WAIT1, factors12..64and final opcode4. Original42F300returns6;42E9D0
+state6local branch calls Human/Opponents/EmptyFleets and requests Classic mode14.
+Guarded x86 oracle verifies three controlled slots(-1/0/1), with card/palette/
+render/player/network callbacks stubbed. Zero uses multiplayer E_WAIT2; production
+rejects nonlocal slots. No native network/game/device callbacks executed. Native
+absolute fade cadence remains unmeasured:40ms/factor,560ms total is modern. The
+prior Fleet fade-out14is still omitted, using an explicit cut into this supported
+prefix. Readiness bridges to the existing maintained Game.Start, not the full
+native world loader. E_WAIT1/2original assets are unchanged. ENTRY-EVIDENCE.txt
+records identity B9A8...A569, addresses, stub scope and all boundaries.
+
+Validation
+97 model/format +56 form groups =153 focused checks;20shutdown cases pass.
+New groups: all words/nonlocal/malformed rejection, native local trace/state/
+callback order, partitioned clock/final-frame hold, focus/tab pause/resume,
+draft/cancel, reset/minimum layout/result handoff and loading image lifetime.
+Existing visible-button mouse-message/first-shot and30percent cinematic board
+transparency regressions pass. A held-confirm test failed before freeze because
+async readiness resampled the known keys; CommitFleet now retains known down
+keys through the handoff until KeyUp. Release can fire. Failed verify-first.log
+is retained; final verify-final.log passes. No exception/JIT suppression added.
+20shutdown cases include paused/resumed entry and an actual SILENT waveOut buffer.
+Owned final startup/main-form/message loop and clean WM_CLOSE exit0 pass. Normal/
+minimum loading previews visually inspected. No user process killed/replaced.
+
+One complete high-detail level0 SILENT duel through title/Solo/Classic/fleet/
+loading fade passes naturally:19shots,111movie stages,362seconds,maxGDI51,
+111audio buffers,onepause/resume,hit/sink and terminal victory/clean close.
+Loading timer not fast-forwarded. Targets use hidden-board knowledge for testing;
+not111games, audible output or original gameplay acceptance. Raw logs/captures:
+work/reconstruction-v19/natural-entry-high/Level-0. Current summary:
+outputs/Battleship-v019-Natural-Check.txt.
+
+Fresh source-only restoration passes153/20shutdown/SILENT;537original assets,
+15Program and308Evidence files(all860)byte-match.306native-derived fixtures
+regenerated from absence,2recorded modern palette inputs retained. Entry prefix
+exports even without -WithChecks. Restored sources use the final production code;
+source/tool dependencies unchanged. Log:work/reconstruction-v19/restore-validation.log.
+Relocated package passes153/20shutdown/SILENT and1098manifest hashes; final ZIP
+1099entries verified for SHA256/lengths, including manifest. No user settings in
+ZIP. Previous display/sound preferences copied byte-for-byte to the new folder.
+
+Frozen integrity
+ZIP SHA256:2A17751CCAF95EBF29BE8EA81857B95ACA9399CFAF2BA6A388C249520EFC5E31
+EXE SHA256:BE76E903D3513F8B7DCA5FAA695B3AB21B2034E7469FD8AB914DBA50E7F7F19D
+See outputs/Battleship-v019-Archive-Check.txt / Battleship-v019-Portable-Check.txt.
+All versions throughv0.18.1and original accepted reference verified unchanged.
+Working source:work/reconstruction-v19/src; packaged Source matches. Current
+ENTRY-EVIDENCE.txt/Entry-Validation.txt supersede older version reports in package.
+User acceptedv0.18.1Start repair; no newv0.19physical/audio/exit acceptance inferred.
+Original reference still confirmed only mainmenu/clean Quit. Shared layout RNG,
+drafts, overlays/cancel/pause UX and direct battle bridge remain modern. Other
+modes/campaigns, saves/network/controllers and native timing/ownership unfinished.
+No original/registry/system changes, downloads, upload/publication/message.
+
+Checkpoint and next comparison
+Source checkpoint26 ZIP and Source-Checkpoint-26.txt exclude originals, binaries,
+settings, scratch and .git metadata; previous archives retained. Git main first
+commit30264f0471cf64d9208b7b58e957439e08cd99ac confirmed; later edits are working
+changes. No additional commit/ownership/global trust mutation attempted.
+Try the loading fade, P/Resume, Return to fleet and then Start/fire/Quit. Next
+native recovery: mode14dispatch beyond FES.407570index13byte407621=7uses
+40760C→4075E9→422F20. Static engine-tick-dispatch.txt retains the branch; inspect
+initialization dependencies before calling code. Establish original observable
+Classic gameplay and preserve exact hash/known versus modern distinctions.
+AI upscale remains optionalSG-01; no model/enhancement download/run.
+
+
+Exact files: work/reconstruction-v19/src; Tools/Extract-EntryEvidence.ps1; Tools/EntryOracle.cs; Programs/BattleEntry.seqbin. EntryOracle expected relocation counts163/22/3/77, code/data boundaries and private stub-only callbacks. Do not execute unknown original device/network callbacks.
+Entry player is a bounded separate model/view; readiness is one-shot, Reset clears Timeline/image; late calls after disposal no-op. No preceding native Fleet fade is claimed. Do not add fabricated loading percentages or unmeasured native timing claims.
+MainForm/EntryProgram/EntryPlayer plus two model/two UI groups changed; Game/AI/clip/ending-player source unchanged. Held-key snapshot was needed at asynchronous commit, not just synchronous menu actions. Final production hash remains unchanged after natural/portable checks.
+Next: user acceptance of loading flow/P/cancel; trace422F20mode14initialization and existing original Classic input/turn controller. Original runtime visual/audible gameplay needs an independent observation before fidelity claims.

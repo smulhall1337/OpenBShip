@@ -1,87 +1,46 @@
-﻿Battleship current status â€” checkpoint24 â€” v0.18 â€” 2026-11-07
+Battleship current status - checkpoint 39 - November 8, 2026
+Playable build: v0.30. New work: bounded native target-order evidence.
 
-Open outputs\Launch-Reconstruction.cmd. Original menu â†’ Start New Solo Game â†’
-Classic â†’ Start Game opens Fleet Configuration with a complete five-ship fleet.
-Click a ship, then a new middle cell; invalid drops retain its old position.
-Arrows/Enter select and move; Tab selects Start; Enter confirms. Escape cancels
-a move, then returns to Practice. The screen's Start Game begins battle.
-Shuffle fleet is explicitly modern. Back discards the draft and retains the
-previous paused game. F2 resets to direct deployment. Existing Classic duel/
-manual placement, original AI settings, movie/detail/audio choices persist.
-Other Practice simulations remain previews; fixed Classic purchasing/Clear/
-Restore controls are inactive.
+Run outputs/Launch-Reconstruction.cmd. Classic setup/loading/battle, original
+intro replay, Credits, Quit and victory/defeat movies remain available. Movies
+play behind the board; approved 30% surface transparency and opaque ships,
+grid, markers and HUD remain. P/Escape pauses battle; F2 resets.
 
-Reconstruction and modernization
-Native4238D0 creates two complete19-cell fleets, then randomizes BOTH. Temporary
-initializer coordinates are not original default layouts. Reused original
-EC_FLEET/EO_FLEET artwork,100percent ship sprites, camera5,5/scale147,98,
-button dimensions and centered fixed-axis bounds/overlap validation. Strict
-184/224byte prefix/button readers reject unsupported data. Native Classic skips
-the separate E_PLACE stage. Start currently uses a modern direct duel bridge:
-post-fleet E_WAIT1/state6/wait/outer-loop entry is not reconstructed. Bounded
-native fixtures stub allocation, RNG/rebuild and original device/network code.
-Production never executes Bs.exe. General shared RNG, draft isolation, atomic
-move rollback, shuffle, keyboard/validity overlays and immediate entry are modern.
-Original font, dynamic budget/fleet labels, exact cursor/occlusion/fade cadence
-remain unported. FLEET-EVIDENCE.txt records exact hash, addresses and limits.
+Checkpoint 39 executes the original opponent firing pair followed by the real
+original target selector using one shared CRT state in a newly owned helper.
+All 720 bounded numerical probes agree with a chained replay of the delivered
+selectors. All 70,620 native draws/states match; all four target RNG call sites
+are covered. Three processes produce identical traces; five negative checks
+reject altered evidence and wrong executable/helper identities. These are
+separate research checks, not additional full-gameplay test counts.
 
-Validation
-94model/format +53real-form groups =147focused checks;18shutdown cases pass.
-New comparisons:121native vertices/100center picks,780move decisions,11button
-bounds and10initializer/2randomization requests. Counts are numerical groups,
-not hundreds of played battles. Forms cover moves/rollback, draft ownership,
-Back, known held confirm/shot gates, pointer epochs/focus, minimum layout/F2,
-bitmap lifetime and the resultâ†’title handoff. Final review found an old draft
-could cover title after a result; correction clears it and its image. Exit
-hotfix remains intact. Actual SILENT audio device lifecycle, owned main-form
-startup and clean exit0 pass. Physical input/audible output remain separate.
+Review: outputs/Inspect-Native-Target-Order.cmd.
+Evidence, addresses, hashes, limits and reproduction:
+outputs/Native-Target-Order-Findings.txt.
+Media admission and the following stage remain stubs. Native initialization,
+fleet generation and complete turn/session scheduling are not established.
+The game's independent random streams remain unchanged.
 
-One complete high-detail level0 SILENT duel through title → Solo → Classic →
-Fleet Configuration → Start Game passes on the final corrected executable.
-Player shots=19, movie stages=111, elapsed seconds=362, max observed GDI handles=51.
-Actual-device buffer starts=111, pause calls=1, resumes=1.
-Pause froze frames/damage; hit/sink feedback and terminal victory completed.
-Targets use hidden-board diagnostic knowledge; no stages skipped. This is one
-scenario repeated after a lifecycle correction.
+Frozen v0.30 validation remains 136 model/format + 88 real-form = 224 focused
+groups, plus 48 shutdown cases. Source-only restore, ZIP and relocated checks
+passed at checkpoint 38. Its full Master/high-detail route reached victory,
+Watch result, title and original Quit: 19 shots, 111 battle stages, 112 SILENT
+buffers, 485 seconds, maximum 51 GDI handles. Four natural result runs covered
+both outcomes muted and with SILENT waveOut. No audible or physical acceptance
+is inferred. The executable and ZIP hashes are unchanged at checkpoint 39.
 
-Fresh source restoration:535original assets +13Program +300evidence files,
-all848byte-match.298native-derived fixtures regenerated from absence;2recorded
-modern palette inputs retained. Final corrected source also passes147checks/
-18shutdown/SILENT after restoration. Runtime-only restore without -WithChecks
-or preexisting Programs/native oracle executables renders Fleet Configuration.
-Relocated final-code draft ZIP1073manifest records passes147/18shutdown/SILENT.
-Normal/minimum Fleet previews inspected; earlier version reports/images remain
-historical. Production EXE frozen after final corrected checks; final report/
-preview-only ZIP refresh gets independent byte/entry verification.
+Partial rebuild: campaign, network, tutorials, radar, controllers and complete
+native lifecycle remain incomplete. Original reference is user-confirmed only
+through main menu and clean Quit. AI upscale remains stretch goal SG-01.
+Ten builds v0.21..v0.30 remain. Originals, reference and archival records remain.
 
-Integrity and memory
-Supplied original reference and all versions throughv0.17 unchanged by manifest/
-delivery hashes. Approved30percent board transparency with opaque grids, ships,
-markers and controls retained. User visually acceptedv0.17; no new physical
-editor/exit, audible-sync or native-gameplay acceptance inferred. Original
-reference is still confirmed only through mainmenu and clean Quit. No original,
-registry/media/system changes, user process termination, dependency/model download,
-upload/publication/message. Source:work\reconstruction-v18\src and matching
-packaged Source. Details:Fleet-Validation.txt/Source-Restore-Check.txt.
+User preference: automatically commit each completed, tested checkpoint locally.
+AGENTS.md records that instruction. Complete-Git-Checkpoint.ps1 accepts a custom
+message and records successful commit identity in ignored outputs/Git-Checkpoint.txt.
+Source checkpoint 39 is independent of Git; see Source-Checkpoint-39.txt.
+No push, upload or publication is part of this workflow.
 
-Frozen delivery: 1073 manifest files / 1074 ZIP entries, all byte-verified.
-ZIP SHA256: 76196E91E44FFEC0F97BC7DDB93AFB950A73B8CC28E9AF1690DF7A58D481A889
-EXE SHA256: 812B73766A8CA9C7AE26D7BC0A381F18C077FCEB367BFD53033E8CF0F4CEA749
-Archive verification: outputs\Battleship-v018-Archive-Check.txt.
-
-Next hands-on comparison
-Use the new fleet screen to move a ship, reject an overlapping/edge move, Start,
-then Quit. Native comparison should establish the original Solo Classic editor/
-battle flow and observable gameplay, not infer equivalence from startup. Next
-reconstruction:450E18 E_WAIT1/state6/local wait/final opcode4 and outer-loop
-battle entry; Fleet-PostWait.txt retains bounded words. Preserve modern RNG label
-and current scene boundaries. Campaigns/other modes, network/save/controllers
-and calibrated shared timing/ownership remain incomplete. AI upscale staysSG-01.
-
-Git initialized/noHEAD: first commit remains pending due protected metadata.
-Prepared Complete-Git-Checkpoint script updated; no retry/bypass/remote claimed.
-Authored-source checkpoint24 ZIP and Source-Checkpoint-24.txt record originals/
-builds/settings/scratch/.git exclusion; previous backups retained.
-
-
-Git helper follow-up: Sean encountered Git's dubious-ownership check because .git belongs to CodexSandboxOffline. Complete-Git-Checkpoint.ps1 now supplies an exact-workspace safe.directory override on every command, including inventory/stage/commit/status. Parsing and read-only source inspection pass. No global trust/ownership change, staging or commit performed during this repair. Rerun outputs\Complete-Git-Checkpoint.cmd from Sean's desktop; first commit remains pending until that succeeds. Frozen v0.18/source-checkpoint24 archives remain unchanged.
+Next: chain the existing original phase dispatcher and travel draw into this
+probe, then establish initialization/fleet passes before a shared-RNG mode.
+Next hands-on comparison remains Replay intro / Classic / Watch result / Quit;
+checkpoint 39 itself makes no audiovisual or control changes.

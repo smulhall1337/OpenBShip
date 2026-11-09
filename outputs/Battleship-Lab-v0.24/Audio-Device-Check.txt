@@ -1,0 +1,3 @@
+PASS x64 waveOut open/prepare/write, position advance, pause/restart, finite completion, reset/unprepare/close, reopen/seek and idempotent stop.
+Observed device samples before pause=1700, paused=2018, after wait=2018.
+The submitted PCM buffer was SILENT. This verifies target API/device behavior, not audible output or physical audio/video synchronization.

@@ -1,0 +1,34 @@
+v0.21 pause validation - 2026-11-07
+PASS102model/format +58real-form groups =160focused checks;20shutdown cases.
+Native fixtures:6pause state/width cases,5style4measurement/glyph/pixel samples,
+including full printable ASCII and right clipping. Existing131language lines,
+564metrics,1200message cases and5style3glyph/pixel samples pass. These are grouped
+numerical fixtures, not thousands of played games. Source spans/relocations and
+exact executable/language/font identities are guarded; original device/network/
+file APIs are substituted. No full native pause lifecycle claim.
+
+The production form pauses a live movie without advancing frame/shot, ignores
+held-key repeats, resumes with Escape without quitting, pauses with Escape,
+releases style4cache on palette changes, and removes overlay/pending shot on
+F2reset. Existing focus, entry, fleet pointer, message, cinematic alpha and
+shutdown coverage stays green. Key events are simulated/offscreen. Normal and
+minimum pause previews were visually inspected; all three lines fit/read clearly.
+Owned no-argument final binary reached its main form and WM_CLOSE exited0.
+No existing user process was closed; no exception suppression/JIT changes.
+
+Clean source-only restoration passed160/20and SILENT actual waveOut checks.
+539original assets+17Programs+328Evidence files byte-match;884data files total.
+326native-derived evidence files regenerated from absence;2modern palette inputs
+retained. Source-Restore-Check.txt/log work/reconstruction-v21/restore-validation.log.
+Production SILENT audio is separately recorded in Audio-Device-Check.txt.
+This does not establish audible playback, physical input or native gameplay.
+
+No full naturally paced duel was repeated for this typography-only milestone.
+The previous v0.20high-detail111stage duel remains historical evidence; Game,
+AI, movie/ending/audio source behavior is unchanged. No new user acceptance is
+inferred from a bare continue. Native Escape quit/options remains unimplemented;
+runtime advertises Escape Also Resumes and retains the accepted P/Escape binding.
+
+Frozen ZIP, relocated executable and source-backup results are recorded outside
+this package in workspace outputs/Battleship-v021-*.txt and Source-Checkpoint-28.txt.
+Other named package validation reports are historical unless listed above.

@@ -1,0 +1,5 @@
+Status,Return,InputState,Line,Offset,Calls
+0,0,41,36,-2,Movie:0
+6,0,41,36,-2,Movie:0|Clear|Rand:136|Movie:137
+9,0,0,36,-2,Movie:0
+1,1,0,36,0,Movie:0

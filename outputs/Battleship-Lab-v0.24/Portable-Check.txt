@@ -1,0 +1,13 @@
+v0.24 portable validation locations
+The immutable ZIP and its delivered executable hashes are recorded in
+work/reconstruction-v24/delivered-hashes.json. External workspace reports:
+outputs/Battleship-v024-Archive-Check.txt verifies every ZIP entry, size and hash;
+outputs/Battleship-v024-Portable-Check.txt records relocated production checks.
+The relocated verification must pass before the default launcher is switched.
+Source-Restore-Check.txt records a completed fresh source-only rebuild/check:
+543original assets,21Program files,368Evidence files byte-match. Native-derived
+outputs are regenerated from absence, retaining only2modern palette inputs.
+Audio-Device-Check.txt uses actual SILENT waveOut; no audible confirmation.
+Owned-Launch-Check.txt records no-argument startup and clean WM_CLOSE exit.
+No unrelated game process was closed or replaced. The native reference remains
+at its user-confirmed main-menu baseline; modern Credits acceptance is separate.

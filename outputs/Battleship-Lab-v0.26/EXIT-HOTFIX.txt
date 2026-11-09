@@ -1,0 +1,38 @@
+Historical v0.15/v0.15.1 comparison report. Current v0.16scope and validation are in README.txt, MENU-EVIDENCE.txt and Menu-Validation.txt.
+
+v0.15.1 exit-crash hotfix - 2026-11-07
+
+Run BattleshipLab.exe or workspace outputs\Launch-Reconstruction.cmd. This fixes
+the v0.15exit NullReferenceException reported after reviewing result sequences.
+The old build is preserved. Result cards/movies, approved board transparency,
+controls, game rules, sound content and preferences are unchanged.
+
+Cause: MainForm.Dispose released its manually-owned EndingPlayer before native
+window teardown could raise Deactivate. That callback called EndingPlayer.Pause,
+which called the disposed ClipStudy's SyncControls with a null frame owner.
+The exact NullReferenceException was reproduced on v0.15 with Dispose then Pause.
+The old offscreen startup/exit test did not cover that late-callback ordering.
+
+Fix: ignore focus/tab callbacks once MainForm teardown begins; make both players'
+late pause/reset/sound/timer/sync operations inert after disposal. Stop timelines
+and timers and detach the displayed bitmap before releasing frame/audio owners.
+Completion callbacks cannot run after disposal. Unexpected runtime errors are
+not globally suppressed and no JIT/Windows error settings were changed.
+
+Verify.cmd now includes ShutdownCheck.exe, built by Build.cmd from
+Tools/Check-Shutdown.cs. It captures ThreadException as a test failure rather than
+opening an unattended JIT dialog. Twelve shutdown cases cover ten owned form
+states (idle, reveal, hold, card fade, movie, paused movie, movie fade, complete,
+combat, active SILENT movie buffer) plus two component lifecycle cases. It injects
+late Deactivate after cleanup, checks repeated disposal and verifies the active
+SILENT waveOut buffer/device is released on close. All pass with zero unhandled
+exceptions. The existing85model+42form=127checks also pass. These are focused
+case groups, not139played games or physical desktop focus acceptance.
+
+Original-ending reconstruction scope/limits remain in ENDING-FLOW-EVIDENCE.txt;
+original menu return and exact native fade cadence remain unfinished. The user
+said v0.15looks good; this records visual feedback, not audible/native-gameplay
+acceptance. AI upscale remains optional SG-01 backlog. No original files, user
+processes, system settings, bindings or registry were changed by this hotfix.
+See HOTFIX-VALIDATION.txt and Shutdown-Check.txt for current validation; older
+natural-duel/library reports are retained historical comparisons.

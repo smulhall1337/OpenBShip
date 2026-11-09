@@ -1,8 +1,0 @@
-PASS 535 original assets, 13 Program files and 300 evidence files byte-match fresh source restoration.
-PASS 298 native-derived fixtures regenerate from absence; two recorded modern Windows palette inputs retained.
-PASS restored 94 model +53 form checks and18 shutdown cases; actual SILENT waveOut lifecycle.
-PASS runtime-only restore without -WithChecks or preexisting Programs/native oracle executables renders Fleet Configuration.
-Native Fleet oracle rebuilt with guarded executable/sprite identity and nine relocation-count assertions; allocator/RNG/rebuild stubs, no full-game/device/network code.
-Logs: work/reconstruction-v18/restore-validation.log and runtime-restore-validation.log.
-
-Final MainForm lifecycle correction also passes source-restored94model/53form/18shutdown and SILENT checks; final restore log: work/reconstruction-v18/restore-final-validation.log. All848asset/Program/evidence records still byte-match.

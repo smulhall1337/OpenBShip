@@ -1,7 +1,0 @@
-PASS unchanged v0.15.1 source: Game.cs
-PASS unchanged v0.15.1 source: OriginalOpponent.cs
-PASS unchanged v0.15.1 source: Presentation.cs
-PASS unchanged v0.15.1 source: ClassicSequence.cs
-PASS unchanged v0.15.1 source: ClassicBackdrop.cs
-PASS unchanged v0.15.1 source: ClassicHud.cs
-PASS unchanged v0.15.1 source: ClipStudy.cs

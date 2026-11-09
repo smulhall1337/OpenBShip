@@ -1,0 +1,2 @@
+PASS40bounded probes/80actual native CRT draws; shared state, weapon/movie output and delivered pair agree.
+20opponent-prefix probes confirm original weapon/movie-before-target order. Target and next-stage logic remain recording stubs;20player pairs are harness-ordered. Not a complete native turn/session or a runtime stream change.
