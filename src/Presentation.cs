@@ -9,6 +9,8 @@ using System.Media;
 namespace FleetLab {
     public sealed class BoardView : Control {
         public Game Game;
+        internal BoardRevealTimeline Reveal;
+        internal bool Revealing {get{return Reveal!=null&&!Reveal.Complete;}}
         public Bitmap Art;
         public Bitmap ForegroundArt,MovieFrame; // Borrowed; owners release them after replacement.
         public ClassicHud Hud;public ClassicMessages Messages;public ClassicSpriteFont MessageFont;
@@ -52,6 +54,7 @@ namespace FleetLab {
         public Point KeyboardCell=new Point(0,0);
         Point? hover;
         Point? pointerPosition;
+        bool pressDuringReveal;
         ClassicCursors nativeCursors;
         internal bool HasOriginalCursors {get{return nativeCursors!=null;}}
         internal void LoadCursors(string programs){
@@ -60,7 +63,7 @@ namespace FleetLab {
             if(nativeCursors!=null)nativeCursors.Dispose();nativeCursors=next;RefreshInteractionCursor();
         }
         internal BoardPointer PointerAt(PointF at){
-            if(Game==null||Game.Paused||Game.Phase==Phase.Finished)return BoardPointer.Arrow;
+            if(Game==null||Game.Paused||Game.Phase==Phase.Finished||Revealing)return BoardPointer.Arrow;
             if(Legacy)return SelectableShip(at)>=0?BoardPointer.Hand:BoardPointer.Arrow;
             if(!Legacy&&(Game.Pending!=null||Game.Phase==Phase.OpponentTurn))return BoardPointer.Wait;
             if(SelectableShip(at)>=0)return BoardPointer.Hand;
@@ -170,6 +173,7 @@ namespace FleetLab {
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             pointerPosition=e.Location;RefreshInteractionCursor();
+            if(Revealing)return;
             RectangleF r=BoundsForArt();
             if(r.Width<=0||Game==null)return;
             var at=new PointF((e.X-r.X)*640/r.Width,(e.Y-r.Y)*ArtHeight/r.Height);
@@ -186,6 +190,7 @@ namespace FleetLab {
         protected override void OnMouseClick(MouseEventArgs e) {
             base.OnMouseClick(e);
             Focus();
+            if(Revealing||pressDuringReveal)return;
             RectangleF r=BoundsForArt();
             if(e.Button!=MouseButtons.Left||r.Width<=0)return;
             var at=new PointF((e.X-r.X)*640/r.Width,(e.Y-r.Y)*ArtHeight/r.Height);
@@ -201,6 +206,7 @@ namespace FleetLab {
                 Act();
             }
         }
+        protected override void OnMouseDown(MouseEventArgs e){pressDuringReveal=Revealing;base.OnMouseDown(e);}
         int SelectableShip(PointF at) {
             if(Game==null||!Game.CanSelectShooter)return -1;
             for(int i=0;i<Game.Player.Ships.Count;i++)if(!Game.Player.Ships[i].Sunk&&new Rectangle(OwnRoster[i],new Size(88,30)).Contains(Point.Round(at)))return i;
@@ -209,13 +215,14 @@ namespace FleetLab {
             return ship!=null&&!ship.Sunk?Game.Player.Ships.IndexOf(ship):-1;
         }
         public void Act() {
-            if(Game.Paused)return;
+            if(Game.Paused||Revealing)return;
             bool placement=Game.Phase==Phase.Placement;
             bool accepted=placement?Game.Place(KeyboardCell):Game.Fire(KeyboardCell);
             if(ActionDone!=null)ActionDone(accepted?(placement?"place":"fire"):"none");
             Invalidate();
         }
         public void MoveCursor(int x,int y) {
+            if(Revealing)return;
             KeyboardCell=new Point(Math.Max(0,Math.Min(9,KeyboardCell.X+x)),Math.Max(0,Math.Min(9,KeyboardCell.Y+y)));
             hover=KeyboardCell;
             Invalidate();
@@ -316,6 +323,7 @@ namespace FleetLab {
                 }
             }
             g.Restore(saved);
+            if(Reveal!=null&&!Reveal.Complete)using(var dim=new SolidBrush(Color.FromArgb(255-Reveal.Factor*255/64,0,0,0)))g.FillRectangle(dim,ClientRectangle);
         }
     }
     public sealed class MapView : Control {

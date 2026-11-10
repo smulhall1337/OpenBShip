@@ -14,16 +14,30 @@ namespace FleetLab {
     public sealed class EntryTimeline {
         // Factor order is recovered;40ms is an explicit modern cadence.
         public const int StepMilliseconds=40;
+        // Retained two-phase comparison duration; playable preparation also exits the card.
         public const int FullTransitionMilliseconds=1240;
+        public const int PreparationMilliseconds=1920;
         public int Factor {get;private set;}public bool Playing {get;private set;}public bool Complete {get;private set;}
         public bool LeavingFleet {get;private set;}
+        public bool LeavingCard {get;private set;}
+        readonly bool fadeCardOut;
         public readonly List<string> Trace=new List<string>();long elapsed;
         public EntryTimeline(EntryProgram program):this(program,false){}
-        public EntryTimeline(EntryProgram program,bool leavingFleet){if(program==null)throw new ArgumentNullException("program");LeavingFleet=leavingFleet;Factor=leavingFleet?64:12;Playing=true;if(leavingFleet)Trace.Add("FleetFade,64");else{Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}
+        public EntryTimeline(EntryProgram program,bool leavingFleet):this(program,leavingFleet,false){}
+        public EntryTimeline(EntryProgram program,bool leavingFleet,bool fadeCardOut){if(program==null)throw new ArgumentNullException("program");this.fadeCardOut=fadeCardOut;LeavingFleet=leavingFleet;Factor=leavingFleet?64:12;Playing=true;if(leavingFleet)Trace.Add("FleetFade,64");else{Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}
         public void Pause(){Playing=false;}public void Resume(){if(!Complete)Playing=true;}
         public bool Advance(long milliseconds){if(milliseconds<0)throw new ArgumentOutOfRangeException("milliseconds");if(!Playing||Complete)return false;bool changed=false;
-            while(milliseconds>0&&!Complete){long used=Math.Min(milliseconds,StepMilliseconds-elapsed);elapsed+=used;milliseconds-=used;if(elapsed<StepMilliseconds)break;elapsed=0;changed=true;if(LeavingFleet){if(Factor>0){Factor-=4;Trace.Add("FleetFade,"+Factor);}else{LeavingFleet=false;Factor=12;Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}else if(Factor<64){Factor+=4;Trace.Add("Fade,"+Factor);}else{Complete=true;Playing=false;Trace.Add("Boundary,4");}}
+            while(milliseconds>0&&!Complete){long used=Math.Min(milliseconds,StepMilliseconds-elapsed);elapsed+=used;milliseconds-=used;if(elapsed<StepMilliseconds)break;elapsed=0;changed=true;if(LeavingFleet){if(Factor>0){Factor-=4;Trace.Add("FleetFade,"+Factor);}else{LeavingFleet=false;Factor=12;Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}else if(LeavingCard){if(Factor>0){Factor-=4;Trace.Add("CardExit,"+Factor);}else Finish();}else if(Factor<64){Factor+=4;Trace.Add("Fade,"+Factor);}else if(fadeCardOut){LeavingCard=true;Trace.Add("CardExit,64");}else Finish();}
             return changed;
         }
+        void Finish(){Complete=true;Playing=false;Trace.Add("Boundary,4");}
+    }
+    // Original 422BA0/422C10 factors. Cadence and RGB dimming are modern.
+    public sealed class BoardRevealTimeline {
+        public const int DurationMilliseconds=560;
+        public int Factor {get;private set;}public bool Complete {get;private set;}
+        long elapsed;
+        public BoardRevealTimeline(){Factor=12;}
+        public bool Advance(long milliseconds,bool running){if(milliseconds<0)throw new ArgumentOutOfRangeException("milliseconds");if(!running||Complete)return false;bool changed=false;while(milliseconds>0&&!Complete){long used=Math.Min(milliseconds,EntryTimeline.StepMilliseconds-elapsed);elapsed+=used;milliseconds-=used;if(elapsed<EntryTimeline.StepMilliseconds)break;elapsed=0;changed=true;if(Factor<64)Factor+=4;else Complete=true;}return changed;}
     }
 }

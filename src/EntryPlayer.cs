@@ -14,7 +14,7 @@ namespace FleetLab {
         }
         static void Add(Control p,Button b,string text,EventHandler action){b.Text=text;b.AutoSize=true;b.Height=32;b.BackColor=Color.FromArgb(31,56,75);b.ForeColor=Color.WhiteSmoke;b.FlatStyle=FlatStyle.Flat;b.Click+=action;p.Controls.Add(b);}
         public void Begin(){Begin(null);}
-        public void Begin(Bitmap fleetFrame){if(disposed)return;if(fleetFrame!=null&&(fleetFrame.Width!=640||fleetFrame.Height!=480))throw new ArgumentException("Fleet transition requires a640x480scene","fleetFrame");Reset();if(fleetFrame!=null)fleetSnapshot=new Bitmap(fleetFrame);Timeline=new EntryTimeline(program,fleetSnapshot!=null);last=clock.ElapsedMilliseconds;Render();Sync();Canvas.Focus();}
+        public void Begin(Bitmap fleetFrame){if(disposed)return;if(fleetFrame!=null&&(fleetFrame.Width!=640||fleetFrame.Height!=480))throw new ArgumentException("Fleet transition requires a640x480scene","fleetFrame");Reset();if(fleetFrame!=null)fleetSnapshot=new Bitmap(fleetFrame);Timeline=new EntryTimeline(program,fleetSnapshot!=null,true);last=clock.ElapsedMilliseconds;Render();Sync();Canvas.Focus();}
         public void Pause(){if(disposed)return;if(Timeline!=null)Timeline.Pause();Sync();}
         public void Resume(){if(disposed||Timeline==null)return;last=clock.ElapsedMilliseconds;Timeline.Resume();Sync();}
         public void Reset(){if(disposed)return;Timeline=null;dispatched=false;var old=image;image=null;Canvas.Invalidate();if(old!=null)old.Dispose();if(fleetSnapshot!=null){fleetSnapshot.Dispose();fleetSnapshot=null;}Sync();}

@@ -86,7 +86,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.37 — Fleet-to-battle transition";
+            Text="Battleship Fleet Lab 0.38 — Loading exit and board reveal";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -237,7 +237,7 @@ namespace FleetLab {
             firingFleet.BorderStyle=BorderStyle.FixedSingle;firingFleet.Font=new Font("Segoe UI",10);
             firingFleet.AccessibleName="Your firing ship";
             firingFleet.KeyDown+=delegate(object sender,KeyEventArgs e) {
-                if(!State.CanSelectShooter)return;
+                if(board.Revealing||!State.CanSelectShooter)return;
                 int direction=e.KeyCode==Keys.Up||e.KeyCode==Keys.Home?-1:e.KeyCode==Keys.Down||e.KeyCode==Keys.End?1:0;
                 if(direction==0)return;
                 int candidate=e.KeyCode==Keys.Home?0:e.KeyCode==Keys.End?State.Player.Ships.Count-1:State.PlayerShooter+direction;
@@ -247,7 +247,7 @@ namespace FleetLab {
                 UpdateView();e.Handled=true;e.SuppressKeyPress=true;
             };
             firingFleet.SelectedIndexChanged+=delegate {
-                if(updatingFleet||State==null)return;
+                if(updatingFleet||State==null||board.Revealing)return;
                 State.SelectShooter(firingFleet.SelectedIndex);UpdateView();
             };
             sidebar.Controls.Add(firingFleet);
@@ -351,8 +351,10 @@ namespace FleetLab {
         }
         void TickVisuals() {
             long now=visualTime.ElapsedMilliseconds,elapsed=now-visualLast;visualLast=now;
+            bool wasRevealing=board.Revealing;
+            AdvanceBoardReveal(elapsed);
             bool finishing=State!=null&&State.Phase==Phase.Finished&&board.VisualEffectCount>0&&ContainsFocus&&tabs.SelectedIndex==0;
-            bool running=preferences.Motion&&State!=null&&!State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn||finishing);
+            bool running=preferences.Motion&&State!=null&&!State.Paused&&!wasRevealing&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn||finishing);
             if(effectClock.Advance(elapsed,running)){board.DamageTick=effectClock.Tick;board.SynchronizeVisualEffects();board.Invalidate();}
         }
         void UpdateDisplayChecks() {
@@ -360,6 +362,11 @@ namespace FleetLab {
             board.AnimateVisualEffects=preferences.Motion;board.SynchronizeVisualEffects();board.Invalidate();
             movies.Checked=State!=null&&State.Phase!=Phase.Placement?State.MovieTurns:preferences.MovieTurns;movies.Enabled=State!=null&&State.Rules.FixedY&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
             highMovies.Checked=preferences.HighMovies;highMovies.Enabled=State!=null&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
+        }
+        void AdvanceBoardReveal(long milliseconds){
+            var reveal=board.Reveal;if(reveal==null)return;
+            if(reveal.Advance(milliseconds,tabs.SelectedIndex==0&&!State.Paused))board.Invalidate();
+            if(reveal.Complete){var held=new Keys[down.Count];down.CopyTo(held);board.Reveal=null;SuppressHeldControls();foreach(Keys key in held)down.Add(key);UpdateView();}
         }
         void SetMovieDetail(bool high,bool persist){
             if(State==null||(State.Phase!=Phase.Placement&&State.Phase!=Phase.Finished))return;
@@ -467,8 +474,9 @@ namespace FleetLab {
         void OpenSolo(){if(disposed)return;front.Pause();front.Visible=false;solo.Visible=true;solo.BringToFront();solo.Begin();SuppressHeldControls();}
         void OpenFleet(){if(disposed)return;int ai=rules.SelectedIndex==1?recoveredOpponent:opponent.SelectedIndex;var draft=new Game(seed,RuleProfile.Recovered,ai==4?OpponentKind.Prototype:OpponentKind.Original,ai<4?ai:0,preferences.MovieTurns);draft.AutoPlace();solo.Pause();solo.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Begin(draft);SuppressHeldControls();UpdateView();}
         void OpenEntry(){if(disposed||entry.HasOpened||fleet.Draft==null||fleet.SelectedShip>=0)return;fleet.Pause();fleet.Visible=false;entry.Visible=true;entry.BringToFront();entry.Begin(fleet.CurrentImage);SuppressHeldControls();UpdateView();}
-        void CommitFleet(){if(disposed||fleet.Draft==null||fleet.SelectedShip>=0)return;var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);Game accepted=fleet.Draft;if(rules.SelectedIndex!=0)rules.SelectedIndex=0;else NewGame();State=accepted;board.Game=State;if(!State.Start())throw new InvalidOperationException("Fleet commit failed");board.KeyboardCell=new Point(0,0);UpdateView();board.Focus();SuppressHeldControls();foreach(Keys key in heldKeys)down.Add(key);}
+        void CommitFleet(){if(disposed||fleet.Draft==null||fleet.SelectedShip>=0)return;var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);Game accepted=fleet.Draft;if(rules.SelectedIndex!=0)rules.SelectedIndex=0;else NewGame();State=accepted;board.Game=State;if(!State.Start())throw new InvalidOperationException("Fleet commit failed");board.KeyboardCell=new Point(0,0);board.Reveal=new BoardRevealTimeline();visualLast=visualTime.ElapsedMilliseconds;UpdateView();board.Focus();SuppressHeldControls();foreach(Keys key in heldKeys)down.Add(key);}
         void ClearBattlePresentation() {
+            board.Reveal=null;
             board.ResetVisualEffects();
             pauseActions.CancelConfirmation();returnConfirmationGame=null;
             if(creditsPage!=null){creditsPage.Reset();creditsPage.Visible=false;}if(startupPage!=null){startupPage.Reset();startupPage.Visible=false;}
@@ -486,7 +494,7 @@ namespace FleetLab {
             UpdateView();
         }
         void RequestBattleRestart() {
-            if(disposed||tabs.SelectedIndex!=0||!State.CanRestartBattle)return;
+            if(disposed||tabs.SelectedIndex!=0||board.Revealing||!State.CanRestartBattle)return;
             Game expected=State;
             if(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn){State.Paused=true;UpdateView();}
             var answer=MessageBox.Show(this,"Restart this battle from its original fleet deployment? Your current progress will be cleared.","Restart this battle",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
@@ -504,7 +512,7 @@ namespace FleetLab {
         }
         string BattleCheckpointPath {get{return validationCheckpointPath??Path.Combine(Path.GetDirectoryName(settingsPath),"battle.obship");}}
         bool SaveCurrentBattle() {
-            if(disposed||tabs.SelectedIndex!=0||!State.CanSaveBattle)return false;
+            if(disposed||tabs.SelectedIndex!=0||board.Revealing||!State.CanSaveBattle)return false;
             State.Paused=true;
             try {State.SaveBattle(BattleCheckpointPath);State.Message="Battle checkpoint saved at turn "+State.Turn+". P or Resume continues.";return true;}
             catch(Exception e) {State.Message="Battle checkpoint was not saved: "+e.Message;return false;}
@@ -514,7 +522,7 @@ namespace FleetLab {
             RequestBattleCheckpoint(BattleCheckpointPath,false);
         }
         void RequestBattleCheckpoint(string path,bool previous) {
-            if(disposed||tabs.SelectedIndex!=0)return;
+            if(disposed||tabs.SelectedIndex!=0||board.Revealing)return;
             Game expected=State,restored;
             if(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn){State.Paused=true;UpdateView();}
             try {restored=Game.LoadBattle(path);}
@@ -605,10 +613,10 @@ namespace FleetLab {
         }
         void UpdateView() {
             if(disposed)return;
-            restartBattle.Enabled=tabs.SelectedIndex==0&&State.CanRestartBattle;
-            saveBattle.Enabled=tabs.SelectedIndex==0&&State.CanSaveBattle;
-            loadBattle.Enabled=tabs.SelectedIndex==0&&File.Exists(BattleCheckpointPath);
-            loadPreviousBattle.Enabled=tabs.SelectedIndex==0&&File.Exists(BattleCheckpointPath+".bak");
+            restartBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&State.CanRestartBattle;
+            saveBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&State.CanSaveBattle;
+            loadBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&File.Exists(BattleCheckpointPath);
+            loadPreviousBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&File.Exists(BattleCheckpointPath+".bak");
             bool showPauseActions=tabs.SelectedIndex==0&&State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn);
             pauseActions.SetAvailable(showPauseActions);battleSidebar.RowStyles[3].Height=showPauseActions?76:0;
             battleSidebar.RowStyles[4].Height=showPauseActions?48:92;hint.Height=showPauseActions?44:82;
@@ -634,6 +642,7 @@ namespace FleetLab {
             else if(State.Phase==Phase.Finished)hint.Text="Watch result sequence (VICTORY/LOSE), or use New battle (F2).";
             else if(placement&&State.Rules.FixedY)hint.Text+=" Options offers optional battle movies.";
             if(showPauseActions)hint.Text="P or Escape resumes. End battle returns to title after confirmation.";
+            if(board.Revealing)hint.Text=State.Paused?"Board reveal paused. P or Resume continues; F2 resets.":"Revealing the battle board. Targeting becomes available when the reveal finishes. P pauses; F2 resets.";
             hint.LinkArea=State.Phase==Phase.Finished?new LinkArea(0,21):new LinkArea(0,0);
             updatingFleet=true;firingFleet.BeginUpdate();firingFleet.Items.Clear();
             for(int i=0; i<State.Rules.Fleet.Length; i++) {
@@ -642,7 +651,7 @@ namespace FleetLab {
                 firingFleet.Items.Add((i==State.PlayerShooter?"> ":"  ")+spec.Name+"  "+(item==null?spec.Length+" / unplaced":item.Sunk?"SUNK":(item.Cells.Count-item.Hits)+" / "+item.Cells.Count));
             }
             firingFleet.SelectedIndex=State.PlayerShooter;
-            firingFleet.Enabled=active&&State.CanSelectShooter;
+            firingFleet.Enabled=active&&!board.Revealing&&State.CanSelectShooter;
             firingFleet.EndUpdate();updatingFleet=false;
             int sunk=0;
             foreach(var item in State.Enemy.Ships)if(item.Sunk)sunk++;
@@ -1258,8 +1267,20 @@ namespace FleetLab {
             check("Fleet move rollback, Back preserves battle, F2 releases draft and minimum layout",delegate{NewGame();auto.PerformClick();start.PerformClick();var prior=State;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;require(State==prior&&prior.Paused&&draft!=prior,"Draft changed active game");var ship=draft.Player.Ships[0];var before=ship.Cells[0];fleet.Cell(ship.Cells[2]);fleet.Cell(new Point(0,0));require(ship.Cells[0]==before&&fleet.SelectedShip==0,"Invalid move mutated fleet");Point? target=null;for(int x=0;x<10;x++)for(int y=0;y<10;y++){var at=new Point(x,y);if(draft.Player.CanMoveClassic(0,at)&&at!=new Point(before.X,before.Y+2))target=at;}require(target.HasValue,"No move fixture");fleet.Cell(target.Value);require(ship.Cells[0]==new Point(target.Value.X,target.Value.Y-2)&&fleet.SelectedShip==-1,"Valid move failed");Size=MinimumSize;PerformLayout();Application.DoEvents();require(fleet.ShuffleButton.Right<=fleet.ShuffleButton.Parent.ClientSize.Width,"Fleet toolbar clipped");fleet.BackButton.PerformClick();require(State==prior&&prior.Paused&&solo.Visible&&!fleet.Visible&&fleet.Draft==null,"Back lost paused battle");solo.Activate(10);Bitmap old=fleet.CurrentImage;down.Remove(Keys.F2);OnKey(this,new KeyEventArgs(Keys.F2));bool released=false;try{int width=old.Width;}catch(ArgumentException){released=true;}require(released&&fleet.CurrentImage==null&&fleet.Draft==null&&!fleet.Visible,"Reset retained fleet image/draft");});
             check("Fleet pointer entry epoch and focus loss clear pending actions",delegate{NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);PerformLayout();Application.DoEvents();var game=State;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var press=fleet.Canvas.GetType().GetMethod("OnMouseDown",flags);var release=fleet.Canvas.GetType().GetMethod("OnMouseUp",flags);var box=fleet.Canvas.Bounds4x3;Point at=new Point((int)(box.X+50*box.Width/640),(int)(box.Y+445*box.Height/480));press.Invoke(fleet.Canvas,new object[]{new MouseEventArgs(MouseButtons.Left,1,at.X,at.Y,0)});fleet.Pause();entry.Pause();release.Invoke(fleet.Canvas,new object[]{new MouseEventArgs(MouseButtons.Left,1,at.X,at.Y,0)});require(State==game&&fleet.Visible,"Stale press started battle");var draft=fleet.Draft;fleet.Cell(draft.Player.Ships[0].Cells[2]);typeof(Form).GetMethod("OnDeactivate",flags).Invoke(this,new object[]{EventArgs.Empty});require(fleet.Draft==draft&&fleet.SelectedShip==0,"Focus loss lost draft");fleet.Key(Keys.Escape);require(fleet.SelectedShip==-1&&fleet.Visible,"Escape did not cancel move");press.Invoke(fleet.Canvas,new object[]{new MouseEventArgs(MouseButtons.Left,1,at.X,at.Y,0)});release.Invoke(fleet.Canvas,new object[]{new MouseEventArgs(MouseButtons.Left,1,at.X,at.Y,0)});FinishEntryForCheck();require(State==draft&&State.Phase==Phase.PlayerTurn&&!fleet.Visible,"Fresh mapped Start failed");});
             check("Result handoff cancels an earlier fleet draft and opens the title",delegate{NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);require(fleet.HasOpened,"Missing draft fixture");Bitmap old=fleet.CurrentImage;var game=State;tabs.SelectedIndex=3;ending.StartOutcome(true);for(int i=0;i<5;i++)ending.SkipButton.PerformClick();bool freed=false;try{int width=old.Width;}catch(ArgumentException){freed=true;}require(freed&&fleet.Draft==null&&fleet.CurrentImage==null&&!fleet.Visible&&front.Visible&&front.HasOpened&&tabs.SelectedIndex==4&&State==game,"Result handoff retained draft or missed title");});
-            check("Visible Fleet Start accepts native pointer messages at normal and minimum sizes",delegate{foreach(Size size in new[]{new Size(1236,879),MinimumSize}){NewGame();Size=size;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);PerformLayout();Application.DoEvents();Bitmap rendered=fleet.CurrentImage;require(rendered.Width==640&&rendered.Height==480,"Fleet bitmap must match native viewport");var box=fleet.Canvas.Bounds4x3;int px=(int)(box.X+60*box.Width/rendered.Width),py=(int)(box.Y+445*box.Height/rendered.Height);IntPtr point=new IntPtr(px|(py<<16));SendMessage(fleet.Canvas.Handle,0x201,new IntPtr(1),point);SendMessage(fleet.Canvas.Handle,0x202,IntPtr.Zero,point);PumpVisuals(1400);require(State.Phase==Phase.PlayerTurn&&tabs.SelectedIndex==0&&State.Player.Ships.Count==5&&!fleet.HasOpened&&!State.Paused,"Click at displayed Start failed at "+size);Point target=State.Enemy.Ships[0].Cells[0];board.KeyboardCell=target;board.Act();require(State.Pending!=null||State.Enemy.Shots[target.X,target.Y],"First shot after Fleet Start was blocked");}});
-            check("Loading entry preserves draft, pauses on focus and cancels without replacing battle",delegate{NewGame();auto.PerformClick();start.PerformClick();var prior=State;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;fleet.Activate(2);require(entry.HasOpened&&entry.Visible&&!fleet.Visible&&State==prior&&prior.Paused,"Entry ownership");entry.Pause();int factor=entry.Timeline.Factor;PumpVisuals(100);require(entry.Timeline.Factor==factor&&State==prior,"Paused entry advanced");entry.BackButton.PerformClick();require(!entry.HasOpened&&fleet.Visible&&fleet.Draft==draft&&State==prior,"Entry cancel lost draft/game");fleet.Activate(2);typeof(Form).GetMethod("OnDeactivate",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(this,new object[]{EventArgs.Empty});factor=entry.Timeline.Factor;PumpVisuals(100);require(!entry.Timeline.Playing&&entry.Timeline.Factor==factor,"Entry focus pause");entry.PauseButton.PerformClick();PumpVisuals(1400);require(State==draft&&State.Phase==Phase.PlayerTurn&&entry.CurrentImage==null&&!entry.HasOpened,"Entry resume commit");});
+            check("Visible Fleet Start accepts native pointer messages at normal and minimum sizes",delegate{foreach(Size size in new[]{new Size(1236,879),MinimumSize}){NewGame();Size=size;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);PerformLayout();Application.DoEvents();Bitmap rendered=fleet.CurrentImage;require(rendered.Width==640&&rendered.Height==480,"Fleet bitmap must match native viewport");var box=fleet.Canvas.Bounds4x3;int px=(int)(box.X+60*box.Width/rendered.Width),py=(int)(box.Y+445*box.Height/rendered.Height);IntPtr point=new IntPtr(px|(py<<16));SendMessage(fleet.Canvas.Handle,0x201,new IntPtr(1),point);SendMessage(fleet.Canvas.Handle,0x202,IntPtr.Zero,point);PumpVisuals(2700);require(State.Phase==Phase.PlayerTurn&&tabs.SelectedIndex==0&&State.Player.Ships.Count==5&&!fleet.HasOpened&&!State.Paused,"Click at displayed Start failed at "+size);Point target=State.Enemy.Ships[0].Cells[0];board.KeyboardCell=target;board.Act();require(State.Pending!=null||State.Enemy.Shots[target.X,target.Y],"First shot after Fleet Start was blocked");}});
+            check("Loading entry preserves draft, pauses on focus and cancels without replacing battle",delegate{NewGame();auto.PerformClick();start.PerformClick();var prior=State;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;fleet.Activate(2);require(entry.HasOpened&&entry.Visible&&!fleet.Visible&&State==prior&&prior.Paused,"Entry ownership");entry.Pause();int factor=entry.Timeline.Factor;PumpVisuals(100);require(entry.Timeline.Factor==factor&&State==prior,"Paused entry advanced");entry.BackButton.PerformClick();require(!entry.HasOpened&&fleet.Visible&&fleet.Draft==draft&&State==prior,"Entry cancel lost draft/game");fleet.Activate(2);typeof(Form).GetMethod("OnDeactivate",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(this,new object[]{EventArgs.Empty});factor=entry.Timeline.Factor;PumpVisuals(100);require(!entry.Timeline.Playing&&entry.Timeline.Factor==factor,"Entry focus pause");entry.PauseButton.PerformClick();PumpVisuals(2700);require(State==draft&&State.Phase==Phase.PlayerTurn&&entry.CurrentImage==null&&!entry.HasOpened,"Entry resume commit");});
+            check("Loading exit remains cancellable and preserves the earlier game and fleet",delegate {
+                NewGame();var old=State;tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;fleet.Activate(2);entry.Pause();entry.Timeline.Resume();entry.Advance(1880);entry.Pause();require(entry.Timeline.LeavingCard&&entry.Timeline.Factor==0&&!entry.Timeline.Complete&&State==old&&draft.Phase==Phase.Placement,"Loading exit committed early");entry.BackButton.PerformClick();require(State==old&&fleet.Draft==draft&&fleet.Visible&&!entry.HasOpened,"Loading exit cancel lost draft");fleet.Activate(2);FinishEntryForCheck();require(State==draft&&State.Phase==Phase.PlayerTurn&&!board.Revealing,"Restart after loading cancellation");
+            });
+            check("Board reveal blocks firing, ship selection, saves and held confirmation",delegate {
+                NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;fleet.Activate(2);entry.Pause();entry.Resume();entry.Advance(1920);require(State==draft&&board.Revealing&&board.Reveal.Factor==12&&!entry.HasOpened,"Battle reveal handoff");var target=State.Enemy.Ships[0].Cells[0];board.KeyboardCell=target;int shooter=State.PlayerShooter;board.Act();require(State.Pending==null&&!State.Enemy.Shots[target.X,target.Y]&&!SaveCurrentBattle()&&!firingFleet.Enabled&&!saveBattle.Enabled&&!restartBattle.Enabled&&State.PlayerShooter==shooter,"Reveal accepted gameplay/save");down.Remove(Keys.Enter);OnKey(this,new KeyEventArgs(Keys.Enter));AdvanceBoardReveal(560);OnKey(this,new KeyEventArgs(Keys.Enter));require(!board.Revealing&&State.Pending==null,"Held confirm fired at reveal completion");OnKeyUp(new KeyEventArgs(Keys.Enter));OnKey(this,new KeyEventArgs(Keys.Enter));OnKeyUp(new KeyEventArgs(Keys.Enter));require(State.Pending!=null||State.Enemy.Shots[target.X,target.Y],"Fresh confirmation remained blocked");
+            });
+            check("Board reveal pauses on focus and tab changes, resumes, and resets safely",delegate {
+                NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);fleet.Activate(2);entry.Pause();entry.Resume();entry.Advance(1920);AdvanceBoardReveal(120);int factor=board.Reveal.Factor;typeof(Form).GetMethod("OnDeactivate",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(this,new object[]{EventArgs.Empty});AdvanceBoardReveal(10000);require(State.Paused&&board.Reveal.Factor==factor,"Focus loss advanced reveal");tabs.SelectedIndex=1;tabs.SelectedIndex=0;AdvanceBoardReveal(10000);require(board.Reveal.Factor==factor&&State.Paused,"Tab return resumed reveal");State.TogglePause();AdvanceBoardReveal(440);require(!board.Revealing&&!State.Paused,"Resume did not finish reveal");NewGame();require(board.Reveal==null&&State.Phase==Phase.Placement,"Reset retained reveal");
+            });
+            check("Mouse press during reveal cannot fire on release after it finishes",delegate {
+                NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);fleet.Activate(2);entry.Pause();entry.Resume();entry.Advance(1920);var point=ClassicGeometry.Project(true,State.Enemy.Ships[0].Cells[0].X+.5f,State.Enemy.Ships[0].Cells[0].Y+.5f);var box=board.ImageBounds;int x=(int)(box.X+point.X*box.Width/640),y=(int)(box.Y+point.Y*box.Height/480);var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var press=typeof(BoardView).GetMethod("OnMouseDown",flags);var release=typeof(BoardView).GetMethod("OnMouseClick",flags);var args=new object[]{new MouseEventArgs(MouseButtons.Left,1,x,y,0)};press.Invoke(board,args);AdvanceBoardReveal(560);release.Invoke(board,args);require(State.Pending==null,"Stale reveal press fired");press.Invoke(board,args);release.Invoke(board,args);var cell=State.Enemy.Ships[0].Cells[0];require(State.Pending!=null||State.Enemy.Shots[cell.X,cell.Y],"Fresh reveal release stayed blocked");
+            });
             check("Fleet exit snapshot holds black frame then releases at loading-card handoff",delegate {
                 NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var draft=fleet.Draft;string scene=FleetOverviewFingerprint(fleet.CurrentImage);fleet.Activate(2);entry.Pause();
                 require(entry.HasFleetSnapshot&&entry.Timeline.LeavingFleet&&entry.Timeline.Factor==64&&FleetOverviewFingerprint(entry.CurrentImage)==scene,"Initial snapshot differs from visible fleet");entry.Timeline.Resume();entry.Advance(640);entry.Pause();require(entry.HasFleetSnapshot&&entry.Timeline.LeavingFleet&&entry.Timeline.Factor==0&&fleet.Draft==draft&&draft.Phase==Phase.Placement,"Black frame lost draft/snapshot");
@@ -1420,7 +1441,7 @@ namespace FleetLab {
             Close();
             return failed==0?0:1;
         }
-        void FinishEntryForCheck(){if(entry.Timeline!=null){entry.Resume();entry.Advance(EntryTimeline.FullTransitionMilliseconds);}}
+        void FinishEntryForCheck(){if(entry.Timeline!=null){entry.Resume();entry.Advance(EntryTimeline.PreparationMilliseconds);}AdvanceBoardReveal(BoardRevealTimeline.DurationMilliseconds);}
         void PumpVisuals(int milliseconds) {
             var watch=Stopwatch.StartNew();
             while(watch.ElapsedMilliseconds<milliseconds){Application.DoEvents();System.Threading.Thread.Sleep(1);}
@@ -1440,7 +1461,7 @@ namespace FleetLab {
         }
         protected override void Dispose(bool disposing) {
             if(disposing&&!disposed) {
-                disposed=true;
+                board.Reveal=null;disposed=true;
                 opponentTimer.Stop();
                 opponentTimer.Dispose();
                 visualTimer.Stop();visualTimer.Dispose();displayMenu.Dispose();
