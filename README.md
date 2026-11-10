@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.36.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.37.
 
 ## Requirements
 
@@ -51,7 +51,7 @@ To keep a duel between app sessions, use **Options → Save battle checkpoint** 
 
 The modern checkpoint lives at `build\current\UserData\battle.obship`, with one `.bak` copy. It preserves the actual starting fleets, accepted shots, selected ship, difficulty, movie-turn mode and random-stream history. Replay validation rejects damaged or incompatible files without replacing the current game. Display/audio preferences stay as currently configured. Pending shots, finished battles and the prototype opponent/rules are unsupported. Original game save files are not compatible.
 
-Fleet Configuration now fills the Fleet Select overview with original miniature ships, grid, selection border and inactive-slot art. It follows committed moves and shuffles. A selected ship stays visible during a placement preview, and Escape cancels that preview.
+Fleet Configuration now fills the Fleet Select overview with original miniature ships, grid, selection border and inactive-slot art. It follows committed moves and shuffles. A selected ship stays visible during a placement preview, and Escape cancels that preview. Starting the battle now fades that completed fleet scene to black before showing the loading card. Pause and Return to fleet remain available throughout. The 17 exit and 14 loading fade factors follow original code; the 40 ms cadence and RGB snapshot dimming are explicit modern presentation choices.
 
 The Classic board uses the original targeting and hand cursor art. Untried enemy cells show a target, selectable friendly ships show a hand, and a shot or opponent turn shows a wait cursor over the board. Pause, resolved cells and finished battles use the arrow. These hover rules are an intentional usability policy; the shapes and target/wait transitions come from the original resources and code. Older prepared folders fall back to system cursors; rerun Setup to extract the original shapes.
 

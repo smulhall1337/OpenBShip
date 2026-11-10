@@ -14,12 +14,15 @@ namespace FleetLab {
     public sealed class EntryTimeline {
         // Factor order is recovered;40ms is an explicit modern cadence.
         public const int StepMilliseconds=40;
+        public const int FullTransitionMilliseconds=1240;
         public int Factor {get;private set;}public bool Playing {get;private set;}public bool Complete {get;private set;}
+        public bool LeavingFleet {get;private set;}
         public readonly List<string> Trace=new List<string>();long elapsed;
-        public EntryTimeline(EntryProgram program){if(program==null)throw new ArgumentNullException("program");Factor=12;Playing=true;Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}
+        public EntryTimeline(EntryProgram program):this(program,false){}
+        public EntryTimeline(EntryProgram program,bool leavingFleet){if(program==null)throw new ArgumentNullException("program");LeavingFleet=leavingFleet;Factor=leavingFleet?64:12;Playing=true;if(leavingFleet)Trace.Add("FleetFade,64");else{Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}
         public void Pause(){Playing=false;}public void Resume(){if(!Complete)Playing=true;}
         public bool Advance(long milliseconds){if(milliseconds<0)throw new ArgumentOutOfRangeException("milliseconds");if(!Playing||Complete)return false;bool changed=false;
-            while(milliseconds>0&&!Complete){long used=Math.Min(milliseconds,StepMilliseconds-elapsed);elapsed+=used;milliseconds-=used;if(elapsed<StepMilliseconds)break;elapsed=0;changed=true;if(Factor<64){Factor+=4;Trace.Add("Fade,"+Factor);}else{Complete=true;Playing=false;Trace.Add("Boundary,4");}}
+            while(milliseconds>0&&!Complete){long used=Math.Min(milliseconds,StepMilliseconds-elapsed);elapsed+=used;milliseconds-=used;if(elapsed<StepMilliseconds)break;elapsed=0;changed=true;if(LeavingFleet){if(Factor>0){Factor-=4;Trace.Add("FleetFade,"+Factor);}else{LeavingFleet=false;Factor=12;Trace.Add("Card,e_wait1");Trace.Add("Fade,12");}}else if(Factor<64){Factor+=4;Trace.Add("Fade,"+Factor);}else{Complete=true;Playing=false;Trace.Add("Boundary,4");}}
             return changed;
         }
     }

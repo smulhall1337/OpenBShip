@@ -1,10 +1,10 @@
-using System;using System.IO;using System.Drawing;using System.Drawing.Drawing2D;using System.Diagnostics;using System.Windows.Forms;
+using System;using System.IO;using System.Drawing;using System.Drawing.Drawing2D;using System.Drawing.Imaging;using System.Diagnostics;using System.Windows.Forms;
 namespace FleetLab {
     public sealed class EntryPlayer:UserControl {
         internal readonly EntryCanvas Canvas=new EntryCanvas();internal readonly Button PauseButton=new Button(),BackButton=new Button();
-        internal EntryTimeline Timeline {get;private set;}internal Bitmap CurrentImage {get{return image;}}internal bool HasOpened {get{return Timeline!=null;}}
+        internal EntryTimeline Timeline {get;private set;}internal Bitmap CurrentImage {get{return image;}}internal bool HasOpened {get{return Timeline!=null;}}internal bool HasFleetSnapshot {get{return fleetSnapshot!=null;}}
         public event Action Ready,ReturnRequested;
-        readonly EntryProgram program;readonly IndexedImage card;readonly Timer timer=new Timer();readonly Stopwatch clock=Stopwatch.StartNew();Bitmap image;long last;bool disposed,dispatched;
+        readonly EntryProgram program;readonly IndexedImage card;readonly Timer timer=new Timer();readonly Stopwatch clock=Stopwatch.StartNew();Bitmap image,fleetSnapshot;long last;bool disposed,dispatched;
         public EntryPlayer(string assets){Dock=DockStyle.Fill;BackColor=Color.FromArgb(10,22,34);ForeColor=Color.WhiteSmoke;
             string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");program=EntryProgram.Read(File.ReadAllBytes(Path.Combine(programs,"BattleEntry.seqbin")),-1);
             card=FleetProgram.Viewport(Assets.Pcx(Path.Combine(assets,"Graphics",EntryProgram.Card)));var reserved=ClassicPalette.Gameplay(File.ReadAllBytes(Path.Combine(assets,"Graphics","ISLAND.COL")));for(int i=0;i<256;i++)if(i<10||i>245)card.Palette[i]=reserved[i];
@@ -13,15 +13,22 @@ namespace FleetLab {
             timer.Interval=16;timer.Tick+=delegate{long now=clock.ElapsedMilliseconds,dt=now-last;last=now;if(!disposed&&Visible)Advance(dt);};timer.Start();Sync();
         }
         static void Add(Control p,Button b,string text,EventHandler action){b.Text=text;b.AutoSize=true;b.Height=32;b.BackColor=Color.FromArgb(31,56,75);b.ForeColor=Color.WhiteSmoke;b.FlatStyle=FlatStyle.Flat;b.Click+=action;p.Controls.Add(b);}
-        public void Begin(){if(disposed)return;Reset();Timeline=new EntryTimeline(program);last=clock.ElapsedMilliseconds;Render();Sync();Canvas.Focus();}
+        public void Begin(){Begin(null);}
+        public void Begin(Bitmap fleetFrame){if(disposed)return;if(fleetFrame!=null&&(fleetFrame.Width!=640||fleetFrame.Height!=480))throw new ArgumentException("Fleet transition requires a640x480scene","fleetFrame");Reset();if(fleetFrame!=null)fleetSnapshot=new Bitmap(fleetFrame);Timeline=new EntryTimeline(program,fleetSnapshot!=null);last=clock.ElapsedMilliseconds;Render();Sync();Canvas.Focus();}
         public void Pause(){if(disposed)return;if(Timeline!=null)Timeline.Pause();Sync();}
         public void Resume(){if(disposed||Timeline==null)return;last=clock.ElapsedMilliseconds;Timeline.Resume();Sync();}
-        public void Reset(){if(disposed)return;Timeline=null;dispatched=false;var old=image;image=null;Canvas.Invalidate();if(old!=null)old.Dispose();Sync();}
+        public void Reset(){if(disposed)return;Timeline=null;dispatched=false;var old=image;image=null;Canvas.Invalidate();if(old!=null)old.Dispose();if(fleetSnapshot!=null){fleetSnapshot.Dispose();fleetSnapshot=null;}Sync();}
         internal void Advance(long milliseconds){if(disposed||Timeline==null)return;var active=Timeline;if(active.Advance(milliseconds))Render();Sync();if(Timeline==active&&active.Complete&&!dispatched){dispatched=true;if(Ready!=null)Ready();}}
         internal bool Key(Keys key){if(disposed||Timeline==null)return false;if(key==Keys.Escape){Back();return true;}if(key==Keys.P){if(Timeline.Playing)Pause();else Resume();return true;}if(key==Keys.Enter||key==Keys.Space){if(!Timeline.Playing)Resume();return true;}return false;}
         void Back(){if(disposed)return;Pause();if(ReturnRequested!=null)ReturnRequested();}
         void Sync(){if(disposed)return;PauseButton.Enabled=Timeline!=null&&!Timeline.Complete;PauseButton.Text=Timeline!=null&&Timeline.Playing?"Pause entry (P)":"Resume entry (P)";BackButton.Enabled=Timeline!=null;}
-        void Render(){if(disposed||Timeline==null)return;var frame=new IndexedImage{Width=640,Height=480,Pixels=card.Pixels,Palette=ClassicPalette.FadeDisplay(card.Palette,Timeline.Factor)};Bitmap next=frame.Bitmap();var old=image;image=next;Canvas.Invalidate();if(old!=null)old.Dispose();}
+        void Render(){if(disposed||Timeline==null)return;Bitmap next;
+            if(Timeline.LeavingFleet){
+                // Recovered factor order; dim the modern RGB composite, including
+                // modern selection cues. Original indexed palette endpoints differ.
+                next=new Bitmap(640,480);try{using(var g=Graphics.FromImage(next))using(var attributes=new ImageAttributes()){float factor=Timeline.Factor/64f;var matrix=new ColorMatrix();matrix.Matrix00=factor;matrix.Matrix11=factor;matrix.Matrix22=factor;attributes.SetColorMatrix(matrix);g.DrawImage(fleetSnapshot,new Rectangle(0,0,640,480),0,0,640,480,GraphicsUnit.Pixel,attributes);}}catch{next.Dispose();throw;}
+            }else{if(fleetSnapshot!=null){fleetSnapshot.Dispose();fleetSnapshot=null;}var frame=new IndexedImage{Width=640,Height=480,Pixels=card.Pixels,Palette=ClassicPalette.FadeDisplay(card.Palette,Timeline.Factor)};next=frame.Bitmap();}
+            var old=image;image=next;Canvas.Invalidate();if(old!=null)old.Dispose();}
         protected override void Dispose(bool disposing){if(disposing&&!disposed){timer.Stop();timer.Dispose();Reset();disposed=true;}base.Dispose(disposing);}
         internal sealed class EntryCanvas:Control {
             internal EntryPlayer Owner;public EntryCanvas(){DoubleBuffered=true;ResizeRedraw=true;TabStop=true;BackColor=Color.Black;}
