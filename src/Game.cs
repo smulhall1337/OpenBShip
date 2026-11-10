@@ -133,7 +133,7 @@ namespace FleetLab {
     // OriginalOpponent recovers targeting; OriginalPlacement recovers layouts.
     // Native RNG streams are isolated deliberately; presentation timing and UI
     // remain modern. Optional firing, travel and impact movies are decoded and played separately.
-    public sealed class Game {
+    public sealed partial class Game {
         public readonly int Seed;
         public readonly RuleProfile Rules;
         public readonly OpponentKind Opponent;
@@ -273,6 +273,9 @@ namespace FleetLab {
         public bool Start() {
             if(Phase!=Phase.Placement||Player.Ships.Count!=Rules.Fleet.Length)return false;
             Enemy=RandomFleet(placementRandom);
+            EnterBattle();return true;
+        }
+        void EnterBattle() {
             // Classic solo entry 0x423100 and 0x42311D select roster slot 1.
             PlayerShooter=EnemyShooter=Rules.FixedY?1:-1;
             Phase=Phase.PlayerTurn;
@@ -280,11 +283,11 @@ namespace FleetLab {
             Events.Add("Battle started. Your shot first.");
             Events.Add(Opponent==OpponentKind.Original?"Opponent: original setting "+(OpponentLevel+1)+".":"Opponent: prototype pursuit.");
             CaptureBattleStart();
-            return true;
         }
         // Modern comparison aid. Capture actual deployment rather than assuming
         // that a seed alone describes manual placement or repeated shuffles.
         void CaptureBattleStart() {
+            battleTurns.Clear();
             startingPlayer=CopyBoard(Player);startingEnemy=CopyBoard(Enemy);
             startingPlacement=classicPlacementRandom.Copy();startingMessage=Message;
             startingEvents=Events.ToArray();startingPlayerShooter=PlayerShooter;
@@ -336,6 +339,7 @@ namespace FleetLab {
             if(Paused||Pending!=null||Phase!=Phase.PlayerTurn)return false;
             if(!Board.Inside(p)||Enemy.Shots[p.X,p.Y]){Message="Choose a square you have not fired at.";return false;}
             RefreshShooters();if(Rules.FixedY)LastPlayerFire=ClassicWeapons.Choose(Player.Ships[PlayerShooter],false,presentationRandom);
+            if(Rules==RuleProfile.Recovered&&Opponent==OpponentKind.Original)battleTurns.Add(new BattleTurn(PlayerShooter,p));
             if(MovieTurns){BeginMovie(false,p,LastPlayerFire);return true;}
             Shot shot=Resolve(false,p);FinishTurn(false,shot);return true;
         }

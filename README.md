@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.34.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.35.
 
 ## Requirements
 
@@ -46,6 +46,10 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 | Options → Restart this battle… | Restore this battle's starting deployment |
 
 Restart asks for confirmation and restores the actual starting fleets, rule preset, opponent setting and random streams, including manually placed fleets and repeated shuffles. Repeating the same actions reproduces the same gameplay and movie choices. This snapshot lasts for the current battle while the app is open; display and audio preferences keep their current values.
+
+To keep a duel between app sessions, use **Options → Save battle checkpoint** when it is your turn and all shot movies have finished. This supports Recovered Classic with any of the four original opponent settings. Saving pauses the game. **Load saved battle…** validates the file before asking to replace your current game, then restores it paused; press P or Resume to play. **Load previous checkpoint…** recovers the file retained before the most recent save.
+
+The modern checkpoint lives at `build\current\UserData\battle.obship`, with one `.bak` copy. It preserves the actual starting fleets, accepted shots, selected ship, difficulty, movie-turn mode and random-stream history. Replay validation rejects damaged or incompatible files without replacing the current game. Display/audio preferences stay as currently configured. Pending shots, finished battles and the prototype opponent/rules are unsupported. Original game save files are not compatible.
 
 The Classic board uses the original targeting and hand cursor art. Untried enemy cells show a target, selectable friendly ships show a hand, and a shot or opponent turn shows a wait cursor over the board. Pause, resolved cells and finished battles use the arrow. These hover rules are an intentional usability policy; the shapes and target/wait transitions come from the original resources and code. Older prepared folders fall back to system cursors; rerun Setup to extract the original shapes.
 

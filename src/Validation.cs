@@ -56,6 +56,66 @@ namespace FleetLab {
                     output.Add("FAIL "+name+": "+e.Message);
                 }
             };
+            check("Battle checkpoint preserves manual deployments, repeated shuffles and selected shooter",delegate {
+                foreach(bool movies in new[]{false,true}) {
+                    var game=new Game(731,RuleProfile.Recovered,OpponentKind.Original,2,movies);
+                    game.AutoPlace();game.AutoPlace();game.AutoPlace();
+                    bool moved=false;for(int y=2;y<8&&!moved;y++)for(int x=0;x<10&&!moved;x++)moved=game.MovePlacedShip(0,new Point(x,y));
+                    Require(moved&&game.Start()&&game.SelectShooter(3),"Checkpoint deployment fixture");
+                    byte[] bytes=game.SerializeBattle();Game restored=Game.ParseBattle(bytes);
+                    Require(restored.Paused&&restored.Turn==1&&restored.PlayerShooter==3&&restored.MovieTurns==movies&&Hash(bytes)==Hash(restored.SerializeBattle()),"Initial checkpoint state");
+                    var restart=restored.RestartBattle();Require(restart!=null&&restart.PlayerShooter==1&&restart.PlacementState==game.PlacementState&&restart.PlacementCalls==game.PlacementCalls,"Loaded restart lost initial stream or selection");
+                    for(int i=0;i<5;i++)Require(restart.Player.Ships[i].Cells[0]==game.Player.Ships[i].Cells[0]&&restart.Enemy.Ships[i].Cells[0]==game.Enemy.Ships[i].Cells[0],"Loaded restart lost deployed fleets");
+                }
+            });
+            check("Saved Classic battles reproduce future targeting, movies, sinks and terminal outcomes",delegate {
+                foreach(bool movies in new[]{false,true})for(int level=0;level<4;level++) {
+                    var game=new Game(1741+level,RuleProfile.Recovered,OpponentKind.Original,level,movies);game.AutoPlace();game.Start();
+                    Point first=game.Enemy.Ships[0].Cells[0];Require(game.Fire(first),"Checkpoint first shot");DrainMovies(game);Require(game.AdvanceOpponent(),"Checkpoint first opponent");DrainMovies(game);
+                    var restored=Game.ParseBattle(game.SerializeBattle());restored.Paused=false;int turns=0;
+                    while(game.Phase!=Phase.Finished) {
+                        Point target=new Point(-1,-1);foreach(var ship in game.Enemy.Ships)foreach(Point cell in ship.Cells)if(!game.Enemy.Shots[cell.X,cell.Y]&&target.X<0)target=cell;
+                        Require(target.X>=0&&++turns<100,"Checkpoint complete-battle bound");
+                        int shooter=game.PlayerShooter;Require(game.SelectShooter(shooter)&&restored.SelectShooter(shooter)&&game.Fire(target)&&restored.Fire(target),"Resumed player action");
+                        MatchSavedMovies(game,restored);
+                        if(game.Phase!=Phase.Finished){Require(game.AdvanceOpponent()&&restored.AdvanceOpponent(),"Resumed opponent action");MatchSavedMovies(game,restored);}
+                        Require(game.Phase==restored.Phase&&game.Turn==restored.Turn&&GameFingerprint(game)==GameFingerprint(restored),"Resumed future history diverged");
+                        if(game.CanSaveBattle)Require(Hash(game.SerializeBattle())==Hash(restored.SerializeBattle()),"Resumed proof or history changed");
+                    }
+                    Require(!game.CanSaveBattle&&!restored.CanSaveBattle,"Finished battle offered checkpoint");
+                }
+            });
+            check("Checkpoint eligibility excludes pending stages, opponent turns and prototype rules",delegate {
+                var game=new Game(731,RuleProfile.Recovered,OpponentKind.Original,0,true);Reject(delegate{game.SerializeBattle();});game.AutoPlace();game.Start();
+                Require(game.CanSaveBattle,"Ready turn cannot save");game.Paused=true;Require(game.CanSaveBattle,"Paused stable turn cannot save");game.Paused=false;
+                Require(game.Fire(new Point(0,0)),"Pending save fixture");while(game.Pending!=null){Require(!game.CanSaveBattle,"Pending movie can save");Reject(delegate{game.SerializeBattle();});game.CompleteMovie(game.Pending,game.Pending.Stage);}
+                Require(!game.CanSaveBattle,"Opponent turn can save");Reject(delegate{game.SerializeBattle();});
+                foreach(var profile in new[]{RuleProfile.Recovered,RuleProfile.Legacy}){var prototype=new Game(731,profile,OpponentKind.Prototype,0);prototype.AutoPlace();prototype.Start();Require(!prototype.CanSaveBattle,"Prototype can save unsupported random state");Reject(delegate{prototype.SerializeBattle();});}
+            });
+            check("Checkpoint refuses unrecorded state mutation and ignores rejected firing attempts",delegate {
+                var game=new Game(731);game.AutoPlace();game.Start();byte[] before=game.SerializeBattle();Require(!game.Fire(new Point(-1,-1))&&Hash(before)==Hash(game.SerializeBattle()),"Rejected fire altered checkpoint");
+                game.Enemy.Shoot(game.Enemy.Ships[0].Cells[0]);Reject(delegate{game.SerializeBattle();});
+            });
+            check("Battle checkpoint validates checksum, version, sizes and replay semantics",delegate {
+                var game=new Game(731);game.AutoPlace();game.Start();byte[] valid=game.SerializeBattle();string text=Encoding.ASCII.GetString(valid);
+                var corrupt=(byte[])valid.Clone();corrupt[30]^=1;Reject(delegate{Game.ParseBattle(corrupt);});Reject(delegate{Game.ParseBattle(null);});Reject(delegate{Game.ParseBattle(new byte[8193]);});Reject(delegate{Game.ParseBattle(new byte[10]);});
+                Reject(delegate{Game.ParseBattle(Encoding.ASCII.GetBytes(text.TrimEnd('\n')));});Reject(delegate{Game.ParseBattle(Encoding.ASCII.GetBytes(text.Replace("\n","\r\n")));});
+                foreach(string altered in new[]{text.Replace("BATTLE 1","BATTLE 2"),text.Replace("difficulty=0","difficulty=4"),text.Replace("movies=0","movies=2"),text.Replace("selected=1","selected=5"),text.Replace("selected=1","selected=+1"),text.Replace("shots=\n","shots=1,0,0;1,0,0\n"),text.Replace("shots=\n","shots=1,-1,0\n"),text.Replace("proof=","proof=0"),text.Replace("enemy=","unexpected=")})Reject(delegate{Game.ParseBattle(ResignBattle(altered));});
+                string[] lines=text.Split('\n');lines[5]="player=0,0;0,0;0,0;0,0;0,0";Reject(delegate{Game.ParseBattle(ResignBattle(string.Join("\n",lines)));});
+                lines=text.Split('\n');lines[4]="placement=4294967296,0";Reject(delegate{Game.ParseBattle(ResignBattle(string.Join("\n",lines)));});lines[4]="placement=0,1000001";Reject(delegate{Game.ParseBattle(ResignBattle(string.Join("\n",lines)));});
+            });
+            check("Local checkpoint replaces atomically, retains one backup and preserves failures",delegate {
+                string dir=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(report)),"checkpoint-io-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);string path=Path.Combine(dir,"battle.obship");
+                var game=new Game(731);game.AutoPlace();game.Start();game.SaveBattle(path);byte[] first=File.ReadAllBytes(path);Require(Game.LoadBattle(path).Paused&&!File.Exists(path+".new"),"Initial checkpoint file");
+                Require(game.Fire(new Point(0,0))&&game.AdvanceOpponent(),"Checkpoint file turn");game.SaveBattle(path);byte[] second=File.ReadAllBytes(path);Require(Hash(first)==Hash(File.ReadAllBytes(path+".bak"))&&Hash(first)!=Hash(second),"Checkpoint previous backup");
+                Require(game.Fire(new Point(1,0))&&game.AdvanceOpponent(),"Second checkpoint file turn");game.SaveBattle(path);Require(Hash(second)==Hash(File.ReadAllBytes(path+".bak"))&&!File.Exists(path+".new"),"Checkpoint backup replacement");
+                string before=GameFingerprint(game);File.WriteAllBytes(path,new byte[8193]);Reject(delegate{Game.LoadBattle(path);});Require(GameFingerprint(game)==before&&Game.LoadBattle(path+".bak").Turn==2,"Corrupt load mutated live game or backup");
+                bool writeFailed=false;try{game.SaveBattle(dir);}catch(IOException){writeFailed=true;}Require(writeFailed&&Directory.Exists(dir)&&!File.Exists(dir+".new"),"Failed atomic save damaged path or left temporary file");
+            });
+            check("Battle checkpoint canonical bytes remain stable across cultures and paused reloads",delegate {
+                var game=new Game(int.MinValue,RuleProfile.Recovered,OpponentKind.Original,3,true);game.AutoPlace();game.Start();game.Fire(new Point(0,0));DrainMovies(game);game.AdvanceOpponent();DrainMovies(game);byte[] bytes=game.SerializeBattle();
+                var prior=System.Threading.Thread.CurrentThread.CurrentCulture;try{System.Threading.Thread.CurrentThread.CurrentCulture=new System.Globalization.CultureInfo("fr-FR");var restored=Game.ParseBattle(bytes);Require(Hash(bytes)==Hash(restored.SerializeBattle()),"Culture changed checkpoint bytes");}finally{System.Threading.Thread.CurrentThread.CurrentCulture=prior;}
+            });
             string visualTable=Path.Combine(Path.GetDirectoryName(assets),"Programs","ClassicVisuals.seqbin");
             check("Original finite visual table fields and unresolved-record preservation",delegate {
                 byte[] b=File.ReadAllBytes(visualTable);var catalog=new ClassicVisualCatalog(b);
@@ -1232,6 +1292,21 @@ namespace FleetLab {
             }
             Require(rate>0&&channels>0&&block==channels*bits/8&&data>=0&&data%block==0,"Invalid PCM units");
             return channels+" channel, "+rate+" Hz, "+bits+" bit; "+(data/(double)(block*rate)).ToString("F4",System.Globalization.CultureInfo.InvariantCulture)+" seconds; playback not auditioned";
+        }
+        static byte[] ResignBattle(string text) {
+            int at=text.LastIndexOf("sha256=",StringComparison.Ordinal);string body=text.Substring(0,at);
+            return Encoding.ASCII.GetBytes(body+"sha256="+Hash(Encoding.ASCII.GetBytes(body))+"\n");
+        }
+        static void MatchSavedMovies(Game first,Game second) {
+            int count=0;while(first.Pending!=null||second.Pending!=null) {
+                Require(first.Pending!=null&&second.Pending!=null&&++count<=3,"Resumed pending stage count");
+                Require(first.Pending.Stage==second.Pending.Stage&&first.Pending.MovieName==second.Pending.MovieName&&first.Pending.Cell==second.Pending.Cell&&first.Pending.Opponent==second.Pending.Opponent,"Resumed movie choice changed");
+                Require(first.CompleteMovie(first.Pending,first.Pending.Stage)&&second.CompleteMovie(second.Pending,second.Pending.Stage),"Resumed movie completion");
+            }
+        }
+        static string GameFingerprint(Game game) {
+            var text=new StringBuilder();foreach(var board in new[]{game.Player,game.Enemy}){foreach(var ship in board.Ships)text.Append(ship.Hits).Append(':').Append(ship.Sunk).Append(';');for(int y=0;y<10;y++)for(int x=0;x<10;x++)text.Append(board.Shots[x,y]?'1':'0');}
+            text.Append(game.Phase).Append(game.Turn).Append(game.PlayerShooter).Append(game.EnemyShooter).Append(string.Join("|",game.Events.ToArray()));return text.ToString();
         }
         static void DrainMovies(Game game){int count=0;while(game.Pending!=null){var pending=game.Pending;Require(game.CompleteMovie(pending,pending.Stage),"Movie completion rejected");if(++count>3)throw new Exception("Shot presentation did not terminate");}}
         static int AlphaCount(Bitmap image,Rectangle area) {

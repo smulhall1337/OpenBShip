@@ -37,6 +37,7 @@ namespace FleetLab {
         readonly ToolStripMenuItem movies=new ToolStripMenuItem("Battle movies (experimental)");
         readonly ToolStripMenuItem highMovies=new ToolStripMenuItem("High-detail original movies (320×240)");
         readonly ToolStripMenuItem restartBattle=new ToolStripMenuItem("Restart this battle...");
+        readonly ToolStripMenuItem saveBattle=new ToolStripMenuItem("Save battle checkpoint"),loadBattle=new ToolStripMenuItem("Load saved battle..."),loadPreviousBattle=new ToolStripMenuItem("Load previous checkpoint...");
         readonly ComboBox rules=new ComboBox();
         readonly ComboBox opponent=new ComboBox();
         readonly ContextMenuStrip displayMenu=new ContextMenuStrip();
@@ -53,7 +54,8 @@ namespace FleetLab {
         readonly DisplaySettings preferences;
         int seed=Environment.TickCount;
         bool disposed,previewMode;
-        bool changingOpponent;
+        bool changingOpponent,loadingSavedBattle;
+        string validationCheckpointPath;
         int recoveredOpponent;
         readonly Color panel=Color.FromArgb(20,36,52),gold=Color.FromArgb(237,200,128);
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
@@ -84,7 +86,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.34 — Sinking ships and miss rings";
+            Text="Battleship Fleet Lab 0.35 — Local battle checkpoints";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -118,11 +120,17 @@ namespace FleetLab {
             display.Click+=delegate {displayMenu.Show(display,0,display.Height);};
             displayMenu.Items.Add(acceptedColors);displayMenu.Items.Add(recoveredColors);displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(motion);
             displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(movies);
-            movies.Click+=delegate{if(State.Phase!=Phase.Placement&&State.Phase!=Phase.Finished)return;preferences.MovieTurns=!preferences.MovieTurns;SavePreferences();NewGame();};
+            movies.Click+=delegate{if(State.Phase!=Phase.Placement&&State.Phase!=Phase.Finished)return;preferences.MovieTurns=!movies.Checked;SavePreferences();NewGame();};
             displayMenu.Items.Add(highMovies);highMovies.ToolTipText="Original higher-detail assets. Change before battle; available in the clip library too.";
             displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(restartBattle);
             restartBattle.ToolTipText="Restore this battle's starting deployment for another attempt.";
             restartBattle.Click+=delegate{RequestBattleRestart();};
+            displayMenu.Items.Add(saveBattle);displayMenu.Items.Add(loadBattle);displayMenu.Items.Add(loadPreviousBattle);
+            saveBattle.ToolTipText="Save between turns in Classic with an original opponent. Keeps one previous file as a backup.";
+            loadBattle.ToolTipText="Validate and restore the local checkpoint, paused. Original game saves are unsupported.";
+            saveBattle.Click+=delegate{SaveCurrentBattle();};loadBattle.Click+=delegate{RequestSavedBattle();};
+            loadPreviousBattle.ToolTipText="Recover the checkpoint retained before the latest successful save.";
+            loadPreviousBattle.Click+=delegate{RequestBattleCheckpoint(BattleCheckpointPath+".bak",true);};
             highMovies.Click+=delegate{SetMovieDetail(!preferences.HighMovies,true);};
             acceptedColors.Click+=delegate {SelectColors(false,true);};
             recoveredColors.Click+=delegate {SelectColors(true,true);};
@@ -211,6 +219,7 @@ namespace FleetLab {
             sidebar.Controls.Add(rules);
             AddLabel(sidebar,new Label {Text="Settings changes reset deployment."},25,9,Color.LightSteelBlue);
             rules.SelectedIndexChanged+=delegate {
+                if(loadingSavedBattle)return;
                 changingOpponent=true;
                 opponent.SelectedIndex=rules.SelectedIndex==1?4:recoveredOpponent;
                 changingOpponent=false;
@@ -349,7 +358,7 @@ namespace FleetLab {
         void UpdateDisplayChecks() {
             acceptedColors.Checked=!preferences.RecoveredColors;recoveredColors.Checked=preferences.RecoveredColors;motion.Checked=preferences.Motion;
             board.AnimateVisualEffects=preferences.Motion;board.SynchronizeVisualEffects();board.Invalidate();
-            movies.Checked=preferences.MovieTurns;movies.Enabled=State!=null&&State.Rules.FixedY&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
+            movies.Checked=State!=null&&State.Phase!=Phase.Placement?State.MovieTurns:preferences.MovieTurns;movies.Enabled=State!=null&&State.Rules.FixedY&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
             highMovies.Checked=preferences.HighMovies;highMovies.Enabled=State!=null&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
         }
         void SetMovieDetail(bool high,bool persist){
@@ -493,6 +502,41 @@ namespace FleetLab {
             tabs.SelectedIndex=0;UpdateView();board.Focus();SuppressHeldControls();
             foreach(Keys key in heldKeys)down.Add(key);return true;
         }
+        string BattleCheckpointPath {get{return validationCheckpointPath??Path.Combine(Path.GetDirectoryName(settingsPath),"battle.obship");}}
+        bool SaveCurrentBattle() {
+            if(disposed||tabs.SelectedIndex!=0||!State.CanSaveBattle)return false;
+            State.Paused=true;
+            try {State.SaveBattle(BattleCheckpointPath);State.Message="Battle checkpoint saved at turn "+State.Turn+". P or Resume continues.";return true;}
+            catch(Exception e) {State.Message="Battle checkpoint was not saved: "+e.Message;return false;}
+            finally {UpdateView();SuppressHeldControls();}
+        }
+        void RequestSavedBattle() {
+            RequestBattleCheckpoint(BattleCheckpointPath,false);
+        }
+        void RequestBattleCheckpoint(string path,bool previous) {
+            if(disposed||tabs.SelectedIndex!=0)return;
+            Game expected=State,restored;
+            if(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn){State.Paused=true;UpdateView();}
+            try {restored=Game.LoadBattle(path);}
+            catch(Exception e) {State.Message="Saved battle was not loaded: "+e.Message;UpdateView();SuppressHeldControls();return;}
+            // Validate the complete file/replay before offering to replace the
+            // current deployment or game. Cancel leaves its state and media intact.
+            var answer=MessageBox.Show(this,"Load "+(previous?"the previous checkpoint at turn ":"saved turn ")+restored.Turn+"? This replaces the current deployment or battle. The saved battle will remain paused.","Load saved battle",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
+            if(answer==DialogResult.Yes)RestoreBattleConfirmed(expected,restored);
+            SuppressHeldControls();
+        }
+        bool RestoreBattleConfirmed(Game expected,Game restored) {
+            if(disposed||tabs.SelectedIndex!=0||!object.ReferenceEquals(State,expected)||restored==null||!restored.CanSaveBattle||!restored.Paused)return false;
+            var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);
+            ClearBattlePresentation();battleMovie.UnloadBattle();
+            loadingSavedBattle=changingOpponent=true;
+            try {rules.SelectedIndex=0;opponent.SelectedIndex=restored.OpponentLevel;}
+            finally {loadingSavedBattle=changingOpponent=false;}
+            State=restored;board.Game=State;board.KeyboardCell=new Point(0,0);
+            effectClock.Reset();board.DamageTick=0;visualLast=visualTime.ElapsedMilliseconds;
+            tabs.SelectedIndex=0;UpdateView();board.Focus();SuppressHeldControls();
+            foreach(Keys key in heldKeys)down.Add(key);return true;
+        }
         void CreateBattleState(){
             bool legacy=rules.SelectedIndex==1;
             State=new Game(unchecked(seed++),legacy?RuleProfile.Legacy:RuleProfile.Recovered,legacy||opponent.SelectedIndex==4?OpponentKind.Prototype:OpponentKind.Original,opponent.SelectedIndex<4?opponent.SelectedIndex:0,preferences.MovieTurns);
@@ -562,6 +606,9 @@ namespace FleetLab {
         void UpdateView() {
             if(disposed)return;
             restartBattle.Enabled=tabs.SelectedIndex==0&&State.CanRestartBattle;
+            saveBattle.Enabled=tabs.SelectedIndex==0&&State.CanSaveBattle;
+            loadBattle.Enabled=tabs.SelectedIndex==0&&File.Exists(BattleCheckpointPath);
+            loadPreviousBattle.Enabled=tabs.SelectedIndex==0&&File.Exists(BattleCheckpointPath+".bak");
             bool showPauseActions=tabs.SelectedIndex==0&&State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn);
             pauseActions.SetAvailable(showPauseActions);battleSidebar.RowStyles[3].Height=showPauseActions?76:0;
             battleSidebar.RowStyles[4].Height=showPauseActions?48:92;hint.Height=showPauseActions?44:82;
@@ -722,6 +769,7 @@ namespace FleetLab {
             Close();
         }
         public int CheckUi(string report) {
+            validationCheckpointPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(report)),"ui-checkpoint-"+Guid.NewGuid().ToString("N"),"battle.obship");
             previewMode=true;sound.Enabled=false;clip.SetSound(false);battleMovie.SetSound(false);ending.SetSound(false);creditsPage.SetSound(false);startupPage.SetSound(false);if(archive!=null)archive.SetSound(false);
             preferences.FxVolume=100;preferences.Difficulty=recoveredOpponent=0;preferences.Radar=0;changingOpponent=true;opponent.SelectedIndex=0;changingOpponent=false;sound.SetLevel(100);clip.SetLevel(100);battleMovie.SetLevel(100);ending.SetLevel(100);
             // Keep diagnostics independent of saved user choices, without saving.
@@ -739,6 +787,39 @@ namespace FleetLab {
                 catch(Exception e) { failed++; results.Add("FAIL "+name+": "+e.Message); }
             };
             Action<bool,string> require=delegate(bool ok,string message) { if(!ok)throw new Exception(message); };
+            check("Local save/load menu eligibility tracks stable Classic turns and file availability",delegate {
+                tabs.SelectedIndex=0;rules.SelectedIndex=0;changingOpponent=true;opponent.SelectedIndex=0;changingOpponent=false;preferences.MovieTurns=true;NewGame();
+                require(!saveBattle.Enabled&&!loadBattle.Enabled,"Unsaved deployment checkpoint menu");auto.PerformClick();start.PerformClick();require(saveBattle.Enabled,"Ready Classic save menu");
+                State.Fire(new Point(0,0));UpdateView();require(!saveBattle.Enabled,"Firing stage save menu");while(State.Pending!=null){State.CompleteMovie(State.Pending,State.Pending.Stage);UpdateView();require(!saveBattle.Enabled,"Pending/opponent save menu");}
+                require(State.AdvanceOpponent(),"Save menu opponent fixture");while(State.Pending!=null)State.CompleteMovie(State.Pending,State.Pending.Stage);UpdateView();
+                saveBattle.PerformClick();saveBattle.PerformClick();require(loadPreviousBattle.Enabled&&State.Paused&&loadBattle.Enabled&&File.Exists(BattleCheckpointPath)&&Game.LoadBattle(BattleCheckpointPath).Turn==2,"Save menu did not create paused checkpoint");
+                tabs.SelectedIndex=1;UpdateView();require(!saveBattle.Enabled&&!loadBattle.Enabled&&!loadPreviousBattle.Enabled,"Off-duel checkpoint actions enabled");tabs.SelectedIndex=0;
+            });
+            check("Validated load restores paused battle from legacy mode without changing preferences",delegate {
+                Game restored=Game.LoadBattle(BattleCheckpointPath);rules.SelectedIndex=1;auto.PerformClick();start.PerformClick();Game previous=State;
+                string choices=preferences.Serialize();require(RestoreBattleConfirmed(previous,restored),"Load replacement rejected");
+                require(State==restored&&State.Paused&&State.Phase==Phase.PlayerTurn&&State.Turn==2&&rules.SelectedIndex==0&&opponent.SelectedIndex==0&&State.MovieTurns&&movies.Checked,"Loaded game/UI state");
+                require(preferences.Serialize()==choices&&State.CanRestartBattle&&board.MovieFrame==null&&board.VisualEffectCount==0&&effectClock.Tick==0,"Load changed preferences or retained presentation");
+                State.Paused=false;require(State.Fire(new Point(1,0)),"Loaded next shot rejected");UpdateView();var pending=State.Pending;require(pending!=null&&board.CinematicBackdropActive,"Loaded movie did not play");
+                pause.PerformClick();require(State.Paused,"Loaded movie pause");
+                var again=Game.LoadBattle(BattleCheckpointPath);require(RestoreBattleConfirmed(State,again)&&State.Pending==null&&!State.CompleteMovie(pending,pending.Stage)&&!battleMovie.Visible&&board.MovieFrame==null,"Load retained old callback/movie");
+            });
+            check("Saved battle replacement rejects stale ownership and keeps rejected loads intact",delegate {
+                Game previous=State;string fingerprint=Convert.ToBase64String(State.SerializeBattle());var loaded=Game.LoadBattle(BattleCheckpointPath);NewGame();Game current=State;
+                require(!RestoreBattleConfirmed(previous,loaded)&&State==current,"Stale load replaced current game");require(!RestoreBattleConfirmed(current,null),"Null load accepted");
+                auto.PerformClick();start.PerformClick();State.Paused=true;UpdateView();Game live=State;byte[] saved=File.ReadAllBytes(BattleCheckpointPath);File.WriteAllBytes(BattleCheckpointPath,new byte[8193]);
+                try {RequestSavedBattle();require(State==live&&State.Paused&&State.Message.StartsWith("Saved battle was not loaded:"),"Corrupt file changed current game");}finally{File.WriteAllBytes(BattleCheckpointPath,saved);}
+                require(Convert.ToBase64String(previous.SerializeBattle())==fingerprint,"Load mutated detached prior game");
+            });
+            check("Checkpoint menu fits minimum window and resume requires a fresh key edge",delegate {
+                var restored=Game.LoadBattle(BattleCheckpointPath);require(RestoreBattleConfirmed(State,restored),"Minimum checkpoint restore");Size=MinimumSize;PerformLayout();
+                down.Add(Keys.P);OnKey(this,new KeyEventArgs(Keys.P));require(State.Paused,"Held resume key escaped load pause");down.Remove(Keys.P);OnKey(this,new KeyEventArgs(Keys.P));require(!State.Paused,"Fresh resume edge ignored");down.Remove(Keys.P);
+                displayMenu.Show(displayButton,0,displayButton.Height);Application.DoEvents();require(saveBattle.Available&&loadBattle.Available&&loadPreviousBattle.Bounds.Bottom<=displayMenu.ClientSize.Height&&displayMenu.Width<Width,"Checkpoint menu clipped");displayMenu.Close();preferences.MovieTurns=false;NewGame();Size=new Size(1236,879);
+            });
+            check("Movie toggle after a loaded result follows the displayed battle mode",delegate {
+                preferences.MovieTurns=false;var loaded=Game.LoadBattle(BattleCheckpointPath);require(RestoreBattleConfirmed(State,loaded)&&loaded.MovieTurns&&!preferences.MovieTurns,"Loaded mode/default fixture");
+                State.Phase=Phase.Finished;UpdateView();require(movies.Enabled&&movies.Checked,"Loaded result movie indicator");movies.PerformClick();require(!preferences.MovieTurns&&!State.MovieTurns&&!movies.Checked&&State.Phase==Phase.Placement,"Movie toggle followed stale default instead of displayed mode");
+            });
             check("Preset switch resets deployment and exposes the matching rotation control",delegate {
                 require(State.Rules==RuleProfile.Recovered&&!rotate.Enabled,"Default recovered preset");
                 auto.PerformClick();

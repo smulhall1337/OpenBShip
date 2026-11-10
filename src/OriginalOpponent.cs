@@ -8,6 +8,10 @@ namespace FleetLab {
         public int Calls { get; private set; }
         public NativeRandom(uint seed) { State=seed; }
         internal NativeRandom Copy() { return new NativeRandom(State) {Calls=this.Calls}; }
+        internal static NativeRandom Restore(uint state,int calls) {
+            if(calls<0||calls>1000000)throw new InvalidDataException("Unsupported random-stream call count");
+            return new NativeRandom(state) {Calls=calls};
+        }
         // Bs.exe 0x439790: exact 32-bit wraparound and 15-bit result.
         public int Next() {
             State=unchecked(State*214013u+2531011u);
