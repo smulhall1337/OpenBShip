@@ -55,6 +55,8 @@ Local numerical comparisons now connect original fleet creation to player select
 
 Canonical board picking is also checked at every integer pixel of the 640×480 viewport against original mouse-conversion code under both 53-bit and 64-bit x87 precision. The four PAT-driven numerical battles additionally pass scripted integer pixels through that conversion before original click dispatch, while preserving the earlier gameplay and random-state records. These comparisons use the fixed Classic camera and exclude later button/sprite hit dispatch and live camera setup.
 
+Those battles also execute original camera easing and the weapon-order loop: the canonical camera stays fixed and the initialized order slots stay inactive. Separate bounded camera cases cover stepping and overshoot; active queued-weapon behavior remains unsupported.
+
 ## Repository layout
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
