@@ -132,6 +132,19 @@ namespace FleetLab {
                 }
             });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
+            check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
+                foreach(string name in new[]{"TargetCursor","HandCursor"}){
+                    byte[] raw=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs",name+".seqbin"));var parsed=ClassicCursorData.Read(raw);byte[] cur=parsed.CurFile();
+                    Require(parsed.Hotspot==(name=="TargetCursor"?new Point(15,15):new Point(11,16)),"Original named cursor hotspot");
+                    Require(cur.Length==326&&BitConverter.ToUInt16(cur,2)==2&&BitConverter.ToUInt16(cur,4)==1&&cur[6]==32&&cur[7]==32&&BitConverter.ToUInt16(cur,10)==parsed.Hotspot.X&&BitConverter.ToUInt16(cur,12)==parsed.Hotspot.Y&&BitConverter.ToInt32(cur,14)==304&&BitConverter.ToInt32(cur,18)==22,"CUR directory/offset");
+                    for(int i=0;i<304;i++)Require(cur[i+22]==raw[i+4],"CUR changed original AND/XOR/palette metadata");
+                    string before=Hash(cur);raw[307]^=1;cur[325]^=1;Require(Hash(parsed.CurFile())==before,"Cursor parser aliases input/export buffers");
+                }
+            });
+            check("Cursor reader rejects malformed lengths, hotspots and unsupported DIB variants",delegate{
+                byte[] raw=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","TargetCursor.seqbin"));Reject(delegate{ClassicCursorData.Read(null);});Reject(delegate{ClassicCursorData.Read(new byte[307]);});Reject(delegate{ClassicCursorData.Read(new byte[309]);});
+                foreach(int at in new[]{0,2,4,8,12,16,18,20,24,36,40}){byte[] bad=(byte[])raw.Clone();bad[at]=at<4?(byte)32:(byte)(bad[at]+1);Reject(delegate{ClassicCursorData.Read(bad);});}
+            });
             check("Credits palette subsets match native quality/state branches and preserve font colors",delegate{
                 byte[] island=File.ReadAllBytes(Path.Combine(assets,"Graphics","ISLAND.COL")),basis=ClassicPalette.Patched(island),pal=new byte[768];for(int i=0;i<768;i++)pal[i]=(byte)((i*13+17)%64);string original=Hash(pal);var rows=File.ReadAllLines(Path.Combine(evidence,"Credits-PaletteSubset-Oracle.csv"));Require(rows.Length==7,"Palette seam cases");for(int i=1;i<rows.Length;i++){var f=rows[i].Split(',');Require(Hash(ClassicPalette.MovieSubset(pal,basis,int.Parse(f[0]),int.Parse(f[1])))==f[2],"Native palette subset "+i);}Require(Hash(pal)==original,"Movie palette mutated source input");var actual=PatMovie.ClipColors(pal,island,true);var gp=ClassicPalette.Gameplay(island);for(int i=0;i<256;i++)Require(actual[i]==(i>=20&&i<=137?Color.FromArgb(pal[i*3]<<2,pal[i*3+1]<<2,pal[i*3+2]<<2):gp[i]),"Credits display subset");var font=Assets.Sph(Path.Combine(assets,"Graphics","FEFONT.SPH"),gp);var indices=new HashSet<byte>();for(int i=376;i<470;i++)for(int p=0;p<font[i].Pixels.Length;p++)if(font[i].Visible[p]&&font[i].Pixels[p]!=0)indices.Add(font[i].Pixels[p]);Require(indices.SetEquals(new byte[]{10,12,209}),"Native front-end style4 palette indices");foreach(byte value in indices)Require(actual[value]==gp[value],"Movie recolored credits text");
             });

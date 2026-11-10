@@ -61,6 +61,7 @@ namespace FleetLab {
         public MainForm(string assetDir):this(assetDir,Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"UserData","settings.txt")) { }
         internal MainForm(string assetDir,string configurationPath) {
             assets=assetDir;
+            board.LoadCursors(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
             settingsPath=Path.GetFullPath(configurationPath);
             preferences=DisplaySettings.Load(settingsPath);
             recoveredOpponent=preferences.Difficulty;
@@ -82,7 +83,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.32 — Repeatable battle restart";
+            Text="Battleship Fleet Lab 0.33 — Original battle cursors";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -595,7 +596,7 @@ namespace FleetLab {
             status.Text=sound.Problem!=""?sound.Problem:preferences.Problem!=""?preferences.Problem:tabs.SelectedIndex==4&&entry.Visible?"Preparing Classic battle. Return to fleet cancels this entry.":tabs.SelectedIndex==4&&fleet.Visible?"Review your fleet. Start Game begins the battle; Back keeps the previous game paused.":tabs.SelectedIndex==2?"Original clip study. Return to Classic duel to play.":State.Message;
             int from=Math.Max(0,State.Events.Count-9);
             history.Text=string.Join(Environment.NewLine,State.Events.GetRange(from,State.Events.Count-from).ToArray());
-            board.Invalidate();UpdateDisplayChecks();
+            board.RefreshInteractionCursor();board.Invalidate();UpdateDisplayChecks();
         }
         void SyncBattleMovie(){
             PendingShot pending=State.Pending;
@@ -1246,6 +1247,23 @@ namespace FleetLab {
             });
             check("Restart is scoped to the duel and preserves settings",delegate {
                 preferences.MovieTurns=false;NewGame();auto.PerformClick();start.PerformClick();UpdateView();var previous=State;string settings=preferences.Serialize();tabs.SelectedIndex=5;UpdateView();require(!restartBattle.Enabled&&!RestartBattleConfirmed(previous),"Archive restarted a battle without duel context");tabs.SelectedIndex=0;State.Phase=Phase.Finished;UpdateView();require(restartBattle.Enabled&&RestartBattleConfirmed(previous)&&State.Phase==Phase.PlayerTurn&&preferences.Serialize()==settings,"Finished replay changed settings or lost starting fleet");
+            });
+            check("Board cursors distinguish targets, selection, playback, pause and resolved cells",delegate{
+                rules.SelectedIndex=0;preferences.MovieTurns=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();require(board.HasOriginalCursors,"Original cursor resources were not loaded");
+                Point cell=State.Enemy.Ships[0].Cells[0],own=State.Player.Ships[0].Cells[0];PointF targetAt=ClassicGeometry.Project(true,cell.X+.5f,cell.Y+.5f),ownAt=ClassicGeometry.Project(false,own.X+.5f,own.Y+.5f);
+                require(board.PointerAt(targetAt)==BoardPointer.Target&&board.PointerAt(ownAt)==BoardPointer.Hand,"Target/ship pointer policy");
+                State.Paused=true;require(board.PointerAt(targetAt)==BoardPointer.Arrow,"Pause retained active target pointer");State.Paused=false;
+                require(State.Fire(cell),"Pointer shot fixture rejected");UpdateView();require(board.PointerAt(targetAt)==BoardPointer.Wait&&board.PointerAt(ownAt)==BoardPointer.Wait,"Pending movie did not signal wait");
+                while(State.Pending!=null)State.CompleteMovie(State.Pending,State.Pending.Stage);require(State.Phase==Phase.OpponentTurn&&board.PointerAt(targetAt)==BoardPointer.Wait,"Opponent turn did not signal wait");
+                State.Phase=Phase.PlayerTurn;require(board.PointerAt(targetAt)==BoardPointer.Arrow,"Previously resolved cell looked targetable");State.Phase=Phase.Finished;require(board.PointerAt(ownAt)==BoardPointer.Arrow,"Finished battle retained a hand");NewGame();require(board.PointerAt(targetAt)==BoardPointer.Arrow,"Deployment retained a battle cursor");
+            });
+            check("Stationary pointer refresh, system fallback and owned cursor disposal",delegate{
+                preferences.MovieTurns=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();Point cell=State.Enemy.Ships[0].Cells[0];PointF artAt=ClassicGeometry.Project(true,cell.X+.5f,cell.Y+.5f);RectangleF r=board.ImageBounds;
+                var move=typeof(BoardView).GetMethod("OnMouseMove",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);Point clientAt=Point.Round(new PointF(r.Left+artAt.X*r.Width/640,r.Top+artAt.Y*r.Height/480));
+                move.Invoke(board,new object[]{new MouseEventArgs(MouseButtons.None,0,clientAt.X,clientAt.Y,0)});require(board.Cursor.HotSpot==new Point(15,15),"Native target hotspot binding");State.Fire(cell);UpdateView();require(board.Cursor==Cursors.WaitCursor,"Stationary pointer stayed target during movie");State.Paused=true;UpdateView();require(board.Cursor==Cursors.Default,"Pause did not refresh stationary pointer");
+                var leave=typeof(BoardView).GetMethod("OnMouseLeave",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);leave.Invoke(board,new object[]{EventArgs.Empty});require(board.Cursor==Cursors.Default,"Mouse leave retained owned cursor");
+                NewGame();auto.PerformClick();start.PerformClick();UpdateView();using(var local=new BoardView()){local.Size=new Size(640,480);local.Game=State;local.LoadCursors(Path.Combine(Path.GetDirectoryName(assets),"NoCursorFixture"));Point direct=Point.Round(artAt);move.Invoke(local,new object[]{new MouseEventArgs(MouseButtons.None,0,direct.X,direct.Y,0)});require(!local.HasOriginalCursors&&local.Cursor==Cursors.Cross,"Prepared-folder system fallback");local.LoadCursors(Path.Combine(Path.GetDirectoryName(assets),"Programs"));require(local.HasOriginalCursors&&local.Cursor.HotSpot==new Point(15,15),"Loading original resources retained fallback cursor");local.Dispose();local.RefreshInteractionCursor();local.Dispose();require(local.IsDisposed,"Late cursor refresh/disposal failed");}
+                NewGame();
             });
             results.Add("UI checks passed="+(results.Count-failed)+" failed="+failed);
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");

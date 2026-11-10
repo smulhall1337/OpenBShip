@@ -1,13 +1,13 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.32.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.33.
 
 ## Requirements
 
 - Windows x64 with the .NET Framework 4.x compiler at `%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe`.
 - An extracted copy of the supported English game. The folder must contain `Bs.exe`, `GRAPHICS`, `LWEBS`, `HWEBS` and `SFX`.
 
-Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
+Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs and original cursor resources from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
 
 ## Build and launch
 
@@ -46,6 +46,8 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 | Options → Restart this battle… | Restore this battle's starting deployment |
 
 Restart asks for confirmation and restores the actual starting fleets, rule preset, opponent setting and random streams, including manually placed fleets and repeated shuffles. Repeating the same actions reproduces the same gameplay and movie choices. This snapshot lasts for the current battle while the app is open; display and audio preferences keep their current values.
+
+The Classic board uses the original targeting and hand cursor art. Untried enemy cells show a target, selectable friendly ships show a hand, and a shot or opponent turn shows a wait cursor over the board. Pause, resolved cells and finished battles use the arrow. These hover rules are an intentional usability policy; the shapes and target/wait transitions come from the original resources and code. Older prepared folders fall back to system cursors; rerun Setup to extract the original shapes.
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 

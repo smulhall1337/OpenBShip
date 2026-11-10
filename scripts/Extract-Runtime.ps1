@@ -9,7 +9,7 @@ $basis=[BitConverter]::ToUInt32($bytes,$pe+52);$count=[BitConverter]::ToUInt16($
 $table=$pe+24+[BitConverter]::ToUInt16($bytes,$pe+20)
 if($basis -ne 0x400000 -or $count -lt 1 -or $count -gt 128 -or $table -gt $bytes.Length-$count*40){throw 'Invalid image base or section table.'}
 $records=@(Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'programs.csv'))
-if($records.Count -ne 16){throw 'Unexpected runtime program manifest.'}
+if($records.Count -ne 18){throw 'Unexpected runtime resource manifest.'}
 $output=[IO.Path]::GetFullPath($Destination);$prefix=$output.TrimEnd('\')+'\';$seen=@{}
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 foreach($record in $records){
@@ -30,4 +30,4 @@ foreach($record in $records){
  if(Test-Path -LiteralPath $path){if((Get-FileHash -LiteralPath $path).Hash -ne $hash){throw "Existing modified program retained: $path"};continue}
  [IO.File]::WriteAllBytes($path,$data)
 }
-'Extracted and verified 16 original runtime programs.'
+'Extracted and verified 18 original runtime resources (16 programs and 2 cursors).'

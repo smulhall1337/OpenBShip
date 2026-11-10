@@ -19,6 +19,36 @@ namespace FleetLab {
         public event Action<string> ActionDone;
         public Point KeyboardCell=new Point(0,0);
         Point? hover;
+        Point? pointerPosition;
+        ClassicCursors nativeCursors;
+        internal bool HasOriginalCursors {get{return nativeCursors!=null;}}
+        internal void LoadCursors(string programs){
+            if(IsDisposed||Disposing)return;
+            var next=ClassicCursors.TryLoad(programs);Cursor=Cursors.Default;
+            if(nativeCursors!=null)nativeCursors.Dispose();nativeCursors=next;RefreshInteractionCursor();
+        }
+        internal BoardPointer PointerAt(PointF at){
+            if(Game==null||Game.Paused||Game.Phase==Phase.Finished)return BoardPointer.Arrow;
+            if(Legacy)return SelectableShip(at)>=0?BoardPointer.Hand:BoardPointer.Arrow;
+            if(!Legacy&&(Game.Pending!=null||Game.Phase==Phase.OpponentTurn))return BoardPointer.Wait;
+            if(SelectableShip(at)>=0)return BoardPointer.Hand;
+            var cell=HitCell(true,at,Legacy);
+            if(Game.Phase==Phase.PlayerTurn&&Game.Pending==null&&cell.HasValue&&!Game.Enemy.Shots[cell.Value.X,cell.Value.Y])return BoardPointer.Target;
+            return BoardPointer.Arrow;
+        }
+        internal void RefreshInteractionCursor(){
+            if(IsDisposed||Disposing)return;
+            BoardPointer kind=BoardPointer.Arrow;RectangleF r=BoundsForArt();
+            if(pointerPosition.HasValue&&r.Width>0&&r.Contains(pointerPosition.Value)){
+                Point p=pointerPosition.Value;kind=PointerAt(new PointF((p.X-r.X)*640/r.Width,(p.Y-r.Y)*ArtHeight/r.Height));
+            }
+            Cursor=kind==BoardPointer.Target?(nativeCursors==null?Cursors.Cross:nativeCursors.Target):kind==BoardPointer.Hand?(nativeCursors==null?Cursors.Hand:nativeCursors.Hand):kind==BoardPointer.Wait?Cursors.WaitCursor:Cursors.Default;
+        }
+        protected override void OnResize(EventArgs e){base.OnResize(e);RefreshInteractionCursor();}
+        protected override void Dispose(bool disposing){
+            if(disposing){Cursor=Cursors.Default;if(nativeCursors!=null){nativeCursors.Dispose();nativeCursors=null;}}
+            base.Dispose(disposing);
+        }
         bool Legacy { get { return Game!=null&&!Game.Rules.FixedY; } }
         internal List<MessageLine> PauseMessages {get{return Game!=null&&Game.Paused&&!Legacy&&MessageFont!=null&&Messages!=null?MessageFont.PauseLines(Messages,640,false):null;}}
         internal bool CinematicBackdropActive {get{return !Legacy&&MovieFrame!=null&&ForegroundArt!=null;}}
@@ -107,16 +137,17 @@ namespace FleetLab {
         }
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
+            pointerPosition=e.Location;RefreshInteractionCursor();
             RectangleF r=BoundsForArt();
-            if(r.Width<=0)return;
+            if(r.Width<=0||Game==null)return;
             var at=new PointF((e.X-r.X)*640/r.Width,(e.Y-r.Y)*ArtHeight/r.Height);
-            Cursor=SelectableShip(at)>=0?Cursors.Hand:Cursors.Default;
             hover=HitCell(Game.Phase!=Phase.Placement,at,Legacy);
             if(hover.HasValue)KeyboardCell=hover.Value;
             Invalidate();
         }
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
+            pointerPosition=null;RefreshInteractionCursor();
             hover=null;
             Invalidate();
         }
