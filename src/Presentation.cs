@@ -16,6 +16,38 @@ namespace FleetLab {
         public ClassicShips Ships;
         public ClassicDamage Damage;
         public long DamageTick;
+        public ClassicVisualSprites VisualSprites; // Borrowed from MainForm.
+        public bool AnimateVisualEffects=true;
+        readonly ClassicVisualTimeline visualEffects=new ClassicVisualTimeline();
+        Game visualGame;
+        Shot visualPlayerShot,visualEnemyShot;
+        long visualTick;
+        internal int VisualEffectCount {get{return visualEffects.Count;}}
+        internal IEnumerable<ClassicVisualEntry> VisualEntries {get{return visualEffects.Entries;}}
+        internal void ResetVisualEffects() {
+            visualEffects.Clear();visualGame=Game;visualTick=DamageTick;
+            visualPlayerShot=Game==null?null:Game.LastPlayerShot;
+            visualEnemyShot=Game==null?null:Game.LastEnemyShot;
+        }
+        internal void SynchronizeVisualEffects() {
+            if(!object.ReferenceEquals(visualGame,Game)||DamageTick<visualTick) {ResetVisualEffects();return;}
+            if(Game==null||Legacy||Game.Phase==Phase.Placement||!AnimateVisualEffects||VisualSprites==null) {ResetVisualEffects();return;}
+            long ticks=DamageTick-visualTick;visualTick=DamageTick;
+            if(!Game.Paused)visualEffects.Advance(ticks);
+            if(!object.ReferenceEquals(visualPlayerShot,Game.LastPlayerShot)) {
+                visualPlayerShot=Game.LastPlayerShot;SpawnVisualImpact(Game.Enemy,visualPlayerShot,true);
+            }
+            if(!object.ReferenceEquals(visualEnemyShot,Game.LastEnemyShot)) {
+                visualEnemyShot=Game.LastEnemyShot;SpawnVisualImpact(Game.Player,visualEnemyShot,false);
+            }
+        }
+        void SpawnVisualImpact(Board victim,Shot shot,bool enemy) {
+            int type;Point start;
+            if(ClassicVisualGeometry.Impact(victim,shot,out type,out start))
+                // Native Classic creates entries before the same frame's aging
+                // pass. Its first draw therefore uses counter 1 (checkpoint59).
+                visualEffects.Spawn(VisualSprites.Catalog.Get(type),enemy,start,1);
+        }
         public event Action<string> ActionDone;
         public Point KeyboardCell=new Point(0,0);
         Point? hover;
@@ -224,6 +256,7 @@ namespace FleetLab {
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             if(Game==null||Art==null)return;
+            SynchronizeVisualEffects();
             RectangleF r=BoundsForArt();
             if(r.Width<=0)return;
             var g=e.Graphics;
@@ -235,9 +268,9 @@ namespace FleetLab {
             g.InterpolationMode=InterpolationMode.NearestNeighbor;
             g.PixelOffsetMode=PixelOffsetMode.Half;
             g.DrawImage(backdrop?ForegroundArt:Art,new Rectangle(0,0,640,ArtHeight),0,0,640,ArtHeight,GraphicsUnit.Pixel);
-            if(!NativeHudCues){DrawRoster(g,Game.Player,false);DrawRoster(g,Game.Enemy,true);DrawResult(g,Game.LastEnemyShot,false);DrawResult(g,Game.LastPlayerShot,true);}
             DrawShips(g,Game.Player,false);
             DrawShips(g,Game.Enemy,true);
+            if(VisualSprites!=null&&!Legacy)VisualSprites.Draw(g,visualEffects);
             g.SmoothingMode=SmoothingMode.AntiAlias;
             DrawBoard(g,Game.Player,false);
             DrawBoard(g,Game.Enemy,true);
@@ -263,6 +296,7 @@ namespace FleetLab {
                 using(var pen=new Pen(Color.FromArgb(250,235,198,113),1.3f))g.DrawPolygon(pen,Polygon(enemy,KeyboardCell.X,KeyboardCell.Y,Legacy));
             }
             if(NativeHudCues)DrawNativeHud(g);
+            else {DrawRoster(g,Game.Player,false);DrawRoster(g,Game.Enemy,true);DrawResult(g,Game.LastEnemyShot,false);DrawResult(g,Game.LastPlayerShot,true);}
             using(var font=new Font("Segoe UI",10,FontStyle.Bold))using(var brush=new SolidBrush(Color.FromArgb(235,225,203))) {
                 if(CurrentMessages==null)g.DrawString("YOUR FLEET",font,brush,16,10);
                 g.DrawString("OPPONENT",font,brush,287,450);

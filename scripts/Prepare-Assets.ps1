@@ -11,7 +11,7 @@ if(!(Test-Path -LiteralPath $exe) -or (Get-FileHash -LiteralPath $exe -Algorithm
 }
 $assets=Join-Path $output 'Assets';$targetPrefix=[IO.Path]::GetFullPath($assets)+'\'
 $manifest=@(Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'assets.csv'))
-if($manifest.Count -ne 1485){throw 'Unexpected asset manifest.'}
+if($manifest.Count -ne 1491){throw 'Unexpected asset manifest.'}
 foreach($record in $manifest){
  $source=[IO.Path]::GetFullPath((Join-Path $original $record.Asset))
  $target=[IO.Path]::GetFullPath((Join-Path $assets $record.Asset))
@@ -26,4 +26,4 @@ foreach($record in $manifest){
  Copy-Item -LiteralPath $source -Destination $target
 }
 & (Join-Path $PSScriptRoot 'Extract-Runtime.ps1') -Executable $exe -Destination (Join-Path $output 'Programs')
-'Imported and verified 1,485 original assets. Supplied files were preserved.'
+'Imported and verified 1,491 original assets. Supplied files were preserved.'

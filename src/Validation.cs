@@ -56,6 +56,55 @@ namespace FleetLab {
                     output.Add("FAIL "+name+": "+e.Message);
                 }
             };
+            string visualTable=Path.Combine(Path.GetDirectoryName(assets),"Programs","ClassicVisuals.seqbin");
+            check("Original finite visual table fields and unresolved-record preservation",delegate {
+                byte[] b=File.ReadAllBytes(visualTable);var catalog=new ClassicVisualCatalog(b);
+                Require(catalog.Get(7).SpriteBank==43&&catalog.Get(1).LastCounter==57&&catalog.Get(27).Resource=="RINGS.SPH","Native record mapping");
+                byte[] copy=catalog.OriginalRecords;copy[0]^=1;Require(catalog.OriginalRecords[0]==b[0],"Catalog exposed owned bytes");
+                var unknown=(byte[])b.Clone();unknown[7*20+4]^=1;Require(new ClassicVisualCatalog(unknown).OriginalRecords[7*20+4]==unknown[7*20+4],"Unknown field discarded");
+                Reject(delegate{new ClassicVisualCatalog(new byte[579]);});
+                foreach(int at in new[]{7*20,7*20+8,7*20+12}){var bad=(byte[])b.Clone();bad[at]^=1;Reject(delegate{new ClassicVisualCatalog(bad);});}
+                Reject(delegate{catalog.Get(28);});
+            });
+            check("Finite visual first-free capacity, terminal tick and safe large advance",delegate {
+                var catalog=new ClassicVisualCatalog(File.ReadAllBytes(visualTable));var timeline=new ClassicVisualTimeline();
+                var ring=timeline.Spawn(catalog.Get(27),false,new Point(0,0),0);var ship=timeline.Spawn(catalog.Get(7),true,new Point(2,3),0);
+                Require(ring.Slot==0&&ship.Slot==1&&!timeline.Advance(0),"Initial allocator state");
+                timeline.Advance(32);Require(timeline.Count==2&&ring.Counter==32,"Empty terminal slot must remain active");
+                timeline.Advance(1);Require(timeline.Count==1&&ship.Counter==33,"Strictly-greater retirement");
+                Require(timeline.Spawn(catalog.Get(27),false,new Point(1,1),1).Slot==0,"First-free hole not reused");
+                while(timeline.Count<40)timeline.Spawn(catalog.Get(1),false,new Point(),0);
+                Require(timeline.Spawn(catalog.Get(1),false,new Point(),0)==null,"Capacity exceeded");
+                timeline.Advance(long.MaxValue);Require(timeline.Count==0,"Large elapsed count overflowed");
+            });
+            check("Finite visual counter history is independent of frame partitions",delegate {
+                var spec=new ClassicVisualCatalog(File.ReadAllBytes(visualTable)).Get(1);var a=new ClassicVisualTimeline();var b=new ClassicVisualTimeline();
+                var x=a.Spawn(spec,false,new Point(),1);var y=b.Spawn(spec,false,new Point(),1);
+                a.Advance(30);b.Advance(7);b.Advance(11);b.Advance(12);
+                Require(x.Counter==31&&y.Counter==31&&a.Count==b.Count,"Counter partition drift");
+                a.Clear();b.Clear();Require(a.Count==0&&b.Count==0,"Reset retained entries");
+            });
+            check("Native finite visual orientation-zero anchor fixtures",delegate {
+                var c=new ClassicVisualCatalog(File.ReadAllBytes(visualTable));
+                Require(ClassicVisualGeometry.Anchor(c.Get(7),false,new Point())==new Point(94,325),"Own carrier anchor");
+                Require(ClassicVisualGeometry.Anchor(c.Get(7),true,new Point())==new Point(308,182),"Enemy carrier anchor");
+                Require(ClassicVisualGeometry.Anchor(c.Get(27),true,new Point())==new Point(242,149),"Miss top-left anchor");
+                Require(ClassicVisualGeometry.Anchor(c.Get(27),false,new Point())==new Point(27,292),"Own miss anchor");
+            });
+            check("Finite visual impact admission covers miss, hit, sink and repeats",delegate {
+                var board=new Board();board.Place(new Point(2,2),2,true,"Destroyer",4);int type;Point at;
+                Shot miss=board.Shoot(new Point(0,0));Require(ClassicVisualGeometry.Impact(board,miss,out type,out at)&&type==27&&at==miss.Cell,"Water entry");
+                Shot hit=board.Shoot(new Point(2,2));Require(!ClassicVisualGeometry.Impact(board,hit,out type,out at),"Non-sinking hit spawned a sink");
+                Require(!ClassicVisualGeometry.Impact(board,new Shot{Cell=hit.Cell,Repeated=true},out type,out at),"Repeated live-ship hit spawned a miss");
+                Shot sink=board.Shoot(new Point(2,3));Require(ClassicVisualGeometry.Impact(board,sink,out type,out at)&&type==4&&at==new Point(2,2),"Sink source type/start");
+                Require(ClassicVisualGeometry.Impact(board,new Shot{Cell=hit.Cell,Repeated=true},out type,out at)&&type==27,"Removed-ship repeat entry");
+            });
+            check("Original finite sprite banks include empty terminal frames and dispose safely",delegate {
+                var palette=Assets.Pcx(Path.Combine(assets,"Graphics","E_CLASS.PCX")).Palette;var sprites=new ClassicVisualSprites(Path.Combine(assets,"Graphics"),File.ReadAllBytes(visualTable),palette);
+                foreach(int type in new[]{7,1,2,12,4,27}){var spec=sprites.Catalog.Get(type);Require(sprites.HasFrame(type,0)&&sprites.HasFrame(type,spec.LastCounter-1)&&!sprites.HasFrame(type,spec.LastCounter),"SPH terminal/frame bounds");}
+                Require(sprites.Bounds(7,60,new Point(300,200)).IsEmpty,"Terminal bounds are visible");
+                sprites.Dispose();sprites.Dispose();bool rejected=false;try{sprites.HasFrame(7,0);}catch(ObjectDisposedException){rejected=true;}Require(rejected,"Disposed bank remained usable");
+            });
             check("Independent PCX RLE/color fixture",delegate {
                 var p=Assets.Pcx(PcxFixture());
                 Require(p.Width==2&&p.Height==2&&p.Pixels[0]==1&&p.Pixels[3]==4,"Pixel geometry");

@@ -48,6 +48,7 @@ namespace FleetLab {
         readonly List<Bitmap> rosterImages=new List<Bitmap>();
         ClassicShips shipImages;
         ClassicDamage damageImages;ClassicSpriteFont messageFont;
+        ClassicVisualSprites visualSprites;
         readonly IndexedImage classicImage;
         readonly DisplaySettings preferences;
         int seed=Environment.TickCount;
@@ -83,7 +84,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.33 — Original battle cursors";
+            Text="Battleship Fleet Lab 0.34 — Sinking ships and miss rings";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -341,11 +342,13 @@ namespace FleetLab {
         }
         void TickVisuals() {
             long now=visualTime.ElapsedMilliseconds,elapsed=now-visualLast;visualLast=now;
-            bool running=preferences.Motion&&State!=null&&!State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn);
-            if(effectClock.Advance(elapsed,running)){board.DamageTick=effectClock.Tick;board.Invalidate();}
+            bool finishing=State!=null&&State.Phase==Phase.Finished&&board.VisualEffectCount>0&&ContainsFocus&&tabs.SelectedIndex==0;
+            bool running=preferences.Motion&&State!=null&&!State.Paused&&(State.Phase==Phase.PlayerTurn||State.Phase==Phase.OpponentTurn||finishing);
+            if(effectClock.Advance(elapsed,running)){board.DamageTick=effectClock.Tick;board.SynchronizeVisualEffects();board.Invalidate();}
         }
         void UpdateDisplayChecks() {
             acceptedColors.Checked=!preferences.RecoveredColors;recoveredColors.Checked=preferences.RecoveredColors;motion.Checked=preferences.Motion;
+            board.AnimateVisualEffects=preferences.Motion;board.SynchronizeVisualEffects();board.Invalidate();
             movies.Checked=preferences.MovieTurns;movies.Enabled=State!=null&&State.Rules.FixedY&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
             highMovies.Checked=preferences.HighMovies;highMovies.Enabled=State!=null&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
         }
@@ -372,7 +375,7 @@ namespace FleetLab {
         }
         void RebuildArt(bool recovered) {
             Color[] palette=recovered?ClassicPalette.Gameplay(File.ReadAllBytes(Path.Combine(assets,"Graphics","ISLAND.COL"))):classicImage.Palette;
-            Bitmap nextArt=null,nextForeground=null;var nextRoster=new List<Bitmap>();ClassicShips nextShips=null;ClassicDamage nextDamage=null;ClassicHud nextHud=null;ClassicSpriteFont nextFont=null;
+            Bitmap nextArt=null,nextForeground=null;var nextRoster=new List<Bitmap>();ClassicShips nextShips=null;ClassicDamage nextDamage=null;ClassicHud nextHud=null;ClassicSpriteFont nextFont=null;ClassicVisualSprites nextVisuals=null;
             try {
                 nextArt=new IndexedImage {Width=classicImage.Width,Height=classicImage.Height,Pixels=classicImage.Pixels,Palette=palette}.Bitmap();
                 nextForeground=ClassicBackdrop.Foreground(new IndexedImage{Width=classicImage.Width,Height=classicImage.Height,Pixels=classicImage.Pixels,Palette=palette});
@@ -380,15 +383,17 @@ namespace FleetLab {
                 nextShips=new ClassicShips(Path.Combine(assets,"Graphics"),palette);
                 nextFont=new ClassicSpriteFont(Path.Combine(assets,"Graphics"),palette);
                 nextDamage=new ClassicDamage(Path.Combine(assets,"Graphics"),palette);nextHud=new ClassicHud(Path.Combine(assets,"Graphics"),palette);
+                nextVisuals=new ClassicVisualSprites(Path.Combine(assets,"Graphics"),File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","ClassicVisuals.seqbin")),palette);
             }catch {
                 if(nextArt!=null)nextArt.Dispose();if(nextForeground!=null)nextForeground.Dispose();foreach(var image in nextRoster)if(image!=null)image.Dispose();
-                if(nextShips!=null)nextShips.Dispose();if(nextDamage!=null)nextDamage.Dispose();if(nextHud!=null)nextHud.Dispose();if(nextFont!=null)nextFont.Dispose();throw;
+                if(nextShips!=null)nextShips.Dispose();if(nextDamage!=null)nextDamage.Dispose();if(nextHud!=null)nextHud.Dispose();if(nextFont!=null)nextFont.Dispose();if(nextVisuals!=null)nextVisuals.Dispose();throw;
             }
             ClassicSpriteFont previousFont=messageFont;messageFont=nextFont;board.MessageFont=messageFont;
+            ClassicVisualSprites previousVisuals=visualSprites;visualSprites=nextVisuals;board.VisualSprites=visualSprites;
             ClassicHud previousHud=hudImages;Bitmap previousArt=art,previousForeground=backdropForeground;ClassicShips previousShips=shipImages;ClassicDamage previousDamage=damageImages;var previousRoster=rosterImages.ToArray();
             hudImages=nextHud;board.Hud=hudImages;art=nextArt;backdropForeground=nextForeground;board.ForegroundArt=backdropForeground;shipImages=nextShips;damageImages=nextDamage;rosterImages.Clear();rosterImages.AddRange(nextRoster);
             board.Art=art;board.Ships=shipImages;board.Damage=damageImages;board.Roster=rosterImages.ToArray();
-            if(previousArt!=null)previousArt.Dispose();if(previousForeground!=null)previousForeground.Dispose();if(previousShips!=null)previousShips.Dispose();if(previousDamage!=null)previousDamage.Dispose();if(previousHud!=null)previousHud.Dispose();if(previousFont!=null)previousFont.Dispose();
+            if(previousArt!=null)previousArt.Dispose();if(previousForeground!=null)previousForeground.Dispose();if(previousShips!=null)previousShips.Dispose();if(previousDamage!=null)previousDamage.Dispose();if(previousHud!=null)previousHud.Dispose();if(previousFont!=null)previousFont.Dispose();if(previousVisuals!=null)previousVisuals.Dispose();
             foreach(var image in previousRoster)if(image!=null)image.Dispose();
         }
         void Button(FlowLayoutPanel parent,Button button,string text,EventHandler action) {
@@ -455,6 +460,7 @@ namespace FleetLab {
         void OpenEntry(){if(disposed||entry.HasOpened||fleet.Draft==null||fleet.SelectedShip>=0)return;fleet.Pause();fleet.Visible=false;entry.Visible=true;entry.BringToFront();entry.Begin();SuppressHeldControls();UpdateView();}
         void CommitFleet(){if(disposed||fleet.Draft==null||fleet.SelectedShip>=0)return;var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);Game accepted=fleet.Draft;if(rules.SelectedIndex!=0)rules.SelectedIndex=0;else NewGame();State=accepted;board.Game=State;if(!State.Start())throw new InvalidOperationException("Fleet commit failed");board.KeyboardCell=new Point(0,0);UpdateView();board.Focus();SuppressHeldControls();foreach(Keys key in heldKeys)down.Add(key);}
         void ClearBattlePresentation() {
+            board.ResetVisualEffects();
             pauseActions.CancelConfirmation();returnConfirmationGame=null;
             if(creditsPage!=null){creditsPage.Reset();creditsPage.Visible=false;}if(startupPage!=null){startupPage.Reset();startupPage.Visible=false;}
             if(prefsPage!=null){prefsPage.Reset();prefsPage.Visible=false;}
@@ -562,6 +568,7 @@ namespace FleetLab {
             front.BackButton.Text=State.Phase==Phase.Placement?"Return to deployment":State.Phase==Phase.Finished?"Return to result":"Return to duel";
             prefsPage.SetValues(CurrentPreferences(),State.Phase==Phase.Placement||State.Phase==Phase.Finished);
             SyncBattleMovie();
+            board.AnimateVisualEffects=preferences.Motion;board.SynchronizeVisualEffects();
             bool placement=State.Phase==Phase.Placement;
             bool active=tabs.SelectedIndex==0;
             auto.Enabled=clear.Enabled=placement&&active;
@@ -1265,6 +1272,41 @@ namespace FleetLab {
                 NewGame();auto.PerformClick();start.PerformClick();UpdateView();using(var local=new BoardView()){local.Size=new Size(640,480);local.Game=State;local.LoadCursors(Path.Combine(Path.GetDirectoryName(assets),"NoCursorFixture"));Point direct=Point.Round(artAt);move.Invoke(local,new object[]{new MouseEventArgs(MouseButtons.None,0,direct.X,direct.Y,0)});require(!local.HasOriginalCursors&&local.Cursor==Cursors.Cross,"Prepared-folder system fallback");local.LoadCursors(Path.Combine(Path.GetDirectoryName(assets),"Programs"));require(local.HasOriginalCursors&&local.Cursor.HotSpot==new Point(15,15),"Loading original resources retained fallback cursor");local.Dispose();local.RefreshInteractionCursor();local.Dispose();require(local.IsDisposed,"Late cursor refresh/disposal failed");}
                 NewGame();
             });
+            Func<Board,Point> visualWater=delegate(Board victim){for(int y=0;y<10;y++)for(int x=0;x<10;x++){var p=new Point(x,y);if(victim.ShipAt(p)==null&&!victim.Shots[x,y])return p;}throw new Exception("No water fixture");};
+            check("Finite miss visuals start at resolved impact and respect pause",delegate {
+                rules.SelectedIndex=0;preferences.MovieTurns=true;preferences.Motion=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();
+                Point target=visualWater(State.Enemy);State.Fire(target);UpdateView();require(board.VisualEffectCount==0,"Firing spawned an early impact");
+                State.CompleteMovie(State.Pending,ShotStage.Firing);UpdateView();require(board.VisualEffectCount==0,"Travel spawned an early impact");
+                State.CompleteMovie(State.Pending,ShotStage.Travel);UpdateView();opponentTimer.Stop();
+                var entries=new List<ClassicVisualEntry>(board.VisualEntries);require(entries.Count==1&&entries[0].Spec.Type==27&&entries[0].Counter==1&&entries[0].Enemy&&entries[0].Start==target,"Resolved miss entry");
+                var pending=State.Pending;int turn=State.Turn;Shot shot=State.LastPlayerShot;State.Paused=true;board.DamageTick+=10;board.SynchronizeVisualEffects();require(entries[0].Counter==1,"Paused visual advanced");
+                State.Paused=false;board.DamageTick+=3;board.SynchronizeVisualEffects();require(entries[0].Counter==4&&State.Pending==pending&&State.Turn==turn&&State.LastPlayerShot==shot,"Visual step changed gameplay");
+            });
+            check("Sinking visuals preserve victim start and the empty terminal tick",delegate {
+                preferences.MovieTurns=false;preferences.Motion=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();Ship ship=State.Enemy.Ships[0];
+                for(int i=0;i<ship.Cells.Count-1;i++)State.Enemy.Shoot(ship.Cells[i]);State.Fire(ship.Cells[ship.Cells.Count-1]);State.Paused=true;UpdateView();opponentTimer.Stop();
+                var entries=new List<ClassicVisualEntry>(board.VisualEntries);require(entries.Count==1&&entries[0].Spec.Type==ship.SourceType&&entries[0].Start==ship.Cells[0],"Sinking identity/start lost");
+                var entry=entries[0];State.Paused=false;board.DamageTick+=entry.Spec.LastCounter-1;board.SynchronizeVisualEffects();require(board.VisualEffectCount==1&&entry.Counter==entry.Spec.LastCounter&&!visualSprites.HasFrame(entry.Spec.Type,entry.Counter),"Empty terminal tick lost");
+                board.DamageTick++;board.SynchronizeVisualEffects();require(board.VisualEffectCount==0,"Expired sinking sprite retained");State.Paused=true;
+            });
+            check("Motion disable clears finite effects and palette changes preserve active entries",delegate {
+                preferences.MovieTurns=false;preferences.Motion=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();State.Fire(visualWater(State.Enemy));State.Paused=true;UpdateView();opponentTimer.Stop();
+                require(board.VisualEffectCount==1,"Miss fixture absent");var entry=new List<ClassicVisualEntry>(board.VisualEntries)[0];int counter=entry.Counter;
+                SelectColors(!preferences.RecoveredColors,false);require(board.VisualEffectCount==1&&entry.Counter==counter&&visualSprites.HasFrame(27,counter),"Palette swap reset or disposed active clip");
+                preferences.Motion=false;UpdateDisplayChecks();require(board.VisualEffectCount==0,"Reduced motion retained frozen clip");preferences.Motion=true;UpdateDisplayChecks();require(board.VisualEffectCount==0,"Re-enabling motion replayed a historical shot");
+                SelectColors(false,false);
+            });
+            check("Restart and return presentation clear finite effects without replay",delegate {
+                preferences.MovieTurns=false;preferences.Motion=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();State.Fire(visualWater(State.Enemy));State.Paused=true;UpdateView();opponentTimer.Stop();
+                require(board.VisualEffectCount==1&&RestartBattleConfirmed(State)&&board.VisualEffectCount==0,"Restart retained clip state");
+                State.Fire(visualWater(State.Enemy));State.Paused=true;UpdateView();opponentTimer.Stop();require(board.VisualEffectCount==1,"Restarted impact missing");ClearBattlePresentation();UpdateView();require(board.VisualEffectCount==0,"Return/reset replayed historical impact");
+            });
+            check("Finished battle finite effects expire through presentation steps",delegate {
+                preferences.MovieTurns=false;preferences.Motion=true;NewGame();auto.PerformClick();start.PerformClick();UpdateView();Ship last=State.Enemy.Ships[4];Point target=last.Cells[last.Cells.Count-1];
+                foreach(Ship ship in State.Enemy.Ships)foreach(Point p in ship.Cells)if(p!=target)State.Enemy.Shoot(p);
+                State.Fire(target);UpdateView();require(State.Phase==Phase.Finished&&board.VisualEffectCount==1,"Final sinking visual missing");
+                var entry=new List<ClassicVisualEntry>(board.VisualEntries)[0];board.DamageTick+=entry.Spec.LastCounter;board.SynchronizeVisualEffects();require(board.VisualEffectCount==0,"Finished entry never retired");NewGame();
+            });
             results.Add("UI checks passed="+(results.Count-failed)+" failed="+failed);
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");
             File.WriteAllLines(report,results.ToArray());
@@ -1290,6 +1332,7 @@ namespace FleetLab {
                 sound.Dispose();
                 art.Dispose();backdropForeground.Dispose();
                 shipImages.Dispose();
+                board.VisualSprites=null;if(visualSprites!=null)visualSprites.Dispose();
                 damageImages.Dispose();hudImages.Dispose();messageFont.Dispose();ending.Dispose();front.Dispose();solo.Dispose();fleet.Dispose();entry.Dispose();prefsPage.Dispose();creditsPage.Dispose();startupPage.Dispose();archive.Dispose();
                 foreach(var bitmap in rosterImages)if(bitmap!=null)bitmap.Dispose();
             }
