@@ -61,6 +61,8 @@ Those battles also execute original camera easing, weapon-order and visual-entry
 
 Static ship and damage-smoke commands are separately checked against original code for all four orientations, selected/unselected ships, supplied context values and prepared hit patterns. Current orientation-0 anchors and smoke phases agree. All 20 Classic hull frames and 33 smoke frames match original software rasterization at six placements; actual production GDI draws agree for the five current hull images and all smoke frames. The original blinks the selected ship and its smoke in some contexts; the rebuild deliberately keeps them visible with a selection outline. The tested context values do not establish the original live default.
 
+The complete Classic pointer routine is also checked with prepared runtime button and sprite-hotspot tables: eligibility flags, first-match priority and rectangle boundaries agree with an independent model. This establishes the dispatch rules under those supplied conditions; live table creation, menu input and action callbacks remain separate work.
+
 ## Repository layout
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
