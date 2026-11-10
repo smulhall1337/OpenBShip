@@ -59,6 +59,8 @@ Canonical board picking is also checked at every integer pixel of the 640×480 v
 
 Those battles also execute original camera easing, weapon-order and visual-entry creation/counter loops, and the Classic selection cache. The canonical camera stays fixed and weapon orders remain inactive. Separate bounded cases cover camera stepping/overshoot, entry allocation, counter retirement/wrap and draw-command geometry in all four orientations. The playable visual timeline matches the native traces; SPH scaling and placement match copied original software rasterization, including terminal slots and viewport edges. Active queued-weapon behavior and the complete original renderer remain incomplete. Modern effects freeze during pause even though native counters continue.
 
+Static ship and damage-smoke commands are separately checked against original code for all four orientations, selected/unselected ships, supplied context values and prepared hit patterns. Current orientation-0 anchors and smoke phases agree. The original blinks the selected ship and its smoke in some contexts; the rebuild deliberately keeps them visible with a selection outline. The tested context values do not establish the original live default.
+
 ## Repository layout
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
