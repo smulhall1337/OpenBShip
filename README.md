@@ -53,6 +53,8 @@ Original intro replay, Credits, Quit, victory/defeat sequences and the movie arc
 
 Local numerical comparisons now connect original fleet creation to player selection, firing, multiple turns, sinks and terminal callbacks. Tests cover 32 continuous numerical battles with two scripted player policies, also replayed through the original frame dispatcher with controlled decoder/clock/UI endpoints. Four battles additionally use real PAT data, original streaming/completion code and outbound command buffering with automatic flushes. File adapters are bounded; drawing/audio are stubbed and transport is disabled. Separate queue boundary tests use a recording transport. Earlier studies cover 900 controlled input cases including 768 first exchanges and a separate 560-case opponent study. One battle policy deliberately uses known enemy positions as test input. Actual original frame pacing, media/device callbacks and the complete shared random sequence remain unestablished; the rebuild retains separate gameplay and presentation random streams.
 
+Canonical board picking is also checked at every integer pixel of the 640×480 viewport against original mouse-conversion code under both 53-bit and 64-bit x87 precision. That comparison uses the fixed Classic camera and excludes later UI hit dispatch and live camera setup.
+
 ## Repository layout
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.

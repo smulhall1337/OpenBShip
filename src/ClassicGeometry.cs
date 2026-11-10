@@ -18,9 +18,10 @@ namespace FleetLab {
             int px=(int)pixel.X,py=(int)pixel.Y;
             int originX=320+(CameraX+CameraY)*ScaleX/-6;
             int originY=240+(CameraX-CameraY)*ScaleY/6;
-            // The native inverse stores this intermediate as float32; its other
-            // operand remains on the x87 stack. Double approximates that operand.
-            // Exact x87 boundary ties are not claimed bit-identical.
+            // Native 0x4115B0 stores this intermediate as float32; the other
+            // operand remains on x87. Every integer pixel in this canonical
+            // viewport matches copied native 53/64-bit x87 runs (checkpoint55).
+            // Other camera/floor/viewport states are outside that comparison.
             float horizontal=(float)((px-originX)/(double)ScaleX*3);
             double vertical=(py-originY)/(double)ScaleY*3;
             var cell=new Point((int)(horizontal-vertical)-(enemy?11:0),(int)(horizontal+vertical));
