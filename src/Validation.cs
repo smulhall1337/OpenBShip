@@ -279,6 +279,11 @@ namespace FleetLab {
                 scene.Reset();Require(scene.Commands.Count==0&&Hash(scene.Snapshot().Pixels)=="EB8F3F551582267B1D3B189A69E68AEA549EE1C46462708AE28BFBC5E88B38C7","Software scene reset");
                 Reject(delegate{scene.CopyPixelsTo(new byte[8]);});Reject(delegate{scene.Render(null);});state.Selected=5;Reject(delegate{scene.Render(state);});
             });
+            check("Classic software result-transition HUD gate matches the original full buffer",delegate {
+                string graphics=Path.Combine(assets,"Graphics");var hidden=ClassicScene.Preview(graphics,false);
+                Require(Hash(hidden.Pixels)=="92D17A59FB70AC629662165CE866E04A97D950873FE1A223B6FEE3C1C2D5C11E","Native mode4 HUD gate; world hulls remain");
+                Require(Hash(ClassicScene.Preview(graphics).Pixels)=="F3D72FF78BBABC3BEF00C950B2AA4F32914392D33EE96179E83991D7F76CC19D","Default HUD scene changed");
+            });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
             check("Classic software effects match original first-miss scene and retain controller ownership",delegate {
                 var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};int[] lengths={5,5,3,4,2};

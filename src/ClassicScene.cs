@@ -8,7 +8,7 @@ namespace FleetLab {
         public readonly Board Own,Enemy;
         public int Selected=1,Phase,OwnResult=-1,EnemyResult=-1,Tick,ActiveOwner;
         public int OwnVisibility=1,EnemyVisibility=1;
-        public bool MovieActive,RestoreBackground=true;
+        public bool MovieActive,RestoreBackground=true,ShowHud=true;
         public ClassicVisualTimeline Effects;
         public IEnumerable<ClassicSceneText> Text;
         public bool ExtendedEffects;
@@ -191,7 +191,10 @@ namespace FleetLab {
             Effects(state,true);
             ClassicGrid.Border(surface,0,13);
             if(state.Phase==0&&state.Pointer.X>=11&&state.Pointer.X<21&&state.Pointer.Y>=0&&state.Pointer.Y<10)ClassicCellRaster.Fill(pixels,state.Pointer.X,state.Pointer.Y,11,0);
-            Hud(state);
+            // Original 40937F omits the HUD when controller mode FBC40 is
+            // nonzero, including the frame that enters a result fade. World
+            // cells, hulls/effects and the separate text pass still draw.
+            if(state.ShowHud)Hud(state);
             // Original descending selection sort. Equal priorities retain the
             // source swap behavior; canonical commands currently all use zero.
             for(int i=0;i<commands.Count;i++){int best=i,priority=0;for(int j=i;j<commands.Count;j++)if(commands[j].Priority>priority){best=j;priority=commands[j].Priority;}var previous=commands[i];commands[i]=commands[best];commands[best]=previous;}
@@ -203,9 +206,12 @@ namespace FleetLab {
             foreach(var board in boards){var placement=OriginalPlacement.Generate(Lengths,random.Next);for(int i=0;i<5;i++)if(!board.Place(placement.Positions[i],Lengths[i],true,RuleProfile.Recovered.Fleet[i].Name,Types[i]))throw new InvalidDataException("Classic software preview placement failed");}
             return boards;
         }
-        public static IndexedImage Preview(string graphics) {
+        public static IndexedImage Preview(string graphics){return Preview(graphics,true);}
+        // Prepared idle fixture with the source result-transition HUD gate.
+        // This is a renderer comparison, not a completed battle or ending.
+        public static IndexedImage Preview(string graphics,bool showHud) {
             var boards=PreviewBoards();
-            var scene=new ClassicScene(graphics);scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=4});return scene.Snapshot();
+            var scene=new ClassicScene(graphics);scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=4,ShowHud=showHud});return scene.Snapshot();
         }
         public static IndexedImage TextPreview(string graphics,byte[] names) {
             var messages=new ClassicMessages(File.ReadAllBytes(Path.Combine(graphics,"ENGLISH.TXT")),names);

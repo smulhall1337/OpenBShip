@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.43.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.44.
 
 ## Requirements
 
@@ -38,7 +38,7 @@ The optional software comparison export uses the reconstructed original grid, ce
 Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--render-software-preview', '.\build\software-preview.png' -Wait
 ```
 
-Run this from the repository folder after setup. It writes a 640×480 PNG of the verified seed-0 idle scene. Use `--render-software-effects-preview` with the same output argument to export the verified first-miss scene, including its original ring entry. Use `--render-software-text-preview` to export the verified idle scene with original sprite-font text. Use `--render-software-movie-preview` or `--render-software-high-movie-preview` for a verified F18 movie/world/text composition in the two original PAT formats. The PNG exports use the documented shared gameplay palette. These are software comparison fixtures; normal play retains its current cinematic presentation and controls.
+Run this from the repository folder after setup. It writes a 640×480 PNG of the verified seed-0 idle scene. Use `--render-software-effects-preview` with the same output argument to export the verified first-miss scene, including its original ring entry. Use `--render-software-text-preview` to export the verified idle scene with original sprite-font text. Use `--render-software-movie-preview` or `--render-software-high-movie-preview` for a verified F18 movie/world/text composition in the two original PAT formats. Use `--render-software-transition-preview` for a prepared idle scene with the original result-transition HUD gate applied; hulls and the background remain visible. The PNG exports use the documented shared gameplay palette. These are software comparison fixtures; normal play retains its current cinematic presentation and controls.
 ## Playing
 
 Use **Auto-place → Start battle**, or **Original menu → Solo → Classic → Start Game → Fleet Configuration → Start Game**.
@@ -99,6 +99,8 @@ A separate main-movie admission study now executes original palette/PAT-header l
 Original main-movie admission is now also joined to eight continuous terminal battles. All 143,868 indexed scenes and 2,046,156 world commands match independent C# rules and the maintained scene renderer, alongside complete palette, sound-sequence, movie-buffer, file-counter and random-event records. Original open/close clock reads and repeated inactive close requests are checked separately. Both source heaps clean up at the controlled terminal boundary. File APIs, clock values and world input remain supplied; audio dispatch is disabled, and this does not establish the original result-screen or full Windows lifecycle.
 
 The original result callback and ending-entry routine are separately checked in 192 prepared cases. They select the exact victory or defeat program from the local-side/winner comparison, write the next controller state and order the special close/movie request before those writes. Recorded network callbacks precede the local transition; network transport is not executed. Both selected programs pass the maintained ending reader after embedded pointers are normalized. This establishes the ending entry contract; it does not establish complete original ending playback or live defaults for the tested numeric fields.
+
+That callback now also executes naturally in eight continuous battles. Their final controller state and selected programs agree with the isolated contract, with four victories and four defeats. The source suppresses HUD commands on the terminal frame while retaining world and text drawing. Independent and maintained renderers match all 143,868 scenes and 2,046,068 commands through that boundary; 24 additional prepared cases verify the HUD gate across two placement seeds, two resource flags and six numeric controller modes. Ending script execution, original audio and the complete result-screen lifecycle remain separate work.
 
 Original cell filling is separately checked in 2,752 bounded numerical cases, covering all canonical own/enemy cells, eight palette indices and supplied clipping/elevation offsets. An independent C# model reproduces the complete indexed buffers, including the original clipping phase and three-by-two pixel pattern. A further 14,056 prepared cell-map cases check forward drawing rotation, palette selection, owner comparison and supplied visibility flags, including copied ship-type and roster-pointer retirement. Their complete buffers agree with an independent model. The visibility field's relationship to live menu settings and full renderer integration remain unconfirmed.
 
