@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.46.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.47.
 
 ## Requirements
 
@@ -46,6 +46,14 @@ Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--export-practice
 ```
 
 The export includes the input hash and original formatted rows. It does not export glyphs; the playable menus keep their current readable text presentation.
+
+To export the original Practice setup screen with its sprite-font descriptions:
+
+```powershell
+Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--render-software-practice-preview', '.\build\practice-preview.png' -Wait
+```
+
+This static 640×480 comparison uses the original card, selected options, description, scroll arrows and page counters. Its renderer matches 150 prepared original scenes, and its six font styles match 90 original glyph-rendering cases. The palette uses the documented modern reserved Windows colors. These checks establish the supplied scene states; original Practice interpreter execution and live paging/click transitions remain incomplete. Normal play keeps its accepted menu text and controls.
 
 ## Playing
 
@@ -146,11 +154,11 @@ The original Solo media check is separately verified in 30 bounded cases using t
 
 The natural returned-title path now also executes Solo activation, the original marker check, all 17 title fade factors and the jump to the Solo program pointer. Eight source runs add 152 controller ticks and 136 palette applications; the independent model checks the full image, latch, script and file state. All 384 capture/provenance files repeat and 32 changed evidence records are rejected. Five resource phases agree on 4,680 buffer states and 520 metadata records. The source retains its previous-button latch during the fade. The Solo body remains pending in this profile; virtual root/message pointers and recorded file/dialog endpoints are restored after the check. Live devices and a complete menu-to-new-battle lifecycle remain unconfirmed.
 
-The natural chain also executes the Solo entry callback, loads its card, applies the 14 entry fade factors and indexes the Practice program. Eight paths add 128 ticks and 112 palette applications. Independent models and maintained PCX/Solo readers agree on the returned table pointer, complete buffers, inherited label table and card lifetime. Six resource phases match 5,616 buffer states and 624 metadata records; 409 capture/provenance files repeat and 40 changed records are rejected. Only the controlled source index 0 is covered. The Practice body and its full renderer remain pending; pointer normalization affects recorded evidence only.
+The natural chain also executes the Solo entry callback, loads its card, applies the 14 entry fade factors and indexes the Practice program. Eight paths add 128 ticks and 112 palette applications. Independent models and maintained PCX/Solo readers agree on the returned table pointer, complete buffers, inherited label table and card lifetime. Six resource phases match 5,616 buffer states and 624 metadata records; 409 capture/provenance files repeat and 40 changed records are rejected. Only the controlled source index 0 is covered. The Practice body remains pending; the prepared renderer is checked separately below. Pointer normalization affects recorded evidence only.
 
-The original Practice-description formatter is separately checked with all 21 source descriptions and nine text/row boundary fixtures under two initial memory patterns. An independent model matches all 60 complete 48×33-byte output tables, including stale tails, the exact 33-character boundary and circular overwrite behavior. Four record/provenance files repeat; eight changed captures are rejected. This establishes formatting only. Original glyph drawing, paging input and the complete Practice screen remain separate work; a long unbroken wrapping window is unsupported and must fail clearly.
+The original Practice-description formatter is separately checked with all 21 source descriptions and nine text/row boundary fixtures under two initial memory patterns. An independent model matches all 60 complete 48×33-byte output tables, including stale tails, the exact 33-character boundary and circular overwrite behavior. Four record/provenance files repeat; eight changed captures are rejected. This establishes formatting only. Original glyph drawing and prepared Practice scenes are checked separately below; paging input and the full interpreter remain separate work; a long unbroken wrapping window is unsupported and must fail clearly.
 
-The playable v0.46 includes the maintained description formatter and a diagnostic export. It matches all 60 native output tables, preserves caller data and rejects ten malformed inputs clearly. The public diagnostics embed whole-table hashes for all 21 original descriptions and three row boundaries. Packaged validation passes 168 model/format and 110 form groups, plus 56 lifecycle cases with no unhandled UI exception. Current and retained launchers open visible windows and exit cleanly; title pixels and accepted settings remain intact. The audio API check submits silence and does not establish audible playback.
+The current build includes maintained description, sprite-font and prepared Practice renderers with diagnostic exports. Formatting matches all 60 native tables and preserves caller data. Glyph composition matches 90 complete surfaces/cursor cases across six styles; Practice composition matches 150 complete prepared scenes across game types, player counts, pages and hover states. Original button installation, polling, wrapping, glyph rasterization and queue flushing execute in the native comparison. The background card, pointer/page state and successful media check are supplied; live clicks, paging and full Practice interpreter execution remain pending. The public diagnostics embed native table and scene hashes. Packaged validation passes 170 model/format and 110 form groups, plus 56 lifecycle cases with no unhandled UI exception. Current and retained launchers open visible windows and exit cleanly; title pixels and accepted settings remain intact. The audio API check submits silence and does not establish audible playback.
 
 Original cell filling is separately checked in 2,752 bounded numerical cases, covering all canonical own/enemy cells, eight palette indices and supplied clipping/elevation offsets. An independent C# model reproduces the complete indexed buffers, including the original clipping phase and three-by-two pixel pattern. A further 14,056 prepared cell-map cases check forward drawing rotation, palette selection, owner comparison and supplied visibility flags, including copied ship-type and roster-pointer retirement. Their complete buffers agree with an independent model. The visibility field's relationship to live menu settings and full renderer integration remain unconfirmed.
 
