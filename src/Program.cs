@@ -8,10 +8,10 @@ namespace FleetLab {
             try {
                 if(args.Length==2&&args[0]=="--audio-check")return WaveOutput.CheckDevice(Path.GetFullPath(args[1]));
                 if(args.Length==2&&args[0]=="--self-check")return Validation.Run(assets,Path.GetFullPath(args[1]));
-                if(args.Length==2&&(args[0]=="--render-software-preview"||args[0]=="--render-software-effects-preview"||args[0]=="--render-software-text-preview")) {
+                if(args.Length==2&&(args[0]=="--render-software-preview"||args[0]=="--render-software-effects-preview"||args[0]=="--render-software-text-preview"||args[0]=="--render-software-movie-preview"||args[0]=="--render-software-high-movie-preview")) {
                     string output=Path.GetFullPath(args[1]);Directory.CreateDirectory(Path.GetDirectoryName(output));
                     string graphics=Path.Combine(assets,"Graphics");
-                    var preview=args[0]=="--render-software-text-preview"?ClassicScene.TextPreview(graphics,File.ReadAllBytes(Path.Combine(root,"Programs","MessageShipNames.seqbin"))):args[0]=="--render-software-effects-preview"?ClassicScene.FirstMissPreview(graphics,File.ReadAllBytes(Path.Combine(root,"Programs","ClassicVisuals.seqbin"))):ClassicScene.Preview(graphics);
+                    var preview=args[0]=="--render-software-movie-preview"||args[0]=="--render-software-high-movie-preview"?ClassicScene.MoviePreview(graphics,File.ReadAllBytes(Path.Combine(root,"Programs","MessageShipNames.seqbin")),args[0]=="--render-software-high-movie-preview"):args[0]=="--render-software-text-preview"?ClassicScene.TextPreview(graphics,File.ReadAllBytes(Path.Combine(root,"Programs","MessageShipNames.seqbin"))):args[0]=="--render-software-effects-preview"?ClassicScene.FirstMissPreview(graphics,File.ReadAllBytes(Path.Combine(root,"Programs","ClassicVisuals.seqbin"))):ClassicScene.Preview(graphics);
                     using(var image=preview.Bitmap())image.Save(output,System.Drawing.Imaging.ImageFormat.Png);
                     return 0;
                 }

@@ -63,6 +63,14 @@ namespace FleetLab {
             commandView=commands.AsReadOnly();Reset();
         }
         public void Reset(){Array.Copy(background,pixels,pixels.Length);commands.Clear();}
+        // Decoder output is an explicit controller boundary. Original 433952
+        // and 43397C expand high/low frames before the world and text passes.
+        // Palette selection remains separate from this indexed-pixel operation.
+        public void ApplyMovieFrame(byte[] frame,int width,int height) {
+            if(frame==null||!(width==160&&height==120||width==320&&height==240)||frame.Length!=width*height)throw new InvalidDataException("Unsupported Classic scene movie frame");
+            int scale=640/width;
+            for(int y=0;y<480;y++)for(int x=0;x<640;x++)pixels[y*640+x]=frame[(y/scale)*width+x/scale];
+        }
         public void CopyPixelsTo(byte[] destination) {
             if(destination==null||destination.Length!=pixels.Length)throw new InvalidDataException("Classic scene destination must be 640x480");
             Array.Copy(pixels,destination,pixels.Length);
@@ -204,6 +212,19 @@ namespace FleetLab {
             var boards=PreviewBoards();var scene=new ClassicScene(graphics);var text=new List<ClassicSceneText>();
             foreach(var line in messages.Commands(0,0,7,0,0,"The Computer"))text.Add(new ClassicSceneText(line.At.X,line.At.Y,3,line.Text));
             scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=1,Text=text});return scene.Snapshot();
+        }
+        public static IndexedImage MoviePreview(string graphics,byte[] names){return MoviePreview(graphics,names,false);}
+        public static IndexedImage MoviePreview(string graphics,byte[] names,bool high) {
+            string low=Path.Combine(Path.GetDirectoryName(graphics),"LWEBS");
+            string folder=high?Path.Combine(Path.GetDirectoryName(graphics),"HWEBS"):low;
+            var movie=PatMovie.Load(File.ReadAllBytes(Path.Combine(folder,"F18FIRE1.PAT")));
+            if(movie.Frames.Count<2)throw new InvalidDataException("Classic movie preview requires the second source frame");
+            var messages=new ClassicMessages(File.ReadAllBytes(Path.Combine(graphics,"ENGLISH.TXT")),names);
+            var boards=PreviewBoards();var scene=new ClassicScene(graphics);var text=new List<ClassicSceneText>();
+            foreach(var line in messages.Commands(1,0,7,0,0,"The Computer"))text.Add(new ClassicSceneText(line.At.X,line.At.Y,3,line.Text));
+            scene.ApplyMovieFrame(movie.Frames[1].Pixels,movie.DecodedWidth,movie.DecodedHeight);
+            scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=8,Selected=0,Phase=1,MovieActive=true,RestoreBackground=false,Text=text});
+            var snapshot=scene.Snapshot();snapshot.Palette=PatMovie.ClipColors(File.ReadAllBytes(Path.Combine(low,"F18FIRE1.PAL")),File.ReadAllBytes(Path.Combine(graphics,"ISLAND.COL")),true);return snapshot;
         }
         // Replay the first eleven supplied frames of the native seed-0 miss
         // fixture. Decoder completion is controlled; movie pixels are absent.

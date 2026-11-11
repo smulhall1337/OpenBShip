@@ -313,6 +313,19 @@ namespace FleetLab {
                 var excessive=new List<ClassicSceneText>();for(int i=0;i<10;i++)excessive.Add(new ClassicSceneText(0,0,3,new string('A',99)));state.Text=excessive;Reject(delegate{scene.Render(state);});Require(Hash(scene.Snapshot().Pixels)==before,"Oversized source text queue changed canvas");
                 Reject(delegate{new ClassicSceneText(0,0,2,"A");});Reject(delegate{new ClassicSceneText(32768,0,3,"A");});Reject(delegate{new ClassicSceneText(0,0,3,"A\nB");});Reject(delegate{new ClassicSceneText(0,0,3,new string('A',100));});
             });
+            check("Classic software movie/world/text composition matches original F18 frame",delegate {
+                string graphics=Path.Combine(assets,"Graphics");
+                var preview=ClassicScene.MoviePreview(graphics,File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","MessageShipNames.seqbin")));
+                Require(Hash(preview.Pixels)=="7CC7CEA62985761B8C3D13A91DA5193A06F0CB322161C012C59F4D167CDAC365","Original streamed movie/world/text frame");
+                var scene=new ClassicScene(graphics);var movie=PatMovie.Load(File.ReadAllBytes(Path.Combine(assets,"LWEBS","F18FIRE1.PAT")));
+                var pixels=(byte[])movie.Frames[1].Pixels.Clone();scene.ApplyMovieFrame(pixels,160,120);string before=Hash(scene.Snapshot().Pixels);pixels[0]^=1;Require(Hash(scene.Snapshot().Pixels)==before,"Movie frame aliases caller data");
+                Reject(delegate{scene.ApplyMovieFrame(new byte[4],160,120);});Reject(delegate{scene.ApplyMovieFrame(new byte[640*480],640,480);});Require(Hash(scene.Snapshot().Pixels)==before,"Invalid movie input changed canvas");
+                scene.Reset();Require(Hash(scene.Snapshot().Pixels)=="EB8F3F551582267B1D3B189A69E68AEA549EE1C46462708AE28BFBC5E88B38C7","Movie reset did not restore PCX");
+            });
+            check("Classic software high movie uses original two-times expansion",delegate {
+                var preview=ClassicScene.MoviePreview(Path.Combine(assets,"Graphics"),File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","MessageShipNames.seqbin")),true);
+                Require(Hash(preview.Pixels)=="9DC9EE2B201C47099C9C43715B9925C0BA3D00ED5CADA2D925B950D970FBE454","Original high movie/world/text frame");
+            });
             check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
                 foreach(string name in new[]{"TargetCursor","HandCursor"}){
                     byte[] raw=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs",name+".seqbin"));var parsed=ClassicCursorData.Read(raw);byte[] cur=parsed.CurFile();
