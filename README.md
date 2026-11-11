@@ -193,3 +193,5 @@ Fleet Configuration has a separate whole-viewport comparison against its origina
 - `Setup.ps1`, `Build.ps1`, `Launch.cmd`: setup, compilation and launch entry points.
 
 Generated `build/` content, assets, binaries, settings, old `outputs/` packages and local `work/` research are ignored. Only the current source is tracked; historical local builds are not required to launch a fresh checkout.
+
+The current source has also been restored from a source-only research supplement into a fresh folder. Public setup, build and a visible launch pass before attaching private validation fixtures. With those external fixtures, the restored package passes all 170 model/format and 110 form groups; title, description and Practice exports reproduce exactly. Fresh native font/Practice captures also match the archived records. Those private research archives and original media are not GitHub dependencies for building or playing.
