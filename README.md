@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.45.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.46.
 
 ## Requirements
 
@@ -39,6 +39,14 @@ Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--render-software
 ```
 
 Run this from the repository folder after setup. It writes a 640×480 PNG of the verified seed-0 idle scene. Use `--render-software-effects-preview` with the same output argument to export the verified first-miss scene, including its original ring entry. Use `--render-software-text-preview` to export the verified idle scene with original sprite-font text. Use `--render-software-movie-preview` or `--render-software-high-movie-preview` for a verified F18 movie/world/text composition in the two original PAT formats. Use `--render-software-transition-preview` for a prepared idle scene with the original result-transition HUD gate applied; hulls and the background remain visible. The battle PNG exports use the documented shared gameplay palette. Use `--render-software-title-preview` with the same output argument for the verified title scene and selected Solo button. The title export uses its original card palette with the documented modern reserved Windows colors; the normal menu shares this renderer. These are software comparison fixtures; normal play retains its current cinematic presentation and controls.
+To export all 21 original setup descriptions with the recovered line wrapping:
+
+```powershell
+Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--export-practice-text', '.\build\practice-text.txt' -Wait
+```
+
+The export includes the input hash and original formatted rows. It does not export glyphs; the playable menus keep their current readable text presentation.
+
 ## Playing
 
 Use **Auto-place → Start battle**, or **Original menu → Solo → Classic → Start Game → Fleet Configuration → Start Game**.
@@ -141,6 +149,8 @@ The natural returned-title path now also executes Solo activation, the original 
 The natural chain also executes the Solo entry callback, loads its card, applies the 14 entry fade factors and indexes the Practice program. Eight paths add 128 ticks and 112 palette applications. Independent models and maintained PCX/Solo readers agree on the returned table pointer, complete buffers, inherited label table and card lifetime. Six resource phases match 5,616 buffer states and 624 metadata records; 409 capture/provenance files repeat and 40 changed records are rejected. Only the controlled source index 0 is covered. The Practice body and its full renderer remain pending; pointer normalization affects recorded evidence only.
 
 The original Practice-description formatter is separately checked with all 21 source descriptions and nine text/row boundary fixtures under two initial memory patterns. An independent model matches all 60 complete 48×33-byte output tables, including stale tails, the exact 33-character boundary and circular overwrite behavior. Four record/provenance files repeat; eight changed captures are rejected. This establishes formatting only. Original glyph drawing, paging input and the complete Practice screen remain separate work; a long unbroken wrapping window is unsupported and must fail clearly.
+
+The playable v0.46 includes the maintained description formatter and a diagnostic export. It matches all 60 native output tables, preserves caller data and rejects ten malformed inputs clearly. The public diagnostics embed whole-table hashes for all 21 original descriptions and three row boundaries. Packaged validation passes 168 model/format and 110 form groups, plus 56 lifecycle cases with no unhandled UI exception. Current and retained launchers open visible windows and exit cleanly; title pixels and accepted settings remain intact. The audio API check submits silence and does not establish audible playback.
 
 Original cell filling is separately checked in 2,752 bounded numerical cases, covering all canonical own/enemy cells, eight palette indices and supplied clipping/elevation offsets. An independent C# model reproduces the complete indexed buffers, including the original clipping phase and three-by-two pixel pattern. A further 14,056 prepared cell-map cases check forward drawing rotation, palette selection, owner comparison and supplied visibility flags, including copied ship-type and roster-pointer retirement. Their complete buffers agree with an independent model. The visibility field's relationship to live menu settings and full renderer integration remain unconfirmed.
 
