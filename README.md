@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.39.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.40.
 
 ## Requirements
 
@@ -32,6 +32,13 @@ Close that build before rebuilding it. Settings are stored locally in `build\cur
 
 `Launch.cmd` waits for a key if setup or required assets are missing. Other startup failures show an error dialog and write details to `build\current\UserData\last-error.txt`.
 
+The optional software comparison export uses the reconstructed original grid, cells, hull/smoke and HUD renderer:
+
+```powershell
+Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--render-software-preview', '.\build\software-preview.png' -Wait
+```
+
+Run this from the repository folder after setup. It writes a 640×480 PNG of the verified seed-0 idle scene. This comparison layer excludes text, transient effects and decoded movie pixels; the normal game retains its current cinematic presentation and controls.
 ## Playing
 
 Use **Auto-place → Start battle**, or **Original menu → Solo → Classic → Start Game → Fleet Configuration → Start Game**.
@@ -82,6 +89,7 @@ A whole-image initialization profile also reproduces all 70 earlier Classic layo
 
 Resources and AI now also run together under the original world-startup controller in 32 whole-image compositions. Independent models check resource buffers, metadata, AI state, player records, display copying, camera/cursor changes and fades through battle readiness. Heap ownership switches and both cleanups pass. These cases begin at a supplied Classic world boundary; title/Solo menu ordering, rendering, audio and real device behavior remain separate work.
 
+The software world layer also runs with original gameplay through 128 controlled battles. All 88,868 indexed scenes and 1,143,402 normalized hull/smoke/HUD commands match the independent C# model and the maintained `ClassicScene` implementation. Source gameplay bytes, random events, resource/AI lifetimes and both cleanups agree. Decoder completion is supplied without writing movie pixels; transient-effect creation, text, audio, live input and display calls remain separate work. This is a verified rendering layer, not complete original audiovisual-session acceptance.
 Original cell filling is separately checked in 2,752 bounded numerical cases, covering all canonical own/enemy cells, eight palette indices and supplied clipping/elevation offsets. An independent C# model reproduces the complete indexed buffers, including the original clipping phase and three-by-two pixel pattern. A further 14,056 prepared cell-map cases check forward drawing rotation, palette selection, owner comparison and supplied visibility flags, including copied ship-type and roster-pointer retirement. Their complete buffers agree with an independent model. The visibility field's relationship to live menu settings and full renderer integration remain unconfirmed.
 
 Canonical board picking is also checked at every integer pixel of the 640×480 viewport against original mouse-conversion code under both 53-bit and 64-bit x87 precision. The four PAT-driven numerical battles additionally pass scripted integer pixels through that conversion before original click dispatch, while preserving the earlier gameplay and random-state records. These comparisons use the fixed Classic camera and exclude later button/sprite hit dispatch and live camera setup.

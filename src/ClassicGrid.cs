@@ -36,13 +36,13 @@ namespace FleetLab {
                 Pixel(image,x,y,color);Pixel(image,x+1,y+direction,color);Pixel(image,x+2,y+direction,color);
             }
         }
-        static void Grid(IndexedImage image,int origin) {
+        internal static void Grid(IndexedImage image,int origin) {
             for(int i=0;i<=10;i++) {
                 Line(image,Project(origin+i,0),1,234);
                 Line(image,Project(origin,i),-1,234);
             }
         }
-        static void Border(IndexedImage image,int origin,byte color) {
+        internal static void Border(IndexedImage image,int origin,byte color) {
             foreach(int edge in new[]{0,10}) {
                 Point p=Project(origin+edge,0);
                 foreach(int offset in new[]{-2,0,-1,1})Line(image,new Point(p.X+offset,p.Y),1,color);

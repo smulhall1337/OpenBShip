@@ -8,6 +8,11 @@ namespace FleetLab {
             try {
                 if(args.Length==2&&args[0]=="--audio-check")return WaveOutput.CheckDevice(Path.GetFullPath(args[1]));
                 if(args.Length==2&&args[0]=="--self-check")return Validation.Run(assets,Path.GetFullPath(args[1]));
+                if(args.Length==2&&args[0]=="--render-software-preview") {
+                    string output=Path.GetFullPath(args[1]);Directory.CreateDirectory(Path.GetDirectoryName(output));
+                    using(var image=ClassicScene.Preview(Path.Combine(assets,"Graphics")).Bitmap())image.Save(output,System.Drawing.Imaging.ImageFormat.Png);
+                    return 0;
+                }
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 using(var form=new MainForm(assets)) {

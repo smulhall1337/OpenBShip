@@ -256,6 +256,29 @@ namespace FleetLab {
                 Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=640,Height=480,Pixels=new byte[8]});});
                 Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=640,Height=480,Pixels=new byte[640*480],Visible=new bool[8]});});
             });
+            check("Classic cell raster and visibility match native pixel fixtures",delegate {
+                Func<byte[]> background=delegate{var b=new byte[640*480];for(int i=0;i<b.Length;i++)b[i]=(byte)((i*37+i/640*11)&255);return b;};
+                int[][] fixtures={new[]{0,0,10,0},new[]{20,9,242,0},new[]{0,-1,243,1},new[]{30,20,255,-1}};
+                string[] hashes={"EC02A4133AB591A669A0A3A37B502FE2741FFC9A9F1DF6FA1B885F3969480992","4BAAF207D111FB0D43BC012DF2625AAB69AAD2C798A6A72BDA9949D6BB087E2A","F17842DD1BB0304AF54796DCEBD04B2EB1AB8118F3F241F02C3AAB52FF0D17DA","CA35BBD7AD16D268D7FA37E6D9A7309F4644C03951704B93BF97A9AB1544810E"};
+                for(int i=0;i<fixtures.Length;i++){var f=fixtures[i];var pixels=background();ClassicCellRaster.Fill(pixels,f[0],f[1],f[2],f[3]);Require(Hash(pixels)==hashes[i],"Native cell fill/clipping fixture "+i);}
+                var map=new int[10,10];map[8,5]=2;Point[] centers={new Point(8,5),new Point(5,3),new Point(3,5),new Point(0,3),new Point(2,3)};
+                var visible=background();ClassicCellRaster.Overlay(visible,map,Point.Empty,1,0,1,2,centers);
+                Require(Hash(visible)=="205584FCECC5A0BB68FE34453CA038F634BC1CBD8D7CBE1FCCA23612017B5730","Native forward rotation/center visibility");
+                var retired=background();ClassicCellRaster.Overlay(retired,map,Point.Empty,1,0,1,2,new[]{centers[1],centers[2],centers[3],centers[4]});Require(Hash(retired)==hashes[3],"Removed center remained visible");
+                Reject(delegate{ClassicCellRaster.Fill(new byte[8],0,0,10,0);});Reject(delegate{ClassicCellRaster.Fill(background(),41,0,10,0);});Reject(delegate{ClassicCellRaster.Fill(background(),0,0,256,0);});
+                Reject(delegate{ClassicCellRaster.Overlay(background(),new int[9,10],Point.Empty,0,0,1,1,new Point[0]);});Reject(delegate{ClassicCellRaster.Overlay(background(),map,Point.Empty,4,0,1,1,centers);});
+            });
+            check("Classic software scene preview matches native world pixels and owns snapshots",delegate {
+                string graphics=Path.Combine(assets,"Graphics");var preview=ClassicScene.Preview(graphics);
+                Require(preview.Width==640&&preview.Height==480&&Hash(preview.Pixels)=="F3D72FF78BBABC3BEF00C950B2AA4F32914392D33EE96179E83991D7F76CC19D","Native complete idle scene");
+                var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};int[] lengths={5,5,3,4,2};
+                foreach(var board in boards){var positions=OriginalPlacement.Generate(lengths,random.Next);for(int i=0;i<5;i++){var ship=RuleProfile.Recovered.Fleet[i];Require(board.Place(positions.Positions[i],ship.Length,true,ship.Name,ship.SourceType),"Scene fixture deployment");}}
+                var scene=new ClassicScene(graphics);var state=new ClassicSceneState(boards[0],boards[1]){Tick=4};scene.Render(state);var snapshot=scene.Snapshot();var copied=new byte[640*480];scene.CopyPixelsTo(copied);Require(Hash(copied)==Hash(preview.Pixels)&&scene.Commands.Count==11,"Maintained scene copy/queue");
+                snapshot.Pixels[0]^=1;snapshot.Palette[0]=Color.Magenta;Require(Hash(scene.Snapshot().Pixels)==Hash(copied)&&scene.Snapshot().Palette[0]!=Color.Magenta,"Snapshot aliases renderer storage");
+                state.Tick=1;scene.Render(state);Require(Hash(scene.Snapshot().Pixels)=="3397F607B573EF5E27E179C8153983653892DEB046FABBC2A81D9C64E0854A38"&&scene.Commands.Count==10,"Native selected-hull blink");
+                scene.Reset();Require(scene.Commands.Count==0&&Hash(scene.Snapshot().Pixels)=="EB8F3F551582267B1D3B189A69E68AEA549EE1C46462708AE28BFBC5E88B38C7","Software scene reset");
+                Reject(delegate{scene.CopyPixelsTo(new byte[8]);});Reject(delegate{scene.Render(null);});state.Selected=5;Reject(delegate{scene.Render(state);});
+            });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
             check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
                 foreach(string name in new[]{"TargetCursor","HandCursor"}){
