@@ -10,6 +10,7 @@ namespace FleetLab {
                 if(args.Length==2&&args[0]=="--self-check")return Validation.Run(assets,Path.GetFullPath(args[1]));
                 if(args.Length==2&&args[0]=="--export-practice-text"){ClassicMenuText.ExportPractice(assets,args[1]);return 0;}
                 if(args.Length==2&&args[0]=="--render-software-practice-preview"){new ClassicPracticeScene(assets).SavePreview(args[1]);return 0;}
+                if(args.Length==2&&args[0]=="--render-software-practice-scroll-preview"){new ClassicPracticeScene(assets).SaveDescriptionComparison(14,12,args[1]);return 0;}
                 if(args.Length==2&&args[0]=="--render-software-title-preview"){new ClassicTitleScene(assets).SavePreview(args[1]);return 0;}
                 if(args.Length==2&&(args[0]=="--render-software-preview"||args[0]=="--render-software-transition-preview"||args[0]=="--render-software-effects-preview"||args[0]=="--render-software-text-preview"||args[0]=="--render-software-movie-preview"||args[0]=="--render-software-high-movie-preview")) {
                     string output=Path.GetFullPath(args[1]);Directory.CreateDirectory(Path.GetDirectoryName(output));
