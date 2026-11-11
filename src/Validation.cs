@@ -284,6 +284,13 @@ namespace FleetLab {
                 Require(Hash(hidden.Pixels)=="92D17A59FB70AC629662165CE866E04A97D950873FE1A223B6FEE3C1C2D5C11E","Native mode4 HUD gate; world hulls remain");
                 Require(Hash(ClassicScene.Preview(graphics).Pixels)=="F3D72FF78BBABC3BEF00C950B2AA4F32914392D33EE96179E83991D7F76CC19D","Default HUD scene changed");
             });
+            check("Classic title scene matches joined original menu poll and raster buffers",delegate {
+                var scene=new ClassicTitleScene(assets);string original=Hash(scene.Card.Pixels);
+                string[] expected={"01DD24C497F0AAED57C74FFF6067B1E12AD163C5C1325ECFE22FA858AD07D432","061B5F761D0576D629109F37BEE0F51146EACEA84E9004D160BA033EA703EFD3","0BA3D7FE3E0E8BF4E6DACF6115E1A90BAF4E068B33695D1AAAFA7B2078789E7F","121EB700D930890DF0E635EDC3F085A414FE7CBAE628F21BD13F1B77A103C7DB"};
+                for(int selected=0;selected<4;selected++){var image=scene.Render(selected);Require(image.Width==640&&image.Height==480&&Hash(image.Pixels)==expected[selected],"Joined native title pixels "+selected);}
+                Require(scene.Card.Height==512&&Hash(scene.Card.Pixels)==original,"Title composition changed original storage rows");
+                Reject(delegate{scene.Render(-1);});Reject(delegate{scene.Render(4);});
+            });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
             check("Classic software effects match original first-miss scene and retain controller ownership",delegate {
                 var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};int[] lengths={5,5,3,4,2};
