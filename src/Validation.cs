@@ -301,6 +301,18 @@ namespace FleetLab {
                 timeline.Clear();timeline.Spawn(catalog.Get(27),true,Point.Empty,32);scene.Render(state);found=false;foreach(var command in scene.Commands)if(command.Bank==37&&command.Frame==32)found=true;Require(found,"Original empty terminal slot lost its queue entry");
                 string before=Hash(scene.Snapshot().Pixels);timeline.Spawn(catalog.Get(27),false,new Point(-1,0),0);Reject(delegate{scene.Render(state);});Require(Hash(scene.Snapshot().Pixels)==before,"Invalid effect mutated the scene");
             });
+            check("Classic software text matches original idle scene and rejects invalid queues before drawing",delegate {
+                string graphics=Path.Combine(assets,"Graphics");
+                var image=ClassicScene.TextPreview(graphics,File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","MessageShipNames.seqbin")));
+                Require(Hash(image.Pixels)=="2D67BE6363337F57BC6F4A7767C44F8E5A33E2688816F9F1D7C2E4F7272C4CD9","Original text-inclusive idle scene");
+                var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};int[] lengths={5,5,3,4,2};
+                foreach(var board in boards){var positions=OriginalPlacement.Generate(lengths,random.Next);for(int i=0;i<5;i++){var ship=RuleProfile.Recovered.Fleet[i];Require(board.Place(positions.Positions[i],ship.Length,true,ship.Name,ship.SourceType),"Text scene deployment");}}
+                var scene=new ClassicScene(graphics);var state=new ClassicSceneState(boards[0],boards[1]){Tick=1,Text=new[]{new ClassicSceneText(12,11,3,"Select Target Square")}};
+                scene.Render(state);Require(Hash(scene.Snapshot().Pixels)==Hash(image.Pixels)&&scene.Commands.Count==10,"Text changed source world command queue");
+                string before=Hash(scene.Snapshot().Pixels);state.Text=new ClassicSceneText[]{null};Reject(delegate{scene.Render(state);});Require(Hash(scene.Snapshot().Pixels)==before,"Invalid text changed canvas");
+                var excessive=new List<ClassicSceneText>();for(int i=0;i<10;i++)excessive.Add(new ClassicSceneText(0,0,3,new string('A',99)));state.Text=excessive;Reject(delegate{scene.Render(state);});Require(Hash(scene.Snapshot().Pixels)==before,"Oversized source text queue changed canvas");
+                Reject(delegate{new ClassicSceneText(0,0,2,"A");});Reject(delegate{new ClassicSceneText(32768,0,3,"A");});Reject(delegate{new ClassicSceneText(0,0,3,"A\nB");});Reject(delegate{new ClassicSceneText(0,0,3,new string('A',100));});
+            });
             check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
                 foreach(string name in new[]{"TargetCursor","HandCursor"}){
                     byte[] raw=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs",name+".seqbin"));var parsed=ClassicCursorData.Read(raw);byte[] cur=parsed.CurFile();

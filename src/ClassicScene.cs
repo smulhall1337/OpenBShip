@@ -10,9 +10,19 @@ namespace FleetLab {
         public int OwnVisibility=1,EnemyVisibility=1;
         public bool MovieActive,RestoreBackground=true;
         public ClassicVisualTimeline Effects;
+        public IEnumerable<ClassicSceneText> Text;
         public bool ExtendedEffects;
         public Point Pointer=new Point(-10,-10);
         public ClassicSceneState(Board own,Board enemy){Own=own;Enemy=enemy;}
+    }
+    public sealed class ClassicSceneText {
+        public readonly int X,Y,Style;
+        public readonly string Value;
+        public ClassicSceneText(int x,int y,int style,string value) {
+            if(x<short.MinValue||x>short.MaxValue||y<short.MinValue||y>short.MaxValue||style!=3&&style!=4||value==null||value.Length>=100)throw new InvalidDataException("Unsupported Classic scene text");
+            foreach(char c in value)if(c<32||c>126)throw new InvalidDataException("Unsupported Classic scene text encoding");
+            X=x;Y=y;Style=style;Value=value;
+        }
     }
     public sealed class ClassicSceneCommand {
         public readonly int Priority,X,Y,Frame,Bank,Mode,Percent;
@@ -22,7 +32,7 @@ namespace FleetLab {
     }
     // Reconstructed canonical Classic software world layer: grid/cells, own
     // hulls/smoke, and HUD commands. Native routines 408D50/407800/407890/407950.
-    // MovieActive selects HUD layout; decoded movie pixels and text are outside
+    // MovieActive selects HUD layout; decoded movie pixels are outside
     // this comparison renderer. Optional effects are supplied by the controller;
     // rendering never advances their counters. RestoreBackground
     // is explicit so a controller can reproduce the original buffer retention.
@@ -108,6 +118,34 @@ namespace FleetLab {
                 Add(at.X,at.Y,entry.Counter,entry.Spec.SpriteBank,entry.Spec.Type==27?0:3,ClassicGeometry.ShipPercent);
             }
         }
+        List<ClassicSceneText> ValidateText(ClassicSceneState state) {
+            var text=new List<ClassicSceneText>();int bytes=0;
+            if(state.Text!=null)foreach(var line in state.Text) {
+                if(line==null)throw new InvalidDataException("Missing Classic scene text command");
+                bytes+=line.Value.Length+7;
+                if(bytes>1004)throw new InvalidDataException("Classic scene text queue exceeds its source buffer");
+                text.Add(line);
+            }
+            if(text.Count!=0&&!banks.ContainsKey(9)) {
+                var frames=Assets.Sph(Path.Combine(graphics,"GAMEFONT.SPH"),palette);
+                if(frames.Count!=567||frames[566]!=null)throw new InvalidDataException("Unsupported Classic scene font table");
+                for(int i=0;i<564;i++)if(frames[i]==null||frames[i].Width>255||frames[i].Height>255)throw new InvalidDataException("Unsupported Classic scene font metrics");
+                banks.Add(9,frames);
+            }
+            return text;
+        }
+        void Text(List<ClassicSceneText> text) {
+            foreach(var line in text) {
+                int x=line.X;
+                foreach(char c in line.Value) {
+                    int frame=line.Style*94+(c==' '?36:c-33);
+                    if(c!=' ')Paint(new ClassicSceneCommand(x,line.Y,frame,9,0,100));
+                    // Native 427300 advances a signed 16-bit pen. Glyphs draw
+                    // directly after the world queue, without queue culling.
+                    x=unchecked((short)(x+banks[9][frame].Width+(c!=' '&&line.Style==4?3:0)));
+                }
+            }
+        }
         void Hud(ClassicSceneState state) {
             if(state.MovieActive){Add(0,0,0,41,0,100);Add(200,0,2,41,0,100);Add(235,264,1,41,0,100);Add(435,264,3,41,0,100);}
             bool enemy=state.Phase>3;Add(enemy?382:232,enemy?392:56,enemy?1:0,40,0,100);
@@ -134,6 +172,7 @@ namespace FleetLab {
             if(state==null||state.Selected<0||state.Selected>4||state.Phase<0||state.Phase>8||state.OwnResult< -1||state.OwnResult>1||state.EnemyResult< -1||state.EnemyResult>1||state.Tick<0||state.Tick>int.MaxValue-80||state.ActiveOwner<0||state.ActiveOwner>1||state.OwnVisibility<0||state.OwnVisibility>255||state.EnemyVisibility<0||state.EnemyVisibility>255)throw new InvalidDataException("Unsupported Classic scene state");
             ValidateBoard(state.Own);ValidateBoard(state.Enemy);
             ValidateEffects(state);
+            var text=ValidateText(state);
             int[,] ownMap,enemyMap;Point[] ownCenters,enemyCenters;
             Cells(state.Own,out ownMap,out ownCenters);Cells(state.Enemy,out enemyMap,out enemyCenters);
             commands.Clear();if(state.RestoreBackground)Array.Copy(background,pixels,pixels.Length);
@@ -149,6 +188,7 @@ namespace FleetLab {
             // source swap behavior; canonical commands currently all use zero.
             for(int i=0;i<commands.Count;i++){int best=i,priority=0;for(int j=i;j<commands.Count;j++)if(commands[j].Priority>priority){best=j;priority=commands[j].Priority;}var previous=commands[i];commands[i]=commands[best];commands[best]=previous;}
             foreach(var command in commands)Paint(command);
+            Text(text);
         }
         static Board[] PreviewBoards() {
             var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};
@@ -158,6 +198,12 @@ namespace FleetLab {
         public static IndexedImage Preview(string graphics) {
             var boards=PreviewBoards();
             var scene=new ClassicScene(graphics);scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=4});return scene.Snapshot();
+        }
+        public static IndexedImage TextPreview(string graphics,byte[] names) {
+            var messages=new ClassicMessages(File.ReadAllBytes(Path.Combine(graphics,"ENGLISH.TXT")),names);
+            var boards=PreviewBoards();var scene=new ClassicScene(graphics);var text=new List<ClassicSceneText>();
+            foreach(var line in messages.Commands(0,0,7,0,0,"The Computer"))text.Add(new ClassicSceneText(line.At.X,line.At.Y,3,line.Text));
+            scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=1,Text=text});return scene.Snapshot();
         }
         // Replay the first eleven supplied frames of the native seed-0 miss
         // fixture. Decoder completion is controlled; movie pixels are absent.
