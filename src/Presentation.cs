@@ -12,7 +12,7 @@ namespace FleetLab {
         internal BoardRevealTimeline Reveal;
         internal bool Revealing {get{return Reveal!=null&&!Reveal.Complete;}}
         public Bitmap Art;
-        public Bitmap ForegroundArt,MovieFrame; // Borrowed; owners release them after replacement.
+        public Bitmap ForegroundArt,MovieFrame,LegacyArt; // Borrowed; owners release them after replacement.
         public ClassicHud Hud;public ClassicMessages Messages;public ClassicSpriteFont MessageFont;
         public Bitmap[] Roster;
         public ClassicShips Ships;
@@ -274,7 +274,7 @@ namespace FleetLab {
             g.ScaleTransform(r.Width/640,r.Height/ArtHeight);
             g.InterpolationMode=InterpolationMode.NearestNeighbor;
             g.PixelOffsetMode=PixelOffsetMode.Half;
-            g.DrawImage(backdrop?ForegroundArt:Art,new Rectangle(0,0,640,ArtHeight),0,0,640,ArtHeight,GraphicsUnit.Pixel);
+            g.DrawImage(Legacy&&LegacyArt!=null?LegacyArt:backdrop?ForegroundArt:Art,new Rectangle(0,0,640,ArtHeight),0,0,640,ArtHeight,GraphicsUnit.Pixel);
             DrawShips(g,Game.Player,false);
             DrawShips(g,Game.Enemy,true);
             if(VisualSprites!=null&&!Legacy)VisualSprites.Draw(g,visualEffects);

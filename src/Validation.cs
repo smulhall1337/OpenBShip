@@ -240,6 +240,22 @@ namespace FleetLab {
                     Require(s.TerrainBytes==expected[i]&&s.Players==2,"Scenario fixture offset "+names[i]);
                 }
             });
+            check("Classic grid matches the original whole-world software buffer",delegate {
+                var original=Assets.Pcx(Path.Combine(assets,"Graphics","E_CLASS.PCX"));
+                string unchanged=Hash(original.Pixels);var grid=ClassicGrid.Compose(original);
+                byte[] viewport=new byte[640*480];Array.Copy(grid.Pixels,viewport,viewport.Length);
+                // Whole Bs.exe world draw before queue flush, two original layouts
+                // and both resource branches: checkpoint110, supported executable.
+                Require(Hash(viewport)=="8F321D89F6587DB5120EFD7E595C17A30C90D6135BBF7C0CF908F5D5B45FD58D","Native grid/border byte identity");
+                int differences=0;for(int i=0;i<original.Pixels.Length;i++)if(original.Pixels[i]!=grid.Pixels[i]){differences++;Require(i<viewport.Length,"PCX storage tail changed");}
+                Require(differences==807&&Hash(original.Pixels)==unchanged&&!object.ReferenceEquals(original.Pixels,grid.Pixels),"Grid altered source or unexpected pixels");
+                Require(Hash(ClassicGrid.Compose(grid).Pixels)==Hash(grid.Pixels),"Repeated grid composition changed pixels");
+                Reject(delegate{ClassicGrid.Compose(null);});
+                Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=641,Height=480,Pixels=new byte[641*480]});});
+                Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=640,Height=481,Pixels=new byte[640*481]});});
+                Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=640,Height=480,Pixels=new byte[8]});});
+                Reject(delegate{ClassicGrid.Compose(new IndexedImage{Width=640,Height=480,Pixels=new byte[640*480],Visible=new bool[8]});});
+            });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
             check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
                 foreach(string name in new[]{"TargetCursor","HandCursor"}){

@@ -11,7 +11,7 @@ namespace FleetLab {
         public Game State;
         readonly string assets,settingsPath;
         readonly BoardView board=new BoardView();
-        Bitmap backdropForeground;ClassicHud hudImages;
+        Bitmap backdropForeground,legacyArt;ClassicHud hudImages;
         readonly MapView map=new MapView();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
@@ -86,7 +86,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.38 — Loading exit and board reveal";
+            Text="Battleship Fleet Lab 0.39 — Recovered Classic grid drawing";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -391,25 +391,26 @@ namespace FleetLab {
         }
         void RebuildArt(bool recovered) {
             Color[] palette=recovered?ClassicPalette.Gameplay(File.ReadAllBytes(Path.Combine(assets,"Graphics","ISLAND.COL"))):classicImage.Palette;
-            Bitmap nextArt=null,nextForeground=null;var nextRoster=new List<Bitmap>();ClassicShips nextShips=null;ClassicDamage nextDamage=null;ClassicHud nextHud=null;ClassicSpriteFont nextFont=null;ClassicVisualSprites nextVisuals=null;
+            Bitmap nextArt=null,nextForeground=null,nextLegacyArt=null;var nextRoster=new List<Bitmap>();ClassicShips nextShips=null;ClassicDamage nextDamage=null;ClassicHud nextHud=null;ClassicSpriteFont nextFont=null;ClassicVisualSprites nextVisuals=null;
             try {
-                nextArt=new IndexedImage {Width=classicImage.Width,Height=classicImage.Height,Pixels=classicImage.Pixels,Palette=palette}.Bitmap();
-                nextForeground=ClassicBackdrop.Foreground(new IndexedImage{Width=classicImage.Width,Height=classicImage.Height,Pixels=classicImage.Pixels,Palette=palette});
+                var grid=ClassicGrid.Compose(classicImage);grid.Palette=palette;nextArt=grid.Bitmap();
+                nextLegacyArt=new IndexedImage{Width=classicImage.Width,Height=classicImage.Height,Pixels=classicImage.Pixels,Palette=palette}.Bitmap();
+                nextForeground=ClassicBackdrop.Foreground(new IndexedImage{Width=classicImage.Width,Height=classicImage.Height,Pixels=grid.Pixels,Palette=palette});
                 foreach(var frame in Assets.Sph(Path.Combine(assets,"Graphics","EO_CLASS.SPH"),palette))nextRoster.Add(frame==null?null:frame.Bitmap());
                 nextShips=new ClassicShips(Path.Combine(assets,"Graphics"),palette);
                 nextFont=new ClassicSpriteFont(Path.Combine(assets,"Graphics"),palette);
                 nextDamage=new ClassicDamage(Path.Combine(assets,"Graphics"),palette);nextHud=new ClassicHud(Path.Combine(assets,"Graphics"),palette);
                 nextVisuals=new ClassicVisualSprites(Path.Combine(assets,"Graphics"),File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs","ClassicVisuals.seqbin")),palette);
             }catch {
-                if(nextArt!=null)nextArt.Dispose();if(nextForeground!=null)nextForeground.Dispose();foreach(var image in nextRoster)if(image!=null)image.Dispose();
+                if(nextArt!=null)nextArt.Dispose();if(nextLegacyArt!=null)nextLegacyArt.Dispose();if(nextForeground!=null)nextForeground.Dispose();foreach(var image in nextRoster)if(image!=null)image.Dispose();
                 if(nextShips!=null)nextShips.Dispose();if(nextDamage!=null)nextDamage.Dispose();if(nextHud!=null)nextHud.Dispose();if(nextFont!=null)nextFont.Dispose();if(nextVisuals!=null)nextVisuals.Dispose();throw;
             }
             ClassicSpriteFont previousFont=messageFont;messageFont=nextFont;board.MessageFont=messageFont;
             ClassicVisualSprites previousVisuals=visualSprites;visualSprites=nextVisuals;board.VisualSprites=visualSprites;
-            ClassicHud previousHud=hudImages;Bitmap previousArt=art,previousForeground=backdropForeground;ClassicShips previousShips=shipImages;ClassicDamage previousDamage=damageImages;var previousRoster=rosterImages.ToArray();
-            hudImages=nextHud;board.Hud=hudImages;art=nextArt;backdropForeground=nextForeground;board.ForegroundArt=backdropForeground;shipImages=nextShips;damageImages=nextDamage;rosterImages.Clear();rosterImages.AddRange(nextRoster);
+            ClassicHud previousHud=hudImages;Bitmap previousArt=art,previousForeground=backdropForeground,previousLegacyArt=legacyArt;ClassicShips previousShips=shipImages;ClassicDamage previousDamage=damageImages;var previousRoster=rosterImages.ToArray();
+            hudImages=nextHud;board.Hud=hudImages;art=nextArt;legacyArt=nextLegacyArt;board.LegacyArt=legacyArt;backdropForeground=nextForeground;board.ForegroundArt=backdropForeground;shipImages=nextShips;damageImages=nextDamage;rosterImages.Clear();rosterImages.AddRange(nextRoster);
             board.Art=art;board.Ships=shipImages;board.Damage=damageImages;board.Roster=rosterImages.ToArray();
-            if(previousArt!=null)previousArt.Dispose();if(previousForeground!=null)previousForeground.Dispose();if(previousShips!=null)previousShips.Dispose();if(previousDamage!=null)previousDamage.Dispose();if(previousHud!=null)previousHud.Dispose();if(previousFont!=null)previousFont.Dispose();if(previousVisuals!=null)previousVisuals.Dispose();
+            if(previousArt!=null)previousArt.Dispose();if(previousLegacyArt!=null)previousLegacyArt.Dispose();if(previousForeground!=null)previousForeground.Dispose();if(previousShips!=null)previousShips.Dispose();if(previousDamage!=null)previousDamage.Dispose();if(previousHud!=null)previousHud.Dispose();if(previousFont!=null)previousFont.Dispose();if(previousVisuals!=null)previousVisuals.Dispose();
             foreach(var image in previousRoster)if(image!=null)image.Dispose();
         }
         void Button(FlowLayoutPanel parent,Button button,string text,EventHandler action) {
@@ -1466,7 +1467,7 @@ namespace FleetLab {
                 opponentTimer.Dispose();
                 visualTimer.Stop();visualTimer.Dispose();displayMenu.Dispose();
                 sound.Dispose();
-                art.Dispose();backdropForeground.Dispose();
+                art.Dispose();legacyArt.Dispose();backdropForeground.Dispose();
                 shipImages.Dispose();
                 board.VisualSprites=null;if(visualSprites!=null)visualSprites.Dispose();
                 damageImages.Dispose();hudImages.Dispose();messageFont.Dispose();ending.Dispose();front.Dispose();solo.Dispose();fleet.Dispose();entry.Dispose();prefsPage.Dispose();creditsPage.Dispose();startupPage.Dispose();archive.Dispose();

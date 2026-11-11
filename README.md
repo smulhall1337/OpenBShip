@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.38.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.39.
 
 ## Requirements
 
@@ -93,6 +93,8 @@ Original window-procedure key-down/key-up branches and the finite key-pulse coun
 That same whole-image composition now continues through 128 complete controlled Classic battles before both original cleanups. Independent C# rules agree on all ship/fleet bytes, damage, selection, targets, packets and semantic random/movie events across all four difficulties and both resource branches. The two targeting policies yield 64 wins and 64 losses across 88,868 gameplay frames. Clock reads and decoder completion are supplied; rendering, audio and device calls remain recordings in this profile. No gameplay-state reset is used at the battle-ready handoff.
 
 A further whole-image profile restores the original world renderer, draw queue, sorting and indexed rasterizer. All 256 initial idle scenes match independently composed C# pixels and 2,752 hull/HUD commands, including grid/border drawing order and the selected-ship blink cycle. This covers two layouts and both resource branches at the canonical camera; battle effects, physical display and live input remain outside that rendering comparison.
+
+The playable build now applies that recovered grid and border drawing to a copy of the Classic background. It preserves the original asset and its 32 storage rows, the legacy preset's background, palette choices, selection outline and approved cinematic transparency. A native buffer hash is checked by the in-source diagnostics; complete battle rendering still combines reconstructed systems with deliberate modern cues.
 
 The original cursor selector is separately checked with 240 controlled fixtures and one exhaustive signed-16-bit numeric sweep, including truncated inputs, invalid IDs, failed loads and retained handles. Its USER32 imports record supplied handles; physical cursor rendering and focus remain separate. A further 48 controlled startup paths execute that selector inside the original startup controller with recorded USER32 imports. Successful and failed target-cursor loads reach the same fade boundary; modern hover eligibility and fallback behavior remain deliberate usability choices.
 
