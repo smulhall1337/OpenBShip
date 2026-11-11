@@ -8,9 +8,10 @@ namespace FleetLab {
             try {
                 if(args.Length==2&&args[0]=="--audio-check")return WaveOutput.CheckDevice(Path.GetFullPath(args[1]));
                 if(args.Length==2&&args[0]=="--self-check")return Validation.Run(assets,Path.GetFullPath(args[1]));
-                if(args.Length==2&&args[0]=="--render-software-preview") {
+                if(args.Length==2&&(args[0]=="--render-software-preview"||args[0]=="--render-software-effects-preview")) {
                     string output=Path.GetFullPath(args[1]);Directory.CreateDirectory(Path.GetDirectoryName(output));
-                    using(var image=ClassicScene.Preview(Path.Combine(assets,"Graphics")).Bitmap())image.Save(output,System.Drawing.Imaging.ImageFormat.Png);
+                    var preview=args[0]=="--render-software-effects-preview"?ClassicScene.FirstMissPreview(Path.Combine(assets,"Graphics"),File.ReadAllBytes(Path.Combine(root,"Programs","ClassicVisuals.seqbin"))):ClassicScene.Preview(Path.Combine(assets,"Graphics"));
+                    using(var image=preview.Bitmap())image.Save(output,System.Drawing.Imaging.ImageFormat.Png);
                     return 0;
                 }
                 Application.EnableVisualStyles();

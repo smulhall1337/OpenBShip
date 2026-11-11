@@ -280,6 +280,27 @@ namespace FleetLab {
                 Reject(delegate{scene.CopyPixelsTo(new byte[8]);});Reject(delegate{scene.Render(null);});state.Selected=5;Reject(delegate{scene.Render(state);});
             });
             string evidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
+            check("Classic software effects match original first-miss scene and retain controller ownership",delegate {
+                var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};int[] lengths={5,5,3,4,2};
+                foreach(var board in boards){var positions=OriginalPlacement.Generate(lengths,random.Next);for(int i=0;i<5;i++){var ship=RuleProfile.Recovered.Fleet[i];Require(board.Place(positions.Positions[i],ship.Length,true,ship.Name,ship.SourceType),"Effect scene deployment");}}
+                var scene=new ClassicScene(Path.Combine(assets,"Graphics"));var state=new ClassicSceneState(boards[0],boards[1]);
+                for(int frame=0;frame<=9;frame++) {
+                    state.Tick=frame+1;state.Selected=frame==0?1:0;state.Phase=frame<4?0:frame<7?1:2;
+                    state.MovieActive=frame>=4;state.RestoreBackground=frame<=4;
+                    state.Pointer=frame==1?new Point(8,3):frame>=2&&frame<=4?new Point(11,0):new Point(-10,-10);
+                    scene.Render(state);
+                }
+                var catalog=new ClassicVisualCatalog(File.ReadAllBytes(visualTable));var timeline=new ClassicVisualTimeline();
+                var entry=timeline.Spawn(catalog.Get(27),true,Point.Empty,1);boards[1].Shoot(Point.Empty);
+                state.Effects=timeline;state.Tick=11;state.Phase=3;state.EnemyResult=0;state.Pointer=new Point(-10,-10);scene.Render(state);
+                Require(Hash(scene.Snapshot().Pixels)=="53AFAE047CA96F8A56890238F3A9688F405F8B929FAC1B71544E73E1A0E0B0AE"&&scene.Commands.Count==17,"Original first-miss software frame");
+                Require(entry.Counter==1&&timeline.Count==1,"Renderer advanced supplied effects");
+                timeline.Clear();timeline.Spawn(catalog.Get(7),false,Point.Empty,0);state.ExtendedEffects=false;scene.Render(state);
+                foreach(var command in scene.Commands)Require(command.Bank!=43,"Reduced-detail sink was queued");
+                state.ExtendedEffects=true;scene.Render(state);bool found=false;foreach(var command in scene.Commands)if(command.Bank==43){found=true;Require(command.Mode==3&&command.Percent==79,"Source sink origin/scale mode");}Require(found,"Extended-detail sink missing");
+                timeline.Clear();timeline.Spawn(catalog.Get(27),true,Point.Empty,32);scene.Render(state);found=false;foreach(var command in scene.Commands)if(command.Bank==37&&command.Frame==32)found=true;Require(found,"Original empty terminal slot lost its queue entry");
+                string before=Hash(scene.Snapshot().Pixels);timeline.Spawn(catalog.Get(27),false,new Point(-1,0),0);Reject(delegate{scene.Render(state);});Require(Hash(scene.Snapshot().Pixels)==before,"Invalid effect mutated the scene");
+            });
             check("Original cursor resources preserve hotspots and all monochrome DIB bytes",delegate{
                 foreach(string name in new[]{"TargetCursor","HandCursor"}){
                     byte[] raw=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Programs",name+".seqbin"));var parsed=ClassicCursorData.Read(raw);byte[] cur=parsed.CurFile();

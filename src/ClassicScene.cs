@@ -9,6 +9,8 @@ namespace FleetLab {
         public int Selected=1,Phase,OwnResult=-1,EnemyResult=-1,Tick,ActiveOwner;
         public int OwnVisibility=1,EnemyVisibility=1;
         public bool MovieActive,RestoreBackground=true;
+        public ClassicVisualTimeline Effects;
+        public bool ExtendedEffects;
         public Point Pointer=new Point(-10,-10);
         public ClassicSceneState(Board own,Board enemy){Own=own;Enemy=enemy;}
     }
@@ -20,8 +22,9 @@ namespace FleetLab {
     }
     // Reconstructed canonical Classic software world layer: grid/cells, own
     // hulls/smoke, and HUD commands. Native routines 408D50/407800/407890/407950.
-    // MovieActive selects HUD layout; decoded movie pixels, text and transient
-    // visual entries are outside this comparison renderer. RestoreBackground
+    // MovieActive selects HUD layout; decoded movie pixels and text are outside
+    // this comparison renderer. Optional effects are supplied by the controller;
+    // rendering never advances their counters. RestoreBackground
     // is explicit so a controller can reproduce the original buffer retention.
     public sealed class ClassicScene {
         static readonly int[] Lengths={5,5,3,4,2},Types={7,1,2,12,4};
@@ -29,6 +32,7 @@ namespace FleetLab {
         static readonly Point[] OwnRoster={new Point(13,61),new Point(115,61),new Point(64,94),new Point(13,127),new Point(115,127)};
         static readonly Point[] EnemyRoster={new Point(437,325),new Point(539,325),new Point(488,358),new Point(437,391),new Point(539,391)};
         readonly byte[] background,pixels=new byte[640*480];
+        readonly string graphics;
         readonly Color[] palette;
         readonly IndexedImage surface;
         readonly Dictionary<int,List<IndexedImage>> banks=new Dictionary<int,List<IndexedImage>>();
@@ -37,6 +41,7 @@ namespace FleetLab {
         readonly ReadOnlyCollection<ClassicSceneCommand> commandView;
         public ReadOnlyCollection<ClassicSceneCommand> Commands {get{return commandView;}}
         public ClassicScene(string graphics) {
+            this.graphics=graphics;
             var pcx=Assets.Pcx(Path.Combine(graphics,"E_CLASS.PCX"));
             if(pcx.Width!=640||pcx.Height!=512)throw new InvalidDataException("Unsupported Classic scene background");
             background=new byte[640*480];Array.Copy(pcx.Pixels,background,background.Length);
@@ -83,6 +88,26 @@ namespace FleetLab {
                 }
             }
         }
+        void ValidateEffects(ClassicSceneState state) {
+            if(state.Effects==null)return;
+            foreach(var entry in state.Effects.Entries) {
+                if(!Board.Inside(entry.Start)||entry.Counter<0||entry.Counter>entry.Spec.LastCounter)throw new InvalidDataException("Unsupported Classic scene effect");
+                if(entry.Spec.Type<=26&&!state.ExtendedEffects)continue;
+                if(banks.ContainsKey(entry.Spec.SpriteBank))continue;
+                var frames=Assets.Sph(Path.Combine(graphics,entry.Spec.Resource),palette);
+                if(frames.Count!=entry.Spec.LastCounter+1||frames[frames.Count-1]!=null)throw new InvalidDataException("Unsupported Classic scene effect bank");
+                for(int i=0;i<frames.Count-1;i++)if(frames[i]==null)throw new InvalidDataException("Missing Classic scene effect frame");
+                banks.Add(entry.Spec.SpriteBank,frames);
+            }
+        }
+        void Effects(ClassicSceneState state,bool enemy) {
+            if(state.Effects==null)return;
+            foreach(var entry in state.Effects.Entries) {
+                if(entry.Enemy!=enemy||entry.Spec.Type<=26&&!state.ExtendedEffects)continue;
+                Point at=ClassicVisualGeometry.Anchor(entry.Spec,enemy,entry.Start);
+                Add(at.X,at.Y,entry.Counter,entry.Spec.SpriteBank,entry.Spec.Type==27?0:3,ClassicGeometry.ShipPercent);
+            }
+        }
         void Hud(ClassicSceneState state) {
             if(state.MovieActive){Add(0,0,0,41,0,100);Add(200,0,2,41,0,100);Add(235,264,1,41,0,100);Add(435,264,3,41,0,100);}
             bool enemy=state.Phase>3;Add(enemy?382:232,enemy?392:56,enemy?1:0,40,0,100);
@@ -97,7 +122,8 @@ namespace FleetLab {
             string key=command.Bank+":"+frame+":"+command.Percent;IndexedImage image;
             if(!scaled.TryGetValue(key,out image)){image=command.Percent==100?frames[frame]:ClassicShips.Scale(frames[frame],command.Percent);scaled.Add(key,image);}
             int x=command.X,y=command.Y;
-            if(command.Mode==1){x-=image.Width/2;y-=image.Height/2;}
+            if(command.Mode==3){x+=frames[frame].OriginX;y+=frames[frame].OriginY;}
+            if(command.Mode==1||command.Mode==3){x-=image.Width/2;y-=image.Height/2;}
             else if(command.Mode==2){x-=image.Width/2;y-=image.Height;}
             for(int sy=0;sy<image.Height;sy++) {
                 int py=y+sy;if(py<0||py>=480)continue;
@@ -107,13 +133,15 @@ namespace FleetLab {
         public void Render(ClassicSceneState state) {
             if(state==null||state.Selected<0||state.Selected>4||state.Phase<0||state.Phase>8||state.OwnResult< -1||state.OwnResult>1||state.EnemyResult< -1||state.EnemyResult>1||state.Tick<0||state.Tick>int.MaxValue-80||state.ActiveOwner<0||state.ActiveOwner>1||state.OwnVisibility<0||state.OwnVisibility>255||state.EnemyVisibility<0||state.EnemyVisibility>255)throw new InvalidDataException("Unsupported Classic scene state");
             ValidateBoard(state.Own);ValidateBoard(state.Enemy);
+            ValidateEffects(state);
             int[,] ownMap,enemyMap;Point[] ownCenters,enemyCenters;
             Cells(state.Own,out ownMap,out ownCenters);Cells(state.Enemy,out enemyMap,out enemyCenters);
             commands.Clear();if(state.RestoreBackground)Array.Copy(background,pixels,pixels.Length);
             ClassicGrid.Grid(surface,0);
             ClassicCellRaster.Overlay(pixels,ownMap,new Point(0,0),0,0,state.ActiveOwner,state.OwnVisibility,ownCenters);
-            Hulls(state);ClassicGrid.Border(surface,0,13);ClassicGrid.Border(surface,11,243);ClassicGrid.Grid(surface,11);
+            Effects(state,false);Hulls(state);ClassicGrid.Border(surface,0,13);ClassicGrid.Border(surface,11,243);ClassicGrid.Grid(surface,11);
             ClassicCellRaster.Overlay(pixels,enemyMap,new Point(11,0),0,1,state.ActiveOwner,state.EnemyVisibility,enemyCenters);
+            Effects(state,true);
             ClassicGrid.Border(surface,0,13);
             if(state.Phase==0&&state.Pointer.X>=11&&state.Pointer.X<21&&state.Pointer.Y>=0&&state.Pointer.Y<10)ClassicCellRaster.Fill(pixels,state.Pointer.X,state.Pointer.Y,11,0);
             Hud(state);
@@ -122,10 +150,30 @@ namespace FleetLab {
             for(int i=0;i<commands.Count;i++){int best=i,priority=0;for(int j=i;j<commands.Count;j++)if(commands[j].Priority>priority){best=j;priority=commands[j].Priority;}var previous=commands[i];commands[i]=commands[best];commands[best]=previous;}
             foreach(var command in commands)Paint(command);
         }
-        public static IndexedImage Preview(string graphics) {
+        static Board[] PreviewBoards() {
             var random=new NativeRandom(0);var boards=new[]{new Board(),new Board()};
             foreach(var board in boards){var placement=OriginalPlacement.Generate(Lengths,random.Next);for(int i=0;i<5;i++)if(!board.Place(placement.Positions[i],Lengths[i],true,RuleProfile.Recovered.Fleet[i].Name,Types[i]))throw new InvalidDataException("Classic software preview placement failed");}
+            return boards;
+        }
+        public static IndexedImage Preview(string graphics) {
+            var boards=PreviewBoards();
             var scene=new ClassicScene(graphics);scene.Render(new ClassicSceneState(boards[0],boards[1]){Tick=4});return scene.Snapshot();
+        }
+        // Replay the first eleven supplied frames of the native seed-0 miss
+        // fixture. Decoder completion is controlled; movie pixels are absent.
+        public static IndexedImage FirstMissPreview(string graphics,byte[] records) {
+            var catalog=new ClassicVisualCatalog(records);var boards=PreviewBoards();
+            var scene=new ClassicScene(graphics);var state=new ClassicSceneState(boards[0],boards[1]);
+            for(int frame=0;frame<=9;frame++) {
+                state.Tick=frame+1;state.Selected=frame==0?1:0;state.Phase=frame<4?0:frame<7?1:2;
+                state.MovieActive=frame>=4;state.RestoreBackground=frame<=4;
+                state.Pointer=frame==1?new Point(8,3):frame>=2&&frame<=4?new Point(11,0):new Point(-10,-10);
+                scene.Render(state);
+            }
+            boards[1].Shoot(Point.Empty);var timeline=new ClassicVisualTimeline();
+            timeline.Spawn(catalog.Get(27),true,Point.Empty,1);
+            state.Effects=timeline;state.Tick=11;state.Phase=3;state.EnemyResult=0;state.Pointer=new Point(-10,-10);
+            scene.Render(state);return scene.Snapshot();
         }
     }
 }
