@@ -224,6 +224,8 @@ The latest private comparison follows 16 continuous controlled sessions from the
 
 That complete 16-session path also replays from the latest private research archive: restored analysis source builds, the independent comparisons pass, and 1,898 numerical/provenance files plus all 248 exported indexed surfaces and palettes repeat byte for byte. The temporary restore uses explicitly supplied original media and current assets/programs. This establishes archive reproducibility under the controlled boundaries above.
 
+Two follow-on paths, after a win and a loss, now reach a second Classic Fleet Configuration through the original menus. Across 154 additional controller ticks, independent models check the original reset/seed timing, all 42 initialization random values, complete ship/fleet records, fades, card lifetimes, inherited labels and text, and 120 full scenes. Both final Fleet images and draw queues agree with the maintained renderer; 16 focused evidence mutations are rejected. The source camera routine is restored when leaving the battle probe's controlled camera profile. A repeat capture agrees exactly. The second world and battle remain pending; this is reconstruction evidence with the same controlled device boundaries, and v0.49 remains the playable release.
+
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
 - `scripts/`: asset/program manifests and the import/extraction scripts needed by setup.
 - `Setup.ps1`, `Build.ps1`, `Launch.cmd`: setup, compilation and launch entry points.
