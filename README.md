@@ -9,6 +9,8 @@ A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (199
 
 Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs and original cursor resources from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
 
+The supplied RIP and disc installer contain different executable builds. The supported RIP `Bs.exe` is 397,824 bytes; the installer cabinet's `Bs.exe` is 401,408 bytes with SHA-256 `AFB5D842D4DF17D3957EA31560D07113AD61452AFD2F1E7A9DC232E2D2C874B4`. Their code and data layouts differ. The installer also contains a separate `BShip.Exe`. These builds are preserved as separate research inputs; setup and the current reconstruction evidence support only the pinned RIP build above.
+
 ## Build and launch
 
 Clone the repository, open PowerShell in its folder, and run:
