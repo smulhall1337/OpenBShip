@@ -30,6 +30,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 
 Close that build before rebuilding it. Settings are stored locally in `build\current\UserData\settings.txt`.
 
+Generated files belong in ignored `build/`. Only `build/current` is required to play. Preserve `build/current/UserData` when cleaning or moving the workspace: it holds your settings and saved battles. Old packaged builds and temporary verification workspaces are optional; they are not launch dependencies.
+
 `Launch.cmd` waits for a key if setup or required assets are missing. Other startup failures show an error dialog and write details to `build\current\UserData\last-error.txt`.
 
 The optional software comparison export uses the reconstructed original grid, cells, hull/smoke and HUD renderer:
