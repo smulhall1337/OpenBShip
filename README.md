@@ -1,13 +1,13 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.50.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.51.
 
 ## Requirements
 
 - Windows x64 with the .NET Framework 4.x compiler at `%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe`.
 - An extracted copy of the supported English game. The folder must contain `Bs.exe`, `GRAPHICS`, `LWEBS`, `HWEBS` and `SFX`.
 
-Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs and original cursor resources from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
+Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs, original cursor resources and five unit-data tables from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
 
 The supplied RIP and disc installer contain different executable builds. The supported RIP `Bs.exe` is 397,824 bytes; the installer cabinet's `Bs.exe` is 401,408 bytes with SHA-256 `AFB5D842D4DF17D3957EA31560D07113AD61452AFD2F1E7A9DC232E2D2C874B4`. Their code and data layouts differ. The installer also contains a separate `BShip.Exe`. These builds are preserved as separate research inputs; setup and the current reconstruction evidence support only the pinned RIP build above.
 
@@ -86,6 +86,8 @@ Restart asks for confirmation and restores the actual starting fleets, rule pres
 
 For faster debugging, enable **Options → Debug → Skip turn cinematics (debug)**. Both sides' shots resolve without loading turn videos, while preserving damage, turn order and random choices. You can change it during a battle; a paused shot resolves when you resume. The setting persists locally and defaults off. Intro videos, result sequences and the clip library remain available. Turn it off to restore normal turn playback.
 
+**Recovered maps** now exposes all seventeen grouped fleet records in the three imported maps. Select a map and fleet record, then choose a unit in its roster or schematic grid to inspect its hull length, hit points, source speed, equipment selections and ammunition. The maintained constructor matches complete original ship and fleet data across 42 captured contexts. Terrain and roster colors are schematic; world spawning and mission rules remain unfinished. Rerun Setup after updating to import the five unit-data tables. Older prepared folders show a clear Setup instruction when those tables are absent.
+
 To keep a duel between app sessions, use **Options → Save battle checkpoint** when it is your turn and all shot movies have finished. This supports Recovered Classic with any of the four original opponent settings. Saving pauses the game. **Load saved battle…** validates the file before asking to replace your current game, then restores it paused; press P or Resume to play. **Load previous checkpoint…** recovers the file retained before the most recent save.
 
 The modern checkpoint lives at `build\current\UserData\battle.obship`, with one `.bak` copy. It preserves the actual starting fleets, accepted shots, selected ship, difficulty, movie-turn mode and random-stream history. Replay validation rejects damaged or incompatible files without replacing the current game. Display/audio preferences stay as currently configured. Pending shots, finished battles and the prototype opponent/rules are unsupported. Original game save files are not compatible.
@@ -131,7 +133,7 @@ The original's default human roster name also appends across the observed second
 
 ## Validation and private research
 
-The packaged v0.50 passes 174 model/format groups and 116 real-form groups (290 total), 56 shutdown/lifecycle cases and silent Windows waveOut API checks. Dedicated checks exercise the actual Debug menu, persistence across three processes, cancellation of active silent output, pause and callback behavior. Twelve paired rounds across the four original opponent settings preserve the same logical state with and without turn playback. A complete debug duel then plays its result movie, returns through the menus, starts a second battle, resolves its first shot and restores normal cinematic playback.
+The packaged v0.51 passes 177 model/format groups and 117 real-form groups (294 total), 56 shutdown/lifecycle cases and silent Windows waveOut API checks. The new inspector selects all seventeen stock records without replacing the active battle. Dedicated checks exercise the actual Debug menu, persistence across three processes, cancellation of active silent output, pause and callback behavior. Twelve paired rounds across the four original opponent settings preserve the same logical state with and without turn playback. A complete debug duel then plays its result movie, returns through the menus, starts a second battle, resolves its first shot and restores normal cinematic playback.
 
 The current source-only Git export also passes public setup, compilation and a visible launch from a different working directory before any private fixtures are attached. Its Debug menu persistence and complete two-battle flow pass separately. Silent samples establish output API handling, not audible confirmation; automated form input does not establish physical controller behavior.
 

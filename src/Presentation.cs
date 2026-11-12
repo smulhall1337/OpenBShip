@@ -349,7 +349,7 @@ namespace FleetLab {
             foreach(var player in Scene.Groups)foreach(var group in player)records+=group.Count;
             using(var brush=new SolidBrush(Color.LightSteelBlue))using(var font=new Font("Segoe UI",10)) {
                 g.DrawString(Scene.Name+"  |  64 x 64  |  "+Scene.Players+" player records  |  "+embedded+" embedded / "+records+" grouped records",font,brush,16,Height-62);
-                g.DrawString("Decoded cell kinds; colors are schematic. Entity fields and mission behavior remain unresolved.",font,brush,16,Height-36);
+                g.DrawString("Schematic terrain; grouped fleets are inspectable. Mission behavior is not implemented.",font,brush,16,Height-36);
             }
         }
     }

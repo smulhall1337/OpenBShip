@@ -19,6 +19,12 @@ namespace FleetLab {
             }
             Require(rejected,"Malformed input was accepted");
         }
+        static void RejectArgument(Action action) {
+            bool rejected=false;
+            try { action(); }
+            catch(ArgumentOutOfRangeException) { rejected=true; }
+            Require(rejected,"Out-of-range argument was accepted");
+        }
         static void W16(byte[] b,int p,int value) {
             b[p]=(byte)value;
             b[p+1]=(byte)(value>>8);
@@ -239,6 +245,43 @@ namespace FleetLab {
                     var s=Scenario.Load(Path.Combine(assets,"Graphics",names[i]));
                     Require(s.TerrainBytes==expected[i]&&s.Players==2,"Scenario fixture offset "+names[i]);
                 }
+            });
+            check("Practice fleet constructor matches complete original ship and fleet pools",delegate {
+                var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
+                string[] maps={"BS201.SCN","BS202.SCN","BS204.SCN"};int[] owners={0,1,0};
+                string[] ships={"A27F5D7ADC2E3C12041E90641E689A96CEAA91A02F8F6E5D66B5249C26F8E425","7139E558709F95DE58AC4CFC118E71C91BFC93A06537DB1B21E12EBFA8783B48","DEE9ABC38D2FEAD06761CA892E57ED933A11711BFFFF51A54250086E01F24DF6"};
+                string[] fleets={"581BE9B1C99E560EBBF22CEBF19829B52115637A4AD4F0744F08C6C59D007404","17797B0CFBB4743E26B2B84A42817F5E3D12223CC8C688F23E8DE2D07A370DF2","40D9DF2DC4F4893CC96756278B3EDDDDB3E36393AF333F6F7D97EF95065A229D"};
+                for(int i=0;i<maps.Length;i++){
+                    var scene=Scenario.Load(Path.Combine(assets,"Graphics",maps[i]));
+                    var fleet=PracticeFleetSnapshot.Create(catalog,scene.Groups[owners[i]][0][0],owners[i],Point.Empty,0);
+                    // Source205 complete buffers, fixed zero origin, local UI excluded.
+                    Require(Hash(fleet.CopyShipPool())==ships[i]&&Hash(fleet.CopyFleetPool())==fleets[i],"Original full-pool fixture "+maps[i]);
+                    Require(Hash(fleet.CopyConsumedPayload())=="2D55A4878D242C44DE4302E4CEBA7152737B0716B115D97331861C332E249A1D","Original destructive marker fixture");
+                }
+            });
+            check("Practice source counter wrap and extra equipment preserve pool bytes",delegate {
+                var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
+                var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));
+                var wrapped=PracticeFleetSnapshot.Create(catalog,scene.Groups[0][0][0],3,new Point(34,12),uint.MaxValue);
+                Require(wrapped.NextCounter==0&&wrapped.CopyFleetRecord()[484]==255,"Original owner counter wrap/truncation");
+                Require(Hash(wrapped.CopyShipPool())=="A3133ED6A205FAAA217AD276A8216680B6E34FF8CF89486D6D972EA833E6F8E5"&&Hash(wrapped.CopyFleetPool())=="326655C690A49CBA614311B11212B32F10FBBD7EE53045EB27114A41FF21079F","Source205 wrapped full-pool fixture");
+                byte[] payload=new byte[400];for(int i=0;i<100;i++)payload[i*4]=1;payload[(2*10+3)*4]=27;
+                var extra=PracticeFleetSnapshot.Create(catalog,payload,0,Point.Empty,0);
+                Require(extra.Units.Count==1&&extra.Units[0].Type==14&&Hash(extra.CopyShipPool())=="E399BC1A9E6D3764A637F83C4A428593DBF13F898E5AFD09CBD509DF37593BDC","Source204 equipment39 full-pool fixture");
+            });
+            check("Practice unit records reject unsupported inputs and preserve owned data",delegate {
+                string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var catalog=PracticeUnitCatalog.Load(programs);
+                byte[] payload=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN")).Groups[0][0][0];string before=Hash(payload);
+                var fleet=PracticeFleetSnapshot.Create(catalog,payload,0,Point.Empty,0);Require(Hash(payload)==before,"Modified source fleet record");
+                byte[] copy=fleet.CopyShipPool();copy[0]^=1;Require(fleet.Units[0].Type==3,"Mutable snapshot pool");
+                copy=fleet.Units[0].CopyRecord();copy[0]^=1;Require(fleet.Units[0].Type==3,"Mutable unit record");
+                bool readonlyUnits=false;try{((IList<PracticeUnitRecord>)fleet.Units).Clear();}catch(NotSupportedException){readonlyUnits=true;}Require(readonlyUnits,"Mutable roster");
+                Reject(delegate{PracticeFleetSnapshot.Create(catalog,new byte[399],0,Point.Empty,0);});
+                RejectArgument(delegate{PracticeFleetSnapshot.Create(catalog,payload,4,Point.Empty,0);});
+                RejectArgument(delegate{PracticeFleetSnapshot.Create(catalog,payload,0,new Point(32768,0),0);});
+                copy=(byte[])payload.Clone();copy[0]=255;Reject(delegate{PracticeFleetSnapshot.Create(catalog,copy,0,Point.Empty,0);});
+                byte[][] tables={File.ReadAllBytes(Path.Combine(programs,"UnitTemplates.seqbin")),File.ReadAllBytes(Path.Combine(programs,"UnitAmmunition.seqbin")),File.ReadAllBytes(Path.Combine(programs,"UnitOffense.seqbin")),File.ReadAllBytes(Path.Combine(programs,"FleetColors.seqbin")),File.ReadAllBytes(Path.Combine(programs,"UnitMarkerMap.seqbin"))};
+                tables[0][0]^=1;Reject(delegate{PracticeUnitCatalog.Read(tables[0],tables[1],tables[2],tables[3],tables[4]);});
             });
             check("Classic grid matches the original whole-world software buffer",delegate {
                 var original=Assets.Pcx(Path.Combine(assets,"Graphics","E_CLASS.PCX"));

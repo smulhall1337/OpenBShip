@@ -13,6 +13,8 @@ namespace FleetLab {
         readonly BoardView board=new BoardView();
         Bitmap backdropForeground,legacyArt;ClassicHud hudImages;
         readonly MapView map=new MapView();
+        readonly PracticeFleetInspector practiceInspection;
+        readonly ComboBox mapSelect=new ComboBox();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
         readonly Stopwatch visualTime=Stopwatch.StartNew();
@@ -87,7 +89,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.50 — original Fleet screen";
+            Text="Battleship Fleet Lab 0.51 — recovered unit records";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -269,9 +271,8 @@ namespace FleetLab {
             // Hidden pause controls must keep their cell; automatic placement
             // otherwise shifts the fleet list into the shorter instruction row.
             for(int i=0;i<sidebar.Controls.Count;i++)sidebar.SetCellPosition(sidebar.Controls[i],new TableLayoutPanelCellPosition(0,i));
-            var mapSelect=new ComboBox {
-                DropDownStyle=ComboBoxStyle.DropDownList,Width=180
-            };
+            mapSelect.DropDownStyle=ComboBoxStyle.DropDownList;
+            mapSelect.Width=180;
             mapSelect.Items.AddRange(new object[] {
                 "BS201.SCN","BS202.SCN","BS204.SCN"
             });
@@ -283,11 +284,14 @@ namespace FleetLab {
                 Text="Read-only scenario inspection",AutoSize=true,Padding=new Padding(12,4,0,0)
             });
             map.Dock=DockStyle.Fill;
+            practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
             inspect.Controls.Add(map);
+            inspect.Controls.Add(practiceInspection);
             inspect.Controls.Add(mapHeader);
             mapSelect.SelectedIndexChanged+=delegate {
                 try {
                     map.Scene=Scenario.Load(Path.Combine(assets,"Graphics",mapSelect.SelectedItem.ToString()));
+                    practiceInspection.SetScenario(map.Scene);
                     map.Invalidate();
                 }
                 catch(Exception e) {
@@ -835,6 +839,24 @@ namespace FleetLab {
                 require(State.AdvanceOpponent(),"Save menu opponent fixture");while(State.Pending!=null)State.CompleteMovie(State.Pending,State.Pending.Stage);UpdateView();
                 saveBattle.PerformClick();saveBattle.PerformClick();require(loadPreviousBattle.Enabled&&State.Paused&&loadBattle.Enabled&&File.Exists(BattleCheckpointPath)&&Game.LoadBattle(BattleCheckpointPath).Turn==2,"Save menu did not create paused checkpoint");
                 tabs.SelectedIndex=1;UpdateView();require(!saveBattle.Enabled&&!loadBattle.Enabled&&!loadPreviousBattle.Enabled,"Off-duel checkpoint actions enabled");tabs.SelectedIndex=0;
+            });
+            check("Recovered fleet inspection exposes all records without replacing the active battle",delegate {
+                NewGame();auto.PerformClick();start.PerformClick();var previous=State;tabs.SelectedIndex=1;
+                int count=0;
+                for(int index=0;index<3;index++){
+                    mapSelect.SelectedIndex=index;Application.DoEvents();
+                    var scene=map.Scene;int expected=0;foreach(var player in scene.Groups)foreach(var group in player)expected+=group.Count;
+                    require(practiceInspection.RecordCount==expected,"Missing grouped fleet record");
+                    for(int record=0;record<expected;record++){
+                        practiceInspection.ChooseRecord(record);var snapshot=practiceInspection.CurrentFleet;
+                        require(snapshot!=null&&snapshot.Units.Count>0&&snapshot.Units.Count<=6,"Unsupported stock fleet record");
+                        foreach(var unit in snapshot.Units)require(unit.HitPoints==unit.Length&&snapshot.Occupancy(unit.X,unit.Y)==2,"Recovered unit/occupancy mismatch");
+                        require(State==previous,"Inspection replaced current battle");count++;
+                    }
+                }
+                require(count==17,"Expected17grouped records");Size=MinimumSize;PerformLayout();Application.DoEvents();
+                require(practiceInspection.Width>=300&&practiceInspection.Height>=260,"Inspection clipped at minimum size");
+                mapSelect.SelectedIndex=0;tabs.SelectedIndex=0;
             });
             check("Validated load restores paused battle from legacy mode without changing preferences",delegate {
                 Game restored=Game.LoadBattle(BattleCheckpointPath);rules.SelectedIndex=1;auto.PerformClick();start.PerformClick();Game previous=State;
