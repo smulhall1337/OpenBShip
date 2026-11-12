@@ -36,6 +36,7 @@ namespace FleetLab {
         bool validationFailMovieLoad; // Only --ui-check injects a failed loader; no user setting.
         readonly ToolStripMenuItem movies=new ToolStripMenuItem("Battle movies (experimental)");
         readonly ToolStripMenuItem highMovies=new ToolStripMenuItem("High-detail original movies (320×240)");
+        readonly ToolStripMenuItem skipTurnVideos=new ToolStripMenuItem("Skip turn cinematics (debug)");
         readonly ToolStripMenuItem restartBattle=new ToolStripMenuItem("Restart this battle...");
         readonly ToolStripMenuItem saveBattle=new ToolStripMenuItem("Save battle checkpoint"),loadBattle=new ToolStripMenuItem("Load saved battle..."),loadPreviousBattle=new ToolStripMenuItem("Load previous checkpoint...");
         readonly ComboBox rules=new ComboBox();
@@ -86,7 +87,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.49 — original Fleet screen";
+            Text="Battleship Fleet Lab 0.50 — original Fleet screen";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -132,6 +133,9 @@ namespace FleetLab {
             loadPreviousBattle.ToolTipText="Recover the checkpoint retained before the latest successful save.";
             loadPreviousBattle.Click+=delegate{RequestBattleCheckpoint(BattleCheckpointPath+".bak",true);};
             highMovies.Click+=delegate{SetMovieDetail(!preferences.HighMovies,true);};
+            var debug=new ToolStripMenuItem("Debug");debug.DropDownItems.Add(skipTurnVideos);displayMenu.Items.Add(new ToolStripSeparator());displayMenu.Items.Add(debug);
+            skipTurnVideos.ToolTipText="Resolve shots without turn videos. Intro, result sequences and the clip library stay available.";
+            skipTurnVideos.Click+=delegate{SetSkipTurnVideos(!preferences.SkipTurnVideos,true);};
             acceptedColors.Click+=delegate {SelectColors(false,true);};
             recoveredColors.Click+=delegate {SelectColors(true,true);};
             motion.Click+=delegate {preferences.Motion=!preferences.Motion;SavePreferences();UpdateDisplayChecks();};
@@ -362,6 +366,7 @@ namespace FleetLab {
             board.AnimateVisualEffects=preferences.Motion;board.SynchronizeVisualEffects();board.Invalidate();
             movies.Checked=State!=null&&State.Phase!=Phase.Placement?State.MovieTurns:preferences.MovieTurns;movies.Enabled=State!=null&&State.Rules.FixedY&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
             highMovies.Checked=preferences.HighMovies;highMovies.Enabled=State!=null&&(State.Phase==Phase.Placement||State.Phase==Phase.Finished);
+            skipTurnVideos.Checked=preferences.SkipTurnVideos;
         }
         void AdvanceBoardReveal(long milliseconds){
             var reveal=board.Reveal;if(reveal==null)return;
@@ -380,6 +385,22 @@ namespace FleetLab {
             if(previewMode)return;
             try{preferences.Save(settingsPath);preferences.Problem="";}
             catch(Exception e){preferences.Problem="Could not save settings: "+e.Message;}
+        }
+        void SetSkipTurnVideos(bool skip,bool persist){
+            preferences.SkipTurnVideos=skip;
+            if(persist)SavePreferences();
+            SuppressHeldControls();UpdateView();
+        }
+        void ResolveTurnWithoutVideos(){
+            if(!preferences.SkipTurnVideos||State==null||State.Paused||State.Pending==null)return;
+            PendingShot pending=State.Pending;
+            // Run the existing logical stages so shot results and random streams
+            // match normal playback. Resolve only this shot, never the next turn.
+            for(int stage=0;stage<3&&object.ReferenceEquals(State.Pending,pending);stage++)
+                if(!State.CompleteMovie(pending,pending.Stage))break;
+            if(object.ReferenceEquals(State.Pending,pending)){
+                State.Paused=true;State.Message="Could not finish this shot without its video. Turn the debug option off to resume.";
+            }
         }
         void SelectColors(bool recovered,bool persist) {
             try {
@@ -614,6 +635,7 @@ namespace FleetLab {
         }
         void UpdateView() {
             if(disposed)return;
+            ResolveTurnWithoutVideos();
             restartBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&State.CanRestartBattle;
             saveBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&State.CanSaveBattle;
             loadBattle.Enabled=tabs.SelectedIndex==0&&!board.Revealing&&File.Exists(BattleCheckpointPath);
@@ -639,7 +661,7 @@ namespace FleetLab {
             phase.Text=State.Paused?"Paused":placement?"Deploy your fleet":State.Phase==Phase.PlayerTurn?"Your turn / "+State.Turn:State.Phase==Phase.OpponentTurn?"Opponent's turn":"Battle complete";
             if(State.Pending!=null&&!State.Paused)phase.Text=(State.Pending.Opponent?"Opponent / ":"Your shot / ")+State.Pending.StageLabel;
             hint.Text=placement?(State.Rules.FixedY?"Click the lower-left board at each ship's center. Ships follow the original fixed axis. Or use Auto-place, then Start battle.":"Click the lower-left board to place ships. Rotate with R. Or choose Auto-place, then Start battle."):State.Rules.FixedY?"Select a firing ship below or click your ship. Fire on the upper-right board (arrows + Enter). One cell per shot. P pauses; F2 resets.":"Click the upper-right board to fire. Arrows + Enter also work. Each shot ends your turn. P pauses; F2 starts over.";
-            if(State.Pending!=null)hint.Text="Firing → travel → damage. Skip stage / Space advances once. P pauses; F2 resets. Movies stay behind the board.";
+            if(State.Pending!=null)hint.Text=preferences.SkipTurnVideos?"Turn cinematics are disabled. Resume to resolve this shot.":"Firing → travel → damage. Skip stage / Space advances once. P pauses; F2 resets. Movies stay behind the board.";
             else if(State.Phase==Phase.Finished)hint.Text="Watch result sequence (VICTORY/LOSE), or use New battle (F2).";
             else if(placement&&State.Rules.FixedY)hint.Text+=" Options offers optional battle movies.";
             if(showPauseActions)hint.Text="P or Escape resumes. End battle returns to title after confirmation.";
@@ -664,6 +686,15 @@ namespace FleetLab {
         }
         void SyncBattleMovie(){
             PendingShot pending=State.Pending;
+            if(preferences.SkipTurnVideos){
+                bool focused=battleMovie.ContainsFocus;
+                bool cancel=shownPending!=null||battleMovie.Visible;
+                shownPending=null;shownGame=null;battleFailure=false;
+                if(cancel)battleMovie.CancelPlayback();
+                battleMovie.Visible=false;battleField.RowStyles[1].Height=0;board.MovieFrame=null;board.Visible=true;
+                if(focused&&tabs.SelectedIndex==0)board.Focus();
+                return;
+            }
             if(pending==null){bool focused=battleMovie.ContainsFocus;if(shownPending!=null)battleMovie.CancelPlayback();battleMovie.Visible=false;battleField.RowStyles[1].Height=0;board.MovieFrame=null;board.Visible=true;if(focused&&tabs.SelectedIndex==0)board.Focus();shownPending=null;return;}
             bool boardFocused=board.ContainsFocus;board.Visible=true;
             battleField.RowStyles[1].Height=106;battleMovie.Visible=true;battleField.PerformLayout();
@@ -681,7 +712,7 @@ namespace FleetLab {
             if(boardFocused&&tabs.SelectedIndex==0)battleMovie.EndButton.Focus();
         }
         void SyncBackdropFrame(){
-            board.MovieFrame=State!=null&&State.Pending!=null&&!battleFailure&&object.ReferenceEquals(shownPending,State.Pending)?battleMovie.CurrentImage:null;board.Invalidate();
+            board.MovieFrame=!preferences.SkipTurnVideos&&State!=null&&State.Pending!=null&&!battleFailure&&object.ReferenceEquals(shownPending,State.Pending)?battleMovie.CurrentImage:null;board.Invalidate();
         }
         void CompleteBattleStage(){
             if(advancingBattle||loadingBattle||shownGame!=State||shownPending==null)return;
@@ -703,7 +734,7 @@ namespace FleetLab {
             ShowInTaskbar=false;
             StartPosition=FormStartPosition.Manual;
             Location=new Point(-20000,-20000);
-            preferences.MovieTurns=false;preferences.HighMovies=false;clip.SetDetail(false);battleMovie.SetDetail(false);seed=731; // Stable comparison scene; normal games still use a fresh seed.
+            preferences.MovieTurns=false;preferences.SkipTurnVideos=false;preferences.HighMovies=false;clip.SetDetail(false);battleMovie.SetDetail(false);seed=731; // Stable comparison scene; normal games still use a fresh seed.
             NewGame();
             if(mode=="navigation-title"||mode=="navigation"||mode=="navigation-small"||mode=="message"||mode=="message-small"||mode=="pause"||mode=="pause-small"){if(mode.EndsWith("small"))Size=MinimumSize;preferences.MovieTurns=true;seed=731;NewGame();State.AutoPlace();State.Start();State.SelectShooter(3);State.Fire(State.Enemy.Ships[0].Cells[0]);UpdateView();State.Paused=true;UpdateView();battleMovie.PreviewFrame(20);if(mode.StartsWith("navigation"))pauseActions.AskButton.PerformClick();}
             if(mode=="high"||mode=="high-small"){SetMovieDetail(true,false);mode=mode=="high"?"backdrop":"backdrop-small";}
@@ -783,7 +814,7 @@ namespace FleetLab {
             previewMode=true;sound.Enabled=false;clip.SetSound(false);battleMovie.SetSound(false);ending.SetSound(false);creditsPage.SetSound(false);startupPage.SetSound(false);if(archive!=null)archive.SetSound(false);
             preferences.FxVolume=100;preferences.Difficulty=recoveredOpponent=0;preferences.Radar=0;changingOpponent=true;opponent.SelectedIndex=0;changingOpponent=false;sound.SetLevel(100);clip.SetLevel(100);battleMovie.SetLevel(100);ending.SetLevel(100);
             // Keep diagnostics independent of saved user choices, without saving.
-            preferences.MovieTurns=false;SetMovieDetail(false,false);SelectColors(false,false);NewGame();
+            preferences.MovieTurns=false;preferences.SkipTurnVideos=false;SetMovieDetail(false,false);SelectColors(false,false);NewGame();
             ShowInTaskbar=false;
             StartPosition=FormStartPosition.Manual;
             Location=new Point(-20000,-20000);
@@ -1065,6 +1096,51 @@ namespace FleetLab {
                 down.Remove(Keys.Space);OnKey(this,new KeyEventArgs(Keys.Space));require(ship.Hits==1&&State.Pending.Stage==ShotStage.Feedback,"Travel did not apply one impact");
                 OnKey(this,new KeyEventArgs(Keys.Space));require(State.Pending.Stage==ShotStage.Feedback&&ship.Hits==1,"Held skip advanced feedback");
                 down.Remove(Keys.Space);OnKey(this,new KeyEventArgs(Keys.Space));require(State.Pending==null&&State.Phase==Phase.OpponentTurn&&!battleMovie.Visible,"Final handoff");
+            });
+            check("Debug video bypass preserves complete player/opponent histories without loading clips",delegate {
+                try{
+                    opponentTimer.Stop();rules.SelectedIndex=0;preferences.MovieTurns=true;SetSkipTurnVideos(true,false);validationFailMovieLoad=true;
+                    for(int level=0;level<4;level++){
+                        opponent.SelectedIndex=level;NewGame();auto.PerformClick();start.PerformClick();
+                        var reference=new Game(State.Seed,RuleProfile.Recovered,OpponentKind.Original,level,true);reference.AutoPlace();reference.Start();
+                        for(int turn=0;turn<3;turn++){
+                            Point target=turn==0?State.Enemy.Ships[0].Cells[0]:new Point(turn,9);
+                            require(State.Fire(target)&&reference.Fire(target),"Parallel bypass shot");
+                            while(reference.Pending!=null)require(reference.CompleteMovie(reference.Pending,reference.Pending.Stage),"Reference player completion");
+                            UpdateView();CompleteBattleStage();require(State.Pending==null&&!State.Paused&&State.Phase==Phase.OpponentTurn,"Bypass player handoff");
+                            require(State.AdvanceOpponent()&&reference.AdvanceOpponent(),"Parallel bypass opponent");
+                            while(reference.Pending!=null)require(reference.CompleteMovie(reference.Pending,reference.Pending.Stage),"Reference opponent completion");
+                            UpdateView();CompleteBattleStage();
+                            require(Convert.ToBase64String(State.SerializeBattle())==Convert.ToBase64String(reference.SerializeBattle()),"Bypass changed saved game or random streams");
+                            require(State.MovieTurns&&skipTurnVideos.Checked&&!battleMovie.Visible&&!battleMovie.AudioActive&&board.MovieFrame==null&&!board.CinematicBackdropActive&&!battleFailure,"Bypass loaded media or changed movie mode");
+                        }
+                    }
+                }finally{validationFailMovieLoad=false;SetSkipTurnVideos(false,false);}
+            });
+            check("Debug video bypass cancels each paused stage without damage or stale completion",delegate {
+                try{
+                    preferences.MovieTurns=true;opponent.SelectedIndex=0;
+                    for(int stage=0;stage<3;stage++){
+                        NewGame();auto.PerformClick();start.PerformClick();var game=State;Ship ship=State.Enemy.Ships[0];State.Fire(ship.Cells[0]);UpdateView();
+                        for(int n=0;n<stage;n++)battleMovie.EndButton.PerformClick();
+                        State.Paused=true;UpdateView();var pending=State.Pending;int hits=ship.Hits;
+                        SetSkipTurnVideos(true,false);CompleteBattleStage();PumpVisuals(80);
+                        require(State==game&&State.Pending==pending&&State.Paused&&ship.Hits==hits&&!battleMovie.Visible&&!battleMovie.AudioActive&&board.MovieFrame==null&&!board.CinematicBackdropActive,"Paused bypass changed shot or retained media");
+                        State.Paused=false;UpdateView();CompleteBattleStage();
+                        require(State==game&&State.Pending==null&&State.Phase==Phase.OpponentTurn&&ship.Hits==1,"Bypass applied impact more than once");
+                        SetSkipTurnVideos(false,false);require(!skipTurnVideos.Checked,"Bypass check not restored");
+                    }
+                }finally{SetSkipTurnVideos(false,false);}
+            });
+            check("Debug video bypass can restore a paused clip and leaves other media available",delegate {
+                try{
+                    preferences.MovieTurns=true;NewGame();auto.PerformClick();start.PerformClick();State.Fire(State.Enemy.Ships[0].Cells[0]);UpdateView();State.Paused=true;UpdateView();var game=State;var pending=State.Pending;
+                    SetSkipTurnVideos(true,false);SetSkipTurnVideos(false,false);
+                    require(State==game&&State.Pending==pending&&pending.Stage==ShotStage.Firing&&State.Paused&&battleMovie.Visible&&board.CinematicBackdropActive&&!battleMovie.Timeline.Playing,"Restore changed paused stage");
+                    State.Paused=false;UpdateView();require(battleMovie.Timeline.Playing,"Normal playback did not resume");
+                    SetSkipTurnVideos(true,false);require(State.Pending==null&&State.Phase==Phase.OpponentTurn,"Live bypass did not resolve shot");
+                    tabs.SelectedIndex=2;clip.Selector.SelectedIndex=0;require(clip.CurrentImage!=null&&clip.Timeline!=null,"Bypass disabled clip library");tabs.SelectedIndex=0;
+                }finally{SetSkipTurnVideos(false,false);}
             });
             check("Live last-frame completion and paused completion advance the right stage",delegate {
                 seed=941;NewGame();auto.PerformClick();start.PerformClick();Point target=State.Enemy.Ships[0].Cells[0];Ship ship=State.Enemy.Ships[0];State.Fire(target);UpdateView();

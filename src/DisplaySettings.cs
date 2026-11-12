@@ -4,7 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 namespace FleetLab {
     public sealed class DisplaySettings {
-        public bool Sound=true,RecoveredColors,Motion=true,MovieTurns,HighMovies;
+        public bool Sound=true,RecoveredColors,Motion=true,MovieTurns,HighMovies,SkipTurnVideos;
         // Existing settings had unity gain. Preserve that level on migration.
         public int FxVolume=100,Difficulty,Radar;
         public string Problem="";
@@ -22,10 +22,10 @@ namespace FleetLab {
                         if(value=="recovered"||value=="accepted")settings.RecoveredColors=value=="recovered";
                         else settings.Problem="Unknown color preference; using the current default.";
                     }
-                    else if(key.Equals("sound",StringComparison.OrdinalIgnoreCase)||key.Equals("motion",StringComparison.OrdinalIgnoreCase)||key.Equals("movies",StringComparison.OrdinalIgnoreCase)||key.Equals("highmovies",StringComparison.OrdinalIgnoreCase)) {
+                    else if(key.Equals("sound",StringComparison.OrdinalIgnoreCase)||key.Equals("motion",StringComparison.OrdinalIgnoreCase)||key.Equals("movies",StringComparison.OrdinalIgnoreCase)||key.Equals("highmovies",StringComparison.OrdinalIgnoreCase)||key.Equals("debugskipturnvideos",StringComparison.OrdinalIgnoreCase)) {
                         bool enabled;
                         if(!bool.TryParse(value,out enabled)) {settings.Problem="Invalid boolean setting; using the current default.";continue;}
-                        if(key.Equals("sound",StringComparison.OrdinalIgnoreCase))settings.Sound=enabled;else if(key.Equals("motion",StringComparison.OrdinalIgnoreCase))settings.Motion=enabled;else if(key.Equals("movies",StringComparison.OrdinalIgnoreCase))settings.MovieTurns=enabled;else settings.HighMovies=enabled;
+                        if(key.Equals("sound",StringComparison.OrdinalIgnoreCase))settings.Sound=enabled;else if(key.Equals("motion",StringComparison.OrdinalIgnoreCase))settings.Motion=enabled;else if(key.Equals("movies",StringComparison.OrdinalIgnoreCase))settings.MovieTurns=enabled;else if(key.Equals("highmovies",StringComparison.OrdinalIgnoreCase))settings.HighMovies=enabled;else settings.SkipTurnVideos=enabled;
                     }
                     else if(key.Equals("fxvolume",StringComparison.OrdinalIgnoreCase)||key.Equals("difficulty",StringComparison.OrdinalIgnoreCase)||key.Equals("radar",StringComparison.OrdinalIgnoreCase)){
                         int number,limit=key.Equals("fxvolume",StringComparison.OrdinalIgnoreCase)?100:key.Equals("difficulty",StringComparison.OrdinalIgnoreCase)?3:1;
@@ -49,6 +49,7 @@ namespace FleetLab {
             text.AppendLine("motion="+(Motion?"true":"false"));
             text.AppendLine("movies="+(MovieTurns?"true":"false"));
             text.AppendLine("highmovies="+(HighMovies?"true":"false"));
+            text.AppendLine("debugskipturnvideos="+(SkipTurnVideos?"true":"false"));
             text.AppendLine("fxvolume="+FxVolume.ToString(System.Globalization.CultureInfo.InvariantCulture));
             text.AppendLine("difficulty="+Difficulty.ToString(System.Globalization.CultureInfo.InvariantCulture));
             text.AppendLine("radar="+Radar.ToString(System.Globalization.CultureInfo.InvariantCulture));

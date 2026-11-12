@@ -763,6 +763,14 @@ namespace FleetLab {
                 var legacy=new Game(921,RuleProfile.Legacy,OpponentKind.Prototype,0,true);Require(!legacy.MovieTurns,"Prototype acquired movies");Require(!new Game(921).MovieTurns&&!DisplaySettings.Parse("sound=false\n").MovieTurns,"Existing default changed");
                 var config=DisplaySettings.Parse("movies=true\nsound=false\ncustom=kept\n");Require(config.MovieTurns&&!config.Sound&&DisplaySettings.Parse(config.Serialize()).MovieTurns&&config.Serialize().Contains("custom=kept"),"Movie preference compatibility");
             });
+            check("Debug turn-video preference defaults off and persists without changing other settings",delegate {
+                Require(!DisplaySettings.Parse("movies=true\nsound=false\n").SkipTurnVideos,"Existing settings skipped videos");
+                var config=DisplaySettings.Parse("debugskipturnvideos=true\nmovies=true\nhighmovies=true\nsound=false\ncustom=kept\n");
+                var again=DisplaySettings.Parse(config.Serialize());Require(again.SkipTurnVideos&&again.MovieTurns&&again.HighMovies&&!again.Sound&&again.Serialize().Contains("custom=kept"),"Debug preference round trip");
+                string path=Path.Combine(Path.GetTempPath(),"OpenBShip-debug-pref-"+Guid.NewGuid().ToString("N")+".txt");
+                try{config.Save(path);Require(DisplaySettings.Load(path).SkipTurnVideos,"Debug preference file round trip");config.SkipTurnVideos=false;config.Save(path);Require(!DisplaySettings.Load(path).SkipTurnVideos,"Debug preference disable not persisted");}finally{if(File.Exists(path))File.Delete(path);}
+                var invalid=DisplaySettings.Parse("debugskipturnvideos=invalid\n");Require(!invalid.SkipTurnVideos&&invalid.Problem.Length>0,"Invalid debug preference accepted");
+            });
             check("Cinematic and instant histories preserve targets, weapons, damage and turns",delegate {
                 for(int level=0;level<4;level++){var instant=new Game(925+level,RuleProfile.Recovered,OpponentKind.Original,level);var movie=new Game(925+level,RuleProfile.Recovered,OpponentKind.Original,level,true);instant.AutoPlace();movie.AutoPlace();instant.Start();movie.Start();
                     for(int turn=0;turn<15;turn++){Point target=new Point(turn/10,turn%10);Require(instant.Fire(target)&&movie.Fire(target),"Parallel player action");DrainMovies(movie);Require(instant.LastPlayerShot.Description==movie.LastPlayerShot.Description&&instant.LastPlayerFire.WeaponId==movie.LastPlayerFire.WeaponId&&instant.LastPlayerFire.MovieId==movie.LastPlayerFire.MovieId,"Player stream/damage changed");Require(instant.AdvanceOpponent()&&movie.AdvanceOpponent(),"Parallel opponent action");DrainMovies(movie);Require(instant.LastEnemyShot.Description==movie.LastEnemyShot.Description&&instant.LastEnemyFire.WeaponId==movie.LastEnemyFire.WeaponId&&instant.Phase==movie.Phase&&instant.Turn==movie.Turn,"Opponent history changed");}

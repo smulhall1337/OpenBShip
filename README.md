@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.49.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.50.
 
 ## Requirements
 
@@ -81,6 +81,8 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 | Options → Restart this battle… | Restore this battle's starting deployment |
 
 Restart asks for confirmation and restores the actual starting fleets, rule preset, opponent setting and random streams, including manually placed fleets and repeated shuffles. Repeating the same actions reproduces the same gameplay and movie choices. This snapshot lasts for the current battle while the app is open; display and audio preferences keep their current values.
+
+For faster debugging, enable **Options → Debug → Skip turn cinematics (debug)**. Both sides' shots resolve without loading turn videos, while preserving damage, turn order and random choices. You can change it during a battle; a paused shot resolves when you resume. The setting persists locally and defaults off. Intro videos, result sequences and the clip library remain available. Turn it off to restore normal turn playback.
 
 To keep a duel between app sessions, use **Options → Save battle checkpoint** when it is your turn and all shot movies have finished. This supports Recovered Classic with any of the four original opponent settings. Saving pauses the game. **Load saved battle…** validates the file before asking to replace your current game, then restores it paused; press P or Resume to play. **Load previous checkpoint…** recovers the file retained before the most recent save.
 
@@ -220,13 +222,15 @@ Fleet Configuration has a separate whole-viewport comparison against its origina
 
 ## Repository layout
 
-The latest private comparison follows 16 continuous controlled sessions from the initial menu through Fleet setup, a complete battle with original movies/effects/text, victory or defeat, and the returned Title → Solo → Practice → Back loop. Independent models check 299,056 battle scenes, 11,608 ending ticks and 2,288 returned-menu ticks, including inherited button, label and description-buffer history. Eleven focused changes to returned-menu evidence are rejected after an unchanged two-session fixture passes. These checks extend reconstruction evidence; the playable release remains v0.49. File, heap, numeric input, clock and audiovisual device boundaries are controlled. Original WinMain startup, a second battle in the same session and live device behavior remain unverified.
+The latest private comparison follows 16 continuous controlled sessions from the initial menu through Fleet setup, a complete battle with original movies/effects/text, victory or defeat, and the returned Title → Solo → Practice → Back loop. Independent models check 299,056 battle scenes, 11,608 ending ticks and 2,288 returned-menu ticks, including inherited button, label and description-buffer history. Eleven focused changes to returned-menu evidence are rejected after an unchanged two-session fixture passes. These checks extend reconstruction evidence; v0.50 adds the optional turn-video bypass described above. File, heap, numeric input, clock and audiovisual device boundaries are controlled. Original WinMain startup, a second battle in the same session and live device behavior remain unverified.
 
 That complete 16-session path also replays from the latest private research archive: restored analysis source builds, the independent comparisons pass, and 1,898 numerical/provenance files plus all 248 exported indexed surfaces and palettes repeat byte for byte. The temporary restore uses explicitly supplied original media and current assets/programs. This establishes archive reproducibility under the controlled boundaries above.
 
-Two follow-on paths, after a win and a loss, now reach a second Classic Fleet Configuration through the original menus. Across 154 additional controller ticks, independent models check the original reset/seed timing, all 42 initialization random values, complete ship/fleet records, fades, card lifetimes, inherited labels and text, and 120 full scenes. Both final Fleet images and draw queues agree with the maintained renderer; 16 focused evidence mutations are rejected. The source camera routine is restored when leaving the battle probe's controlled camera profile. A repeat capture agrees exactly. This is reconstruction evidence with the same controlled device boundaries, and v0.49 remains the playable release.
+Two follow-on paths, after a win and a loss, now reach a second Classic Fleet Configuration through the original menus. Across 154 additional controller ticks, independent models check the original reset/seed timing, all 42 initialization random values, complete ship/fleet records, fades, card lifetimes, inherited labels and text, and 120 full scenes. Both final Fleet images and draw queues agree with the maintained renderer; 16 focused evidence mutations are rejected. The source camera routine is restored when leaving the battle probe's controlled camera profile. A repeat capture agrees exactly. This is reconstruction evidence with the same controlled device boundaries.
 
 Four follow-on paths now continue through the second Fleet Start action and actual world startup, covering prior wins/losses at difficulty indices 0 and 3. Independent models check 140 loading/menu ticks, 132 world ticks, 2,496 complete resource-buffer states, 260 metadata records, AI initialization and retirement, roster bytes and complete world scenes. Source menu cleanup frees its 117 leases; source AI cleanup frees all 16,250 leases. Twenty-two changed evidence checks are rejected, and repeat captures agree. In this controlled path the original appends its default human name and scales the already carried AI weights again; both behaviors are recorded without imposing them on modern play. Second-game gameplay, a second ending, original WinMain and physical device behavior remain unverified.
+
+The attempted second battle currently retains a prior turn phase that prevents the controlled player-input path from proceeding. Its cause is unresolved: the original application lifecycle and a hands-on second battle have not established the missing transition. The probe stops at this gap without forcing the phase to a convenient value. This finding does not establish a bug in the original game and does not change modern gameplay.
 
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
 - `scripts/`: asset/program manifests and the import/extraction scripts needed by setup.
