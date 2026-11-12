@@ -220,6 +220,8 @@ Fleet Configuration has a separate whole-viewport comparison against its origina
 
 ## Repository layout
 
+The latest private comparison follows 16 continuous controlled sessions from the initial menu through Fleet setup, a complete battle with original movies/effects/text, victory or defeat, and the returned Title → Solo → Practice → Back loop. Independent models check 299,056 battle scenes, 11,608 ending ticks and 2,288 returned-menu ticks, including inherited button, label and description-buffer history. Eleven focused changes to returned-menu evidence are rejected after an unchanged two-session fixture passes. These checks extend reconstruction evidence; the playable release remains v0.49. File, heap, numeric input, clock and audiovisual device boundaries are controlled. Original WinMain startup, a second battle in the same session and live device behavior remain unverified.
+
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
 - `scripts/`: asset/program manifests and the import/extraction scripts needed by setup.
 - `Setup.ps1`, `Build.ps1`, `Launch.cmd`: setup, compilation and launch entry points.
