@@ -3,7 +3,7 @@ using System.IO;
 using System.Drawing;
 using System.Collections.Generic;
 namespace FleetLab {
-    // 25 Hz target from the native Classic loop's timeGetTime 40 ms limiter.
+    // Accepted modern 40 ms step (25 Hz); original outer-loop cadence is separate evidence.
     // Visual time is separate from game turns; pause/still/focus loss freeze it.
     public sealed class EffectClock {
         public long Tick {get;private set;}

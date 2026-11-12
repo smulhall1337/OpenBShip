@@ -115,8 +115,8 @@ namespace FleetLab {
             return colors;
         }
     }
-    // Modern explicit study-player lifecycle. Frame cadence comes from Classic's
-    // 40 ms loop; bounded catch-up, pause, stepping and reset are deliberate policy.
+    // Modern study-player lifecycle with an accepted fixed 40 ms default step.
+    // Original outer-loop cadence is separate; catch-up, pause and stepping are modern policy.
     public sealed class ClipTimeline {
         public readonly int Count,FrameMilliseconds;public int Frame {get;private set;}public bool Playing {get;private set;}public bool Completed {get;private set;}
         long remainder;

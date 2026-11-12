@@ -100,6 +100,8 @@ Miss rings and the five original sinking clips now appear when a Classic shot re
 
 Original intro replay, Credits, Quit, victory/defeat sequences and the movie archive are available. Cinematics play behind the board with the accepted 30% board-surface transparency. Campaigns, networking, tutorials, radar, controllers and the complete original lifecycle remain incomplete.
 
+Turn movies and damage effects retain the accepted modern 40 ms step. A read-only study of the supported original executable on the current compatibility setup measured about 50 main-loop counter increments per second: its 40 ms wait uses the previous iteration's clock value. This corrects an earlier 25 Hz inference; it does not establish a universal historical frame rate or audiovisual synchronization. Production pacing remains unchanged pending a fuller playback comparison.
+
 <details>
 <summary>Source comparisons and deliberate changes</summary>
 
