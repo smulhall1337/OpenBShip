@@ -86,7 +86,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.48 — original Practice screen";
+            Text="Battleship Fleet Lab 0.49 — original Fleet screen";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -474,7 +474,7 @@ namespace FleetLab {
         }
         void OpenSolo(){if(disposed)return;front.Pause();front.Visible=false;solo.Visible=true;solo.BringToFront();solo.Begin();SuppressHeldControls();}
         void OpenFleet(){if(disposed)return;int ai=rules.SelectedIndex==1?recoveredOpponent:opponent.SelectedIndex;var draft=new Game(seed,RuleProfile.Recovered,ai==4?OpponentKind.Prototype:OpponentKind.Original,ai<4?ai:0,preferences.MovieTurns);draft.AutoPlace();solo.Pause();solo.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Begin(draft);SuppressHeldControls();UpdateView();}
-        void OpenEntry(){if(disposed||entry.HasOpened||fleet.Draft==null||fleet.SelectedShip>=0)return;fleet.Pause();fleet.Visible=false;entry.Visible=true;entry.BringToFront();entry.Begin(fleet.CurrentImage);SuppressHeldControls();UpdateView();}
+        void OpenEntry(){if(disposed||entry.HasOpened||fleet.Draft==null||fleet.SelectedShip>=0)return;entry.Begin(fleet.CurrentImage);fleet.Pause();fleet.Visible=false;entry.Visible=true;entry.BringToFront();entry.Canvas.Focus();SuppressHeldControls();UpdateView();}
         void CommitFleet(){if(disposed||fleet.Draft==null||fleet.SelectedShip>=0)return;var heldKeys=new Keys[down.Count];down.CopyTo(heldKeys);Game accepted=fleet.Draft;if(rules.SelectedIndex!=0)rules.SelectedIndex=0;else NewGame();State=accepted;board.Game=State;if(!State.Start())throw new InvalidOperationException("Fleet commit failed");board.KeyboardCell=new Point(0,0);board.Reveal=new BoardRevealTimeline();visualLast=visualTime.ElapsedMilliseconds;UpdateView();board.Focus();SuppressHeldControls();foreach(Keys key in heldKeys)down.Add(key);}
         void ClearBattlePresentation() {
             board.Reveal=null;
@@ -1256,6 +1256,15 @@ namespace FleetLab {
             check("Solo focus/tab pause, minimum layout and F2 release setup images",delegate {
                 solo.Begin();PumpVisuals(100);typeof(Form).GetMethod("OnDeactivate",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(this,new object[]{EventArgs.Empty});int factor=solo.Factor;PumpVisuals(90);require(solo.Factor==factor&&!solo.Revealing,"Solo focus pause");solo.FadeButton.PerformClick();PumpVisuals(650);require(solo.Factor==64,"Solo explicit resume");tabs.SelectedIndex=0;tabs.SelectedIndex=4;require(solo.Visible&&solo.State.Type==1,"Tab return lost setup");Size=MinimumSize;PerformLayout();Application.DoEvents();foreach(var b in new[]{solo.BackButton,solo.FadeButton})require(b.Right<=b.Parent.ClientSize.Width,"Solo toolbar clipped");Bitmap old=solo.CurrentImage;down.Remove(Keys.F2);OnKey(this,new KeyEventArgs(Keys.F2));bool released=false;try{int width=old.Width;}catch(ArgumentException){released=true;}require(released&&solo.CurrentImage==null&&!solo.HasOpened&&!solo.Visible&&tabs.SelectedIndex==0,"F2 retained Solo bitmap/state");
             });
+            check("Fleet original hover footer follows real control events",delegate {
+                NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var renderer=new ClassicFleetScene(assets);var bounds=fleet.Canvas.Bounds4x3;require(bounds.Width>0,"Fleet viewport");
+                foreach(int index in new[]{2,3}){var button=fleet.Program.Buttons[index];int x=(int)(bounds.X+(button.X+button.Bounds.Width/2)*bounds.Width/640),y=(int)(bounds.Y+(button.Y+button.Bounds.Height/2)*bounds.Height/480);fleet.Canvas.GetType().GetMethod("OnMouseMove",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(fleet.Canvas,new object[]{new MouseEventArgs(MouseButtons.None,0,x,y,0)});require(fleet.HoveredIndex==index&&!entry.Visible,"Hover activated or missed its button");using(var expected=renderer.Compose(fleet.Draft.Player,index).Bitmap())require(BitmapRegionFingerprint(fleet.CurrentImage,new Rectangle(0,420,640,60))==BitmapRegionFingerprint(expected,new Rectangle(0,420,640,60)),"Production footer differs from native software scene");}
+                fleet.Canvas.GetType().GetMethod("OnMouseLeave",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(fleet.Canvas,new object[]{EventArgs.Empty});require(fleet.HoveredIndex==-1,"Mouse leave retained hover");fleet.Hover(2);fleet.Pause();require(fleet.HoveredIndex==-1,"Focus pause retained hover");
+            });
+            check("Fleet matching release and pause suppress accidental Start",delegate {
+                NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);var canvas=fleet.Canvas;var bounds=canvas.Bounds4x3;var button=fleet.Program.Buttons[2];int x=(int)(bounds.X+(button.X+button.Bounds.Width/2)*bounds.Width/640),y=(int)(bounds.Y+(button.Y+button.Bounds.Height/2)*bounds.Height/480);Action<string,int,int> mouse=delegate(string name,int px,int py){canvas.GetType().GetMethod(name,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(canvas,new object[]{new MouseEventArgs(MouseButtons.Left,1,px,py,0)});};
+                mouse("OnMouseDown",x,y);mouse("OnMouseUp",-1,-1);require(!entry.Visible&&fleet.Visible,"Mismatched release started battle");mouse("OnMouseDown",x,y);fleet.Pause();mouse("OnMouseUp",x,y);require(!entry.Visible&&fleet.Visible,"Release after pause started battle");var ship=fleet.Draft.Player.Ships[0];fleet.Cell(ship.Cells[ship.Cells.Count/2]);fleet.Hover(2);require(fleet.SelectedShip>=0&&fleet.HoveredIndex==-1,"Held preview showed Start hover");mouse("OnMouseDown",x,y);mouse("OnMouseUp",x,y);require(!entry.Visible&&fleet.Visible,"Held preview started battle");fleet.Key(Keys.Escape);fleet.Hover(2);string footer=BitmapRegionFingerprint(fleet.CurrentImage,new Rectangle(0,420,640,60));mouse("OnMouseDown",x,y);mouse("OnMouseUp",x,y);require(entry.Visible&&!fleet.Visible&&entry.HasFleetSnapshot,"Matched Start did not enter loading transition");entry.Pause();require(BitmapRegionFingerprint(entry.CurrentImage,new Rectangle(0,420,640,60))==footer,"Starting cleared hover before capturing the visible fleet");
+            });
             check("Fleet overview retains previews and follows committed moves",delegate {
                 NewGame();tabs.SelectedIndex=4;OpenSolo();solo.FinishReveal();solo.Activate(6);solo.Activate(10);
                 var draft=fleet.Draft;string before=FleetOverviewFingerprint(fleet.CurrentImage);var ship=draft.Player.Ships[0];Point original=ship.Cells[0];
@@ -1457,7 +1466,10 @@ namespace FleetLab {
             while(watch.ElapsedMilliseconds<milliseconds){Application.DoEvents();System.Threading.Thread.Sleep(1);}
         }
         static string FleetOverviewFingerprint(Bitmap image) {
-            var region=new Rectangle(0,112,104,74);var data=image.LockBits(region,System.Drawing.Imaging.ImageLockMode.ReadOnly,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            return BitmapRegionFingerprint(image,new Rectangle(0,112,104,74));
+        }
+        static string BitmapRegionFingerprint(Bitmap image,Rectangle region) {
+            var data=image.LockBits(region,System.Drawing.Imaging.ImageLockMode.ReadOnly,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             try {
                 var bytes=new byte[region.Width*region.Height*4];for(int y=0;y<region.Height;y++)System.Runtime.InteropServices.Marshal.Copy(IntPtr.Add(data.Scan0,y*data.Stride),bytes,y*region.Width*4,region.Width*4);
                 using(var hash=System.Security.Cryptography.SHA256.Create())return BitConverter.ToString(hash.ComputeHash(bytes));

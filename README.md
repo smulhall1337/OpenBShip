@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.48.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.49.
 
 ## Requirements
 
@@ -59,6 +59,14 @@ This static 640×480 comparison uses the original card, selected options, descri
 
 Use `--render-software-practice-scroll-preview` with an output PNG argument to inspect page 2 of a longer original description and its 2/3 counter. This explicit comparison uses description 14; normal Practice selections keep their original descriptions. The screen also exposes its current description as accessible text.
 
+The Fleet Configuration software comparison exports use the same renderer as the playable setup screen:
+
+```powershell
+Start-Process .\build\current\BattleshipLab.exe -ArgumentList '--render-software-fleet-preview', '.\build\fleet-preview.png' -Wait
+```
+
+Use `--render-software-fleet-hover-preview` with an output PNG argument for its original Start Game hover sprite. The fixed seed-0 comparison includes the original main grid, miniature fleet, selection border, inactive slots, full-size hulls and disabled Classic purchase overlay. Original code and the maintained renderer agree across all 70 recorded layouts in normal, Start-hover and Back-hover states. A separate 808-poll study checks the source hit boundaries and full scenes. The playable control retains the modern gold cursor, atomic placement previews, keyboard support and matched-release activation.
+
 ## Playing
 
 Use **Auto-place → Start battle**, or **Original menu → Solo → Classic → Start Game → Fleet Configuration → Start Game**.
@@ -78,7 +86,7 @@ To keep a duel between app sessions, use **Options → Save battle checkpoint** 
 
 The modern checkpoint lives at `build\current\UserData\battle.obship`, with one `.bak` copy. It preserves the actual starting fleets, accepted shots, selected ship, difficulty, movie-turn mode and random-stream history. Replay validation rejects damaged or incompatible files without replacing the current game. Display/audio preferences stay as currently configured. Pending shots, finished battles and the prototype opponent/rules are unsupported. Original game save files are not compatible.
 
-Fleet Configuration now fills the Fleet Select overview with original miniature ships, grid, selection border and inactive-slot art. It follows committed moves and shuffles. A selected ship stays visible during a placement preview, and Escape cancels that preview. Starting the battle fades that completed fleet scene to black, shows the loading card, fades the card out and reveals the battle board. Pause and Return to fleet remain available until the board appears. Targeting unlocks after its reveal; focus or tab loss pauses the transition, and P resumes. These phases use the original 17 exit and 14 entry factors. The 40 ms cadence and RGB scene dimming are explicit modern presentation choices.
+Fleet Configuration now shares its complete original software scene with the comparison export: main grid, miniature ships, selection border, inactive-slot art, full-size hulls and disabled Classic controls. Start Game and Back display their original hover sprites. It follows committed moves and shuffles. A selected ship stays visible during a placement preview, and Escape cancels that preview. Starting the battle fades that completed fleet scene to black, shows the loading card, fades the card out and reveals the battle board. Pause and Return to fleet remain available until the board appears. Targeting unlocks after its reveal; focus or tab loss pauses the transition, and P resumes. These phases use the original 17 exit and 14 entry factors. The 40 ms cadence and RGB scene dimming are explicit modern presentation choices.
 
 The Classic board uses the original targeting and hand cursor art. Untried enemy cells show a target, selectable friendly ships show a hand, and a shot or opponent turn shows a wait cursor over the board. Pause, resolved cells and finished battles use the arrow. These hover rules are an intentional usability policy; the shapes and target/wait transitions come from the original resources and code. Older prepared folders fall back to system cursors; rerun Setup to extract the original shapes.
 
@@ -162,7 +170,7 @@ The natural chain also executes the Solo entry callback, loads its card, applies
 
 The original Practice-description formatter is separately checked with all 21 source descriptions and nine text/row boundary fixtures under two initial memory patterns. An independent model matches all 60 complete 48×33-byte output tables, including stale tails, the exact 33-character boundary and circular overwrite behavior. Four record/provenance files repeat; eight changed captures are rejected. This establishes formatting only. Original glyph drawing and prepared Practice scenes are checked separately below; physical input and the full interpreter remain separate work; a long unbroken wrapping window is unsupported and must fail clearly.
 
-The current build includes maintained description, sprite-font and prepared Practice renderers with diagnostic exports. Formatting matches all 60 native tables and preserves caller data. Glyph composition matches 90 complete surfaces/cursor cases across six styles; Practice composition matches 150 complete prepared scenes across game types, player counts, pages and hover states. Original button installation, polling, wrapping, glyph rasterization and queue flushing execute in the native comparison. The background card, pointer/page state and successful media check are supplied; live clicks, paging and full Practice interpreter execution remain pending. The public diagnostics embed native table and scene hashes. Packaged validation passes 171 model/format and 111 form groups, plus 56 lifecycle cases with no unhandled UI exception. Current and retained launchers open visible windows and exit cleanly; title pixels and accepted settings remain intact. The audio API check submits silence and does not establish audible playback.
+The current build includes maintained description, sprite-font and prepared Practice renderers with diagnostic exports. Formatting matches all 60 native tables and preserves caller data. Glyph composition matches 90 complete surfaces/cursor cases across six styles; Practice composition matches 150 complete prepared scenes across game types, player counts, pages and hover states. Original button installation, polling, wrapping, glyph rasterization and queue flushing execute in the native comparison. The background card, pointer/page state and successful media check are supplied; live clicks, paging and full Practice interpreter execution remain pending. The public diagnostics embed native table and scene hashes. Packaged validation passes 173 model/format and 113 form groups, plus 56 lifecycle cases with no unhandled UI exception. Current and retained launchers open visible windows and exit cleanly; title pixels and accepted settings remain intact. The audio API check submits silence and does not establish audible playback.
 
 A separate prepared-session study executes the original Practice interpreter through nine continuous trajectories and 414 complete states. An independent controller and composition model checks pressed/held clicks, player limits, description history, labels, callback results, pixels and commands; 138 normal-description frames also match the maintained renderer. The four normal descriptions fit on one page. Explicit overrides to a copied runtime pointer table select two longer original descriptions to exercise two- and three-page counters and scroll boundaries. The pointer is restored before resource and cleanup checks; original assets remain intact. Fifteen changed records are rejected. These prepared sessions use supplied numeric input and a prepared card callback.
 
