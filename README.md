@@ -236,6 +236,8 @@ The attempted second battle retains a prior turn phase that prevents the control
 
 The v0.50 debug option also passes a complete modern duel, result-movie playback, title-to-Fleet-to-second-battle flow and its first shot. Turning the option off restores an opponent cinematic in that second battle. Modern play keeps its fresh battle state rather than reproducing the reference's carried phase.
 
+The recent private research archive has also been restored into a fresh folder. Its native and independent comparison source rebuilds, all four second-world paths pass, and 556 numerical/provenance files plus 112 selected surface, palette and AI exports repeat exactly. The verified prior archive supplies earlier ending fixtures; original media and runtime assets remain explicit external inputs. Superseded captures and the temporary replay folder are removed only after this verification.
+
 - `src/`: current maintainable C# source, including the in-source diagnostic routines.
 - `scripts/`: asset/program manifests and the import/extraction scripts needed by setup.
 - `Setup.ps1`, `Build.ps1`, `Launch.cmd`: setup, compilation and launch entry points.
