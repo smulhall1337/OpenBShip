@@ -75,8 +75,14 @@ namespace FleetLab {
                 throw new InvalidDataException("Timed depletion requires the complete unit-order pool.");
             return CreateCore(weapon, sourceShip, targetFleet, offsetX, offsetY, gameMilliseconds, units, orderPool);
         }
-        PracticeTimedCreationUpdate CreateCore(int weapon, int sourceShip, int targetFleet,
+        // Only the separately verified416570 adapter admits raw signed stock.
+        // Existing public single-object constructors retain their boundary.
+        internal PracticeTimedCreationUpdate CreateLaunchObject(int weapon, int sourceShip, int targetFleet,
                 int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool) {
+            return CreateCore(weapon,sourceShip,targetFleet,offsetX,offsetY,gameMilliseconds,units,orderPool,true);
+        }
+        PracticeTimedCreationUpdate CreateCore(int weapon, int sourceShip, int targetFleet,
+                int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool, bool allowSignedStock = false) {
             int speed = catalog.SourceSpeed(weapon);
             if (sourceShip < 0 || sourceShip >= 1500) throw new ArgumentOutOfRangeException("sourceShip");
             if (targetFleet < 0 || targetFleet >= 250) throw new ArgumentOutOfRangeException("targetFleet");
@@ -86,7 +92,7 @@ namespace FleetLab {
             if (slot == 80) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.PoolFull, -1, orderPool);
             int source = sourceShip * 268, ammoAt = source + 196 + weapon * 2, ammo = Short(ships, ammoAt);
             if (ammo == 0) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.NoAmmunition, -1, orderPool);
-            if (ammo == 1 && units == null || ammo < -1)
+            if (ammo == 1 && units == null || ammo < -1 && !allowSignedStock)
                 throw new NotSupportedException("Timed-weapon depletion callbacks and negative ammo variants are not reconstructed.");
             int parent = Short(ships, source + 12);
             if (parent < 0 || parent >= 250 || Short(ships, source + 4) != sourceShip || Short(fleets, targetFleet * 492 + 4) != targetFleet)
