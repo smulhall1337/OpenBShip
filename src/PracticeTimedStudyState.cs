@@ -11,6 +11,8 @@ namespace FleetLab {
         readonly PracticeTimedWeaponCatalog catalog;
         readonly PracticeUnitCatalog units;
         readonly byte[] visuals;
+        readonly PracticeDefenseTables impactTables;
+        byte[] scoreRegion;
         PracticeVisualPool effects;
         public PracticeTimedCreationState Objects { get; private set; }
         public OriginalPauseTimers PauseTimers { get; private set; }
@@ -25,6 +27,16 @@ namespace FleetLab {
         public int ExpiredObjects { get; private set; }
         public int DroppedEffects { get; private set; }
         public int RandomCalls { get; private set; }
+        public int ExpiryCallbacks { get; private set; }
+        public PracticeImpactOutcome? LastImpactOutcome { get; private set; }
+        public int LastVictimShip { get; private set; }
+        public int LastImpactPoints { get; private set; }
+        public int LastScatterAttempts { get; private set; }
+        public bool IncludesShipImpacts { get { return impactTables != null; } }
+        public byte[] CopyScoreRegion() {
+            if(scoreRegion==null)throw new InvalidOperationException("This study does not include ship-impact scores.");
+            return (byte[])scoreRegion.Clone();
+        }
         public int ActiveEffects { get { return effects == null ? 0 : effects.Count; } }
         public byte[] CopyEffectPool() {
             if (effects == null) throw new InvalidOperationException("This study does not include visual records.");
@@ -38,7 +50,7 @@ namespace FleetLab {
             for (int i = 0; i < 1500; i++) BitConverter.GetBytes((short)-1).CopyTo(timerShips, i * 52 + 8);
             for (int i = 0; i < timestamps.Length; i++) timestamps[i] = 255;
             PauseTimers = new OriginalPauseTimers(Objects.CopyTimedPool(), timerShips, new byte[16], timestamps, 0);
-            ClockMilliseconds = initialClock; LastStoppedAtRecord = LastCreatedSlot = -1;
+            ClockMilliseconds = initialClock; LastStoppedAtRecord = LastCreatedSlot = LastVictimShip = -1;
         }
         // Opt-in composition of verified data branches. The old constructor
         // remains the bounded future-only comparison baseline. Supplying a
@@ -51,10 +63,18 @@ namespace FleetLab {
             effects = PracticeVisualPool.Empty(visualRecords);
             units = unitCatalog; visuals = (byte[])visualRecords.Clone(); RandomState = randomState;
         }
+        public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons, PracticeUnitCatalog unitCatalog,
+                byte[] visualRecords, byte[] ships, byte[] fleets, uint initialClock, uint randomState,
+                PracticeDefenseTables sourceTables) : this(weapons,unitCatalog,visualRecords,ships,fleets,initialClock,randomState) {
+            if(sourceTables==null)throw new ArgumentNullException("sourceTables");
+            impactTables=sourceTables;scoreRegion=new byte[176];BitConverter.GetBytes((short)-2).CopyTo(scoreRegion,172);
+        }
         PracticeTimedStudyState(PracticeTimedStudyState before, PracticeTimedCreationState objects,
                                 OriginalPauseTimers timers, uint clock) {
             catalog = before.catalog; Objects = objects; PauseTimers = timers; ClockMilliseconds = clock;
             units = before.units; visuals = before.visuals; effects = before.effects;
+            impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
+            LastImpactOutcome=before.LastImpactOutcome;LastVictimShip=before.LastVictimShip;LastImpactPoints=before.LastImpactPoints;LastScatterAttempts=before.LastScatterAttempts;
             RandomState = before.RandomState; ExpiredObjects = before.ExpiredObjects;
             DroppedEffects = before.DroppedEffects; RandomCalls = before.RandomCalls;
             MovementFrames = before.MovementFrames; PausedFrames = before.PausedFrames;
@@ -82,6 +102,16 @@ namespace FleetLab {
                 var next = new PracticeTimedStudyState(this, objects, timers, nextClock);
                 next.PausedFrames++; return next;
             }
+            if(IncludesShipImpacts) {
+                var update=new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState).Advance(nextClock,StepMilliseconds);
+                var nextEffects=new PracticeVisualPool(update.State.CopyEffectPool(),visuals).Advance();
+                var updatedObjects=new PracticeTimedCreationState(catalog,update.State.CopyTimedPool(),update.State.CopyShipPool(),update.State.CopyFleetPool(),Objects.LastTargetFleet);
+                var next=new PracticeTimedStudyState(this,updatedObjects,WithTimedPool(update.State.CopyTimedPool()),nextClock);
+                next.effects=nextEffects;next.scoreRegion=update.State.CopyScoreRegion();next.RandomState=update.State.RandomState;
+                next.ExpiredObjects+=update.RetiredRecords;next.ExpiryCallbacks+=update.ExpiryCallbacks;next.DroppedEffects+=update.DroppedEffects;next.RandomCalls+=update.RandomCalls;
+                if(update.LastImpactOutcome.HasValue){next.LastImpactOutcome=update.LastImpactOutcome;next.LastVictimShip=update.LastVictimShip;next.LastImpactPoints=update.LastPoints;next.LastScatterAttempts=update.LastScatterAttempts;}
+                next.MovementFrames++;next.LastStoppedAtRecord=update.StoppedAtRecord;return next;
+            }
             if (IncludesDataExpiry) {
                 var update = new PracticeTimedExpiryState(Objects.CopyTimedPool(), Objects.CopyFleetPool(), effects.CopyEffectPool(), visuals, RandomState)
                     .Advance(nextClock, StepMilliseconds);
@@ -93,6 +123,7 @@ namespace FleetLab {
                 var next = new PracticeTimedStudyState(this, updatedObjects, WithTimedPool(update.State.CopyTimedPool()), nextClock);
                 next.effects = nextEffects; next.RandomState = update.State.RandomState;
                 next.ExpiredObjects += update.ExpiredRecords; next.DroppedEffects += update.DroppedEffects; next.RandomCalls += update.RandomCalls;
+                next.ExpiryCallbacks+=update.ExpiredRecords;
                 next.MovementFrames++; next.LastStoppedAtRecord = update.StoppedAtRecord; return next;
             }
             var motion = new PracticeTimedMotionState(Objects.CopyTimedPool(), Objects.CopyFleetPool()).Advance(nextClock, StepMilliseconds);
