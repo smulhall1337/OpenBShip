@@ -10,6 +10,6 @@ foreach($process in @(Get-Process -Name BattleshipLab -ErrorAction SilentlyConti
 $sources=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -File -Filter '*.cs' | Sort-Object Name | ForEach-Object {$_.FullName})
 if(!$sources.Count){throw 'No C# source files found in src.'}
 New-Item -ItemType Directory -Path $output -Force | Out-Null
-& $compiler /nologo /target:winexe /platform:x64 /optimize+ /debug:pdbonly /main:FleetLab.Program /r:System.Drawing.dll /r:System.Windows.Forms.dll "/out:$executable" @sources
+& $compiler /nologo /target:winexe /platform:x64 /optimize+ /debug:pdbonly /main:FleetLab.Program /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Numerics.dll "/out:$executable" @sources
 if($LASTEXITCODE -ne 0){throw 'Build failed.'}
 "Built $executable"

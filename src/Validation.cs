@@ -115,6 +115,27 @@ namespace FleetLab {
                 t[0]=0;f[4*492+483]=0;timed[0]=0;fleets[0]=13;Require(result.State.CopyTimedPool()[0]==14&&result.State.CopyFleetPool()[4*492+483]==1&&initial.CopyTimedPool()[0]==14&&initial.CopyFleetPool()[0]==0,"Timed buffer ownership");
                 var idle=new PracticeTimedMotionState(new byte[PracticeTimedMotionState.TimedBytes],fleets).Advance(0,0);Require(idle.InterpolatedRecords==0&&idle.StoppedAtRecord==-1,"Empty timed pool should not divide");
             });
+            check("Timed creation imports source speed table and preserves ammunition, identity and duration order",delegate {
+                string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");byte[] table=File.ReadAllBytes(Path.Combine(programs,"TimedWeaponSpeed.seqbin"));var catalog=new PracticeTimedWeaponCatalog(table);
+                Require(catalog.SourceSpeed(14)==20&&catalog.SourceSpeed(17)==40&&catalog.SourceSpeed(26)==22,"Original timed speed words");table[28]=0;Require(catalog.SourceSpeed(14)==20,"Weapon table aliases input");Reject(delegate{new PracticeTimedWeaponCatalog(table);});Reject(delegate{new PracticeTimedWeaponCatalog(new byte[1]);});RejectArgument(delegate{catalog.SourceSpeed(13);});RejectArgument(delegate{catalog.SourceSpeed(31);});
+                var ships=new byte[402000];var fleets=new byte[123000];for(int i=0;i<250;i++)W16(fleets,i*492+4,i);W16(ships,8,7);W16(ships,10,9);W16(ships,196+14*2,2);W16(fleets,12,300);W16(fleets,14,200);W16(fleets,492+12,100);W16(fleets,492+14,100);ships[267]=93;
+                var before=new PracticeTimedCreationState(catalog,new byte[21440],ships,fleets,-1);string saved=Hash(ships);var update=before.Create(14,0,1,0,0,100);byte[] t=update.State.CopyTimedPool();
+                Require(update.Outcome==PracticeTimedCreationOutcome.Created&&update.CreatedSlot==0&&update.State.LastTargetFleet==1&&BitConverter.ToInt16(t,8)==307&&BitConverter.ToInt16(t,10)==209&&BitConverter.ToInt16(t,12)==1&&BitConverter.ToInt16(t,196+14*2)==1&&t[267]==93,"Created record copy/ammo/world identity");
+                Require(BitConverter.ToUInt32(t,24)==23400&&BitConverter.ToUInt32(t,28)==0x4B498Cu,"Truncated distance before scale or target token");
+                var precision=before.Create(14,0,1,122,-95,100);Require(BitConverter.ToUInt32(precision.State.CopyTimedPool(),24)==22100,"Constructor lost original CRT distance precision");
+                Require(saved==Hash(before.CopyShipPool())&&before.LastTargetFleet==-1,"Creation changed input");
+                string after=Hash(update.State.CopyShipPool());bool depleted=false;try{update.State.Create(14,0,1,0,0,100);}catch(NotSupportedException){depleted=true;}Require(depleted&&after==Hash(update.State.CopyShipPool()),"Depletion callback silently skipped");
+                W16(ships,196+14*2,0);var empty=new PracticeTimedCreationState(catalog,new byte[21440],ships,fleets,7);var noAmmo=empty.Create(14,0,1,0,0,100);Require(noAmmo.Outcome==PracticeTimedCreationOutcome.NoAmmunition&&noAmmo.CreatedSlot==-1&&noAmmo.State.LastTargetFleet==7&&Object.ReferenceEquals(empty,noAmmo.State),"Empty ammo changed target state");
+                W16(ships,196+14*2,-1);var infinite=new PracticeTimedCreationState(catalog,new byte[21440],ships,fleets,-1).Create(14,0,1,207,109,uint.MaxValue);Require(BitConverter.ToInt16(infinite.State.CopyShipPool(),196+14*2)==-1&&BitConverter.ToUInt32(infinite.State.CopyTimedPool(),24)==uint.MaxValue,"Infinite ammo/zero-distance clock");
+                var full=new byte[21440];for(int i=0;i<80;i++)BitConverter.GetBytes(14).CopyTo(full,i*268);var capacity=new PracticeTimedCreationState(catalog,full,ships,fleets,7);Require(capacity.Create(14,0,1,0,0,100).Outcome==PracticeTimedCreationOutcome.PoolFull,"Timed pool capacity");
+                Reject(delegate{new PracticeTimedCreationState(catalog,new byte[1],ships,fleets,-1);});RejectArgument(delegate{before.Create(14,-1,1,0,0,100);});RejectArgument(delegate{before.Create(14,0,250,0,0,100);});RejectArgument(delegate{before.Create(14,0,1,32768,0,100);});
+            });
+            check("Original timed distance retains CRT register/store precision before truncation",delegate {
+                Require(OriginalTimedDistance.Truncated(0,0)==0&&OriginalTimedDistance.Truncated(3,4)==5&&OriginalTimedDistance.Truncated(-3,-4)==5,"Timed distance axes/sign");
+                Require(OriginalTimedDistance.Truncated(85,204)==220&&OriginalTimedDistance.Truncated(-85,204)==220&&OriginalTimedDistance.Truncated(27,120)==122&&OriginalTimedDistance.Truncated(165,52)==173&&OriginalTimedDistance.Truncated(1615,2856)==3280,"Original scaled CRT precision boundaries");
+                Require(OriginalTimedDistance.Truncated(98303,0)==98303&&OriginalTimedDistance.Truncated(0,-98303)==98303,"Timed coordinate range");
+                RejectArgument(delegate{OriginalTimedDistance.Truncated(98304,0);});RejectArgument(delegate{OriginalTimedDistance.Truncated(0,-98304);});
+            });
             check("Original fleet batch boundaries, cycle wrap and world caller enumeration",delegate {
                 var start=new PracticeFleetScheduler(248,uint.MaxValue);
                 var last=start.TakeBatch();int[] slots=last.CopySlots();
