@@ -99,6 +99,22 @@ namespace FleetLab {
                 Reject(delegate{new OriginalPauseTimers(null,ships,four,sixteen,0);});Reject(delegate{new OriginalPauseTimers(new byte[1],ships,four,sixteen,0);});
                 Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),new byte[1],four,sixteen,0);});Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),ships,new byte[1],sixteen,0);});Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),ships,four,new byte[1],0);});
             });
+            check("Timed motion preserves original signed rounding, grouped marks and whole-pass early return",delegate {
+                var timed=new byte[PracticeTimedMotionState.TimedBytes];var fleets=new byte[PracticeTimedMotionState.FleetBytes];
+                BitConverter.GetBytes(2).CopyTo(fleets,5*492);W16(fleets,5*492+12,317);W16(fleets,5*492+14,189);
+                for(int i=0;i<250;i++)fleets[i*492+483]=17;
+                foreach(int slot in new[]{0,17,79}){int at=slot*268;BitConverter.GetBytes(14).CopyTo(timed,at);W16(timed,at+8,300);W16(timed,at+10,200);W16(timed,at+12,5);BitConverter.GetBytes((uint)(slot==17?139:180)).CopyTo(timed,at+24);}
+                var initial=new PracticeTimedMotionState(timed,fleets);string before=Hash(timed)+Hash(fleets);var result=initial.Advance(100,40);byte[] t=result.State.CopyTimedPool(),f=result.State.CopyFleetPool();
+                Require(result.InterpolatedRecords==1&&result.StoppedAtRecord==17&&BitConverter.ToInt16(t,8)==309&&BitConverter.ToInt16(t,10)==194&&BitConverter.ToInt16(t,79*268+8)==300,"Timed signed half or early return");
+                for(int i=0;i<250;i++)Require(f[i*492+483]==(i==4?1:0),"Timed grouped mark/whole-pool reset");
+                Require(before==Hash(initial.CopyTimedPool())+Hash(initial.CopyFleetPool()),"Timed input mutated");
+                foreach(uint delta in new[]{0u,0x80000000u,uint.MaxValue}){bool rejected=false;try{initial.Advance(100,delta);}catch(NotSupportedException){rejected=true;}Require(rejected&&before==Hash(initial.CopyTimedPool())+Hash(initial.CopyFleetPool()),"Unsupported timed delta changed state");}
+                bool expired=false;try{initial.Advance(180,40);}catch(NotSupportedException){expired=true;}Require(expired&&before==Hash(initial.CopyTimedPool())+Hash(initial.CopyFleetPool()),"Timed expiry silently skipped");
+                W16(timed,12,250);Reject(delegate{new PracticeTimedMotionState(timed,fleets).Advance(100,40);});
+                Reject(delegate{new PracticeTimedMotionState(null,fleets);});Reject(delegate{new PracticeTimedMotionState(new byte[1],fleets);});Reject(delegate{new PracticeTimedMotionState(initial.CopyTimedPool(),new byte[1]);});
+                t[0]=0;f[4*492+483]=0;timed[0]=0;fleets[0]=13;Require(result.State.CopyTimedPool()[0]==14&&result.State.CopyFleetPool()[4*492+483]==1&&initial.CopyTimedPool()[0]==14&&initial.CopyFleetPool()[0]==0,"Timed buffer ownership");
+                var idle=new PracticeTimedMotionState(new byte[PracticeTimedMotionState.TimedBytes],fleets).Advance(0,0);Require(idle.InterpolatedRecords==0&&idle.StoppedAtRecord==-1,"Empty timed pool should not divide");
+            });
             check("Original fleet batch boundaries, cycle wrap and world caller enumeration",delegate {
                 var start=new PracticeFleetScheduler(248,uint.MaxValue);
                 var last=start.TakeBatch();int[] slots=last.CopySlots();
