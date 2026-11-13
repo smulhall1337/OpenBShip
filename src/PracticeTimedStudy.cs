@@ -22,6 +22,7 @@ namespace FleetLab {
         readonly Label impactSummary = new Label();
         readonly TextBox details = new TextBox();
         readonly Button create = new Button();
+        readonly Button sourceLaunch = new Button();
         readonly TimedCanvas canvas;
         readonly HashSet<Keys> held = new HashSet<Keys>();
         bool changing;
@@ -52,7 +53,7 @@ namespace FleetLab {
             var scroll = new Panel { Dock=DockStyle.Fill,AutoScroll=true }; layout.Controls.Add(scroll,1,0);
             var side = new FlowLayoutPanel { Dock=DockStyle.Top,AutoSize=true,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(8,0,0,0) }; scroll.Controls.Add(side);
             Action<Control,int> add = delegate(Control c,int height) { c.Width=278;c.Height=height;c.Margin=new Padding(3,2,3,2);side.Controls.Add(c); };
-            add(clock,76);
+            add(clock,94);
             impactSummary.AccessibleName="Last impact and copied scores";add(impactSummary,76);
             add(new Label { Text="Source unit" },20); add(source,28);
             add(new Label { Text="Test weapon (original ammo data)" },20); add(weapon,28); add(ammo,38);
@@ -66,6 +67,8 @@ namespace FleetLab {
             var pickMiss = new Button { Text="Choose supported nonship cell",Name="timedPickMiss" };add(pickMiss,32);
             var pickShip = new Button { Text="Choose supported ship cell",Name="timedPickShip" };add(pickShip,32);
             create.Text="Create test object";add(create,32);
+            sourceLaunch.Text="Create source launch pattern";sourceLaunch.Name="timedLaunch";add(sourceLaunch,32);
+            add(new Label { Text=ClassicWeapons.Name(20)+" uses adjacent rows Y−1, Y, Y+1; other test weapons request one object. Expiry outside the 10 × 10 grid remains unsupported." },68);
             var steps = new FlowLayoutPanel { WrapContents=false };
             var one = new Button { Text="+40 ms",Width=100,Height=30,Name="timedOne" };
             var second = new Button { Text="+1 s",Width=100,Height=30,Name="timedSecond" };steps.Controls.Add(one);steps.Controls.Add(second);add(steps,36);
@@ -102,6 +105,7 @@ namespace FleetLab {
             pickMiss.Click += delegate { PickNonshipCell(); };
             pickShip.Click += delegate { PickShipCell(); };
             create.Click += delegate { CreateObject(); };one.Click += delegate { AdvanceFrames(1,false); };second.Click += delegate { AdvanceFrames(25,false); };
+            sourceLaunch.Click += delegate { CreateObject(true); };
             paused.Click += delegate { AdvanceFrames(25,true); };boundary.Click += delegate { AdvanceToBoundary(); };
             reset.Click += delegate { state=initial;RefreshState();SetStatus("Reset to the copied startup pools and clock0.",false); };
             KeyUp += delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};Deactivate += delegate { held.Clear();canvas.CancelPick(); };
@@ -173,9 +177,9 @@ namespace FleetLab {
                 changing=true;offsetX.Value=x;offsetY.Value=y;changing=false;UpdateSelection();SetStatus("Selected existing cell "+x+","+y+" with original code "+code+" for the supported nonship expiry branch.",false);return;}
             SetStatus("This fleet has no supported nonship cell. Choose another fixed target.",true);
         }
-        void CreateObject() {
+        void CreateObject(bool useSourcePattern=false) {
             if(!create.Enabled)return;
-            try { state=state.Create(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value);int created=state.LastCreatedSlot;RefreshState();if(created>=0)for(int i=0;i<objects.Items.Count;i++)if(((Choice)objects.Items[i]).Id==created){objects.SelectedIndex=i;break;}SetStatus(state.LastCreationOutcome==PracticeTimedCreationOutcome.Created?"Created test object "+(created+1)+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.PoolFull?"The 80-record pool is full. Reset to clear it.":"This unit has no ammunition for that weapon.",false); }
+            try { state=useSourcePattern?state.Launch(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value):state.Create(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value);int created=state.LastCreatedSlot;RefreshState();if(created>=0)for(int i=0;i<objects.Items.Count;i++)if(((Choice)objects.Items[i]).Id==created){objects.SelectedIndex=i;break;}SetStatus(useSourcePattern?"Source launch: created "+state.LastLaunchCount+" / "+state.LastLaunchAttempts+" requested objects; last-round updates "+state.LastLaunchDepletions+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.Created?"Created test object "+(created+1)+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.PoolFull?"The 80-record pool is full. Reset to clear it.":"This unit has no ammunition for that weapon.",false); }
             catch(NotSupportedException e){SetStatus(e.Message,true);}catch(InvalidDataException e){SetStatus(e.Message,true);}
         }
         void AdvanceToBoundary() { if(objects.Items.Count==0){SetStatus("Create an object before advancing to its expiry boundary.",false);return;}AdvanceFrames(5000,false,true); }
@@ -191,6 +195,7 @@ namespace FleetLab {
             if(objects.SelectedIndex<0&&objects.Items.Count>0&&impacts.SelectedIndex<0)objects.SelectedIndex=0;
             if(objects.SelectedIndex<0&&impacts.SelectedIndex<0&&impacts.Items.Count>0)impacts.SelectedIndex=0;changing=false;
             clock.Text="Clock "+state.ClockMilliseconds+" ms · "+objects.Items.Count+"/80 objects · "+state.ActiveEffects+"/40 effects\r\nUpdates "+state.MovementFrames+" · paused "+state.PausedFrames+" · expired "+state.ExpiredObjects+"\r\nFixture RNG "+state.RandomState+" · calls "+state.RandomCalls+" · dropped effects "+state.DroppedEffects+"\r\nDestroyed units "+state.DestroyedUnits+" · movie-selection counter "+state.MovieCounter;
+            clock.Text+="\r\nLast source launch "+state.LastLaunchCount+" / "+state.LastLaunchAttempts+" objects · last-round updates "+state.LastLaunchDepletions;
             byte[] score=state.CopyScoreRegion();impactSummary.Text=ImpactText()+"\r\nCopied scores: P1 "+BitConverter.ToInt32(score,0)+" · P2 "+BitConverter.ToInt32(score,44);
             canvas.SetPools(state.Objects.CopyFleetPool(),timed,visuals);LoadWeapons();UpdateSelection();
         }
@@ -198,6 +203,7 @@ namespace FleetLab {
             if(changing)return;byte[] currentShips=state.Objects.CopyShipPool(),currentFleets=state.Objects.CopyFleetPool();int count=0;if(SourceSlot>=0&&WeaponId>=14)count=BitConverter.ToInt16(currentShips,SourceSlot*268+196+WeaponId*2);
             bool sourceLive=SourceSlot>=0&&BitConverter.ToInt32(currentShips,SourceSlot*268)!=0,targetLive=target.SelectedItem!=null&&BitConverter.ToInt32(currentFleets,((Choice)target.SelectedItem).Id*492)!=0;
             create.Enabled=sourceLive&&WeaponId>=14&&targetLive&&(count==-1||count>=1);
+            sourceLaunch.Enabled=create.Enabled;
             ammo.Text=!sourceLive?"Source unit was destroyed. Reset the study to restore it.":!targetLive?"Target fleet is inactive. Choose another fleet or reset.":count==-1?"Infinite ammunition.":count==1?"Last round: includes order reset and equipment reevaluation.":count==0?"No ammunition for this weapon.":"Ammunition: "+count;
             int slot=SelectedObject;canvas.Selected=slot;
             if(target.SelectedItem!=null){int id=((Choice)target.SelectedItem).Id,x=(int)offsetX.Value,y=(int)offsetY.Value;byte[] fleet=state.Objects.CopyFleetPool();canvas.TargetWorld=new Point(BitConverter.ToInt16(fleet,id*492+12)+x,BitConverter.ToInt16(fleet,id*492+14)+y);
