@@ -82,9 +82,10 @@ namespace FleetLab {
         }
     }
 
-    // Bounded, fresh-pool subset of 4037B0: grouped records only, kinds 1/9.
-    // Embedded terrain entities, earlier startup, local-player UI and mission
-    // simulation are not executed. Input Scenario data is never consumed.
+    // Default: bounded4037B0 grouped records in fresh zero pools, kinds1/9.
+    // FirstPractice adds root pool defaults and kind7/type25 construction with
+    // the required single-unit41B9A0 placement. Auxiliary terrain, application
+    // startup, local-player UI and mission simulation remain separate.
     public sealed class PracticeDeployment {
         readonly byte[] ships = new byte[PracticeFleetSnapshot.ShipSlots * PracticeUnitCatalog.RecordBytes];
         readonly byte[] fleetPool = new byte[PracticeFleetSnapshot.FleetSlots * PracticeFleetSnapshot.FleetBytes];
@@ -95,16 +96,63 @@ namespace FleetLab {
         public uint RandomState { get; private set; }
         public int RandomCalls { get; private set; }
         public int UnitCount { get; private set; }
+        public bool IncludesMapObjects { get; private set; }
+        public int MapObjectCount { get; private set; }
 
-        public PracticeDeployment(PracticeUnitCatalog catalog, Scenario scene, uint seed) {
+        public PracticeDeployment(PracticeUnitCatalog catalog, Scenario scene, uint seed)
+            : this(catalog, scene, seed, false) { }
+
+        // This exact map is the observed first Practice startup. Other maps
+        // may require different special constructors; fail instead of skipping them.
+        public static PracticeDeployment FirstPractice(PracticeUnitCatalog catalog, byte[] source, uint seed) {
+            if (source == null || source.Length != 6788)
+                throw new InvalidDataException("Unsupported first Practice map length.");
+            source = (byte[])source.Clone();
+            string hash;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+                hash = BitConverter.ToString(sha.ComputeHash(source)).Replace("-", "");
+            if (hash != "BAA35BA0CF478F99290B390F51D37211D6BD99852325EFF4E15ECDA4394C9E9B")
+                throw new InvalidDataException("Unsupported first Practice map identity.");
+            return new PracticeDeployment(catalog, Scenario.Load(source, "BSSB201.SCN"), seed, true);
+        }
+
+        PracticeDeployment(PracticeUnitCatalog catalog, Scenario scene, uint seed, bool includeObjects) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (scene == null) throw new ArgumentNullException("scene");
             if (scene.Players < 1 || scene.Players > 4 || scene.Groups == null ||
                 scene.Groups.Length != scene.Players)
                 throw new InvalidDataException("Unsupported deployment player groups.");
             Seed = seed;
-            var planner = new PracticeSpawnPlanner(scene, seed, null);
+            IncludesMapObjects = includeObjects;
             var records = new List<PracticeFleetSnapshot>();
+            var reservations = new List<PracticeFleetOrigin>();
+            var earlierRandom = new NativeRandom(seed);
+            if (includeObjects) {
+                if (!catalog.HasMapObjectTables)
+                    throw new InvalidDataException("Run Setup again to import first Practice object tables.");
+                // Source42B612..42B71F on fresh pools: IDs and sentinel fields.
+                for (int i = 0; i < PracticeFleetSnapshot.ShipSlots; i++)
+                    BitConverter.GetBytes((short)i).CopyTo(ships, i * PracticeUnitCatalog.RecordBytes + 4);
+                for (int i = 0; i < PracticeFleetSnapshot.FleetSlots; i++)
+                    PracticeFleetSnapshot.InitializeRootFleet(fleetPool, i * PracticeFleetSnapshot.FleetBytes, i);
+                for (int x = 0; x < 64; x++) for (int y = 0; y < 64; y++) {
+                    Cell cell = scene.At(x, y);
+                    if (cell.Kind != 7) continue;
+                    int owner = unchecked((sbyte)cell.Value);
+                    // Only the required one-unit41B9A0 subset is reconstructed
+                    // here. Multi-unit spacing/restarts differ from Classic.
+                    int length = BitConverter.ToInt16(catalog.MapObjectTemplate, 14);
+                    if (length != 2) throw new InvalidDataException("Unsupported first Practice object shape.");
+                    Point local = new Point(earlierRandom.Next() % 10, earlierRandom.Next() % (length - 11));
+                    var fleet = PracticeFleetSnapshot.CreateMapObject(catalog, owner,
+                        new Point(x * 10, y * 10), records.Count, UnitCount, local);
+                    Merge(fleet, records);
+                    reservations.Add(new PracticeFleetOrigin(11, fleet.WorldOrigin));
+                    MapObjectCount++;
+                }
+                if (MapObjectCount != 7) throw new InvalidDataException("Unsupported first Practice object count.");
+            }
+            var planner = new PracticeSpawnPlanner(scene, earlierRandom.State, reservations);
             for (int owner = 0; owner < scene.Players; owner++) {
                 if (scene.Groups[owner] == null || scene.Groups[owner].Length != 2)
                     throw new InvalidDataException("A player must contain two deployment groups.");
@@ -116,24 +164,27 @@ namespace FleetLab {
                         int kind = group == 0 ? 1 : 9;
                         Point origin = planner.NextOrigin(owner);
                         var fleet = PracticeFleetSnapshot.CreateDeployment(catalog, input, owner,
-                            origin, counters[owner + 1], kind, records.Count, UnitCount);
-                        byte[] pool = fleet.CopyShipPool();
-                        Array.Copy(pool, UnitCount * PracticeUnitCatalog.RecordBytes, ships,
-                                   UnitCount * PracticeUnitCatalog.RecordBytes,
-                                   fleet.Units.Count * PracticeUnitCatalog.RecordBytes);
-                        Array.Copy(fleet.CopyFleetRecord(), 0, fleetPool,
-                                   records.Count * PracticeFleetSnapshot.FleetBytes,
-                                   PracticeFleetSnapshot.FleetBytes);
-                        UnitCount += fleet.Units.Count;
+                            origin, counters[owner + 1], kind, records.Count, UnitCount, includeObjects);
                         counters[owner + 1] = fleet.NextCounter;
-                        records.Add(fleet);
+                        Merge(fleet, records);
                         planner.Reserve(kind, origin);
                     }
                 }
             }
             fleets = records.AsReadOnly();
             RandomState = planner.RandomState;
-            RandomCalls = planner.RandomCalls;
+            RandomCalls = earlierRandom.Calls + planner.RandomCalls;
+        }
+
+        void Merge(PracticeFleetSnapshot fleet, List<PracticeFleetSnapshot> records) {
+            byte[] pool = fleet.CopyShipPool();
+            Array.Copy(pool, UnitCount * PracticeUnitCatalog.RecordBytes, ships,
+                       UnitCount * PracticeUnitCatalog.RecordBytes,
+                       fleet.Units.Count * PracticeUnitCatalog.RecordBytes);
+            Array.Copy(fleet.CopyFleetRecord(), 0, fleetPool,
+                       records.Count * PracticeFleetSnapshot.FleetBytes, PracticeFleetSnapshot.FleetBytes);
+            UnitCount += fleet.Units.Count;
+            records.Add(fleet);
         }
 
         // Five original counters at 5C3360; index0 belongs to owner -1.

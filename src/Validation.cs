@@ -309,6 +309,43 @@ namespace FleetLab {
                 Reject(delegate{planner.NextOrigin(0);});Require(planner.RandomState==731&&planner.RandomCalls==0,"Nozone failure consumed random or map aliased");
             });
 
+            check("First Practice startup matches complete source pools across five initial random states",delegate {
+                var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
+                byte[] source=File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN"));
+                // Source213 includes root pool defaults, seven kind7 objects,
+                // type25 construction/local placement, and grouped creation.
+                // Two seeds also match complete actual WinMain212 snapshots.
+                string[] fixtures={
+                    "0,653E5A4ED50C67C8FDE818DB540476E1D91A58712A959ED2A7AE7D054A799B71,5194430FAF502BB2B467B112BCCF663DBC87F1D417910222D28CE916CAEE482E,2451081716,692",
+                    "731,508D5FFB81B0539A2D7807D9E9884D73893D6D7900411FD9C136DCA3310A6C27,E6F61762D9EAAC619A46C7CE7A385B04B2DCBBB5C97530E00370718315A945BA,3548431817,494",
+                    "4294967295,E00C1F571D07CAFAD42648ECB50468F42A7320F37D278510CB35AA4E9C0803A3,CBC7EB9912AC0D854A2C650E3F4074CC7ADAC2339FB659AFFE883FA7AC96E809,1191079719,520",
+                    "143514006,BB5FC9652DF41EC906A746B555300DD24F13F711B7DECD4002A96CDC83459121,9CF2E0C76FD8683D241732740FB2836599A77F8FF2EA9C1D32F40DE7BA760449,1835941210,548",
+                    "144062032,691A61B5268E2E427DC05E57B325039031E7E6C9AE1C2E3AF2E56E3F9B746847,613886C0A73968179A655F49B1EF5FB500252B61FEECFB857C90DB682FB68BC6,2218741530,210",
+                };
+                foreach(string fixture in fixtures){string[] f=fixture.Split(',');var state=PracticeDeployment.FirstPractice(catalog,source,uint.Parse(f[0]));
+                    Require(Hash(state.CopyShipPool())==f[1]&&Hash(state.CopyFleetPool())==f[2],"Original whole startup pools seed"+f[0]);
+                    Require(state.RandomState==uint.Parse(f[3])&&state.RandomCalls==int.Parse(f[4])&&state.MapObjectCount==7&&state.Fleets.Count==13&&state.UnitCount==19,"Original startup random/count context");
+                }
+            });
+            check("Kind7 records retain source IDs, local placement, counters and resource identity",delegate {
+                var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
+                byte[] source=File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN"));string hash=Hash(source);
+                var state=PracticeDeployment.FirstPractice(catalog,source,143514006u);
+                Require(Hash(source)==hash&&state.IncludesMapObjects&&state.Fleets[0].WorldOrigin==new Point(170,180),"Input map/source scan order");
+                var first=state.Fleets[0];Require(first.Kind==11&&first.Units.Count==1&&first.Units[0].Type==25&&first.Units[0].X==8&&first.Units[0].Y==3&&first.Units[0].Length==2&&first.Units[0].HitPoints==2&&first.Units[0].Speed==0,"Actual original type25 fields");
+                Require(first.NextCounter==1&&first.CopyConsumedPayload().Length==0&&state.OwnerCounter(0)==2&&state.OwnerCounter(1)==6,"Special object spent owner counter or invented payload");
+                byte[] ships=state.CopyShipPool(),fleets=state.CopyFleetPool();Require(BitConverter.ToInt16(ships,1499*268+4)==1499&&BitConverter.ToInt16(fleets,249*492+4)==249&&fleets[249*492+40]==255&&fleets[249*492+482]==255,"Original inactive IDs/sentinels");
+                ships[0]^=1;Require(first.Units[0].Type==25,"Startup pool aliases unit records");
+            });
+            check("First Practice startup rejects unsupported maps and absent or changed special tables",delegate {
+                string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=new byte[7][];string[] names={"UnitTemplates","UnitAmmunition","UnitOffense","FleetColors","UnitMarkerMap","Type25Template","Kind11Colors"};for(int i=0;i<7;i++)data[i]=File.ReadAllBytes(Path.Combine(programs,names[i]+".seqbin"));
+                var catalog=PracticeUnitCatalog.ReadWithMapObjects(data[0],data[1],data[2],data[3],data[4],data[5],data[6]);byte[] source=File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN"));
+                var old=PracticeUnitCatalog.Read(data[0],data[1],data[2],data[3],data[4]);Require(!old.HasMapObjectTables,"Old five-table catalog changed");
+                Reject(delegate{PracticeDeployment.FirstPractice(old,source,0);});Reject(delegate{PracticeDeployment.FirstPractice(catalog,new byte[0],0);});source[0]^=1;Reject(delegate{PracticeDeployment.FirstPractice(catalog,source,0);});
+                foreach(int i in new[]{5,6}){data[i][0]^=1;Reject(delegate{PracticeUnitCatalog.ReadWithMapObjects(data[0],data[1],data[2],data[3],data[4],data[5],data[6]);});data[i][0]^=1;}
+                Reject(delegate{PracticeUnitCatalog.ReadWithMapObjects(data[0],data[1],data[2],data[3],data[4],data[5],null);});
+            });
+
             check("Practice source counter wrap and extra equipment preserve pool bytes",delegate {
                 var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
                 var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));

@@ -349,8 +349,8 @@ namespace FleetLab {
             for(int i=0;i<labels.Length;i++){
                 Point marker=FleetMarker(i);labels[i]=marker;
                 foreach(Point offset in offsets){
-                    Point candidate=new Point((int)Math.Max(bounds.Left+9,Math.Min(bounds.Right-9,marker.X+offset.X)),
-                                              (int)Math.Max(bounds.Top+9,Math.Min(bounds.Bottom-9,marker.Y+offset.Y)));
+                    Point candidate=new Point((int)Math.Max(bounds.Left+11,Math.Min(bounds.Right-11,marker.X+offset.X)),
+                                              (int)Math.Max(bounds.Top+11,Math.Min(bounds.Bottom-11,marker.Y+offset.Y)));
                     bool clear=true;
                     for(int prior=0;prior<i&&clear;prior++)clear=Math.Abs(candidate.X-labels[prior].X)>=18||Math.Abs(candidate.Y-labels[prior].Y)>=18;
                     for(int other=0;other<labels.Length&&clear;other++)if(other!=i){Point point=FleetMarker(other);clear=Math.Abs(candidate.X-point.X)>=13||Math.Abs(candidate.Y-point.Y)>=13;}
@@ -395,20 +395,24 @@ namespace FleetLab {
                     var fleet=Deployment.Fleets[i];Point marker=FleetMarker(i),center=labels[i];
                     if(marker!=center)using(var pen=new Pen(colors[fleet.Owner]))g.DrawLine(pen,marker,center);
                     using(var fill=new SolidBrush(colors[fleet.Owner]))g.FillEllipse(fill,marker.X-2,marker.Y-2,4,4);
-                    using(var fill=new SolidBrush(colors[fleet.Owner]))g.FillEllipse(fill,center.X-6,center.Y-6,12,12);
-                    if(i==SelectedFleet)using(var pen=new Pen(Color.Gold,2))g.DrawEllipse(pen,center.X-9,center.Y-9,18,18);
-                    g.DrawString((i+1).ToString(),font,Brushes.Black,center.X-4,center.Y-7);
+                    int radius=i<9?6:8;
+                    using(var fill=new SolidBrush(colors[fleet.Owner]))g.FillEllipse(fill,center.X-radius,center.Y-radius,radius*2,radius*2);
+                    if(i==SelectedFleet)using(var pen=new Pen(Color.Gold,2))g.DrawEllipse(pen,center.X-radius-3,center.Y-radius-3,radius*2+6,radius*2+6);
+                    string number=(i+1).ToString();SizeF text=g.MeasureString(number,font);
+                    g.DrawString(number,font,Brushes.Black,center.X-text.Width/2,center.Y-7);
                 }
             }
             int embedded=0,records=0;
             foreach(Cell c in Scene.Cells)if(c.Payload!=null)embedded++;
             foreach(var player in Scene.Groups)foreach(var group in player)records+=group.Count;
             using(var brush=new SolidBrush(Color.LightSteelBlue))using(var font=new Font("Segoe UI",9)) {
-                g.DrawString(Scene.Name+" · 64 x 64 · "+Scene.Players+" players · "+embedded+" embedded / "+records+" grouped records",font,brush,16,Height-72);
+                g.DrawString(Scene.Name+" · 64 x 64 · "+Scene.Players+" players · "+embedded+" payload cells / "+records+" grouped records",font,brush,16,Height-72);
                 string detail=Deployment==null?"Schematic terrain and fleet records. Missions remain unavailable.":
                     "Seed "+Deployment.Seed+" · "+Deployment.RandomCalls+" RNG calls · click a numbered fleet to inspect";
                 g.DrawString(PreviewProblem??detail,font,brush,new RectangleF(16,Height-50,Math.Max(0,Width-32),44));
-                if(Deployment!=null)g.DrawString("Fresh grouped deployment · earlier startup and embedded entities excluded",font,brush,16,Height-25);
+                if(Deployment!=null)g.DrawString(Deployment.IncludesMapObjects?
+                    "First Practice startup data · 7 map objects · other terrain/UI/missions excluded":
+                    "Fresh grouped deployment · earlier startup and embedded entities excluded",font,brush,16,Height-25);
             }
         }
     }

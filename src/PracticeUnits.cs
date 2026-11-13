@@ -7,19 +7,27 @@ using System.Security.Cryptography;
 
 namespace FleetLab {
     // Data from the supported B9A8...6A569 executable. No executable code is
-    // loaded here. Setup extracts these five small, hash-pinned table regions.
+    // loaded here. Setup extracts the small, hash-pinned table regions below.
     public sealed class PracticeUnitCatalog {
         internal readonly byte[] Templates, Ammunition, Offense, Colors, Markers;
+        internal readonly byte[] MapObjectTemplate, MapObjectColors;
+        public bool HasMapObjectTables { get { return MapObjectTemplate != null; } }
         public const int TemplateCount = 15;
         public const int RecordBytes = 268;
 
         PracticeUnitCatalog(byte[] templates, byte[] ammunition, byte[] offense,
-                            byte[] colors, byte[] markers) {
+                            byte[] colors, byte[] markers, byte[] mapObjectTemplate = null, byte[] mapObjectColors = null) {
             Templates = Check(templates, 4020, "C861FE8C683C6E6918AD78185F8348903BF16726E77B17A7E177C8782AB01B33", "unit templates");
             Ammunition = Check(ammunition, 80, "70F5B7233E5FE38F5418FEBC502B4C1FD25020D8CACE907E4EB1BA1F7D5A6322", "ammunition table");
             Offense = Check(offense, 72, "4B86D59C0CB7BEEA2A9FBAE3521CA7D697D79DCEFCD7B2F99963D496C631ADC4", "weapon priorities");
             Colors = Check(colors, 33, "344B28FBC02F85C970ADF39F113810F6A07EE0382E3093E91CF28CDEFB67BDAE", "fleet colors");
             Markers = Check(markers, 30, "0307AF7C553F7D7D9CD6EA80F0ECE3142D06ECE493CA11A2640F6FAF96F6CB14", "unit markers");
+            if ((mapObjectTemplate == null) != (mapObjectColors == null))
+                throw new InvalidDataException("Incomplete first Practice object tables. Run Setup again.");
+            if (mapObjectTemplate != null) {
+                MapObjectTemplate = Check(mapObjectTemplate, 268, "8FCA0A4BEE4198644C6730E8B2CA117F1650B7D7DAF23EDC408E6AAEFF93CD4A", "type-25 template");
+                MapObjectColors = Check(mapObjectColors, 3, "DA6DEF0384643B0F45B255CF0FC1C671528847F755AFE65C7487F7F385A003DB", "kind-11 color bytes");
+            }
         }
 
         static byte[] Check(byte[] data, int length, string identity, string name) {
@@ -39,11 +47,20 @@ namespace FleetLab {
         }
 
         public static PracticeUnitCatalog Load(string programs) {
-            return Read(File.ReadAllBytes(Path.Combine(programs, "UnitTemplates.seqbin")),
+            string template = Path.Combine(programs, "Type25Template.seqbin"), colors = Path.Combine(programs, "Kind11Colors.seqbin");
+            if (File.Exists(template) != File.Exists(colors))
+                throw new InvalidDataException("Incomplete first Practice object tables. Run Setup again.");
+            return ReadWithMapObjects(File.ReadAllBytes(Path.Combine(programs, "UnitTemplates.seqbin")),
                         File.ReadAllBytes(Path.Combine(programs, "UnitAmmunition.seqbin")),
                         File.ReadAllBytes(Path.Combine(programs, "UnitOffense.seqbin")),
                         File.ReadAllBytes(Path.Combine(programs, "FleetColors.seqbin")),
-                        File.ReadAllBytes(Path.Combine(programs, "UnitMarkerMap.seqbin")));
+                        File.ReadAllBytes(Path.Combine(programs, "UnitMarkerMap.seqbin")),
+                        File.Exists(template) ? File.ReadAllBytes(template) : null,
+                        File.Exists(colors) ? File.ReadAllBytes(colors) : null);
+        }
+        public static PracticeUnitCatalog ReadWithMapObjects(byte[] templates, byte[] ammunition,
+                byte[] offense, byte[] colors, byte[] markers, byte[] objectTemplate, byte[] objectColors) {
+            return new PracticeUnitCatalog(templates, ammunition, offense, colors, markers, objectTemplate, objectColors);
         }
     }
 
@@ -100,7 +117,7 @@ namespace FleetLab {
 
         PracticeFleetSnapshot(PracticeUnitCatalog catalog, byte[] source, int owner,
                               Point origin, uint counter, int kind = 2,
-                              int fleetSlot = 0, int firstShipSlot = 0) {
+                              int fleetSlot = 0, int firstShipSlot = 0, bool rootDefaults = false) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (source == null || source.Length != 400)
                 throw new InvalidDataException("A fleet record must contain exactly 400 bytes.");
@@ -119,6 +136,7 @@ namespace FleetLab {
             InitialCounter = counter;
             NextCounter = unchecked(counter + 1);
             payload = (byte[])source.Clone();
+            if (rootDefaults) InitializeRootFleet(fleet, 0, fleetSlot);
             DWord(fleet, 0, kind);
             Word(fleet, 6, owner);
             Word(fleet, 12, origin.X);
@@ -149,26 +167,63 @@ namespace FleetLab {
                 }
             }
 
-            Array.Copy(catalog.Colors, kind * 3, fleet, 464, 3);
+            FinalizeFleet(catalog, records);
+            units = records.AsReadOnly();
+        }
+
+        // Source42CBF0 creates one type-25 record from a kind-7 map cell.
+        // Its local placement uses the single-unit subset of41B9A0; the caller
+        // supplies the already drawn local position and does not spend an owner counter.
+        PracticeFleetSnapshot(PracticeUnitCatalog catalog, int owner, Point origin,
+                              int fleetSlot, int shipSlot, Point local) {
+            if (catalog == null) throw new ArgumentNullException("catalog");
+            if (!catalog.HasMapObjectTables) throw new InvalidDataException("Run Setup again to import first Practice object tables.");
+            if (owner < 0 || owner > 3 || fleetSlot < 0 || fleetSlot >= FleetSlots || shipSlot < 0 || shipSlot >= ShipSlots)
+                throw new ArgumentOutOfRangeException("owner");
+            if (origin.X < 0 || origin.X > 630 || origin.Y < 0 || origin.Y > 630 ||
+                local.X < 0 || local.X > 9 || local.Y < 0 || local.Y > 8)
+                throw new ArgumentOutOfRangeException("origin");
+            Owner = owner; Kind = 11; FleetSlot = fleetSlot; FirstShipSlot = shipSlot;
+            WorldOrigin = origin; InitialCounter = 1; NextCounter = 1;
+            payload = new byte[0]; // A kind-7 cell has no 400-byte fleet payload.
+            InitializeRootFleet(fleet, 0, fleetSlot);
+            DWord(fleet, 0, 11); Word(fleet, 6, owner);
+            Word(fleet, 12, origin.X); Word(fleet, 14, origin.Y); fleet[484] = 1;
+            Construct(catalog, 25, shipSlot, local.X, local.Y);
+            var records = new List<PracticeUnitRecord> { new PracticeUnitRecord(ships, shipSlot) };
+            DWord(fleet, 16, 0x4fc340 + shipSlot * PracticeUnitCatalog.RecordBytes);
+            FinalizeFleet(catalog, records);
+            units = records.AsReadOnly();
+        }
+
+        internal static void InitializeRootFleet(byte[] bytes, int at, int slot) {
+            Word(bytes, at + 4, slot);
+            for (int i = 40; i < 50; i++) bytes[at + i] = 255;
+            bytes[at + 482] = 255;
+        }
+
+        void FinalizeFleet(PracticeUnitCatalog catalog, List<PracticeUnitRecord> records) {
+            if (Kind == 11) Array.Copy(catalog.MapObjectColors, 0, fleet, 464, 3);
+            else Array.Copy(catalog.Colors, Kind * 3, fleet, 464, 3);
             int speed = 0;
             foreach (var record in records) {
                 if (speed == 0) speed = unchecked((byte)record.Speed);
                 if (speed > record.Speed) speed = unchecked((byte)record.Speed);
             }
             Word(fleet, 60, speed);
-            for (int i = 0; i < 100; i++) DWord(fleet, 64 + i * 4, kind == 2 ? 3 : 0);
+            for (int i = 0; i < 100; i++) DWord(fleet, 64 + i * 4, Kind == 2 ? 3 : 0);
             foreach (var record in records) {
                 for (int n = 0; n < record.Length; n++)
                     DWord(fleet, 64 + (record.X * 10 + record.Y + n) * 4, 2);
             }
-            units = records.AsReadOnly();
         }
 
         void Construct(PracticeUnitCatalog catalog, int type, int slot, int row, int column) {
-            if (type < 1 || type >= PracticeUnitCatalog.TemplateCount)
+            if ((type < 1 || type >= PracticeUnitCatalog.TemplateCount) && !(type == 25 && catalog.HasMapObjectTables))
                 throw new InvalidDataException("Unsupported unit template " + type + ".");
             int at = slot * PracticeUnitCatalog.RecordBytes;
-            Array.Copy(catalog.Templates, type * PracticeUnitCatalog.RecordBytes, ships, at, PracticeUnitCatalog.RecordBytes);
+            if (type == 25) Array.Copy(catalog.MapObjectTemplate, 0, ships, at, PracticeUnitCatalog.RecordBytes);
+            else Array.Copy(catalog.Templates, type * PracticeUnitCatalog.RecordBytes, ships, at, PracticeUnitCatalog.RecordBytes);
             int length = Word(ships, at + 14);
             if (DWord(ships, at) != type || length < 1 || length > 6 || column + length > 10)
                 throw new InvalidDataException("Unsupported unit shape or placement.");
@@ -216,8 +271,12 @@ namespace FleetLab {
             return new PracticeFleetSnapshot(catalog, payload, owner, worldOrigin, initialCounter);
         }
         internal static PracticeFleetSnapshot CreateDeployment(PracticeUnitCatalog catalog, byte[] payload,
-                int owner, Point origin, uint counter, int kind, int fleetSlot, int firstShipSlot) {
-            return new PracticeFleetSnapshot(catalog, payload, owner, origin, counter, kind, fleetSlot, firstShipSlot);
+                int owner, Point origin, uint counter, int kind, int fleetSlot, int firstShipSlot, bool rootDefaults = false) {
+            return new PracticeFleetSnapshot(catalog, payload, owner, origin, counter, kind, fleetSlot, firstShipSlot, rootDefaults);
+        }
+        internal static PracticeFleetSnapshot CreateMapObject(PracticeUnitCatalog catalog, int owner,
+                Point origin, int fleetSlot, int shipSlot, Point local) {
+            return new PracticeFleetSnapshot(catalog, owner, origin, fleetSlot, shipSlot, local);
         }
         public int Occupancy(int x, int y) {
             if (x < 0 || x >= 10 || y < 0 || y >= 10) throw new ArgumentOutOfRangeException("x");

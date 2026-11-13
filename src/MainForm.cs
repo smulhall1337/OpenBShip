@@ -16,6 +16,7 @@ namespace FleetLab {
         readonly PracticeFleetInspector practiceInspection;
         readonly ComboBox mapSelect=new ComboBox();
         readonly CheckBox seededDeployment=new CheckBox();
+        readonly CheckBox mapObjects=new CheckBox();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
@@ -26,7 +27,7 @@ namespace FleetLab {
         readonly Label phase=new Label(),enemy=new Label();
         readonly LinkLabel hint=new LinkLabel{LinkArea=new LinkArea(0,0)};
         readonly ListBox firingFleet=new ListBox();
-        bool updatingFleet;
+        bool updatingFleet,refreshingInspection;
         readonly TextBox history=new TextBox();
         readonly ToolStripStatusLabel status=new ToolStripStatusLabel();
         readonly TabControl tabs=new TabControl();
@@ -91,7 +92,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.52 — seeded grouped deployment";
+            Text="Battleship Fleet Lab 0.53 — first Practice startup data";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -276,7 +277,7 @@ namespace FleetLab {
             mapSelect.DropDownStyle=ComboBoxStyle.DropDownList;
             mapSelect.Width=180;
             mapSelect.Items.AddRange(new object[] {
-                "BS201.SCN","BS202.SCN","BS204.SCN"
+                "BS201.SCN","BS202.SCN","BS204.SCN","BSSB201.SCN"
             });
             var mapHeader=new FlowLayoutPanel {
                 Dock=DockStyle.Top,Height=42,Padding=new Padding(12,7,0,0)
@@ -290,6 +291,9 @@ namespace FleetLab {
             mapHeader.Controls.Add(seededDeployment);
             mapHeader.Controls.Add(new Label {Text="Seed",AutoSize=true,Padding=new Padding(6,4,0,0)});
             mapHeader.Controls.Add(deploymentSeed);
+            mapObjects.Text="Include map objects";mapObjects.AutoSize=true;mapObjects.Enabled=false;
+            mapObjects.AccessibleName="Include first Practice map objects";
+            mapHeader.Controls.Add(mapObjects);
             mapHeader.Controls.Add(new Label {Text="Read-only preview",AutoSize=true,Padding=new Padding(8,4,0,0)});
             map.Dock=DockStyle.Fill;
             practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
@@ -310,6 +314,7 @@ namespace FleetLab {
             };
             seededDeployment.CheckedChanged+=delegate {deploymentSeed.Enabled=seededDeployment.Checked;RefreshMapInspection();};
             deploymentSeed.ValueChanged+=delegate {if(seededDeployment.Checked)RefreshMapInspection();};
+            mapObjects.CheckedChanged+=delegate {RefreshMapInspection();};
             mapSelect.SelectedIndex=0;
             clip=new ClipStudy(assets,preferences.HighMovies);clip.SetSound(sound.Enabled);clip.SetLevel(preferences.FxVolume);
             archive=new ClipStudy(assets,preferences.HighMovies);archive.ConfigureArchive(CreditsCatalog.Load(assets));archive.SetSound(sound.Enabled);archive.SetLevel(preferences.FxVolume);
@@ -364,11 +369,16 @@ namespace FleetLab {
             visualTimer.Start();
         }
         void RefreshMapInspection() {
-            if(map.Scene==null)return;
+            if(map.Scene==null||refreshingInspection)return;
+            refreshingInspection=true;
             map.PreviewProblem=null;
             try {
-                map.Deployment=seededDeployment.Checked ?
-                    practiceInspection.BuildDeployment(map.Scene,(uint)deploymentSeed.Value) : null;
+                mapObjects.Enabled=seededDeployment.Checked&&practiceInspection.CanIncludeMapObjects&&
+                    string.Equals(mapSelect.SelectedItem.ToString(),"BSSB201.SCN",StringComparison.OrdinalIgnoreCase);
+                if(!mapObjects.Enabled)mapObjects.Checked=false;
+                map.Deployment=!seededDeployment.Checked ? null : mapObjects.Checked ?
+                    practiceInspection.BuildFirstPractice(File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN")),(uint)deploymentSeed.Value) :
+                    practiceInspection.BuildDeployment(map.Scene,(uint)deploymentSeed.Value);
                 practiceInspection.SetScenario(map.Scene,map.Deployment);
             }
             catch(InvalidDataException e) {
@@ -376,6 +386,7 @@ namespace FleetLab {
                 practiceInspection.SetScenario(map.Scene);
                 map.PreviewProblem=e.Message;
             }
+            finally {refreshingInspection=false;}
             map.Invalidate();
         }
 
@@ -901,6 +912,20 @@ namespace FleetLab {
                 seededDeployment.Checked=false;Application.DoEvents();require(map.Deployment==null&&!deploymentSeed.Enabled&&practiceInspection.CurrentFleet.Kind==2&&practiceInspection.CurrentFleet.WorldOrigin==Point.Empty,"Record fixture not restored");
                 require(State==previous&&State.Turn==turn&&State.Events.Count==events&&preferences.Serialize()==settings,"Preview altered gameplay/settings");
                 mapSelect.SelectedIndex=0;tabs.SelectedIndex=0;
+            });
+            check("First Practice map objects stay scoped to the verified read-only startup preview",delegate {
+                tabs.SelectedIndex=1;seededDeployment.Checked=true;mapSelect.SelectedIndex=3;
+                require(mapObjects.Enabled&&!mapObjects.Checked&&map.Deployment.Fleets.Count==6,"Actual map grouped preview");
+                var previous=State;string settings=preferences.Serialize();int turn=State.Turn,events=State.Events.Count;
+                deploymentSeed.Value=143514006u;mapObjects.Checked=true;Application.DoEvents();
+                require(map.Deployment.IncludesMapObjects&&map.Deployment.MapObjectCount==7&&map.Deployment.Fleets.Count==13&&map.Deployment.UnitCount==19&&practiceInspection.RecordCount==13,"Full startup record collection");
+                require(map.Deployment.RandomCalls==548&&map.Deployment.RandomState==1835941210u&&practiceInspection.CurrentFleet.Kind==11&&practiceInspection.CurrentFleet.Units[0].Type==25,"Actual startup seed/context");
+                for(int i=0;i<13;i++){practiceInspection.ChooseRecord(i);require(map.SelectedFleet==i&&practiceInspection.CurrentFleet==map.Deployment.Fleets[i],"Startup map/record synchronization");}
+                mapSelect.SelectedIndex=0;Application.DoEvents();require(!mapObjects.Enabled&&!mapObjects.Checked&&!map.Deployment.IncludesMapObjects&&practiceInspection.RecordCount==4,"Unsupported map kept object mode");
+                mapSelect.SelectedIndex=3;Application.DoEvents();require(mapObjects.Enabled&&!mapObjects.Checked&&practiceInspection.RecordCount==6,"Object mode silently carried between maps");
+                mapObjects.Checked=true;seededDeployment.Checked=false;Application.DoEvents();require(!mapObjects.Enabled&&!mapObjects.Checked&&map.Deployment==null&&practiceInspection.RecordCount==6,"Record fixture restore");
+                require(State==previous&&State.Turn==turn&&State.Events.Count==events&&preferences.Serialize()==settings,"Startup preview changed gameplay/settings");
+                deploymentSeed.Value=0;mapSelect.SelectedIndex=0;tabs.SelectedIndex=0;
             });
             check("Validated load restores paused battle from legacy mode without changing preferences",delegate {
                 Game restored=Game.LoadBattle(BattleCheckpointPath);rules.SelectedIndex=1;auto.PerformClick();start.PerformClick();Game previous=State;

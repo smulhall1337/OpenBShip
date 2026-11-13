@@ -29,6 +29,7 @@ namespace FleetLab {
         internal int RecordCount { get { return records.Items.Count; } }
         internal int SelectedUnit { get { return units.SelectedIndex; } }
         internal bool CanDeploy { get { return catalog != null; } }
+        internal bool CanIncludeMapObjects { get { return catalog != null && catalog.HasMapObjectTables; } }
         internal event Action<int> FleetChanged;
 
         public PracticeFleetInspector(string programs, ClassicMessages messages) {
@@ -89,6 +90,9 @@ namespace FleetLab {
             if (catalog == null) throw new InvalidDataException("Run Setup again to import the recovered unit tables.");
             return new PracticeDeployment(catalog, scene, seed);
         }
+        internal PracticeDeployment BuildFirstPractice(byte[] source, uint seed) {
+            return PracticeDeployment.FirstPractice(catalog, source, seed);
+        }
 
         public void SetScenario(Scenario scene) { SetScenario(scene, null); }
 
@@ -97,6 +101,16 @@ namespace FleetLab {
             records.Items.Clear();
             units.Items.Clear();
             CurrentFleet = null;
+            if (deployment != null && deployment.IncludesMapObjects) {
+                for (int i = 0; i < deployment.MapObjectCount; i++) {
+                    var item = deployment.Fleets[i];
+                    records.Items.Add(new RecordChoice {
+                        Label = "Map cell " + (item.WorldOrigin.X / 10 + 1) + "," + (item.WorldOrigin.Y / 10 + 1) +
+                                " · player " + (item.Owner + 1) + " · type 25",
+                        Owner = item.Owner, Snapshot = item
+                    });
+                }
+            }
             if (scene != null) {
                 for (int player = 0; player < scene.Groups.Length; player++) {
                     for (int group = 0; group < scene.Groups[player].Length; group++) {
@@ -115,7 +129,8 @@ namespace FleetLab {
             }
             if (deployment != null && deployment.Fleets.Count != records.Items.Count)
                 throw new InvalidDataException("Deployment has extra scenario records.");
-            note.Text = deployment == null ?
+            note.Text = deployment != null && deployment.IncludesMapObjects ?
+                "First Practice startup data, including kind-7/type-25 records. Other terrain buffers, local UI and mission behavior remain unfinished." : deployment == null ?
                 "Schematic kind-2 record fixture. Enable seeded deployment to inspect original grouped kinds and world origins. Missions remain unavailable." :
                 "Seeded grouped deployment in fresh pools. Earlier startup, embedded entities and mission rules remain unfinished. Terrain is schematic.";
             changing = false;
