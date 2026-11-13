@@ -30,7 +30,7 @@ namespace FleetLab {
             internal int Unit, Row, HP, CellAt, Cell, Owner;
         }
         internal static Target CheckTarget(PracticeUnitCatalog catalog, byte[] shipPool,
-                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner) {
+                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, bool allowDestruction = false) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (shipPool == null || shipPool.Length != 402000 || fleetPool == null || fleetPool.Length != 123000 || scoreRegion == null || scoreRegion.Length != 176)
                 throw new InvalidDataException("Segment damage requires complete ship/fleet pools and the original 176-byte score region.");
@@ -45,7 +45,8 @@ namespace FleetLab {
             int cellAt = parent * 492 + 64 + (x * 10 + y) * 4, cell = BitConverter.ToInt32(fleetPool, cellAt);
             if (cell != 2 && cell != 4 && cell != 5 && cell != 6 && cell != 7 && cell != 8)
                 throw new NotSupportedException("This target cell is outside the admitted ship-segment states.");
-            if (hp < 1 || cell != 8 && hp < 2) throw new NotSupportedException("Lethal segment damage requires unreconstructed destruction callbacks.");
+            if ((hp < 1 && !(allowDestruction && hp == 0 && cell == 8)) || (cell != 8 && hp < 2 && !allowDestruction))
+                throw new NotSupportedException("Lethal segment damage requires unreconstructed destruction callbacks.");
             for (int column = 0; column < 4; column++) {
                 int equipment = BitConverter.ToInt32(shipPool, unit + 100 + row * 16 + column * 4);
                 if (equipment < 0 || equipment > 34) throw new NotSupportedException("This segment has unreconstructed attached-object equipment.");
@@ -54,7 +55,11 @@ namespace FleetLab {
         }
         public static PracticeSegmentDamageResult Apply(PracticeUnitCatalog catalog, byte[] shipPool,
                 byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner) {
-            Target target = CheckTarget(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+            return ApplyCore(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, null);
+        }
+        internal static PracticeSegmentDamageResult ApplyCore(PracticeUnitCatalog catalog, byte[] shipPool,
+                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, PracticeDamageContinuation continuation) {
+            Target target = CheckTarget(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation != null);
             int unit = target.Unit, row = target.Row, hp = target.HP, cellAt = target.CellAt, cell = target.Cell, owner = target.Owner;
             byte[] ships = (byte[])shipPool.Clone(), fleets = (byte[])fleetPool.Clone(), scores = (byte[])scoreRegion.Clone();
             int removed = 0, points = 0;
@@ -71,6 +76,8 @@ namespace FleetLab {
             short hullPoints = unchecked((short)((short)(8 - cell) * 25));
             Score(scores, attackerOwner, owner, hullPoints); points += hullPoints;
             BitConverter.GetBytes(8).CopyTo(fleets, cellAt);
+            if (continuation != null && BitConverter.ToInt16(ships, unit + 16) == 0)
+                return continuation.Destroy(ships, fleets, scores, victimShip, attackerOwner, removed, lost, points);
             PracticeUnitDepletion.Reevaluate(catalog, ships, unit);
             return new PracticeSegmentDamageResult(ships, fleets, scores, removed, lost, points);
         }

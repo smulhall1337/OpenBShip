@@ -17,7 +17,7 @@ namespace FleetLab {
             return PracticeDamagePolicy.KnownEquipmentRow;
         }
         static PracticeSegmentDamageResult KnownRow(PracticeDefenseTables tables, PracticeUnitCatalog units,
-                byte[] ships, byte[] fleets, byte[] scores, int victim, int x, int y, int weapon, int attacker) {
+                byte[] ships, byte[] fleets, byte[] scores, int victim, int x, int y, int weapon, int attacker, PracticeDamageContinuation continuation) {
             // The original B list contains every1..34. For admitted rows0..34,
             // its final data is identical to the complete segment callback:
             // score/clear equipment, update hull/cell, then reevaluate. Its
@@ -25,23 +25,27 @@ namespace FleetLab {
             var priorities = new HashSet<int>(tables.CopyDamagePriority(false));
             for (int equipment = 1; equipment <= 34; equipment++)
                 if (!priorities.Contains(equipment)) throw new NotSupportedException("Incomplete known-equipment damage priority.");
-            return PracticeSegmentDamage.Apply(units, ships, fleets, scores, victim, x, y, weapon, attacker);
+            return PracticeSegmentDamage.ApplyCore(units, ships, fleets, scores, victim, x, y, weapon, attacker, continuation);
         }
         public static PracticeSegmentDamageResult Apply(PracticeDefenseTables tables, PracticeUnitCatalog units,
                 byte[] shipPool, byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner) {
+            return ApplyCore(tables, units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, null);
+        }
+        internal static PracticeSegmentDamageResult ApplyCore(PracticeDefenseTables tables, PracticeUnitCatalog units,
+                byte[] shipPool, byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, PracticeDamageContinuation continuation) {
             if (tables == null) throw new ArgumentNullException("tables");
-            var target = PracticeSegmentDamage.CheckTarget(units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+            var target = PracticeSegmentDamage.CheckTarget(units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation != null);
             PracticeDamagePolicy policy = PolicyForWeapon(weapon);
             if (policy == PracticeDamagePolicy.FullSegment)
-                return PracticeSegmentDamage.Apply(units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+                return PracticeSegmentDamage.ApplyCore(units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation);
             if (policy == PracticeDamagePolicy.KnownEquipmentRow)
-                return KnownRow(tables, units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+                return KnownRow(tables, units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation);
             int selected = 0, column = -1, unit = target.Unit, row = target.Row;
             foreach (int priority in tables.CopyDamagePriority(true)) {
                 for (int c = 0; c < 4; c++) if (BitConverter.ToInt32(shipPool, unit + 100 + row * 16 + c * 4) == priority) { selected = priority; column = c; break; }
                 if (column >= 0) break;
             }
-            if (column < 0) return KnownRow(tables, units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+            if (column < 0) return KnownRow(tables, units, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation);
             byte[] ships = (byte[])shipPool.Clone(), fleets = (byte[])fleetPool.Clone(), scores = (byte[])scoreRegion.Clone();
             int points = 0;
             if (selected >= 14 && selected <= 34) { PracticeSegmentDamage.Score(scores, attackerOwner, target.Owner, 50); points += 50; }
@@ -62,7 +66,7 @@ namespace FleetLab {
             PracticeSegmentDamage.Score(scores, attackerOwner, target.Owner, hullPoints); points += hullPoints;
             BitConverter.GetBytes(8 - remaining).CopyTo(fleets, target.CellAt);
             if (remaining == 0) {
-                var segment = PracticeSegmentDamage.Apply(units, ships, fleets, scores, victimShip, x, y, weapon, attackerOwner);
+                var segment = PracticeSegmentDamage.ApplyCore(units, ships, fleets, scores, victimShip, x, y, weapon, attackerOwner, continuation);
                 return new PracticeSegmentDamageResult(segment.CopyShipPool(), segment.CopyFleetPool(), segment.CopyScoreRegion(), 1 + segment.RemovedEquipment, lost || segment.LostHullSegment, points + segment.Points);
             }
             PracticeUnitDepletion.Reevaluate(units, ships, unit);
