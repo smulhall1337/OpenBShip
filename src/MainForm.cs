@@ -18,6 +18,7 @@ namespace FleetLab {
         readonly CheckBox seededDeployment=new CheckBox();
         readonly CheckBox mapObjects=new CheckBox();
         readonly Button waypointStudy=new Button();
+        readonly Button timedStudy=new Button();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
@@ -93,7 +94,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.57 — recovered fleet batches";
+            Text="Battleship Fleet Lab 0.58 — recovered timed objects";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -281,7 +282,7 @@ namespace FleetLab {
                 "BS201.SCN","BS202.SCN","BS204.SCN","BSSB201.SCN"
             });
             var mapHeader=new FlowLayoutPanel {
-                Dock=DockStyle.Top,Height=42,Padding=new Padding(12,7,0,0)
+                Dock=DockStyle.Top,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,Padding=new Padding(12,7,0,5)
             };
             mapHeader.Controls.Add(mapSelect);
             seededDeployment.Text="Seeded deployment";seededDeployment.AutoSize=true;
@@ -298,6 +299,9 @@ namespace FleetLab {
             waypointStudy.Text="Waypoint study…";waypointStudy.AutoSize=true;waypointStudy.Enabled=false;
             waypointStudy.AccessibleDescription="Choose a player 1 grouped fleet in the first Practice startup preview.";
             mapHeader.Controls.Add(waypointStudy);
+            timedStudy.Text="Timed objects…";timedStudy.AutoSize=true;timedStudy.Enabled=false;
+            timedStudy.AccessibleDescription="Manual creation, motion and paused-deadline study for the selected player 1 fleet.";
+            mapHeader.Controls.Add(timedStudy);
             map.Dock=DockStyle.Fill;
             practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
             seededDeployment.Enabled=practiceInspection.CanDeploy;
@@ -305,6 +309,15 @@ namespace FleetLab {
             waypointStudy.Click+=delegate {
                 if(!waypointStudy.Enabled)return;
                 using(var study=new PracticeWaypointStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment))study.ShowDialog(this);
+                SuppressHeldControls();
+            };
+            timedStudy.Click+=delegate {
+                if(!timedStudy.Enabled)return;
+                try {
+                    using(var study=new PracticeTimedStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment,
+                        Path.Combine(Path.GetDirectoryName(assets),"Programs"),practiceInspection.SelectedUnit,board.Messages))study.ShowDialog(this);
+                }
+                catch(IOException e) {MessageBox.Show(this,e.Message,"Timed-object study");}
                 SuppressHeldControls();
             };
             map.FleetSelected+=delegate(int index){practiceInspection.ChooseRecord(index);};
@@ -403,6 +416,7 @@ namespace FleetLab {
             var selected=practiceInspection.CurrentFleet;
             waypointStudy.Enabled=map.Deployment!=null&&map.Deployment.IncludesMapObjects&&selected!=null&&
                 selected.Owner==0&&(selected.Kind==1||selected.Kind==9);
+            timedStudy.Enabled=waypointStudy.Enabled;
         }
 
         void SuppressHeldControls() {
@@ -880,7 +894,7 @@ namespace FleetLab {
             Show();
             Application.DoEvents();
             var results=new List<string>();
-            int failed=0;
+            int failed=0,skipped=0;
             Action<string,Action> check=delegate(string name,Action action) {
                 try { action(); results.Add("PASS "+name); }
                 catch(Exception e) { failed++; results.Add("FAIL "+name+": "+e.Message); }
@@ -1399,7 +1413,9 @@ namespace FleetLab {
             });
             check("Startup replay runs original order/fades and returns with battle/settings intact",delegate {
                 NewGame();auto.PerformClick();start.PerformClick();var game=State;var settings=preferences.Serialize();tabs.SelectedIndex=4;front.FinishReveal();front.IntroButton.PerformClick();require(startupPage.Visible&&startupPage.HasOpened&&startupPage.Index==0&&startupPage.Movie.Timeline.Frame==0&&startupPage.Movie.Timeline.Count==250&&startupPage.Movie.Problem==""&&State==game&&game.Paused,"Startup first-frame bridge/audio decode");
-                byte[] startupPalette=File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(assets),"Evidence","Startup-Palette-HASBRO-0.bin"));var startupFrame=startupPage.Movie.IndexedFrame(0);for(int c=10;c<=245;c++)require(startupFrame.Palette[c].R==startupPalette[c*3]&&startupFrame.Palette[c].G==startupPalette[c*3+1]&&startupFrame.Palette[c].B==startupPalette[c*3+2],"Startup used Credits partial palette");
+                string startupEvidence=Path.Combine(Path.GetDirectoryName(assets),"Evidence");
+                if(!Directory.Exists(startupEvidence)){skipped++;results.Add("SKIP optional native startup palette comparison: private Evidence directory unavailable.");}
+                else {byte[] startupPalette=File.ReadAllBytes(Path.Combine(startupEvidence,"Startup-Palette-HASBRO-0.bin"));var startupFrame=startupPage.Movie.IndexedFrame(0);for(int c=10;c<=245;c++)require(startupFrame.Palette[c].R==startupPalette[c*3]&&startupFrame.Palette[c].G==startupPalette[c*3+1]&&startupFrame.Palette[c].B==startupPalette[c*3+2],"Startup used Credits partial palette");}
                 for(int i=0;i<3;i++){require(startupPage.Index==i&&startupPage.Stage==1&&startupPage.Factor==64&&startupPage.Movie.Timeline.FrameMilliseconds==50,"Startup source order/cadence");startupPage.Advance(50);require(startupPage.Movie.Timeline.Frame==1,"Startup first wait");startupPage.SkipButton.PerformClick();require(startupPage.Stage==2&&startupPage.Movie.Timeline==null,"Startup skip did not stop/unload movie");for(int t=1;t<=16;t++){startupPage.Advance(40);require(startupPage.Factor==64-4*t,"Startup source fade factor");}startupPage.Advance(40);}
                 require(!startupPage.HasOpened&&!startupPage.Visible&&front.Visible&&front.HasOpened&&State==game&&game.Paused&&preferences.Serialize()==settings,"Startup title return changed battle/settings");
             });
@@ -1636,7 +1652,7 @@ namespace FleetLab {
                 State.Fire(target);UpdateView();require(State.Phase==Phase.Finished&&board.VisualEffectCount==1,"Final sinking visual missing");
                 var entry=new List<ClassicVisualEntry>(board.VisualEntries)[0];board.DamageTick+=entry.Spec.LastCounter;board.SynchronizeVisualEffects();require(board.VisualEffectCount==0,"Finished entry never retired");NewGame();
             });
-            results.Add("UI checks passed="+(results.Count-failed)+" failed="+failed);
+            results.Add("UI checks passed="+(results.Count-failed-skipped)+" failed="+failed+(skipped>0?" skipped="+skipped:""));
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");
             File.WriteAllLines(report,results.ToArray());
             Close();
