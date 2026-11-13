@@ -65,8 +65,9 @@ namespace FleetLab {
             if(weapon<14||weapon>30||weapon==19||weapon==21)throw new NotSupportedException("This projectile uses an unreconstructed impact branch.");
             if(target<0||target>=250||x<0||x>=10||y<0||y>=10)throw new InvalidDataException("Impact target is outside the admitted fleet grid.");
             int fleet=target*492,kind=Dword(fleetPool,fleet),cell=Dword(fleetPool,fleet+64+(x*10+y)*4);
-            if(kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported impact fleet kind.");
-            if(destruction!=null&&((kind!=1&&kind!=9)||Word(scoreRegion,172)!=-2))throw new NotSupportedException("Destructive impacts require fleet1/9 and the explicit offscreen local-owner context.");
+            bool retiredPassive=destruction!=null&&kind==0&&cell==8;
+            if(!retiredPassive&&kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported impact fleet kind.");
+            if(destruction!=null&&((!retiredPassive&&kind!=1&&kind!=9)||Word(scoreRegion,172)!=-2))throw new NotSupportedException("Destructive impacts require fleet1/9 (or a retired fleet's resolved cell8) and the explicit offscreen local-owner context.");
             if(cell==0||cell==1||cell==3){var miss=PracticeMissImpact.Resolve(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState);return new PracticeImpactResult(miss.CopyTimedPool(),shipPool,fleetPool,miss.CopyEffectPool(),scoreRegion,PracticeImpactOutcome.NonshipCell,miss.RandomState,miss.RandomCalls,-1,miss.EffectSlot,miss.EffectType,0,0,true,false,movieCounter);}
             byte[] timed=(byte[])timedPool.Clone();
             if(cell==8){BitConverter.GetBytes(0).CopyTo(timed,at);return new PracticeImpactResult(timed,shipPool,fleetPool,effectPool,scoreRegion,PracticeImpactOutcome.PassiveCell,randomState,0,-1,-1,-1,0,0,true,false,movieCounter);}
