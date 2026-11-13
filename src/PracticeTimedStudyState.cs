@@ -4,10 +4,14 @@ namespace FleetLab {
     // Copied-state composition for an explicit manual study. Fleets stay fixed;
     // supplied40ms deltas are numeric steps, not calibrated original frame pace.
     // The auxiliary pause-timer regions are an inactive fixture, not recovered
-    // application initialization. Expiration, combat admission and impacts fail
-    // explicitly rather than being replaced with invented damage behavior.
+    // application initialization. The optional extended constructor admits
+    // verified last-round and shared nonship expiry data. Unsupported combat
+    // branches fail explicitly rather than inventing damage behavior.
     public sealed class PracticeTimedStudyState {
         readonly PracticeTimedWeaponCatalog catalog;
+        readonly PracticeUnitCatalog units;
+        readonly byte[] visuals;
+        PracticeVisualPool effects;
         public PracticeTimedCreationState Objects { get; private set; }
         public OriginalPauseTimers PauseTimers { get; private set; }
         public uint ClockMilliseconds { get; private set; }
@@ -16,6 +20,16 @@ namespace FleetLab {
         public int LastStoppedAtRecord { get; private set; }
         public int LastCreatedSlot { get; private set; }
         public PracticeTimedCreationOutcome? LastCreationOutcome { get; private set; }
+        public bool IncludesDataExpiry { get { return visuals != null; } }
+        public uint RandomState { get; private set; }
+        public int ExpiredObjects { get; private set; }
+        public int DroppedEffects { get; private set; }
+        public int RandomCalls { get; private set; }
+        public int ActiveEffects { get { return effects == null ? 0 : effects.Count; } }
+        public byte[] CopyEffectPool() {
+            if (effects == null) throw new InvalidOperationException("This study does not include visual records.");
+            return effects.CopyEffectPool();
+        }
         public const uint StepMilliseconds = 40;
 
         public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons, byte[] ships, byte[] fleets, uint initialClock) {
@@ -26,20 +40,37 @@ namespace FleetLab {
             PauseTimers = new OriginalPauseTimers(Objects.CopyTimedPool(), timerShips, new byte[16], timestamps, 0);
             ClockMilliseconds = initialClock; LastStoppedAtRecord = LastCreatedSlot = -1;
         }
+        // Opt-in composition of verified data branches. The old constructor
+        // remains the bounded future-only comparison baseline. Supplying a
+        // random seed and inactive auxiliary pools does not reconstruct the
+        // original application seed selection, normal firing or mission loop.
+        public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons, PracticeUnitCatalog unitCatalog,
+                byte[] visualRecords, byte[] ships, byte[] fleets, uint initialClock, uint randomState)
+                : this(weapons, ships, fleets, initialClock) {
+            if (unitCatalog == null) throw new ArgumentNullException("unitCatalog");
+            effects = PracticeVisualPool.Empty(visualRecords);
+            units = unitCatalog; visuals = (byte[])visualRecords.Clone(); RandomState = randomState;
+        }
         PracticeTimedStudyState(PracticeTimedStudyState before, PracticeTimedCreationState objects,
                                 OriginalPauseTimers timers, uint clock) {
             catalog = before.catalog; Objects = objects; PauseTimers = timers; ClockMilliseconds = clock;
+            units = before.units; visuals = before.visuals; effects = before.effects;
+            RandomState = before.RandomState; ExpiredObjects = before.ExpiredObjects;
+            DroppedEffects = before.DroppedEffects; RandomCalls = before.RandomCalls;
             MovementFrames = before.MovementFrames; PausedFrames = before.PausedFrames;
             LastCreatedSlot = before.LastCreatedSlot; LastCreationOutcome = before.LastCreationOutcome;
             LastStoppedAtRecord = before.LastStoppedAtRecord;
         }
-        OriginalPauseTimers WithTimedPool(byte[] timed) {
-            return new OriginalPauseTimers(timed, PauseTimers.CopyShipTimers(), PauseTimers.CopyFourCounters(),
+        OriginalPauseTimers WithTimedPool(byte[] timed, byte[] orderPool = null) {
+            return new OriginalPauseTimers(timed, orderPool ?? PauseTimers.CopyShipTimers(), PauseTimers.CopyFourCounters(),
                                            PauseTimers.CopyTimestamps(), PauseTimers.GlobalCounter);
         }
         public PracticeTimedStudyState Create(int weapon, int sourceShip, int targetFleet, int offsetX, int offsetY) {
-            PracticeTimedCreationUpdate result = Objects.Create(weapon, sourceShip, targetFleet, offsetX, offsetY, ClockMilliseconds);
-            var next = new PracticeTimedStudyState(this, result.State, WithTimedPool(result.State.CopyTimedPool()), ClockMilliseconds);
+            PracticeTimedCreationUpdate result = IncludesDataExpiry ?
+                Objects.CreateWithDepletion(weapon, sourceShip, targetFleet, offsetX, offsetY, ClockMilliseconds, units, PauseTimers.CopyShipTimers()) :
+                Objects.Create(weapon, sourceShip, targetFleet, offsetX, offsetY, ClockMilliseconds);
+            var next = new PracticeTimedStudyState(this, result.State,
+                WithTimedPool(result.State.CopyTimedPool(), IncludesDataExpiry ? result.CopyOrderPool() : null), ClockMilliseconds);
             next.LastCreationOutcome = result.Outcome; next.LastCreatedSlot = result.CreatedSlot;
             return next;
         }
@@ -50,6 +81,19 @@ namespace FleetLab {
                 var objects = new PracticeTimedCreationState(catalog, timers.CopyTimedRecords(), Objects.CopyShipPool(), Objects.CopyFleetPool(), Objects.LastTargetFleet);
                 var next = new PracticeTimedStudyState(this, objects, timers, nextClock);
                 next.PausedFrames++; return next;
+            }
+            if (IncludesDataExpiry) {
+                var update = new PracticeTimedExpiryState(Objects.CopyTimedPool(), Objects.CopyFleetPool(), effects.CopyEffectPool(), visuals, RandomState)
+                    .Advance(nextClock, StepMilliseconds);
+                // In the admitted inactive-order fixture, source416090 between
+                // 416C40 and40E0D0 changes nothing. Advance new effects in the
+                // same supplied update in which the expiry created them.
+                var nextEffects = new PracticeVisualPool(update.State.CopyEffectPool(), visuals).Advance();
+                var updatedObjects = new PracticeTimedCreationState(catalog, update.State.CopyTimedPool(), Objects.CopyShipPool(), update.State.CopyFleetPool(), Objects.LastTargetFleet);
+                var next = new PracticeTimedStudyState(this, updatedObjects, WithTimedPool(update.State.CopyTimedPool()), nextClock);
+                next.effects = nextEffects; next.RandomState = update.State.RandomState;
+                next.ExpiredObjects += update.ExpiredRecords; next.DroppedEffects += update.DroppedEffects; next.RandomCalls += update.RandomCalls;
+                next.MovementFrames++; next.LastStoppedAtRecord = update.StoppedAtRecord; return next;
             }
             var motion = new PracticeTimedMotionState(Objects.CopyTimedPool(), Objects.CopyFleetPool()).Advance(nextClock, StepMilliseconds);
             var advanced = new PracticeTimedCreationState(catalog, motion.State.CopyTimedPool(), Objects.CopyShipPool(), motion.State.CopyFleetPool(), Objects.LastTargetFleet);
