@@ -22,11 +22,14 @@ namespace FleetLab {
     // selected-unit refresh. Destruction/attached-object callbacks are guarded.
     // This source-only component is not connected to the shipped study.
     public static class PracticeSegmentDamage {
-        static void Score(byte[] region, int attacker, int victim, short points) {
+        internal static void Score(byte[] region, int attacker, int victim, short points) {
             if (attacker >= 0) { int at = attacker * 44; BitConverter.GetBytes(unchecked(BitConverter.ToInt32(region, at) + points)).CopyTo(region, at); }
             if (victim >= 0) { int at = victim * 44; BitConverter.GetBytes(unchecked(BitConverter.ToInt32(region, at) - points)).CopyTo(region, at); }
         }
-        public static PracticeSegmentDamageResult Apply(PracticeUnitCatalog catalog, byte[] shipPool,
+        internal struct Target {
+            internal int Unit, Row, HP, CellAt, Cell, Owner;
+        }
+        internal static Target CheckTarget(PracticeUnitCatalog catalog, byte[] shipPool,
                 byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (shipPool == null || shipPool.Length != 402000 || fleetPool == null || fleetPool.Length != 123000 || scoreRegion == null || scoreRegion.Length != 176)
@@ -47,6 +50,12 @@ namespace FleetLab {
                 int equipment = BitConverter.ToInt32(shipPool, unit + 100 + row * 16 + column * 4);
                 if (equipment < 0 || equipment > 34) throw new NotSupportedException("This segment has unreconstructed attached-object equipment.");
             }
+            return new Target { Unit = unit, Row = row, HP = hp, CellAt = cellAt, Cell = cell, Owner = owner };
+        }
+        public static PracticeSegmentDamageResult Apply(PracticeUnitCatalog catalog, byte[] shipPool,
+                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner) {
+            Target target = CheckTarget(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner);
+            int unit = target.Unit, row = target.Row, hp = target.HP, cellAt = target.CellAt, cell = target.Cell, owner = target.Owner;
             byte[] ships = (byte[])shipPool.Clone(), fleets = (byte[])fleetPool.Clone(), scores = (byte[])scoreRegion.Clone();
             int removed = 0, points = 0;
             for (int column = 0; column < 4; column++) {

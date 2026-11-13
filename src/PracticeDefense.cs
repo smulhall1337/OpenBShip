@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace FleetLab {
     // Hash-pinned original region44D1D8..44D657, retained as a region rather
@@ -20,6 +21,16 @@ namespace FleetLab {
         internal int BaseChance(int weapon, int targetKind) { return unchecked((sbyte)data[weapon * 13 + targetKind]); }
         internal int PrimaryChance(int selection, int weapon) { return unchecked((sbyte)data[0x255 + selection * 35 + weapon]); }
         internal int SecondaryChance(int selection, int weapon) { return unchecked((sbyte)data[0x8D + selection * 35 + weapon]); }
+        internal int[] CopyDamagePriority(bool primary) {
+            int first = primary ? 0x390 : 0x3F0, end = primary ? 0x3F0 : 0x480;
+            var result = new List<int>();
+            for (int at = first; at < end; at += 4) {
+                int value = BitConverter.ToInt32(data, at);
+                if (value == 0) return result.ToArray();
+                result.Add(value);
+            }
+            throw new InvalidDataException("Original damage priority list has no bounded terminator.");
+        }
     }
 
     public enum PracticeDefenseOutcome { PrimaryStopped = 0, Miss = 1, ProceedToDamage = 2 }
