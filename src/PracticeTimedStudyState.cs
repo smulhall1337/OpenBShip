@@ -13,6 +13,9 @@ namespace FleetLab {
         readonly byte[] visuals;
         readonly PracticeDefenseTables impactTables;
         readonly PracticeDestructionTables destructionTables;
+        readonly PracticeFiringRangeTable firingRanges;
+        readonly PracticeVisibility visibility;
+        readonly PracticeFiringRateTable firingRates;
         byte[] scoreRegion;
         PracticeVisualPool effects;
         public PracticeTimedCreationState Objects { get; private set; }
@@ -38,6 +41,16 @@ namespace FleetLab {
         public int DestroyedUnits { get; private set; }
         public bool LastVictimDestroyed { get; private set; }
         public int MovieCounter { get; private set; }
+        public bool IncludesFiringOrders { get { return firingRanges!=null; } }
+        public int LastQueueReturnCode { get; private set; }
+        public int LastQueueSlot { get; private set; }
+        public int FiringPolls { get; private set; }
+        public int ConsumedOrders { get; private set; }
+        public int RejectedOrders { get; private set; }
+        public int ObjectsFromOrders { get; private set; }
+        public int LastOrdersConsumed { get; private set; }
+        public int LastOrdersRejected { get; private set; }
+        public int LastOrdersCreated { get; private set; }
         int[] lastLaunchSlots = new int[0];
         public int LastLaunchCount { get { return lastLaunchSlots.Length; } }
         public int LastLaunchAttempts { get; private set; }
@@ -88,12 +101,30 @@ namespace FleetLab {
             if(destruction==null)throw new ArgumentNullException("destruction");
             destructionTables=destruction;
         }
+        // Optional local firing-data composition. All ten X sentinels are
+        // explicitly cleared in this fresh study fixture; the old inactive-
+        // order constructors and their comparison inputs remain unchanged.
+        public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog unitCatalog,
+                byte[] visualRecords,byte[] ships,byte[] fleets,uint initialClock,uint randomState,
+                PracticeDefenseTables sourceTables,PracticeDestructionTables destruction,
+                PracticeFiringRangeTable ranges,PracticeVisibility visibilityRules,PracticeFiringRateTable rates)
+                : this(weapons,unitCatalog,visualRecords,ships,fleets,initialClock,randomState,sourceTables,destruction) {
+            if(ranges==null||visibilityRules==null||rates==null)throw new ArgumentNullException("firing tables");
+            firingRanges=ranges;visibility=visibilityRules;firingRates=rates;
+            byte[] orders=PauseTimers.CopyShipTimers();
+            for(int source=0;source<1500;source++)for(int n=0;n<10;n++)BitConverter.GetBytes((short)-1).CopyTo(orders,source*52+8+n*2);
+            PauseTimers=WithTimedPool(Objects.CopyTimedPool(),orders);LastQueueReturnCode=LastQueueSlot=-1;
+        }
         PracticeTimedStudyState(PracticeTimedStudyState before, PracticeTimedCreationState objects,
                                 OriginalPauseTimers timers, uint clock) {
             catalog = before.catalog; Objects = objects; PauseTimers = timers; ClockMilliseconds = clock;
             units = before.units; visuals = before.visuals; effects = before.effects;
             impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
             destructionTables=before.destructionTables;DestroyedUnits=before.DestroyedUnits;LastVictimDestroyed=before.LastVictimDestroyed;MovieCounter=before.MovieCounter;
+            firingRanges=before.firingRanges;visibility=before.visibility;firingRates=before.firingRates;
+            LastQueueReturnCode=before.LastQueueReturnCode;LastQueueSlot=before.LastQueueSlot;FiringPolls=before.FiringPolls;
+            ConsumedOrders=before.ConsumedOrders;RejectedOrders=before.RejectedOrders;ObjectsFromOrders=before.ObjectsFromOrders;
+            LastOrdersConsumed=before.LastOrdersConsumed;LastOrdersRejected=before.LastOrdersRejected;LastOrdersCreated=before.LastOrdersCreated;
             lastLaunchSlots=before.lastLaunchSlots;LastLaunchAttempts=before.LastLaunchAttempts;LastLaunchDepletions=before.LastLaunchDepletions;
             LastImpactOutcome=before.LastImpactOutcome;LastVictimShip=before.LastVictimShip;LastImpactPoints=before.LastImpactPoints;LastScatterAttempts=before.LastScatterAttempts;
             RandomState = before.RandomState; ExpiredObjects = before.ExpiredObjects;
@@ -105,6 +136,29 @@ namespace FleetLab {
         OriginalPauseTimers WithTimedPool(byte[] timed, byte[] orderPool = null) {
             return new OriginalPauseTimers(timed, orderPool ?? PauseTimers.CopyShipTimers(), PauseTimers.CopyFourCounters(),
                                            PauseTimers.CopyTimestamps(), PauseTimers.GlobalCounter);
+        }
+        public PracticeFiringCheck CheckFiring(int sourceShip,int targetFleet,int weapon) {
+            if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing rules.");
+            return PracticeFiringEligibility.Evaluate(firingRanges,visibility,Objects.CopyShipPool(),Objects.CopyFleetPool(),sourceShip,targetFleet,weapon,0,-2);
+        }
+        public PracticeTimedStudyState QueueOrder(int weapon,int sourceShip,int targetFleet,int offsetX,int offsetY) {
+            if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing orders.");
+            var queued=PracticeFireQueue.Enqueue(Objects.CopyShipPool(),Objects.CopyFleetPool(),PauseTimers.CopyShipTimers(),sourceShip,weapon,targetFleet,offsetX,offsetY);
+            var next=new PracticeTimedStudyState(this,Objects,WithTimedPool(Objects.CopyTimedPool(),queued.CopyOrderPool()),ClockMilliseconds);
+            next.LastQueueReturnCode=queued.ReturnCode;next.LastQueueSlot=queued.SelectedSlot;return next;
+        }
+        public PracticeTimedStudyState ClearOrders(int sourceShip) {
+            if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing orders.");
+            byte[] cleared=PracticeFireQueue.Clear(PauseTimers.CopyShipTimers(),sourceShip);
+            var next=new PracticeTimedStudyState(this,Objects,WithTimedPool(Objects.CopyTimedPool(),cleared),ClockMilliseconds);
+            next.LastQueueReturnCode=next.LastQueueSlot=-1;return next;
+        }
+        public PracticeTimedStudyState ProcessOrders() {
+            if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing orders.");
+            var update=PracticeFiringOrders.AdvanceWithLaunch(firingRanges,visibility,firingRates,catalog,units,Objects,PauseTimers.CopyShipTimers(),ClockMilliseconds,0,-2);
+            var next=new PracticeTimedStudyState(this,update.Objects,WithTimedPool(update.Objects.CopyTimedPool(),update.CopyOrderPool()),ClockMilliseconds);
+            next.FiringPolls++;next.ConsumedOrders+=update.ConsumedOrders;next.RejectedOrders+=update.RejectedOrders;next.ObjectsFromOrders+=update.CreatedObjects;
+            next.LastOrdersConsumed=update.ConsumedOrders;next.LastOrdersRejected=update.RejectedOrders;next.LastOrdersCreated=update.CreatedObjects;return next;
         }
         public PracticeTimedStudyState Create(int weapon, int sourceShip, int targetFleet, int offsetX, int offsetY) {
             PracticeTimedCreationUpdate result = IncludesDataExpiry ?
@@ -147,7 +201,7 @@ namespace FleetLab {
                 next.ExpiredObjects+=update.RetiredRecords;next.ExpiryCallbacks+=update.ExpiryCallbacks;next.DroppedEffects+=update.DroppedEffects;next.RandomCalls+=update.RandomCalls;
                 next.DestroyedUnits+=update.DestroyedUnits;next.MovieCounter=update.State.MovieCounter;
                 if(update.LastImpactOutcome.HasValue){next.LastImpactOutcome=update.LastImpactOutcome;next.LastVictimShip=update.LastVictimShip;next.LastImpactPoints=update.LastPoints;next.LastScatterAttempts=update.LastScatterAttempts;next.LastVictimDestroyed=update.LastVictimDestroyed;}
-                next.MovementFrames++;next.LastStoppedAtRecord=update.StoppedAtRecord;return next;
+                next.MovementFrames++;next.LastStoppedAtRecord=update.StoppedAtRecord;return next.IncludesFiringOrders?next.ProcessOrders():next;
             }
             if (IncludesDataExpiry) {
                 var update = new PracticeTimedExpiryState(Objects.CopyTimedPool(), Objects.CopyFleetPool(), effects.CopyEffectPool(), visuals, RandomState)
@@ -161,12 +215,12 @@ namespace FleetLab {
                 next.effects = nextEffects; next.RandomState = update.State.RandomState;
                 next.ExpiredObjects += update.ExpiredRecords; next.DroppedEffects += update.DroppedEffects; next.RandomCalls += update.RandomCalls;
                 next.ExpiryCallbacks+=update.ExpiredRecords;
-                next.MovementFrames++; next.LastStoppedAtRecord = update.StoppedAtRecord; return next;
+                next.MovementFrames++; next.LastStoppedAtRecord = update.StoppedAtRecord; return next.IncludesFiringOrders?next.ProcessOrders():next;
             }
             var motion = new PracticeTimedMotionState(Objects.CopyTimedPool(), Objects.CopyFleetPool()).Advance(nextClock, StepMilliseconds);
             var advanced = new PracticeTimedCreationState(catalog, motion.State.CopyTimedPool(), Objects.CopyShipPool(), motion.State.CopyFleetPool(), Objects.LastTargetFleet);
             var result = new PracticeTimedStudyState(this, advanced, WithTimedPool(motion.State.CopyTimedPool()), nextClock);
-            result.MovementFrames++; result.LastStoppedAtRecord = motion.StoppedAtRecord; return result;
+            result.MovementFrames++; result.LastStoppedAtRecord = motion.StoppedAtRecord; return result.IncludesFiringOrders?result.ProcessOrders():result;
         }
     }
 }
