@@ -25,11 +25,19 @@ namespace FleetLab {
 
     public enum PracticeTimedCreationOutcome { Created, NoAmmunition, PoolFull }
     public sealed class PracticeTimedCreationUpdate {
+        readonly byte[] orders;
         public PracticeTimedCreationState State { get; private set; }
         public PracticeTimedCreationOutcome Outcome { get; private set; }
         public int CreatedSlot { get; private set; }
-        internal PracticeTimedCreationUpdate(PracticeTimedCreationState state, PracticeTimedCreationOutcome outcome, int slot) {
-            State = state; Outcome = outcome; CreatedSlot = slot;
+        public bool DepletedLastRound { get; private set; }
+        internal PracticeTimedCreationUpdate(PracticeTimedCreationState state, PracticeTimedCreationOutcome outcome, int slot,
+                                            byte[] orderPool = null, bool depleted = false) {
+            State = state; Outcome = outcome; CreatedSlot = slot; DepletedLastRound = depleted;
+            orders = orderPool == null ? null : (byte[])orderPool.Clone();
+        }
+        public byte[] CopyOrderPool() {
+            if (orders == null) throw new InvalidOperationException("This creation did not include the unit-order pool.");
+            return (byte[])orders.Clone();
         }
     }
 
@@ -55,22 +63,41 @@ namespace FleetLab {
         static void Int(byte[] b, int at, int value) { BitConverter.GetBytes(value).CopyTo(b, at); }
         public PracticeTimedCreationUpdate Create(int weapon, int sourceShip, int targetFleet,
                                                   int offsetX, int offsetY, uint gameMilliseconds) {
+            return CreateCore(weapon, sourceShip, targetFleet, offsetX, offsetY, gameMilliseconds, null, null);
+        }
+        // The explicit data-only variant includes the source's last-round order
+        // reset and equipment reevaluation BEFORE copying the projectile record.
+        // UI refresh, media and normal firing admission remain separate.
+        public PracticeTimedCreationUpdate CreateWithDepletion(int weapon, int sourceShip, int targetFleet,
+                int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool) {
+            if (units == null) throw new ArgumentNullException("units");
+            if (orderPool == null || orderPool.Length != 78000)
+                throw new InvalidDataException("Timed depletion requires the complete unit-order pool.");
+            return CreateCore(weapon, sourceShip, targetFleet, offsetX, offsetY, gameMilliseconds, units, orderPool);
+        }
+        PracticeTimedCreationUpdate CreateCore(int weapon, int sourceShip, int targetFleet,
+                int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool) {
             int speed = catalog.SourceSpeed(weapon);
             if (sourceShip < 0 || sourceShip >= 1500) throw new ArgumentOutOfRangeException("sourceShip");
             if (targetFleet < 0 || targetFleet >= 250) throw new ArgumentOutOfRangeException("targetFleet");
             if (offsetX < short.MinValue || offsetX > short.MaxValue) throw new ArgumentOutOfRangeException("offsetX");
             if (offsetY < short.MinValue || offsetY > short.MaxValue) throw new ArgumentOutOfRangeException("offsetY");
             int slot = 0; while (slot < 80 && BitConverter.ToInt32(timed, slot * 268) != 0) slot++;
-            if (slot == 80) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.PoolFull, -1);
+            if (slot == 80) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.PoolFull, -1, orderPool);
             int source = sourceShip * 268, ammoAt = source + 196 + weapon * 2, ammo = Short(ships, ammoAt);
-            if (ammo == 0) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.NoAmmunition, -1);
-            if (ammo == 1 || ammo < -1)
+            if (ammo == 0) return new PracticeTimedCreationUpdate(this, PracticeTimedCreationOutcome.NoAmmunition, -1, orderPool);
+            if (ammo == 1 && units == null || ammo < -1)
                 throw new NotSupportedException("Timed-weapon depletion callbacks and negative ammo variants are not reconstructed.");
             int parent = Short(ships, source + 12);
             if (parent < 0 || parent >= 250 || Short(ships, source + 4) != sourceShip || Short(fleets, targetFleet * 492 + 4) != targetFleet)
                 throw new InvalidDataException("Timed creation contains an invalid source or target identity.");
             byte[] nextShips = CopyShipPool(), nextTimed = CopyTimedPool();
-            if (ammo != -1) Short(nextShips, ammoAt, ammo - 1);
+            byte[] nextOrders = orderPool;
+            if (ammo == 1) {
+                var depleted = PracticeUnitDepletion.ConsumeLastRound(units, ships, orderPool, sourceShip, weapon);
+                nextShips = depleted.CopyShipPool(); nextOrders = depleted.CopyOrderPool();
+            }
+            else if (ammo != -1) Short(nextShips, ammoAt, ammo - 1);
             int at = slot * 268; Array.Copy(nextShips, source, nextTimed, at, 268);
             int x = unchecked((short)(Short(ships, source + 8) + Short(fleets, parent * 492 + 12)));
             int y = unchecked((short)(Short(ships, source + 10) + Short(fleets, parent * 492 + 14)));
@@ -89,7 +116,7 @@ namespace FleetLab {
             // Evidence uses the original VA as an identity token only. It is
             // never dereferenced as a managed-process pointer.
             Int(nextTimed, at + 28, 0x4B47A0 + targetFleet * 492);
-            return new PracticeTimedCreationUpdate(new PracticeTimedCreationState(catalog, nextTimed, nextShips, fleets, targetFleet), PracticeTimedCreationOutcome.Created, slot);
+            return new PracticeTimedCreationUpdate(new PracticeTimedCreationState(catalog, nextTimed, nextShips, fleets, targetFleet), PracticeTimedCreationOutcome.Created, slot, nextOrders, ammo == 1);
         }
         public byte[] CopyTimedPool() { return (byte[])timed.Clone(); }
         public byte[] CopyShipPool() { return (byte[])ships.Clone(); }
