@@ -12,6 +12,7 @@ namespace FleetLab {
         readonly PracticeUnitCatalog units;
         readonly byte[] visuals;
         readonly PracticeDefenseTables impactTables;
+        readonly PracticeDestructionTables destructionTables;
         byte[] scoreRegion;
         PracticeVisualPool effects;
         public PracticeTimedCreationState Objects { get; private set; }
@@ -33,6 +34,10 @@ namespace FleetLab {
         public int LastImpactPoints { get; private set; }
         public int LastScatterAttempts { get; private set; }
         public bool IncludesShipImpacts { get { return impactTables != null; } }
+        public bool IncludesDestruction { get { return destructionTables != null; } }
+        public int DestroyedUnits { get; private set; }
+        public bool LastVictimDestroyed { get; private set; }
+        public int MovieCounter { get; private set; }
         public byte[] CopyScoreRegion() {
             if(scoreRegion==null)throw new InvalidOperationException("This study does not include ship-impact scores.");
             return (byte[])scoreRegion.Clone();
@@ -69,11 +74,21 @@ namespace FleetLab {
             if(sourceTables==null)throw new ArgumentNullException("sourceTables");
             impactTables=sourceTables;scoreRegion=new byte[176];BitConverter.GetBytes((short)-2).CopyTo(scoreRegion,172);
         }
+        // Explicit offscreen mode0/playercount0 destruction composition. This
+        // models data and selection counters, without live media or missions.
+        public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons, PracticeUnitCatalog unitCatalog,
+                byte[] visualRecords, byte[] ships, byte[] fleets, uint initialClock, uint randomState,
+                PracticeDefenseTables sourceTables, PracticeDestructionTables destruction)
+                : this(weapons,unitCatalog,visualRecords,ships,fleets,initialClock,randomState,sourceTables) {
+            if(destruction==null)throw new ArgumentNullException("destruction");
+            destructionTables=destruction;
+        }
         PracticeTimedStudyState(PracticeTimedStudyState before, PracticeTimedCreationState objects,
                                 OriginalPauseTimers timers, uint clock) {
             catalog = before.catalog; Objects = objects; PauseTimers = timers; ClockMilliseconds = clock;
             units = before.units; visuals = before.visuals; effects = before.effects;
             impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
+            destructionTables=before.destructionTables;DestroyedUnits=before.DestroyedUnits;LastVictimDestroyed=before.LastVictimDestroyed;MovieCounter=before.MovieCounter;
             LastImpactOutcome=before.LastImpactOutcome;LastVictimShip=before.LastVictimShip;LastImpactPoints=before.LastImpactPoints;LastScatterAttempts=before.LastScatterAttempts;
             RandomState = before.RandomState; ExpiredObjects = before.ExpiredObjects;
             DroppedEffects = before.DroppedEffects; RandomCalls = before.RandomCalls;
@@ -103,13 +118,14 @@ namespace FleetLab {
                 next.PausedFrames++; return next;
             }
             if(IncludesShipImpacts) {
-                var update=new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState).Advance(nextClock,StepMilliseconds);
+                var update=new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,destructionTables,MovieCounter).Advance(nextClock,StepMilliseconds);
                 var nextEffects=new PracticeVisualPool(update.State.CopyEffectPool(),visuals).Advance();
                 var updatedObjects=new PracticeTimedCreationState(catalog,update.State.CopyTimedPool(),update.State.CopyShipPool(),update.State.CopyFleetPool(),Objects.LastTargetFleet);
                 var next=new PracticeTimedStudyState(this,updatedObjects,WithTimedPool(update.State.CopyTimedPool()),nextClock);
                 next.effects=nextEffects;next.scoreRegion=update.State.CopyScoreRegion();next.RandomState=update.State.RandomState;
                 next.ExpiredObjects+=update.RetiredRecords;next.ExpiryCallbacks+=update.ExpiryCallbacks;next.DroppedEffects+=update.DroppedEffects;next.RandomCalls+=update.RandomCalls;
-                if(update.LastImpactOutcome.HasValue){next.LastImpactOutcome=update.LastImpactOutcome;next.LastVictimShip=update.LastVictimShip;next.LastImpactPoints=update.LastPoints;next.LastScatterAttempts=update.LastScatterAttempts;}
+                next.DestroyedUnits+=update.DestroyedUnits;next.MovieCounter=update.State.MovieCounter;
+                if(update.LastImpactOutcome.HasValue){next.LastImpactOutcome=update.LastImpactOutcome;next.LastVictimShip=update.LastVictimShip;next.LastImpactPoints=update.LastPoints;next.LastScatterAttempts=update.LastScatterAttempts;next.LastVictimDestroyed=update.LastVictimDestroyed;}
                 next.MovementFrames++;next.LastStoppedAtRecord=update.StoppedAtRecord;return next;
             }
             if (IncludesDataExpiry) {

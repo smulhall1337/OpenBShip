@@ -10,13 +10,16 @@ namespace FleetLab {
         public int DroppedEffects { get; private set; }
         public int StoppedAtRecord { get; private set; }
         public int RandomCalls { get; private set; }
+        public int DestroyedUnits { get; private set; }
+        public bool LastVictimDestroyed { get; private set; }
         public PracticeImpactOutcome? LastImpactOutcome { get; private set; }
         public int LastVictimShip { get; private set; }
         public int LastPoints { get; private set; }
         public int LastScatterAttempts { get; private set; }
-        internal PracticeTimedImpactUpdate(PracticeTimedImpactState state,int moved,int callbacks,int retired,int dropped,int stopped,int calls,PracticeImpactResult last) {
+        internal PracticeTimedImpactUpdate(PracticeTimedImpactState state,int moved,int callbacks,int retired,int dropped,int stopped,int calls,PracticeImpactResult last,int destroyed) {
             State=state;InterpolatedRecords=moved;ExpiryCallbacks=callbacks;RetiredRecords=retired;DroppedEffects=dropped;StoppedAtRecord=stopped;RandomCalls=calls;
             LastImpactOutcome=last==null?(PracticeImpactOutcome?)null:last.Outcome;LastVictimShip=last==null?-1:last.VictimShip;LastPoints=last==null?0:last.Points;LastScatterAttempts=last==null?0:last.ScatterAttempts;
+            DestroyedUnits=destroyed;LastVictimDestroyed=last!=null&&last.VictimDestroyed;
         }
     }
 
@@ -27,14 +30,19 @@ namespace FleetLab {
     public sealed class PracticeTimedImpactState {
         readonly PracticeUnitCatalog units;
         readonly PracticeDefenseTables tables;
+        readonly PracticeDestructionTables destruction;
         readonly byte[] visuals,timed,ships,fleets,effects,scores;
         public uint RandomState { get; private set; }
+        public int MovieCounter { get; private set; }
         public PracticeTimedImpactState(PracticeUnitCatalog unitCatalog,PracticeDefenseTables sourceTables,byte[] visualRecords,
-                byte[] timedPool,byte[] shipPool,byte[] fleetPool,byte[] effectPool,byte[] scoreRegion,uint randomState) {
+                byte[] timedPool,byte[] shipPool,byte[] fleetPool,byte[] effectPool,byte[] scoreRegion,uint randomState,
+                PracticeDestructionTables destructionTables=null,int movieCounter=0) {
             if(unitCatalog==null)throw new ArgumentNullException("unitCatalog");if(sourceTables==null)throw new ArgumentNullException("sourceTables");
             if(timedPool==null||timedPool.Length!=21440||shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||effectPool==null||effectPool.Length!=800||scoreRegion==null||scoreRegion.Length!=176)
                 throw new InvalidDataException("Timed impact stepping requires complete original pools and score region.");
             new PracticeVisualPool(effectPool,visualRecords);
+            if(movieCounter<short.MinValue||movieCounter>short.MaxValue)throw new ArgumentOutOfRangeException("movieCounter");
+            destruction=destructionTables;MovieCounter=movieCounter;
             units=unitCatalog;tables=sourceTables;visuals=(byte[])visualRecords.Clone();timed=(byte[])timedPool.Clone();ships=(byte[])shipPool.Clone();fleets=(byte[])fleetPool.Clone();effects=(byte[])effectPool.Clone();scores=(byte[])scoreRegion.Clone();RandomState=randomState;
         }
         static int Word(byte[] b,int at){return BitConverter.ToInt16(b,at);}
@@ -46,12 +54,13 @@ namespace FleetLab {
             }
             byte[] t=CopyTimedPool(),s=CopyShipPool(),f=CopyFleetPool(),e=CopyEffectPool(),score=CopyScoreRegion();uint random=RandomState;
             for(int at=483;at<f.Length;at+=492)f[at]=0;
-            int moved=0,callbacks=0,retired=0,dropped=0,stopped=-1,calls=0;PracticeImpactResult last=null;
+            int moved=0,callbacks=0,retired=0,dropped=0,stopped=-1,calls=0,destroyed=0,counter=MovieCounter;PracticeImpactResult last=null;
             for(int slot=0;slot<80;slot++){
                 int at=slot*268;if(BitConverter.ToInt32(t,at)==0)continue;
                 int remaining=unchecked((int)(BitConverter.ToUInt32(t,at+24)-gameMilliseconds)),updates=remaining/(int)priorDeltaMilliseconds;
                 if(remaining<=0){
-                    last=PracticeImpact.Resolve(tables,units,visuals,t,s,f,e,score,slot,random);t=last.CopyTimedPool();s=last.CopyShipPool();f=last.CopyFleetPool();e=last.CopyEffectPool();score=last.CopyScoreRegion();random=last.RandomState;calls+=last.RandomCalls;callbacks++;if(last.Retired)retired++;if(last.EffectRequested&&last.EffectSlot<0)dropped++;
+                    last=destruction==null?PracticeImpact.Resolve(tables,units,visuals,t,s,f,e,score,slot,random):PracticeImpact.ResolveWithDestruction(tables,units,visuals,t,s,f,e,score,slot,random,destruction,counter);
+                    t=last.CopyTimedPool();s=last.CopyShipPool();f=last.CopyFleetPool();e=last.CopyEffectPool();score=last.CopyScoreRegion();random=last.RandomState;calls+=last.RandomCalls;callbacks++;if(last.Retired)retired++;if(last.EffectRequested&&last.EffectSlot<0)dropped++;if(last.VictimDestroyed)destroyed++;if(destruction!=null)counter=last.MovieCounter;
                 }
                 // Original callback precedes the whole-pass quotient-zero
                 // return, and a negative quotient still writes retired coords.
@@ -60,8 +69,8 @@ namespace FleetLab {
                 int x=Word(t,at+8),y=Word(t,at+10),dx=Word(f,fleet+12)-x+Word(t,at+18),dy=Word(f,fleet+14)-y+Word(t,at+20);
                 Word(t,at+8,x+PracticeTimedMotionState.Component(dx,updates));Word(t,at+10,y+PracticeTimedMotionState.Component(dy,updates));moved++;
             }
-            var next=new PracticeTimedImpactState(units,tables,visuals,t,s,f,e,score,random);
-            return new PracticeTimedImpactUpdate(next,moved,callbacks,retired,dropped,stopped,calls,last);
+            var next=new PracticeTimedImpactState(units,tables,visuals,t,s,f,e,score,random,destruction,counter);
+            return new PracticeTimedImpactUpdate(next,moved,callbacks,retired,dropped,stopped,calls,last,destroyed);
         }
         public byte[] CopyTimedPool(){return (byte[])timed.Clone();}
         public byte[] CopyShipPool(){return (byte[])ships.Clone();}
