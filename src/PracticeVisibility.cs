@@ -15,6 +15,9 @@ namespace FleetLab {
                 throw new InvalidDataException("Unsupported visibility kind table identity.");
             allowedKinds=(byte[])sourceAllowedKinds.Clone();
         }
+        public static PracticeVisibility Load(string programs) {
+            return new PracticeVisibility(File.ReadAllBytes(Path.Combine(programs,"VisibilityKinds.seqbin")));
+        }
 
         public int Level(byte[] shipPool,byte[] fleetPool,int sourceShip,int targetFleet,
                          byte visibilityFlag,short localOwner) {

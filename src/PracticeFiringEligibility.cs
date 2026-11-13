@@ -11,6 +11,9 @@ namespace FleetLab {
             if(hash!="489BD18D81D2133EADC28D6F3CA6827A421367E64C69B8159422F5C5BC00BBFA")throw new InvalidDataException("Unsupported firing range table identity.");
             ranges=(byte[])sourceRanges.Clone();
         }
+        public static PracticeFiringRangeTable Load(string programs) {
+            return new PracticeFiringRangeTable(File.ReadAllBytes(Path.Combine(programs,"FiringRanges.seqbin")));
+        }
         public int SourceRange(int weapon) {
             if(weapon<0||weapon>=35)throw new ArgumentOutOfRangeException("weapon");
             return BitConverter.ToInt16(ranges,weapon*2);

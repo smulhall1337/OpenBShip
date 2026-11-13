@@ -6,6 +6,13 @@ using System.Collections.Generic;
 namespace FleetLab {
     public static class Validation {
         static string Hash(byte[] value){using(var sha=System.Security.Cryptography.SHA256.Create())return BitConverter.ToString(sha.ComputeHash(value)).Replace("-","");}
+        static PracticeTimedStudyState FiringFixture(string assets) {
+            string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var units=PracticeUnitCatalog.Load(p);
+            var deployment=PracticeDeployment.FirstPractice(units,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN")),143514006u);
+            return new PracticeTimedStudyState(PracticeTimedWeaponCatalog.Load(p),units,File.ReadAllBytes(Path.Combine(p,"ClassicVisuals.seqbin")),
+                deployment.CopyShipPool(),deployment.CopyFleetPool(),0,731,PracticeDefenseTables.Load(p),PracticeDestructionTables.Load(p),
+                PracticeFiringRangeTable.Load(p),PracticeVisibility.Load(p),PracticeFiringRateTable.Load(p));
+        }
         static void Require(bool condition,string message) {
             if(!condition)throw new Exception(message);
         }
@@ -434,6 +441,40 @@ namespace FleetLab {
                 Reject(delegate{planner.NextOrigin(0);});Require(planner.RandomState==731&&planner.RandomCalls==0,"Nozone failure consumed random or map aliased");
             });
 
+            check("Visibility matches original inclusive tiers and kind2 hidden branch",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var rules=PracticeVisibility.Load(p);
+                var ships=new byte[402000];var fleets=new byte[123000];BitConverter.GetBytes(1).CopyTo(fleets,0);
+                fleets[464]=10;fleets[465]=20;fleets[466]=40;int at=249*492;BitConverter.GetBytes(1).CopyTo(fleets,at);W16(fleets,at+6,1);
+                int[] distances={0,9,10,11,19,20,21,39,40,41,-40,-41},levels={3,3,3,2,2,2,1,1,1,0,1,0};
+                for(int n=0;n<distances.Length;n++){W16(fleets,at+12,distances[n]);W16(fleets,at+14,-distances[n]);Require(rules.Level(ships,fleets,0,249,0,-2)==levels[n],"Original279 visibility threshold "+n);}
+                BitConverter.GetBytes(2).CopyTo(fleets,at);Require(rules.Level(ships,fleets,0,249,0,-2)==1&&rules.Level(ships,fleets,0,249,1,-2)==0&&rules.Level(ships,fleets,0,249,1,1)==1,"Original282 kind2 flag/local owner");
+                fleets[at+467]=1;Require(rules.Level(ships,fleets,0,249,1,-2)==1,"Original282 revealed kind2");
+            });
+            check("First Practice firing eligibility matches original startup observations",delegate {
+                var initial=FiringFixture(assets);string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var rules=PracticeVisibility.Load(p);
+                byte[] ships=initial.Objects.CopyShipPool(),fleets=initial.Objects.CopyFleetPool();
+                int[] levels={3,3,1,0,3,3,3,3,0,1,1,0,0};for(int n=0;n<levels.Length;n++)Require(rules.Level(ships,fleets,7,n,0,-2)==levels[n],"Original279 startup visibility "+n);
+                var admitted=initial.CheckFiring(7,10,20);var denied=initial.CheckFiring(7,10,17);
+                Require(admitted.Allowed&&admitted.VisibilityLevel==1&&admitted.Distance==150&&admitted.Range==180,"Original283 admitted startup shot");
+                Require(denied.Denial==PracticeFiringDenial.OutOfRange&&denied.Distance==150&&denied.Range==20,"Original283 startup range rejection");
+            });
+            check("Queued firing matches the original enqueue and first complete frame",delegate {
+                var initial=FiringFixture(assets);var queued=initial.QueueOrder(20,7,10,4,6);
+                Require(Hash(queued.PauseTimers.CopyShipTimers())=="1DB4CB1236397A3B32013642A2A92A86D6AA543AEAEDDB314B6CE125CC518857","Original286 enqueue pool");
+                var fired=queued.AdvanceFrame(false);Require(fired.ClockMilliseconds==40&&fired.LastOrdersConsumed==1&&fired.ObjectsFromOrders==3,"Original286 first frame counters");
+                Require(Hash(fired.Objects.CopyTimedPool())=="6D10C7DB96947014EDA28E5D106430C5DE90779FC5AAEA938E9DDAFCDDC65AD4"&&
+                    Hash(fired.Objects.CopyShipPool())=="B78317AD4085A15A6AB72E7348DB7D6C8B61D56958ED00567AB98A482F1425B5"&&
+                    Hash(fired.PauseTimers.CopyShipTimers())=="2D8137560DC450AD714AA869BE70B27BD7DFC09A56281CB7B58D07D7511B76E5","Original286 complete timed/ship/order outputs");
+                Require(Hash(initial.Objects.CopyShipPool())=="BB5FC9652DF41EC906A746B555300DD24F13F711B7DECD4002A96CDC83459121"&&initial.FiringPolls==0,"Initial comparison checkpoint changed");
+            });
+            check("Queued firing pauses deadlines and retains explicit resource boundaries",delegate {
+                var initial=FiringFixture(assets);var state=initial.QueueOrder(20,7,10,4,6);for(int n=0;n<25;n++)state=state.AdvanceFrame(true);
+                Require(state.ClockMilliseconds==1000&&state.FiringPolls==0&&state.ObjectsFromOrders==0&&BitConverter.ToUInt32(state.PauseTimers.CopyShipTimers(),7*52+4)==1000,"Original286 paused order timer");
+                Require(state.ProcessOrders().ConsumedOrders==0&&state.AdvanceFrame(false).ObjectsFromOrders==3,"Original strict timer equality/next update");
+                var cleared=state.ClearOrders(7);Require(BitConverter.ToInt16(cleared.PauseTimers.CopyShipTimers(),7*52+8)==-1&&cleared.ClockMilliseconds==1000&&initial.ClockMilliseconds==0,"Clear and reset baseline");
+                Reject(delegate{new PracticeVisibility(new byte[624]);});Reject(delegate{new PracticeFiringRangeTable(new byte[70]);});Reject(delegate{new PracticeFiringRateTable(new byte[140]);});
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");RejectArgument(delegate{PracticeFiringRateTable.Load(p).Interval(17,1000,0);});
+            });
             check("First Practice startup matches complete source pools across five initial random states",delegate {
                 var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
                 byte[] source=File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN"));

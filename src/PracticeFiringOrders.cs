@@ -12,6 +12,9 @@ namespace FleetLab {
             if(hash!="6FAF98880ED597C57F44ABCCD95E5F75AC6B2D15ABEA78EADDB98BEEDF238C1B")throw new InvalidDataException("Unsupported firing rate table identity.");
             rates=(byte[])sourceRates.Clone();
         }
+        public static PracticeFiringRateTable Load(string programs) {
+            return new PracticeFiringRateTable(File.ReadAllBytes(Path.Combine(programs,"FiringRates.seqbin")));
+        }
         public int Interval(int weapon,int scale,int mounts) {
             if(weapon<0||weapon>=35)throw new ArgumentOutOfRangeException("weapon");
             if(mounts<1||mounts>24)throw new ArgumentOutOfRangeException("mounts");

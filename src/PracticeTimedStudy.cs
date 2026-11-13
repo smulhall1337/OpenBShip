@@ -23,6 +23,12 @@ namespace FleetLab {
         readonly TextBox details = new TextBox();
         readonly Button create = new Button();
         readonly Button sourceLaunch = new Button();
+        readonly CheckBox showFiringOrders = new CheckBox();
+        readonly FlowLayoutPanel firingPanel = new FlowLayoutPanel();
+        readonly Label firingInfo = new Label();
+        readonly TextBox firingQueue = new TextBox();
+        readonly Button queueOrder = new Button(), clearOrders = new Button(), pollOrders = new Button(), findOrder = new Button();
+        readonly string firingImportProblem;
         readonly TimedCanvas canvas;
         readonly HashSet<Keys> held = new HashSet<Keys>();
         bool changing;
@@ -42,6 +48,13 @@ namespace FleetLab {
             this.messages=messages;
             initial = state = new PracticeTimedStudyState(catalog,unitCatalog,visualData,
                 deployment.CopyShipPool(),deployment.CopyFleetPool(),0,0,math,destruction);
+            try {
+                initial=state=new PracticeTimedStudyState(catalog,unitCatalog,visualData,
+                    deployment.CopyShipPool(),deployment.CopyFleetPool(),0,0,math,destruction,
+                    PracticeFiringRangeTable.Load(programs),PracticeVisibility.Load(programs),PracticeFiringRateTable.Load(programs));
+            }
+            catch(InvalidDataException e){firingImportProblem=e.Message;}
+            catch(IOException e){firingImportProblem=e.Message;}
             Text = "Recovered timed objects · manual study"; Size = new Size(1120, 820); MinimumSize = new Size(900, 640);
             StartPosition = FormStartPosition.CenterParent; BackColor = Color.FromArgb(12,23,35);
             ForeColor = Color.WhiteSmoke; Font = new Font("Segoe UI",9); KeyPreview = true;
@@ -57,6 +70,7 @@ namespace FleetLab {
             impactSummary.AccessibleName="Last impact and copied scores";add(impactSummary,76);
             add(new Label { Text="Source unit" },20); add(source,28);
             add(new Label { Text="Test weapon (original ammo data)" },20); add(weapon,28); add(ammo,38);
+            showFiringOrders.Text="Show firing orders";showFiringOrders.AccessibleName="Show source firing order controls";add(showFiringOrders,28);
             add(new Label { Text="Fixed target fleet" },20); add(target,28);
             add(new Label { Text="Target offset X/Y. Click the map to choose a world point relative to that fleet." },40);
             var offsets = new FlowLayoutPanel { WrapContents=false };
@@ -64,11 +78,22 @@ namespace FleetLab {
             offsetX.AccessibleName="Timed target offset X";offsetY.AccessibleName="Timed target offset Y";
             offsets.Controls.Add(offsetX);offsets.Controls.Add(offsetY);add(offsets,32);
             add(targetInfo,78);
+            firingPanel.FlowDirection=FlowDirection.TopDown;firingPanel.WrapContents=false;firingPanel.AutoSize=true;
+            firingPanel.AutoSizeMode=AutoSizeMode.GrowAndShrink;add(firingPanel,0);firingPanel.Visible=false;
             var pickMiss = new Button { Text="Choose supported nonship cell",Name="timedPickMiss" };add(pickMiss,32);
             var pickShip = new Button { Text="Choose supported ship cell",Name="timedPickShip" };add(pickShip,32);
             create.Text="Create test object";add(create,32);
             sourceLaunch.Text="Create source launch pattern";sourceLaunch.Name="timedLaunch";add(sourceLaunch,32);
             add(new Label { Text=ClassicWeapons.Name(20)+" uses adjacent rows Y−1, Y, Y+1; other test weapons request one object. Expiry outside the 10 × 10 grid remains unsupported." },68);
+            Action<Control,int> addFiring=delegate(Control c,int height){c.Width=270;c.Height=height;c.Margin=new Padding(0,2,0,2);firingPanel.Controls.Add(c);};
+            firingInfo.AccessibleName="Source firing eligibility and queue totals";addFiring(firingInfo,140);
+            findOrder.Text="Find admitted test shot";findOrder.Name="timedFindOrder";addFiring(findOrder,32);
+            queueOrder.Text="Queue test order (raw)";queueOrder.Name="timedQueueOrder";addFiring(queueOrder,32);
+            pollOrders.Text="Run firing poll (same clock)";pollOrders.Name="timedPollOrders";addFiring(pollOrders,32);
+            clearOrders.Text="Clear this unit's orders";clearOrders.Name="timedClearOrders";addFiring(clearOrders,32);
+            firingQueue.Multiline=true;firingQueue.ReadOnly=true;firingQueue.ScrollBars=ScrollBars.Vertical;
+            firingQueue.BackColor=BackColor;firingQueue.ForeColor=ForeColor;firingQueue.AccessibleName="Selected unit raw firing queue";addFiring(firingQueue,132);
+            addFiring(new Label{Text="+40 ms / +1 s process orders after impacts. Paused steps shift their deadlines. Hiding these controls keeps queued orders active. Raw X=−1 is the empty sentinel."},84);
             var steps = new FlowLayoutPanel { WrapContents=false };
             var one = new Button { Text="+40 ms",Width=100,Height=30,Name="timedOne" };
             var second = new Button { Text="+1 s",Width=100,Height=30,Name="timedSecond" };steps.Controls.Add(one);steps.Controls.Add(second);add(steps,36);
@@ -87,8 +112,21 @@ namespace FleetLab {
                 int available = Math.Max(180,scroll.ClientSize.Width-side.Padding.Horizontal-8);
                 side.MaximumSize = new Size(Math.Max(1,scroll.ClientSize.Width),0);
                 foreach(Control child in side.Controls)child.Width=available;
+                firingPanel.MaximumSize=new Size(available,0);
+                foreach(Control child in firingPanel.Controls)child.Width=Math.Max(160,available-6);
             };
             scroll.SizeChanged += delegate { fitSide(); }; fitSide();
+            showFiringOrders.CheckedChanged+=delegate {
+                firingPanel.Visible=showFiringOrders.Checked;
+                // Creating a formerly hidden child handle can append it to a
+                // FlowLayoutPanel. Restore its position after target details.
+                side.Controls.SetChildIndex(firingPanel,side.Controls.GetChildIndex(targetInfo)+1);
+                fitSide();side.PerformLayout();if(firingPanel.Visible)scroll.ScrollControlIntoView(firingPanel);
+            };
+            queueOrder.Click+=delegate { QueueTestOrder(); };
+            pollOrders.Click+=delegate {try{state=state.ProcessOrders();RefreshState();SetStatus("Firing poll: consumed "+state.LastOrdersConsumed+", rejected "+state.LastOrdersRejected+", created "+state.LastOrdersCreated+". A timer equal to the clock waits; use +40 ms to advance.",false);}catch(NotSupportedException e){SetStatus(e.Message,true);}catch(InvalidDataException e){SetStatus(e.Message,true);}};
+            clearOrders.Click+=delegate {if(SourceSlot<0)return;state=state.ClearOrders(SourceSlot);RefreshState();SetStatus("Cleared this unit's X sentinels; its timer, Y values and existing projectiles are preserved.",false);};
+            findOrder.Click+=delegate { FindAdmittedOrder(); };
             status.Dock=DockStyle.Fill;status.Text="Create an object, then advance the supplied clock.";status.ForeColor=Color.LightSteelBlue;
             layout.Controls.Add(status,0,1);layout.SetColumnSpan(status,2);
             foreach(var combo in new[]{source,weapon,target}){combo.DropDownStyle=ComboBoxStyle.DropDownList;combo.DropDownWidth=360;}
@@ -110,7 +148,9 @@ namespace FleetLab {
             reset.Click += delegate { state=initial;RefreshState();SetStatus("Reset to the copied startup pools and clock0.",false); };
             KeyUp += delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};Deactivate += delegate { held.Clear();canvas.CancelPick(); };
             if(source.Items.Count>0)source.SelectedIndex=Math.Max(0,Math.Min(source.Items.Count-1,selectedUnit));
-            if(target.Items.Count>0)target.SelectedIndex=0;RefreshState();SetStatus("Create an object, then advance the supplied clock. Closing preserves the active battle and deployment.",false);
+            if(target.Items.Count>0)target.SelectedIndex=0;RefreshState();SetStatus(firingImportProblem==null?
+                "Create an object, or expand Show firing orders for queued shots. Closing preserves the active battle and deployment.":
+                "Firing orders unavailable: run Setup again to import the three firing tables. Manual test creation remains available.",false);
         }
         int SourceSlot { get { return source.SelectedItem==null?-1:((Choice)source.SelectedItem).Id; } }
         int WeaponId { get { return weapon.SelectedItem==null?-1:((Choice)weapon.SelectedItem).Id; } }
@@ -131,7 +171,7 @@ namespace FleetLab {
             if(SourceSlot>=0)for(int id=14;id<=30;id++){int count=BitConverter.ToInt16(ships,SourceSlot*268+196+id*2);int index=weapon.Items.Add(new Choice { Id=id,Text=ClassicWeapons.Name(id)+" · "+(count==-1?"infinite":count.ToString()) });if(id==previous)chosen=index;else if(chosen<0&&(count==-1||count>=1))chosen=index;}
             if(weapon.Items.Count>0)weapon.SelectedIndex=chosen<0?0:chosen;changing=false;UpdateSelection();
         }
-        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual study: 40 ms steps, fixture seed0, fixed fleets; creation bypasses firing admission/media. Ordinary impacts and bounded destruction use copied data. Missions/endings, attached objects, special projectiles and unresolved inactive-fleet impacts remain unsupported."; }
+        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual study: 40 ms steps, fixture seed0, fixed fleets. Manual creation bypasses admission; queued orders use source visibility/ammo/mount/range checks. No live firing media. Missions/endings, attached objects and special expiry branches remain unsupported."; }
         static int UnitAt(byte[] ships,byte[] fleets,int fleet,int x,int y) {
             for(int slot=0;slot<6;slot++){
                 uint reference=BitConverter.ToUInt32(fleets,fleet*492+16+slot*4);long delta=(long)reference-0x4fc340;
@@ -177,6 +217,65 @@ namespace FleetLab {
                 changing=true;offsetX.Value=x;offsetY.Value=y;changing=false;UpdateSelection();SetStatus("Selected existing cell "+x+","+y+" with original code "+code+" for the supported nonship expiry branch.",false);return;}
             SetStatus("This fleet has no supported nonship cell. Choose another fixed target.",true);
         }
+        void QueueTestOrder() {
+            if(!queueOrder.Enabled)return;
+            try {
+                state=state.QueueOrder(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value);
+                RefreshState();SetStatus(state.LastQueueReturnCode==1?"The selected unit's ten-slot queue is full.":
+                    (int)offsetX.Value==-1?"Stored X=−1: this is an empty sentinel, so no shot became active.":
+                    "Stored request in slot "+(state.LastQueueSlot+1)+". Admission is checked when due. Use +40 ms or +1 s; a new timer at the current clock waits.",false);
+            }
+            catch(NotSupportedException e){SetStatus(e.Message,true);}catch(InvalidDataException e){SetStatus(e.Message,true);}
+        }
+        static List<int> PreferredIndices(ComboBox choices) {
+            var result=new List<int>();if(choices.SelectedIndex>=0)result.Add(choices.SelectedIndex);
+            for(int n=0;n<choices.Items.Count;n++)if(n!=choices.SelectedIndex)result.Add(n);return result;
+        }
+        void FindAdmittedOrder() {
+            if(!state.IncludesFiringOrders)return;
+            var candidates=new List<int>();if(WeaponId>=14&&WeaponId<=30)candidates.Add(WeaponId);
+            for(int id=14;id<=30;id++)if(id!=WeaponId)candidates.Add(id);
+            try {
+                foreach(int sourceIndex in PreferredIndices(source))foreach(int targetIndex in PreferredIndices(target))foreach(int id in candidates) {
+                    if(id==19||id==21)continue; // Their expiry remains unsupported.
+                    int unit=((Choice)source.Items[sourceIndex]).Id,fleet=((Choice)target.Items[targetIndex]).Id;
+                    if(!state.CheckFiring(unit,fleet,id).Allowed)continue;
+                    source.SelectedIndex=sourceIndex;target.SelectedIndex=targetIndex;
+                    for(int n=0;n<weapon.Items.Count;n++)if(((Choice)weapon.Items[n]).Id==id){weapon.SelectedIndex=n;break;}
+                    PickNonshipCell();SetStatus("Selected an admitted shot with a supported expiry weapon. Fleet positions and pools are unchanged. Queue it, then advance the clock.",false);return;
+                }
+                SetStatus("No admitted supported shot exists for the source units and enemy fleets in this fixed preview. The eligibility readout explains the current selection; manual test creation remains available.",true);
+            }
+            catch(NotSupportedException e){SetStatus(e.Message,true);}catch(InvalidDataException e){SetStatus(e.Message,true);}
+        }
+        void UpdateFiringControls(byte[] ships,byte[] fleets) {
+            bool available=state.IncludesFiringOrders;showFiringOrders.Enabled=available;
+            byte[] orders=state.PauseTimers.CopyShipTimers();int pending=0;
+            for(int unit=0;unit<1500;unit++)if(BitConverter.ToInt16(orders,unit*52+8)!=-1)pending++;
+            showFiringOrders.Text=available?"Show firing orders ("+pending+" pending units)":"Firing orders unavailable: run Setup";
+            showFiringOrders.AccessibleDescription=available?"Shows controls; hiding them keeps queued orders active.":firingImportProblem??"Reset this study to restore firing rules.";
+            bool chosen=available&&SourceSlot>=0&&WeaponId>=14&&target.SelectedItem!=null;
+            queueOrder.Enabled=chosen&&BitConverter.ToInt32(ships,SourceSlot*268)!=0;
+            clearOrders.Enabled=available&&SourceSlot>=0;pollOrders.Enabled=findOrder.Enabled=available;
+            firingInfo.Text=available?"Choose source, weapon and target.":"Run Setup again to import the three firing tables.";
+            if(chosen) {
+                try {
+                    var check=state.CheckFiring(SourceSlot,((Choice)target.SelectedItem).Id,WeaponId);
+                    string reason=check.Allowed?"allowed":check.Denial==PracticeFiringDenial.InactiveSource?"source inactive":check.Denial==PracticeFiringDenial.InactiveTarget?"target inactive":check.Denial==PracticeFiringDenial.HiddenTarget?"target hidden":check.Denial==PracticeFiringDenial.NoAmmunition?"no ammunition":check.Denial==PracticeFiringDenial.NoMount?"weapon not mounted":"out of range";
+                    firingInfo.Text="Unit "+(SourceSlot+1)+" · "+ClassicWeapons.Name(WeaponId)+"\r\nTarget fleet "+(((Choice)target.SelectedItem).Id+1)+"\r\nAdmission: "+reason+" · visibility "+check.VisibilityLevel;
+                    if(check.Distance>=0)firingInfo.Text+="\r\nFleet distance "+check.Distance+" / range "+check.Range;
+                }
+                catch(NotSupportedException e){firingInfo.Text="Unsupported admission: "+e.Message;}
+                catch(InvalidDataException e){firingInfo.Text=e.Message;}
+            }
+            firingInfo.Text+="\r\nPolls "+state.FiringPolls+" · consumed "+state.ConsumedOrders+" · rejected "+state.RejectedOrders+"\r\nObjects from orders: "+state.ObjectsFromOrders;
+            if(SourceSlot<0){firingQueue.Text="No source unit selected.";return;}
+            int at=SourceSlot*52;var text=new System.Text.StringBuilder();
+            text.AppendLine("Timer "+BitConverter.ToInt32(orders,at+4)+" · clock "+unchecked((int)state.ClockMilliseconds));
+            text.AppendLine("Raw order kind "+BitConverter.ToInt32(orders,at));
+            for(int n=0;n<10;n++){int x=BitConverter.ToInt16(orders,at+8+n*2),y=BitConverter.ToInt16(orders,at+28+n*2);text.AppendLine((n+1)+": "+(x==-1?"empty (stored Y="+y+")":x+", "+y));}
+            firingQueue.Text=text.ToString();
+        }
         void CreateObject(bool useSourcePattern=false) {
             if(!create.Enabled)return;
             try { state=useSourcePattern?state.Launch(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value):state.Create(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value);int created=state.LastCreatedSlot;RefreshState();if(created>=0)for(int i=0;i<objects.Items.Count;i++)if(((Choice)objects.Items[i]).Id==created){objects.SelectedIndex=i;break;}SetStatus(useSourcePattern?"Source launch: created "+state.LastLaunchCount+" / "+state.LastLaunchAttempts+" requested objects; last-round updates "+state.LastLaunchDepletions+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.Created?"Created test object "+(created+1)+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.PoolFull?"The 80-record pool is full. Reset to clear it.":"This unit has no ammunition for that weapon.",false); }
@@ -216,6 +315,7 @@ namespace FleetLab {
             if(slot<0&&impacts.SelectedItem!=null){byte[] e=state.CopyEffectPool();int at=((Choice)impacts.SelectedItem).Id*20;details.Text="Schematic effect "+(((Choice)impacts.SelectedItem).Id+1)+" · type "+BitConverter.ToInt32(e,at+16)+"\r\nFleet reference "+(BitConverter.ToInt16(e,at)+1)+" · local "+BitConverter.ToInt16(e,at+2)+", "+BitConverter.ToInt16(e,at+4)+"\r\nSprite bank "+BitConverter.ToInt32(e,at+8)+" · counter "+BitConverter.ToInt16(e,at+12)+"\r\nRing geometry is a modern schematic, not the original sprite renderer.";}
             else if(slot<0)details.Text="No active timed object or expiry effect.\r\nThis study is isolated from the active Classic battle.";
             else { byte[] t=state.Objects.CopyTimedPool();int at=slot*268;uint deadline=BitConverter.ToUInt32(t,at+24);details.Text="Object "+(slot+1)+" · weapon "+BitConverter.ToInt32(t,at)+"\r\nWorld "+BitConverter.ToInt16(t,at+8)+", "+BitConverter.ToInt16(t,at+10)+"\r\nSource unit "+(BitConverter.ToInt16(t,at+16)+1)+" · target fleet "+(BitConverter.ToInt16(t,at+12)+1)+"\r\nDeadline "+deadline+" ms\r\nRemaining "+unchecked((int)(deadline-state.ClockMilliseconds))+" ms\r\nLast early return: "+(state.LastStoppedAtRecord<0?"none":"object "+(state.LastStoppedAtRecord+1)); }
+            UpdateFiringControls(currentShips,currentFleets);
             canvas.Invalidate();
         }
         sealed class TimedCanvas : Control {
