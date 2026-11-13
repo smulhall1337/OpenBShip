@@ -18,6 +18,7 @@ namespace FleetLab {
         readonly Label fleetData = new Label();
         readonly int fleetSlot;
         readonly PracticeMovementState initialMovement;
+        readonly byte[] secondaryPool = new byte[PracticeFleetBatchState.SecondaryBytes];
         PracticeMovementState movement;
         int updates;
         int polls;
@@ -147,9 +148,13 @@ namespace FleetLab {
             try {
                 for(int i=0;i<limit&&queue.HasWaypoint(0);i++){
                     var current=movement.WithFleetRecord(fleetSlot,queue.CopyRecord(),queue.Selected);
-                    var poll=current.StepSelectedFleetPoll(schedule,fleetSlot);
-                    if(poll.FleetUpdate!=null)stopped=ApplyUpdate(poll.FleetUpdate,out message);
-                    movement=poll.State;schedule=poll.NextSchedule;polls++;advanced++;
+                    // The pinned first Practice startup has no secondary
+                    // objects; this copied study introduces none. Every
+                    // admitted fleet is visited in the original batch order.
+                    var poll=new PracticeFleetBatchState(current,schedule,secondaryPool).AdvanceNormalPoll();
+                    foreach(var body in poll.FleetUpdates)
+                        if(body.Slot==fleetSlot)stopped=ApplyUpdate(body.Update,out message);
+                    movement=poll.State.Movement;schedule=poll.State.Schedule;polls++;advanced++;
                     if(stopped)break;
                 }
                 if(advanced>0&&!stopped&&queue.HasWaypoint(0))message="Advanced "+advanced+" source "+(advanced==1?"poll":"polls")+"; "+(updates-before)+" fleet "+(updates-before==1?"update.":"updates.");

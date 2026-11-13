@@ -76,6 +76,34 @@ namespace FleetLab {
                 Require(visited==250&&cursor.BatchStart==0&&cursor.CompletedCycles==1,"Original63batch cycle");
                 foreach(int invalid in new[]{-4,-1,1,2,3,249,250,252})RejectArgument(delegate{new PracticeFleetScheduler(invalid,0);});
             });
+            check("Whole admitted fleet polls preserve source order, secondary ownership and atomic failure",delegate {
+                var pool=new byte[250*492];
+                for(int i=0;i<250;i++)W16(pool,i*492+4,i);
+                foreach(int slot in new[]{7,8}){int at=slot*492;BitConverter.GetBytes(1).CopyTo(pool,at);W16(pool,at+12,slot==7?350:362);W16(pool,at+14,390);W16(pool,at+60,3);pool[at+485]=2;for(int i=0;i<5;i++)W16(pool,at+40+i*2,-1);W16(pool,at+40,slot==7?380:332);W16(pool,at+50,390);}
+                var movement=new PracticeMovementState(pool,new byte[PracticeMovementState.TerrainBytes],new byte[PracticeMovementState.AuxiliaryBytes],7,-1);
+                var secondary=new byte[PracticeFleetBatchState.SecondaryBytes];secondary[secondary.Length-1]=17;
+                var initial=new PracticeFleetBatchState(movement,new PracticeFleetScheduler(4,0),secondary);
+                secondary[secondary.Length-1]=0;
+                var poll=initial.AdvanceNormalPoll();byte[] result=poll.State.Movement.CopyFleetPool();
+                Require(poll.BatchCount==2&&poll.State.Schedule.BatchStart==12&&poll.FleetUpdates.Count==2&&
+                    poll.State.Movement.Origin(7)==new Point(352,390)&&poll.State.Movement.Origin(8)==new Point(362,390)&&
+                    result[8*492+482]==7&&result[4*492+482]==255&&result[482]==0,"Source sequential bodies/preamble");
+                Require(initial.Movement.Origin(7)==new Point(350,390)&&initial.Schedule.BatchStart==4&&
+                    initial.CopySecondaryPool()[secondary.Length-1]==17&&poll.State.CopySecondaryPool()[secondary.Length-1]==17,"Batch input/secondary ownership");
+                var copy=poll.State.CopySecondaryPool();copy[0]=1;Require(poll.State.CopySecondaryPool()[0]==0,"Secondary copy aliases state");
+                bool readOnly=false;try{poll.FleetUpdates.Clear();}catch(NotSupportedException){readOnly=true;}Require(readOnly,"Mutable batch update list");
+                var unsupported=(byte[])pool.Clone();BitConverter.GetBytes(3).CopyTo(unsupported,8*492);
+                var state=new PracticeFleetBatchState(new PracticeMovementState(unsupported,movement.CopyTerrainPool(),movement.CopyAuxiliary(),7,-1),new PracticeFleetScheduler(4,731),new byte[PracticeFleetBatchState.SecondaryBytes]);
+                string before=Hash(state.Movement.CopyFleetPool());bool rejected=false;try{state.AdvanceNormalPoll();}catch(NotSupportedException){rejected=true;}
+                Require(rejected&&Hash(state.Movement.CopyFleetPool())==before&&state.Schedule.BatchStart==4&&state.Schedule.CompletedCycles==731,"Unsupported second batch published first batch");
+                secondary[0]=1;rejected=false;try{new PracticeFleetBatchState(movement,initial.Schedule,secondary);}catch(NotSupportedException){rejected=true;}Require(rejected,"Active secondary accepted");
+                Reject(delegate{new PracticeFleetBatchState(movement,initial.Schedule,new byte[1]);});
+            });
+            check("Fleet movement rejects unreconstructed field476 modes atomically",delegate {
+                var pool=new byte[250*492];for(int i=0;i<250;i++)W16(pool,i*492+4,i);
+                int at=7*492;BitConverter.GetBytes(1).CopyTo(pool,at);W16(pool,at+12,320);W16(pool,at+14,320);W16(pool,at+40,350);W16(pool,at+50,320);W16(pool,at+60,3);pool[at+485]=2;
+                foreach(int task in new[]{3,5}){BitConverter.GetBytes(task).CopyTo(pool,at+476);var state=new PracticeMovementState(pool,new byte[PracticeMovementState.TerrainBytes],new byte[PracticeMovementState.AuxiliaryBytes],7,-1);string before=Hash(state.CopyFleetPool());bool rejected=false;try{state.Step(7);}catch(NotSupportedException){rejected=true;}Require(rejected&&Hash(state.CopyFleetPool())==before,"Unsupported follow task changed input");}
+            });
             check("Battle checkpoint preserves manual deployments, repeated shuffles and selected shooter",delegate {
                 foreach(bool movies in new[]{false,true}) {
                     var game=new Game(731,RuleProfile.Recovered,OpponentKind.Original,2,movies);

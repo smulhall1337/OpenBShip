@@ -32,7 +32,7 @@ namespace FleetLab {
 
     // One admitted kind1 fleet update, not an original frame or scheduler.
     // B9A8...6A569:482 reset at4276A9;427CC7..42822B movement/arrival.
-    // Network0,state472=0,flags485=2/3,speed1..7. Kind12 interaction is
+    // Network0,state472=0,task476=0,flags485=2/3,speed1..7. Kind12 interaction is
     // deliberately unsupported. Inputs/outputs are owned immutable snapshots.
     public sealed class PracticeMovementState {
         public const int FleetSlots = 250, FleetBytes = 492;
@@ -114,17 +114,25 @@ namespace FleetLab {
             byte[] next = (byte[])fleets.Clone(); Array.Copy(record, 0, next, slot * FleetBytes, FleetBytes);
             return new PracticeMovementState(next, terrain, auxiliary, slot, selectedWaypoint);
         }
+        internal PracticeMovementState ResetCollision(int slot) {
+            Slot(slot); if (fleets[slot * FleetBytes + 482] == 255) return this;
+            byte[] next = (byte[])fleets.Clone(); next[slot * FleetBytes + 482] = 255;
+            return new PracticeMovementState(next, terrain, auxiliary, SelectedFleet, SelectedWaypoint);
+        }
 
         public PracticeMovementUpdate Step(int slot) {
             Slot(slot); int at = slot * FleetBytes, flag = fleets[at + 485];
-            if (Integer(fleets, at) != 1 || Integer(fleets, at + 472) != 0 || (flag != 2 && flag != 3))
+            if (Integer(fleets, at) != 1 || Integer(fleets, at + 472) != 0 ||
+                Integer(fleets, at + 476) != 0 || (flag != 2 && flag != 3))
                 throw new NotSupportedException("This fleet mode is outside the recovered movement subset.");
             Point before = Origin(slot);
             if (before.X < 0 || before.X >= 640 || before.Y < 0 || before.Y >= 640)
                 throw new InvalidDataException("Movement origin is outside the world.");
+            int targetX = Short(fleets, at + 40), targetY = Short(fleets, at + 50);
+            if (targetX == -1 && fleets[at + 482] == 255)
+                return new PracticeMovementUpdate(this, PracticeMovementOutcome.NoWaypoint, before, before, 255, false);
             byte[] next = (byte[])fleets.Clone(), aux = (byte[])auxiliary.Clone();
             next[at + 482] = 255; // Admitted original per-fleet preamble.
-            int targetX = Short(next, at + 40), targetY = Short(next, at + 50);
             if (targetX == -1)
                 return Finish(next, aux, SelectedWaypoint, PracticeMovementOutcome.NoWaypoint, before, before, 255, false);
             int speed = Short(next, at + 60);
