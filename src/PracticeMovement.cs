@@ -3,6 +3,15 @@ using System.IO;
 using System.Drawing;
 
 namespace FleetLab {
+    public sealed class PracticeSelectedFleetPoll {
+        public PracticeMovementState State { get; private set; }
+        public PracticeFleetScheduler NextSchedule { get; private set; }
+        public PracticeMovementUpdate FleetUpdate { get; private set; }
+        internal PracticeSelectedFleetPoll(PracticeMovementState state, PracticeFleetScheduler next,
+                                           PracticeMovementUpdate update) {
+            State = state; NextSchedule = next; FleetUpdate = update;
+        }
+    }
     public enum PracticeMovementOutcome {
         NoWaypoint, Moved, BlockedByFleet, BlockedByTerrain, ReachedWaypoint, ReachedLockedWaypoint
     }
@@ -59,6 +68,19 @@ namespace FleetLab {
         }
 
         static void Slot(int slot) { if (slot < 0 || slot >= FleetSlots) throw new ArgumentOutOfRangeException("slot"); }
+        // Study composition: enumerate one normal source poll, but execute
+        // only this selected fleet's admitted movement body. Other fleets
+        // stay fixed; secondary-pool, AI and source input/render work are absent.
+        // An unsupported selected update throws before either input changes.
+        public PracticeSelectedFleetPoll StepSelectedFleetPoll(PracticeFleetScheduler schedule, int slot) {
+            if (schedule == null) throw new ArgumentNullException("schedule");
+            Slot(slot);
+            PracticeFleetPoll poll = schedule.TakeWorldPoll(false);
+            PracticeMovementUpdate update = null;
+            foreach (int visited in poll.CopySlots())
+                if (visited == slot) update = Step(slot);
+            return new PracticeSelectedFleetPoll(update == null ? this : update.State, poll.Next, update);
+        }
         static int Short(byte[] data, int at) { return BitConverter.ToInt16(data, at); }
         static void Short(byte[] data, int at, int value) { BitConverter.GetBytes((short)value).CopyTo(data, at); }
         static int Integer(byte[] data, int at) { return BitConverter.ToInt32(data, at); }

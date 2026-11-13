@@ -412,7 +412,32 @@ namespace FleetLab {
                     Require(Hash(update.State.CopyFleetPool())==Hash(expected)&&update.State.SelectedWaypoint==int.Parse(f[13]),"Native movement/fleet selection "+f[0]);
                     Require(Hash(update.State.CopyAuxiliary())==f[14],"Native complete movement auxiliary data "+f[0]);
                     Require(Hash(state.CopyFleetPool())==Hash(pool),"Step mutated its input "+f[0]);
+                    var scheduled=state.StepSelectedFleetPoll(new PracticeFleetScheduler(0,0),7);
+                    Require(scheduled.FleetUpdate!=null&&Hash(scheduled.State.CopyFleetPool())==Hash(expected)&&
+                        Hash(scheduled.State.CopyAuxiliary())==f[14]&&scheduled.State.SelectedWaypoint==int.Parse(f[13]),
+                        "Scheduled selected-fleet composition "+f[0]);
                 }
+            });
+            check("Selected-fleet study polls retain original 32/31 cadence and atomic failure",delegate {
+                var pool=new byte[250*492];
+                for(int i=0;i<250;i++)BitConverter.GetBytes((short)i).CopyTo(pool,i*492+4);
+                int at=7*492;BitConverter.GetBytes(1).CopyTo(pool,at);W16(pool,at+12,320);W16(pool,at+14,320);
+                W16(pool,at+60,3);pool[at+485]=2;
+                for(int i=0;i<5;i++){W16(pool,at+40+i*2,i==0?350:-1);W16(pool,at+50+i*2,320);}
+                var state=new PracticeMovementState(pool,new byte[PracticeMovementState.TerrainBytes],new byte[PracticeMovementState.AuxiliaryBytes],7,-1);
+                var schedule=new PracticeFleetScheduler(0,0);int updates=0;
+                for(int poll=1;poll<=64;poll++){
+                    var before=state;var next=state.StepSelectedFleetPoll(schedule,7);state=next.State;schedule=next.NextSchedule;
+                    if(next.FleetUpdate!=null){updates++;Require(poll==1||poll==33||poll==64,"Original slot7 cadence");}
+                    else Require(object.ReferenceEquals(before,state),"Unvisited fleet changed during study poll");
+                }
+                Require(updates==3&&state.Origin(7)==new Point(326,320)&&schedule.BatchStart==8&&schedule.CompletedCycles==2,"Source poll/movement composition");
+                byte[] unsupported=state.CopyFleetPool();unsupported[at+485]=0;
+                var rejected=new PracticeMovementState(unsupported,state.CopyTerrainPool(),state.CopyAuxiliary(),7,-1);
+                string hash=Hash(rejected.CopyFleetPool());var phase=new PracticeFleetScheduler(4,731);bool unsupportedRejected=false;
+                try{rejected.StepSelectedFleetPoll(phase,7);}catch(NotSupportedException){unsupportedRejected=true;}
+                Require(unsupportedRejected&&Hash(rejected.CopyFleetPool())==hash&&phase.BatchStart==4&&phase.CompletedCycles==731,"Unsupported poll changed input");
+                RejectArgument(delegate{state.StepSelectedFleetPoll(schedule,250);});
             });
             check("Practice waypoint data matches 33 original append and selection contexts",delegate {
                 // Captured from supported Bs.exe41377C..4138BA, checkpoint217.

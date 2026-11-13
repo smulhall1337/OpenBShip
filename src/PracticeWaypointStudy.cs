@@ -13,11 +13,15 @@ namespace FleetLab {
         readonly Label result = new Label();
         readonly Button append = new Button(), deselect = new Button(), clear = new Button(), reset = new Button();
         readonly Button stepFleet = new Button(), stepTen = new Button();
+        readonly Button pollFleet = new Button(), pollThirtyTwo = new Button();
+        readonly Label pollData = new Label();
         readonly Label fleetData = new Label();
         readonly int fleetSlot;
         readonly PracticeMovementState initialMovement;
         PracticeMovementState movement;
         int updates;
+        int polls;
+        PracticeFleetScheduler schedule = new PracticeFleetScheduler(0, 0);
         readonly HashSet<Keys> held = new HashSet<Keys>();
         internal PracticeWaypointQueue Queue { get { return queue; } }
 
@@ -29,9 +33,9 @@ namespace FleetLab {
             queue = new PracticeWaypointQueue(fleet.CopyFleetRecord(), scene, 1);
             fleetSlot = fleet.FleetSlot;
             if (deployment != null) movement = initialMovement = PracticeMovementState.ForStudy(deployment, fleetSlot);
-            Text = "Recovered waypoints and fleet steps · fleet " + (fleet.FleetSlot + 1);
+            Text = "Recovered waypoints and fleet polls · fleet " + (fleet.FleetSlot + 1);
             StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(980, 740); MinimumSize = new Size(820, 640);
+            Size = new Size(980, 800); MinimumSize = new Size(820, 640);
             BackColor = Color.FromArgb(12, 23, 35); ForeColor = Color.WhiteSmoke;
             Font = new Font("Segoe UI", 9);
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2, Padding = new Padding(12) };
@@ -58,11 +62,11 @@ namespace FleetLab {
             canvas.KeyUp += delegate(object sender, KeyEventArgs e) { held.Remove(e.KeyCode); };
             canvas.LostFocus += delegate { held.Clear(); };
             Deactivate += delegate { held.Clear(); };
-            var side = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 11, Padding = new Padding(10, 0, 0, 0) };
+            var sideScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            var side = new TableLayoutPanel { Dock = DockStyle.Top, Height = 650, ColumnCount = 1, RowCount = 13, Padding = new Padding(10, 0, 0, 0) };
             side.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            foreach(int height in new[]{42,62,32,32,112,32,32,32,34,52})side.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
-            side.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            layout.Controls.Add(side, 1, 0);
+            foreach(int height in new[]{42,62,32,32,112,32,32,32,34,34,38,52,54})side.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
+            sideScroll.Controls.Add(side); layout.Controls.Add(sideScroll, 1, 0);
             fleetData.Dock = DockStyle.Fill; side.Controls.Add(fleetData, 0, 0);
             side.Controls.Add(new Label { Dock = DockStyle.Fill, Text = "Click a map cell, or enter world X/Y (0–639). Points snap to multiples of 10.\r\nMap focus: arrows move cursor; Enter adds." }, 0, 1);
             var inputs = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
@@ -82,19 +86,28 @@ namespace FleetLab {
             stepFleet.Dock = stepTen.Dock = DockStyle.Fill;
             stepFleet.AccessibleName = "Advance selected fleet once"; stepTen.AccessibleName = "Advance selected fleet up to ten times";
             stepping.Controls.Add(stepFleet,0,0); stepping.Controls.Add(stepTen,1,0); side.Controls.Add(stepping,0,8);
-            result.Dock = DockStyle.Fill; result.ForeColor = Color.LightCyan; result.AccessibleName = "Waypoint result"; side.Controls.Add(result, 0, 9);
-            side.Controls.Add(new Label { Dock = DockStyle.Fill, ForeColor = Color.LightSteelBlue, Text = "Step advances this fleet only.\r\nOther fleets are fixed blockers.\r\nPoint dragging/editing is unfinished." }, 0, 10);
+            var polling = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
+            polling.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50)); polling.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50));
+            pollFleet.Text = "1 source poll"; pollThirtyTwo.Text = "32 source polls";
+            pollFleet.Dock = pollThirtyTwo.Dock = DockStyle.Fill;
+            pollFleet.AccessibleName = "Advance one normal source poll"; pollThirtyTwo.AccessibleName = "Advance up to thirty-two normal source polls";
+            polling.Controls.Add(pollFleet,0,0); polling.Controls.Add(pollThirtyTwo,1,0); side.Controls.Add(polling,0,9);
+            pollData.Dock = DockStyle.Fill; pollData.ForeColor = Color.LightSteelBlue; pollData.AccessibleName = "Source poll phase"; side.Controls.Add(pollData,0,10);
+            result.Dock = DockStyle.Fill; result.ForeColor = Color.LightCyan; result.AccessibleName = "Waypoint result"; side.Controls.Add(result, 0, 11);
+            side.Controls.Add(new Label { Dock = DockStyle.Fill, ForeColor = Color.LightSteelBlue, Text = "Only the selected fleet moves.\r\nOther fleets are fixed blockers.\r\nEach source poll visits two batches." }, 0, 12);
             var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,88));
-            footer.Controls.Add(new Label { Dock = DockStyle.Fill, ForeColor = Color.LightSteelBlue, Text = "Manual updates and schematic terrain only; original timing, AI and missions are unfinished. Reset/deselect are modern study controls. Closing discards this study; Classic play and the deployment stay unchanged." }, 0, 0);
+            footer.Controls.Add(new Label { Dock = DockStyle.Fill, ForeColor = Color.LightSteelBlue, Text = "Manual study with schematic terrain; update buttons leave the poll cursor unchanged. No wall-clock pacing, AI or missions. Reset restores position, queue and poll phase. Closing discards the study." }, 0, 0);
             var close = new Button { Text = "Close", Dock = DockStyle.Fill, DialogResult = DialogResult.Cancel };
             footer.Controls.Add(close,1,0); layout.Controls.Add(footer,0,1); layout.SetColumnSpan(footer,2); CancelButton=close;
             append.Click += delegate { AddPoint(); };
             deselect.Click += delegate { queue.Deselect(); Sync("Selection cleared; queue preserved."); };
-            clear.Click += delegate { queue.Clear(); Sync("Queue cleared; deployment preserved."); };
-            reset.Click += delegate { queue.Reset(); movement = initialMovement; updates = 0; canvas.BlockingCode = 255; Sync("Copied startup and queue restored."); };
+            clear.Click += delegate { queue.Clear(); Sync("Queue cleared; position and poll phase preserved."); };
+            reset.Click += delegate { queue.Reset(); movement = initialMovement; updates = polls = 0; schedule = new PracticeFleetScheduler(0,0); canvas.BlockingCode = 255; Sync("Copied startup, queue and poll phase restored."); };
             stepFleet.Click += delegate { AdvanceFleet(1); };
             stepTen.Click += delegate { AdvanceFleet(10); };
+            pollFleet.Click += delegate { AdvancePolls(1); };
+            pollThirtyTwo.Click += delegate { AdvancePolls(32); };
             worldX.ValueChanged += delegate { UpdateCursorPosition(); }; worldY.ValueChanged += delegate { UpdateCursorPosition(); };
             worldX.Value = queue.Origin.X; worldY.Value = queue.Origin.Y;
             Sync("Ready · 5 waypoint slots.");
@@ -114,6 +127,35 @@ namespace FleetLab {
             points.SelectedIndex=queue.Selected; deselect.Enabled=queue.Selected!=-1; result.Text=message; canvas.Invalidate();
             fleetData.Text="Fleet "+(fleetSlot+1)+" · player 1\r\nOrigin "+queue.Origin.X+", "+queue.Origin.Y+" · updates "+updates;
             stepFleet.Enabled=stepTen.Enabled=movement!=null&&queue.HasWaypoint(0);
+            pollFleet.Enabled=pollThirtyTwo.Enabled=movement!=null&&queue.HasWaypoint(0);
+            pollData.Text="Source polls "+polls+" · next batch "+schedule.BatchStart+"\r\nCompleted cycles "+schedule.CompletedCycles;
+        }
+        bool ApplyUpdate(PracticeMovementUpdate update, out string message) {
+            queue.ApplyMovementRecord(update.State.CopyFleetRecord(fleetSlot),update.State.SelectedWaypoint);
+            movement=update.State; updates++; canvas.BlockingCode=update.CollisionCode;
+            message=update.Outcome==PracticeMovementOutcome.BlockedByFleet?"Blocked by fleet "+(update.CollisionCode+1)+". Clear queue to reroute.":
+                update.Outcome==PracticeMovementOutcome.BlockedByTerrain?"Blocked by terrain. Clear queue to reroute.":
+                update.Outcome==PracticeMovementOutcome.ReachedLockedWaypoint?"Reached point; source auxiliary state retains it.":
+                update.QueueConsumed?(queue.HasWaypoint(0)?"Point reached; next point is ready.":"Queue complete."):"Fleet advanced; "+updates+" updates.";
+            return update.Outcome==PracticeMovementOutcome.BlockedByFleet||update.Outcome==PracticeMovementOutcome.BlockedByTerrain||
+                   update.Outcome==PracticeMovementOutcome.ReachedLockedWaypoint;
+        }
+        internal void AdvancePolls(int limit) {
+            if(limit<1||limit>32)throw new ArgumentOutOfRangeException("limit");
+            if(movement==null){Sync("Open this study from the first Practice startup to step.");return;}
+            int before=updates, advanced=0;bool stopped=false;string message="Queue a point before stepping.";
+            try {
+                for(int i=0;i<limit&&queue.HasWaypoint(0);i++){
+                    var current=movement.WithFleetRecord(fleetSlot,queue.CopyRecord(),queue.Selected);
+                    var poll=current.StepSelectedFleetPoll(schedule,fleetSlot);
+                    if(poll.FleetUpdate!=null)stopped=ApplyUpdate(poll.FleetUpdate,out message);
+                    movement=poll.State;schedule=poll.NextSchedule;polls++;advanced++;
+                    if(stopped)break;
+                }
+                if(advanced>0&&!stopped&&queue.HasWaypoint(0))message="Advanced "+advanced+" source "+(advanced==1?"poll":"polls")+"; "+(updates-before)+" fleet "+(updates-before==1?"update.":"updates.");
+            }catch(NotSupportedException e){message=e.Message;}
+             catch(System.IO.InvalidDataException e){message=e.Message;}
+            Sync(message);
         }
         internal void AdvanceFleet(int limit) {
             if(limit<1||limit>10)throw new ArgumentOutOfRangeException("limit");
@@ -123,14 +165,7 @@ namespace FleetLab {
                 for(int i=0;i<limit&&queue.HasWaypoint(0);i++){
                     var current=movement.WithFleetRecord(fleetSlot,queue.CopyRecord(),queue.Selected);
                     var update=current.Step(fleetSlot);
-                    queue.ApplyMovementRecord(update.State.CopyFleetRecord(fleetSlot),update.State.SelectedWaypoint);
-                    movement=update.State; updates++; canvas.BlockingCode=update.CollisionCode;
-                    message=update.Outcome==PracticeMovementOutcome.BlockedByFleet?"Blocked by fleet "+(update.CollisionCode+1)+". Clear queue to reroute.":
-                        update.Outcome==PracticeMovementOutcome.BlockedByTerrain?"Blocked by terrain. Clear queue to reroute.":
-                        update.Outcome==PracticeMovementOutcome.ReachedLockedWaypoint?"Reached point; source auxiliary state retains it.":
-                        update.QueueConsumed?(queue.HasWaypoint(0)?"Point reached; next point is ready.":"Queue complete."):"Fleet advanced; "+updates+" updates.";
-                    if(update.Outcome==PracticeMovementOutcome.BlockedByFleet||update.Outcome==PracticeMovementOutcome.BlockedByTerrain||
-                       update.Outcome==PracticeMovementOutcome.ReachedLockedWaypoint)break;
+                    if(ApplyUpdate(update,out message))break;
                 }
             }catch(NotSupportedException e){message=e.Message;}
              catch(System.IO.InvalidDataException e){message=e.Message;}
