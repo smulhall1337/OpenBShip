@@ -38,7 +38,7 @@ namespace FleetLab {
     // Optional complete417990 data continuation through418BD0 for types1..4,
     // kinds1/9, mode0/network0/playercount0/localowner-2/another selected fleet.
     // Normal firing, defense, live media, missions and attached objects excluded.
-    // The original nonlethal API and playable v0.60 guard remain unchanged.
+    // The original nonlethal API retains its guard; the manual study opts in.
     public static class PracticeDamageWithDestruction {
         public static PracticeDestructiveDamageResult Apply(PracticeDefenseTables tables, PracticeUnitCatalog units,
                 PracticeDestructionTables destruction, byte[] visuals, byte[] ships, byte[] fleets, byte[] scores, byte[] effects,

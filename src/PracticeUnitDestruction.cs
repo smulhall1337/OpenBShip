@@ -15,6 +15,9 @@ namespace FleetLab {
             points = (byte[])sourcePoints.Clone();
         }
         internal short Points(int type) { return BitConverter.ToInt16(points, type * 2); }
+        public static PracticeDestructionTables Load(string programs) {
+            return new PracticeDestructionTables(File.ReadAllBytes(Path.Combine(programs, "UnitDestructionPoints.seqbin")));
+        }
     }
 
     public sealed class PracticeDestructionResult {
@@ -38,7 +41,7 @@ namespace FleetLab {
     // unit types1..4, fleet kinds1/9, HP0, mode0/network0/playercount0,
     // local owner-2 and another selected fleet. Mission counters/endings,
     // live UI/media and transport/attached-object callbacks remain excluded.
-    // Not called by the runnable timed study; its lethal guard stays in place.
+    // The optional manual study uses this explicit context, without missions.
     public static class PracticeUnitDestruction {
         static int W(byte[] b, int at) { return BitConverter.ToInt16(b, at); }
         static int D(byte[] b, int at) { return BitConverter.ToInt32(b, at); }

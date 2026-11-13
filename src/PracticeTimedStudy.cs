@@ -34,13 +34,13 @@ namespace FleetLab {
                 selected.Owner != 0 || (selected.Kind != 1 && selected.Kind != 9))
                 throw new ArgumentException("Choose a player 1 grouped fleet in the first Practice startup preview.");
             PracticeTimedWeaponCatalog catalog;
-            PracticeUnitCatalog unitCatalog;PracticeDefenseTables math;byte[] visualData;
+            PracticeUnitCatalog unitCatalog;PracticeDefenseTables math;PracticeDestructionTables destruction;byte[] visualData;
             try { catalog=PracticeTimedWeaponCatalog.Load(programs);unitCatalog=PracticeUnitCatalog.Load(programs);
-                math=PracticeDefenseTables.Load(programs);visualData=File.ReadAllBytes(Path.Combine(programs,"ClassicVisuals.seqbin")); }
-            catch (IOException e) { throw new InvalidDataException("Run Setup again to import the timed-object and combat tables.",e); }
+                math=PracticeDefenseTables.Load(programs);destruction=PracticeDestructionTables.Load(programs);visualData=File.ReadAllBytes(Path.Combine(programs,"ClassicVisuals.seqbin")); }
+            catch (IOException e) { throw new InvalidDataException("Run Setup again to import the timed-object, combat and destruction tables.",e); }
             this.messages=messages;
             initial = state = new PracticeTimedStudyState(catalog,unitCatalog,visualData,
-                deployment.CopyShipPool(),deployment.CopyFleetPool(),0,0,math);
+                deployment.CopyShipPool(),deployment.CopyFleetPool(),0,0,math,destruction);
             Text = "Recovered timed objects · manual study"; Size = new Size(1120, 820); MinimumSize = new Size(900, 640);
             StartPosition = FormStartPosition.CenterParent; BackColor = Color.FromArgb(12,23,35);
             ForeColor = Color.WhiteSmoke; Font = new Font("Segoe UI",9); KeyPreview = true;
@@ -52,7 +52,7 @@ namespace FleetLab {
             var scroll = new Panel { Dock=DockStyle.Fill,AutoScroll=true }; layout.Controls.Add(scroll,1,0);
             var side = new FlowLayoutPanel { Dock=DockStyle.Top,AutoSize=true,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(8,0,0,0) }; scroll.Controls.Add(side);
             Action<Control,int> add = delegate(Control c,int height) { c.Width=278;c.Height=height;c.Margin=new Padding(3,2,3,2);side.Controls.Add(c); };
-            add(clock,58);
+            add(clock,76);
             impactSummary.AccessibleName="Last impact and copied scores";add(impactSummary,76);
             add(new Label { Text="Source unit" },20); add(source,28);
             add(new Label { Text="Test weapon (original ammo data)" },20); add(weapon,28); add(ammo,38);
@@ -78,6 +78,14 @@ namespace FleetLab {
             details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;details.AccessibleName="Selected timed object data";add(details,128);
             var reset = new Button { Text="Reset study",Name="timedReset" };add(reset,32);
             var close = new Button { Text="Close",DialogResult=DialogResult.Cancel };add(close,30);CancelButton=close;
+            // Account for the vertical scrollbar at each window size. Fixed
+            // child widths otherwise create a second scrollbar and clip text.
+            Action fitSide = delegate {
+                int available = Math.Max(180,scroll.ClientSize.Width-side.Padding.Horizontal-8);
+                side.MaximumSize = new Size(Math.Max(1,scroll.ClientSize.Width),0);
+                foreach(Control child in side.Controls)child.Width=available;
+            };
+            scroll.SizeChanged += delegate { fitSide(); }; fitSide();
             status.Dock=DockStyle.Fill;status.Text="Create an object, then advance the supplied clock.";status.ForeColor=Color.LightSteelBlue;
             layout.Controls.Add(status,0,1);layout.SetColumnSpan(status,2);
             foreach(var combo in new[]{source,weapon,target}){combo.DropDownStyle=ComboBoxStyle.DropDownList;combo.DropDownWidth=360;}
@@ -119,7 +127,7 @@ namespace FleetLab {
             if(SourceSlot>=0)for(int id=14;id<=30;id++){int count=BitConverter.ToInt16(ships,SourceSlot*268+196+id*2);int index=weapon.Items.Add(new Choice { Id=id,Text=ClassicWeapons.Name(id)+" · "+(count==-1?"infinite":count.ToString()) });if(id==previous)chosen=index;else if(chosen<0&&(count==-1||count>=1))chosen=index;}
             if(weapon.Items.Count>0)weapon.SelectedIndex=chosen<0?0:chosen;changing=false;UpdateSelection();
         }
-        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual study: 40 ms steps, fixture seed0, fixed fleets; creation bypasses firing admission/media. Ordinary nonlethal impacts only. Destruction, attached objects, special projectiles and out-of-grid impacts stop before the unsupported update."; }
+        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual study: 40 ms steps, fixture seed0, fixed fleets; creation bypasses firing admission/media. Ordinary impacts and bounded destruction use copied data. Missions/endings, attached objects, special projectiles and unresolved inactive-fleet impacts remain unsupported."; }
         static int UnitAt(byte[] ships,byte[] fleets,int fleet,int x,int y) {
             for(int slot=0;slot<6;slot++){
                 uint reference=BitConverter.ToUInt32(fleets,fleet*492+16+slot*4);long delta=(long)reference-0x4fc340;
@@ -137,14 +145,15 @@ namespace FleetLab {
         void PickShipCell() {
             if(target.SelectedItem==null)return;int fleet=((Choice)target.SelectedItem).Id;
             byte[] f=state.Objects.CopyFleetPool(),ships=state.Objects.CopyShipPool();
+            if(BitConverter.ToInt32(f,fleet*492)==0){SetStatus("This target fleet is inactive. Choose another fleet or reset the study.",true);return;}
             for(int x=0;x<10;x++)for(int y=0;y<10;y++){
                 int code=BitConverter.ToInt32(f,fleet*492+64+(x*10+y)*4);
                 if(code!=2&&code!=4&&code!=5&&code!=6&&code!=7)continue;
-                int unit=UnitAt(ships,f,fleet,x,y);if(unit<0||BitConverter.ToInt16(ships,unit*268+16)<2)continue;
+                int unit=UnitAt(ships,f,fleet,x,y);if(unit<0||BitConverter.ToInt16(ships,unit*268+16)<1)continue;
                 changing=true;offsetX.Value=x;offsetY.Value=y;changing=false;UpdateSelection();
                 SetStatus("Selected existing ship cell "+x+","+y+" on unit "+(unit+1)+". Original defense may intercept or scatter the shot.",false);return;
             }
-            SetStatus("No supported ship cell with at least2 HP remains in this fleet. Destruction is guarded; choose another target or reset.",true);
+            SetStatus("No supported live ship cell remains in this fleet. Choose another target or reset.",true);
         }
         string ImpactText() {
             if(!state.LastImpactOutcome.HasValue)return "No impact resolved yet.";
@@ -154,11 +163,12 @@ namespace FleetLab {
                 case PracticeImpactOutcome.ScatteredMiss:return "Shot missed the ship; nearby effect after "+state.LastScatterAttempts+" scatter attempt(s).";
                 case PracticeImpactOutcome.PassiveCell:return "Cell8: projectile retired without new damage.";
                 case PracticeImpactOutcome.NoVictim:return "No matching unit; source retains the active projectile.";
-                default:byte[] ships=state.Objects.CopyShipPool();return "Unit "+(state.LastVictimShip+1)+" damaged; HP "+BitConverter.ToInt16(ships,state.LastVictimShip*268+16)+". Source point value "+state.LastImpactPoints+".";
+                default:byte[] ships=state.Objects.CopyShipPool();return "Unit "+(state.LastVictimShip+1)+(state.LastVictimDestroyed?" destroyed":" damaged; HP "+BitConverter.ToInt16(ships,state.LastVictimShip*268+16))+". Source point value "+state.LastImpactPoints+".";
             }
         }
         void PickNonshipCell() {
             if(target.SelectedItem==null)return;int fleet=((Choice)target.SelectedItem).Id;byte[] f=state.Objects.CopyFleetPool();
+            if(BitConverter.ToInt32(f,fleet*492)==0){SetStatus("This target fleet is inactive. Choose another fleet or reset the study.",true);return;}
             for(int x=0;x<10;x++)for(int y=0;y<10;y++){int code=BitConverter.ToInt32(f,fleet*492+64+(x*10+y)*4);if(code!=0&&code!=1&&code!=3)continue;
                 changing=true;offsetX.Value=x;offsetY.Value=y;changing=false;UpdateSelection();SetStatus("Selected existing cell "+x+","+y+" with original code "+code+" for the supported nonship expiry branch.",false);return;}
             SetStatus("This fleet has no supported nonship cell. Choose another fixed target.",true);
@@ -180,14 +190,15 @@ namespace FleetLab {
             for(int i=0;i<40;i++)if(BitConverter.ToInt16(visuals,i*20)!=-1){int index=impacts.Items.Add(new Choice { Id=i,Text="Effect "+(i+1)+" · type "+BitConverter.ToInt32(visuals,i*20+16)+" · counter "+BitConverter.ToInt16(visuals,i*20+12) });if(i==effect)impacts.SelectedIndex=index;}
             if(objects.SelectedIndex<0&&objects.Items.Count>0&&impacts.SelectedIndex<0)objects.SelectedIndex=0;
             if(objects.SelectedIndex<0&&impacts.SelectedIndex<0&&impacts.Items.Count>0)impacts.SelectedIndex=0;changing=false;
-            clock.Text="Clock "+state.ClockMilliseconds+" ms · "+objects.Items.Count+"/80 objects · "+state.ActiveEffects+"/40 effects\r\nUpdates "+state.MovementFrames+" · paused "+state.PausedFrames+" · expired "+state.ExpiredObjects+"\r\nFixture RNG "+state.RandomState+" · calls "+state.RandomCalls+" · dropped effects "+state.DroppedEffects;
+            clock.Text="Clock "+state.ClockMilliseconds+" ms · "+objects.Items.Count+"/80 objects · "+state.ActiveEffects+"/40 effects\r\nUpdates "+state.MovementFrames+" · paused "+state.PausedFrames+" · expired "+state.ExpiredObjects+"\r\nFixture RNG "+state.RandomState+" · calls "+state.RandomCalls+" · dropped effects "+state.DroppedEffects+"\r\nDestroyed units "+state.DestroyedUnits+" · movie-selection counter "+state.MovieCounter;
             byte[] score=state.CopyScoreRegion();impactSummary.Text=ImpactText()+"\r\nCopied scores: P1 "+BitConverter.ToInt32(score,0)+" · P2 "+BitConverter.ToInt32(score,44);
             canvas.SetPools(state.Objects.CopyFleetPool(),timed,visuals);LoadWeapons();UpdateSelection();
         }
         void UpdateSelection() {
-            if(changing)return;int count=0;if(SourceSlot>=0&&WeaponId>=14)count=BitConverter.ToInt16(state.Objects.CopyShipPool(),SourceSlot*268+196+WeaponId*2);
-            create.Enabled=SourceSlot>=0&&WeaponId>=14&&target.SelectedItem!=null&&(count==-1||count>=1);
-            ammo.Text=count==-1?"Infinite ammunition.":count==1?"Last round: includes order reset and equipment reevaluation.":count==0?"No ammunition for this weapon.":"Ammunition: "+count;
+            if(changing)return;byte[] currentShips=state.Objects.CopyShipPool(),currentFleets=state.Objects.CopyFleetPool();int count=0;if(SourceSlot>=0&&WeaponId>=14)count=BitConverter.ToInt16(currentShips,SourceSlot*268+196+WeaponId*2);
+            bool sourceLive=SourceSlot>=0&&BitConverter.ToInt32(currentShips,SourceSlot*268)!=0,targetLive=target.SelectedItem!=null&&BitConverter.ToInt32(currentFleets,((Choice)target.SelectedItem).Id*492)!=0;
+            create.Enabled=sourceLive&&WeaponId>=14&&targetLive&&(count==-1||count>=1);
+            ammo.Text=!sourceLive?"Source unit was destroyed. Reset the study to restore it.":!targetLive?"Target fleet is inactive. Choose another fleet or reset.":count==-1?"Infinite ammunition.":count==1?"Last round: includes order reset and equipment reevaluation.":count==0?"No ammunition for this weapon.":"Ammunition: "+count;
             int slot=SelectedObject;canvas.Selected=slot;
             if(target.SelectedItem!=null){int id=((Choice)target.SelectedItem).Id,x=(int)offsetX.Value,y=(int)offsetY.Value;byte[] fleet=state.Objects.CopyFleetPool();canvas.TargetWorld=new Point(BitConverter.ToInt16(fleet,id*492+12)+x,BitConverter.ToInt16(fleet,id*492+14)+y);
                 targetInfo.Text=x<0||x>=10||y<0||y>=10?"Offset is outside the 10 × 10 fleet grid. Impact will stop.":"Target cell code "+BitConverter.ToInt32(fleet,id*492+64+(x*10+y)*4)+" at "+x+","+y+".";
@@ -195,6 +206,7 @@ namespace FleetLab {
                 if(victim>=0){int at=victim*268,row=y-BitConverter.ToInt16(ships,at+10),equipped=0;for(int column=0;column<4;column++)if(BitConverter.ToInt32(ships,at+100+row*16+column*4)!=0)equipped++;targetInfo.Text+="\r\nUnit "+(victim+1)+" · "+UnitName(ships,victim)+" · HP "+BitConverter.ToInt16(ships,at+16)+" · row equipment "+equipped+"/4.";}
                 else targetInfo.Text+="\r\nNonship expiry codes: 0, 1, 3.";
                 if(WeaponId==19||WeaponId==21)targetInfo.Text="This test weapon's special expiry branch is unsupported.";}
+            if(!targetLive)targetInfo.Text="Target fleet inactive; new test objects are disabled. Queued shots on resolved cell8 can still retire. Reset restores the original fleet.";
             if(slot<0&&impacts.SelectedItem!=null){byte[] e=state.CopyEffectPool();int at=((Choice)impacts.SelectedItem).Id*20;details.Text="Schematic effect "+(((Choice)impacts.SelectedItem).Id+1)+" · type "+BitConverter.ToInt32(e,at+16)+"\r\nFleet reference "+(BitConverter.ToInt16(e,at)+1)+" · local "+BitConverter.ToInt16(e,at+2)+", "+BitConverter.ToInt16(e,at+4)+"\r\nSprite bank "+BitConverter.ToInt32(e,at+8)+" · counter "+BitConverter.ToInt16(e,at+12)+"\r\nRing geometry is a modern schematic, not the original sprite renderer.";}
             else if(slot<0)details.Text="No active timed object or expiry effect.\r\nThis study is isolated from the active Classic battle.";
             else { byte[] t=state.Objects.CopyTimedPool();int at=slot*268;uint deadline=BitConverter.ToUInt32(t,at+24);details.Text="Object "+(slot+1)+" · weapon "+BitConverter.ToInt32(t,at)+"\r\nWorld "+BitConverter.ToInt16(t,at+8)+", "+BitConverter.ToInt16(t,at+10)+"\r\nSource unit "+(BitConverter.ToInt16(t,at+16)+1)+" · target fleet "+(BitConverter.ToInt16(t,at+12)+1)+"\r\nDeadline "+deadline+" ms\r\nRemaining "+unchecked((int)(deadline-state.ClockMilliseconds))+" ms\r\nLast early return: "+(state.LastStoppedAtRecord<0?"none":"object "+(state.LastStoppedAtRecord+1)); }
