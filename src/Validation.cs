@@ -62,6 +62,25 @@ namespace FleetLab {
                     output.Add("FAIL "+name+": "+e.Message);
                 }
             };
+            check("Original frame clock preserves pre-wait sample, prior delta and observed zero reset",delegate {
+                // Values from source probes234/236 and the two observed zero
+                // exits in actual234. Expected values are recorded boundaries.
+                var before=new OriginalFrameClock(99,100,731,17);
+                var body=before.BeginFrame(100,0);var after=body.CompleteFrame();
+                Require(before.PreviousMilliseconds==99&&before.CurrentMilliseconds==100&&before.GameMilliseconds==731&&before.DeltaMilliseconds==17,"Clock input mutated");
+                Require(body.PreviousMilliseconds==100&&body.CurrentMilliseconds==100&&body.GameMilliseconds==100&&body.DeltaMilliseconds==17,"Clock callback ordering");
+                Require(after.PreviousMilliseconds==100&&after.CurrentMilliseconds==1&&after.GameMilliseconds==1&&after.DeltaMilliseconds==1,"Original zero reset");
+                var next=after.BeginFrame(179270175,0).CompleteFrame();
+                Require(next.DeltaMilliseconds==179270174,"Clock reset lost following uptime spike");
+                var wrapped=new OriginalFrameClock(0,uint.MaxValue,731,17).BeginFrame(0,2);
+                Require(wrapped.GameMilliseconds==731&&wrapped.DeltaMilliseconds==17&&wrapped.CompleteFrame().DeltaMilliseconds==1,"Network clock or wrapped subtraction");
+                var zeroNetwork=before.BeginFrame(100,2).CompleteFrame();
+                Require(zeroNetwork.GameMilliseconds==1,"Network zero branch failed to reset game clock");
+                var negativeMode=before.BeginFrame(101,-1);Require(negativeMode.GameMilliseconds==101,"Network comparison was unsigned");
+                var wait=new OriginalFrameClock(0,0xfffffff0,0,0).BeginFrame(0xfffffff0,0);
+                Require(!wait.WorldWaitSatisfied(23)&&wait.WorldWaitSatisfied(24)&&!wait.WorldWaitSatisfied(0x7ffffff0),"Signed wait wrap/threshold");
+                Require(body.WorldWaitSatisfied(140)&&!body.WorldWaitSatisfied(139)&&!body.WorldWaitSatisfied(99),"Wait predicate uses wrong timestamp");
+            });
             check("Original fleet batch boundaries, cycle wrap and world caller enumeration",delegate {
                 var start=new PracticeFleetScheduler(248,uint.MaxValue);
                 var last=start.TakeBatch();int[] slots=last.CopySlots();
