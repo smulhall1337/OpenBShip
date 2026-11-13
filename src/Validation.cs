@@ -259,6 +259,56 @@ namespace FleetLab {
                     Require(Hash(fleet.CopyConsumedPayload())=="2D55A4878D242C44DE4302E4CEBA7152737B0716B115D97331861C332E249A1D","Original destructive marker fixture");
                 }
             });
+            check("Grouped deployment matches complete original initializer pools and random histories",delegate {
+                var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
+                // Original209:4037B0+403210+403E20, pinned RIP, freshzero pools,
+                // source map, supplied seed and localUIowner-1. Nine native cases.
+                string[] fixtures={
+                    "BS201,0,ECAE40FD7F9102D012E28F1CEB9F2378CDC3E7546242599B80C02644B5805E6E,429AE63C356DD897F0553E9B1CF5D65398CE77655CE2BF5AF78698A7CE98FF59,1149097276,700,4,16",
+                    "BS201,731,ECAE40FD7F9102D012E28F1CEB9F2378CDC3E7546242599B80C02644B5805E6E,5AF9D07F5829D54F468D7469EAAC649A250B899158C0092E6F82E0D07E337626,2073215917,386,4,16",
+                    "BS201,4294967295,ECAE40FD7F9102D012E28F1CEB9F2378CDC3E7546242599B80C02644B5805E6E,CAB8108946139A297D79546A91A2C309001EB2EEFE68787F3C1F781DD967430F,1191079719,520,4,16",
+                    "BS202,0,1563EA37843C263292DBB0E0D98AA4E1911E57744E9B7C3E3CB0E6E2E16B481A,ECBDC3AB95DA838A300670617334E9AE6E93E4CAC26C931B7C1C4071E7119C4B,2202582748,348,4,15",
+                    "BS202,731,1563EA37843C263292DBB0E0D98AA4E1911E57744E9B7C3E3CB0E6E2E16B481A,B9E0AA7556C9E2091B32C368D812239670CE98B17A99F64AE600E5542731F95C,54921299,152,4,15",
+                    "BS202,4294967295,1563EA37843C263292DBB0E0D98AA4E1911E57744E9B7C3E3CB0E6E2E16B481A,96E323C531A232C9B1666A2B0C2A4C08CEFDCE48C51DCDB47C4F37AAAE0DC1EB,1414743281,130,4,15",
+                    "BS204,0,AABF80D8547BC6E230A72A33FFC052652E299EE990D51BF2B9BF117971F78451,C40C45FBD5019D1B63F9862B1836AC955D4F33C8095F34019C37740EC3B008DD,1114490042,578,9,34",
+                    "BS204,731,AABF80D8547BC6E230A72A33FFC052652E299EE990D51BF2B9BF117971F78451,BEAA2215C5D0C3665EC0BAA6AE332F409592056E2E76863E2E76BBEFA3A7A125,358922119,796,9,34",
+                    "BS204,4294967295,AABF80D8547BC6E230A72A33FFC052652E299EE990D51BF2B9BF117971F78451,4DDCD60E2CF5E8C6E34FB5117913D29CF619DCEF626750AA5A55808EC57A5BDA,786305251,436,9,34",
+                };
+                foreach(string fixture in fixtures){
+                    string[] f=fixture.Split(',');var scene=Scenario.Load(Path.Combine(assets,"Graphics",f[0]+".SCN"));
+                    var deployed=new PracticeDeployment(catalog,scene,uint.Parse(f[1]));
+                    Require(Hash(deployed.CopyShipPool())==f[2]&&Hash(deployed.CopyFleetPool())==f[3],"Original grouped fullpool "+f[0]+" seed"+f[1]);
+                    Require(deployed.RandomState==uint.Parse(f[4])&&deployed.RandomCalls==int.Parse(f[5])&&deployed.Fleets.Count==int.Parse(f[6])&&deployed.UnitCount==int.Parse(f[7]),"Original grouped counters/random "+f[0]);
+                    for(int owner=0;owner<scene.Players;owner++)Require(deployed.OwnerCounter(owner)==1+scene.Groups[owner][0].Count+scene.Groups[owner][1].Count,"Original initial owner counter");
+                }
+            });
+            check("Original placement rejects occupied origins and ignores inactive records",delegate {
+                var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));
+                var planner=new PracticeSpawnPlanner(scene,0,null);
+                Point[] expected={new Point(320,330),new Point(370,390),new Point(320,310)};int[] calls={160,258,374};uint[] states={1909300640u,4144848762u,3384151758u};
+                for(int i=0;i<3;i++){Require(planner.NextOrigin(0)==expected[i]&&planner.RandomCalls==calls[i]&&planner.RandomState==states[i],"Original placement draw order");planner.Reserve(2,expected[i]);}
+                foreach(int kind in new[]{0,1,-1}){
+                    planner=new PracticeSpawnPlanner(scene,0,new[]{new PracticeFleetOrigin(kind,expected[0])});
+                    Require(planner.NextOrigin(0)==expected[kind==0?0:1]&&planner.RandomCalls==calls[kind==0?0:1],"Original active/inactive reservation");
+                }
+            });
+            check("Bounded deployment failures preserve random state and source data",delegate {
+                var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));
+                var planner=new PracticeSpawnPlanner(scene,0,null);
+                Reject(delegate{planner.NextOrigin(0,1);});Require(planner.RandomState==0&&planner.RandomCalls==0,"Failed search consumed random");
+                RejectArgument(delegate{planner.NextOrigin(4);});RejectArgument(delegate{planner.NextOrigin(0,0);});
+                byte[] source=scene.Groups[0][0][0];string hash=Hash(source);
+                var deployed=new PracticeDeployment(PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs")),scene,0);
+                Require(Hash(source)==hash&&deployed.Fleets[0].Kind==1&&deployed.Fleets[0].Occupancy(0,0)==0,"Source/emptycell kind isolation");
+                byte[] selectedPool=deployed.Fleets[1].CopyFleetPool();
+                Require(BitConverter.ToInt32(selectedPool,0)==0&&BitConverter.ToInt32(selectedPool,PracticeFleetSnapshot.FleetBytes)==1,"Selected fleet snapshot lost its pool slot");
+                byte[] copy=deployed.CopyShipPool();copy[0]^=1;Require(deployed.Fleets[0].Units[0].Type==3,"Deployment pool alias");
+                bool readOnly=false;try{((IList<PracticeFleetSnapshot>)deployed.Fleets).Clear();}catch(NotSupportedException){readOnly=true;}Require(readOnly,"Deployment roster mutable");
+                for(int i=0;i<4096;i++)scene.Cells[i].Kind=1;
+                planner=new PracticeSpawnPlanner(scene,731,null);scene.Cells[0].Kind=4;
+                Reject(delegate{planner.NextOrigin(0);});Require(planner.RandomState==731&&planner.RandomCalls==0,"Nozone failure consumed random or map aliased");
+            });
+
             check("Practice source counter wrap and extra equipment preserve pool bytes",delegate {
                 var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
                 var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));

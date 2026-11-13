@@ -15,6 +15,8 @@ namespace FleetLab {
         readonly MapView map=new MapView();
         readonly PracticeFleetInspector practiceInspection;
         readonly ComboBox mapSelect=new ComboBox();
+        readonly CheckBox seededDeployment=new CheckBox();
+        readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
         readonly Stopwatch visualTime=Stopwatch.StartNew();
@@ -89,7 +91,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.51 — recovered unit records";
+            Text="Battleship Fleet Lab 0.52 — seeded grouped deployment";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -280,24 +282,34 @@ namespace FleetLab {
                 Dock=DockStyle.Top,Height=42,Padding=new Padding(12,7,0,0)
             };
             mapHeader.Controls.Add(mapSelect);
-            mapHeader.Controls.Add(new Label {
-                Text="Read-only scenario inspection",AutoSize=true,Padding=new Padding(12,4,0,0)
-            });
+            seededDeployment.Text="Seeded deployment";seededDeployment.AutoSize=true;
+            seededDeployment.AccessibleName="Preview seeded grouped deployment";
+            deploymentSeed.Minimum=0;deploymentSeed.Maximum=uint.MaxValue;
+            deploymentSeed.Width=112;deploymentSeed.Enabled=false;
+            deploymentSeed.AccessibleName="Deployment seed";
+            mapHeader.Controls.Add(seededDeployment);
+            mapHeader.Controls.Add(new Label {Text="Seed",AutoSize=true,Padding=new Padding(6,4,0,0)});
+            mapHeader.Controls.Add(deploymentSeed);
+            mapHeader.Controls.Add(new Label {Text="Read-only preview",AutoSize=true,Padding=new Padding(8,4,0,0)});
             map.Dock=DockStyle.Fill;
             practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
+            seededDeployment.Enabled=practiceInspection.CanDeploy;
+            practiceInspection.FleetChanged+=delegate(int index){map.SelectedFleet=index;map.Invalidate();};
+            map.FleetSelected+=delegate(int index){practiceInspection.ChooseRecord(index);};
             inspect.Controls.Add(map);
             inspect.Controls.Add(practiceInspection);
             inspect.Controls.Add(mapHeader);
             mapSelect.SelectedIndexChanged+=delegate {
                 try {
                     map.Scene=Scenario.Load(Path.Combine(assets,"Graphics",mapSelect.SelectedItem.ToString()));
-                    practiceInspection.SetScenario(map.Scene);
-                    map.Invalidate();
+                    RefreshMapInspection();
                 }
                 catch(Exception e) {
                     MessageBox.Show(this,e.Message,"Unsupported scenario");
                 }
             };
+            seededDeployment.CheckedChanged+=delegate {deploymentSeed.Enabled=seededDeployment.Checked;RefreshMapInspection();};
+            deploymentSeed.ValueChanged+=delegate {if(seededDeployment.Checked)RefreshMapInspection();};
             mapSelect.SelectedIndex=0;
             clip=new ClipStudy(assets,preferences.HighMovies);clip.SetSound(sound.Enabled);clip.SetLevel(preferences.FxVolume);
             archive=new ClipStudy(assets,preferences.HighMovies);archive.ConfigureArchive(CreditsCatalog.Load(assets));archive.SetSound(sound.Enabled);archive.SetLevel(preferences.FxVolume);
@@ -351,6 +363,22 @@ namespace FleetLab {
             visualTimer.Tick+=delegate {TickVisuals();};
             visualTimer.Start();
         }
+        void RefreshMapInspection() {
+            if(map.Scene==null)return;
+            map.PreviewProblem=null;
+            try {
+                map.Deployment=seededDeployment.Checked ?
+                    practiceInspection.BuildDeployment(map.Scene,(uint)deploymentSeed.Value) : null;
+                practiceInspection.SetScenario(map.Scene,map.Deployment);
+            }
+            catch(InvalidDataException e) {
+                map.Deployment=null;
+                practiceInspection.SetScenario(map.Scene);
+                map.PreviewProblem=e.Message;
+            }
+            map.Invalidate();
+        }
+
         void SuppressHeldControls() {
             if(disposed)return;
             foreach(Keys key in new[]{Keys.Enter,Keys.Space,Keys.R,Keys.P,Keys.Escape,Keys.F2,Keys.Left,Keys.Right,Keys.Up,Keys.Down}) {
@@ -856,6 +884,22 @@ namespace FleetLab {
                 }
                 require(count==17,"Expected17grouped records");Size=MinimumSize;PerformLayout();Application.DoEvents();
                 require(practiceInspection.Width>=300&&practiceInspection.Height>=260,"Inspection clipped at minimum size");
+                mapSelect.SelectedIndex=0;tabs.SelectedIndex=0;
+            });
+            check("Seeded grouped deployment changes preview alone and restores record inspection",delegate {
+                tabs.SelectedIndex=1;mapSelect.SelectedIndex=0;deploymentSeed.Value=0;
+                var previous=State;string settings=preferences.Serialize();int turn=State.Turn,events=State.Events.Count;
+                seededDeployment.Checked=true;Application.DoEvents();
+                require(map.Deployment!=null&&deploymentSeed.Enabled&&map.Deployment.Fleets.Count==4,"Seeded preview unavailable");
+                require(map.Deployment.Fleets[0].WorldOrigin==new Point(320,330)&&practiceInspection.CurrentFleet.Kind==1,"Original first deployment origin/kind");
+                uint originalState=map.Deployment.RandomState;
+                practiceInspection.ChooseRecord(3);require(map.SelectedFleet==3&&practiceInspection.CurrentFleet==map.Deployment.Fleets[3],"Map/roster selection mismatch");
+                deploymentSeed.Value=uint.MaxValue;Application.DoEvents();require(map.Deployment.Seed==uint.MaxValue&&map.Deployment.RandomState!=originalState,"Full unsigned seed range");
+                deploymentSeed.Value=0;Application.DoEvents();require(map.Deployment.RandomState==originalState&&map.Deployment.Fleets[0].WorldOrigin==new Point(320,330),"Seed reset changed deployment");
+                mapSelect.SelectedIndex=2;Application.DoEvents();require(map.Deployment.Fleets.Count==9&&practiceInspection.RecordCount==9,"Deployment map change");
+                for(int i=0;i<9;i++){practiceInspection.ChooseRecord(i);require(map.SelectedFleet==i&&practiceInspection.CurrentFleet==map.Deployment.Fleets[i],"Grouped selection");}
+                seededDeployment.Checked=false;Application.DoEvents();require(map.Deployment==null&&!deploymentSeed.Enabled&&practiceInspection.CurrentFleet.Kind==2&&practiceInspection.CurrentFleet.WorldOrigin==Point.Empty,"Record fixture not restored");
+                require(State==previous&&State.Turn==turn&&State.Events.Count==events&&preferences.Serialize()==settings,"Preview altered gameplay/settings");
                 mapSelect.SelectedIndex=0;tabs.SelectedIndex=0;
             });
             check("Validated load restores paused battle from legacy mode without changing preferences",delegate {

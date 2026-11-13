@@ -328,6 +328,50 @@ namespace FleetLab {
     }
     public sealed class MapView : Control {
         public Scenario Scene;
+        public PracticeDeployment Deployment;
+        public int SelectedFleet;
+        public string PreviewProblem;
+        public event Action<int> FleetSelected;
+        RectangleF MapBounds {
+            get { float size=Math.Max(0,Math.Min(Width-40,Height-104));return new RectangleF((Width-size)/2,16,size,size); }
+        }
+        internal Point FleetMarker(int index) {
+            if(Deployment==null||index<0||index>=Deployment.Fleets.Count)throw new ArgumentOutOfRangeException("index");
+            var bounds=MapBounds;var origin=Deployment.Fleets[index].WorldOrigin;
+            return new Point((int)(bounds.X+(origin.X/10f+.5f)*bounds.Width/64),
+                             (int)(bounds.Y+(origin.Y/10f+.5f)*bounds.Height/64));
+        }
+        Point[] FleetLabels() {
+            if(Deployment==null)return new Point[0];
+            var labels=new Point[Deployment.Fleets.Count];var bounds=MapBounds;
+            Point[] offsets={Point.Empty,new Point(0,-18),new Point(0,18),new Point(-18,0),new Point(18,0),
+                new Point(-18,-18),new Point(18,-18),new Point(-18,18),new Point(18,18),new Point(0,-36),new Point(0,36)};
+            for(int i=0;i<labels.Length;i++){
+                Point marker=FleetMarker(i);labels[i]=marker;
+                foreach(Point offset in offsets){
+                    Point candidate=new Point((int)Math.Max(bounds.Left+9,Math.Min(bounds.Right-9,marker.X+offset.X)),
+                                              (int)Math.Max(bounds.Top+9,Math.Min(bounds.Bottom-9,marker.Y+offset.Y)));
+                    bool clear=true;
+                    for(int prior=0;prior<i&&clear;prior++)clear=Math.Abs(candidate.X-labels[prior].X)>=18||Math.Abs(candidate.Y-labels[prior].Y)>=18;
+                    for(int other=0;other<labels.Length&&clear;other++)if(other!=i){Point point=FleetMarker(other);clear=Math.Abs(candidate.X-point.X)>=13||Math.Abs(candidate.Y-point.Y)>=13;}
+                    if(clear){labels[i]=candidate;break;}
+                }
+            }
+            return labels;
+        }
+        internal Point FleetLabel(int index) { return FleetLabels()[index]; }
+        protected override void OnMouseDown(MouseEventArgs e) {
+            base.OnMouseDown(e);
+            if(e.Button!=MouseButtons.Left||Deployment==null)return;
+            Point[] labels=FleetLabels();
+            int nearest=-1;double distance=101;
+            for(int i=0;i<Deployment.Fleets.Count;i++){
+                Point marker=FleetMarker(i);double dx=e.X-marker.X,dy=e.Y-marker.Y,d=dx*dx+dy*dy;
+                dx=e.X-labels[i].X;dy=e.Y-labels[i].Y;d=Math.Min(d,dx*dx+dy*dy);
+                if(d<distance){nearest=i;distance=d;}
+            }
+            if(nearest>=0&&FleetSelected!=null)FleetSelected(nearest);
+        }
         public MapView() {
             DoubleBuffered=true;
             BackColor=Color.FromArgb(12,23,35);
@@ -337,19 +381,34 @@ namespace FleetLab {
             base.OnPaint(e);
             if(Scene==null)return;
             var g=e.Graphics;
-            float size=Math.Min(Width-40,Height-88),step=size/64;
-            float left=(Width-size)/2,top=16;
+            var bounds=MapBounds;if(bounds.Width<1)return;
+            float step=bounds.Width/64,left=bounds.X,top=bounds.Y;
             for(int y=0; y<64; y++)for(int x=0; x<64; x++) {
                 Cell c=Scene.At(x,y);
                 Color color=c.Kind==1?Color.FromArgb(24,55,77):c.Kind==2?Color.FromArgb(123,145,91):c.Kind==4?Color.FromArgb(Math.Min(255,40+25*c.Value),84,106):c.Kind==3?Color.FromArgb(236,192,98):c.Kind==7?Color.Turquoise:Color.IndianRed;
                 using(var brush=new SolidBrush(color))g.FillRectangle(brush,left+x*step,top+y*step,step+.1f,step+.1f);
             }
+            if(Deployment!=null)using(var font=new Font("Segoe UI",8,FontStyle.Bold)) {
+                Color[] colors={Color.LightCyan,Color.Orange,Color.LightGreen,Color.Plum};
+                Point[] labels=FleetLabels();
+                for(int i=0;i<Deployment.Fleets.Count;i++) {
+                    var fleet=Deployment.Fleets[i];Point marker=FleetMarker(i),center=labels[i];
+                    if(marker!=center)using(var pen=new Pen(colors[fleet.Owner]))g.DrawLine(pen,marker,center);
+                    using(var fill=new SolidBrush(colors[fleet.Owner]))g.FillEllipse(fill,marker.X-2,marker.Y-2,4,4);
+                    using(var fill=new SolidBrush(colors[fleet.Owner]))g.FillEllipse(fill,center.X-6,center.Y-6,12,12);
+                    if(i==SelectedFleet)using(var pen=new Pen(Color.Gold,2))g.DrawEllipse(pen,center.X-9,center.Y-9,18,18);
+                    g.DrawString((i+1).ToString(),font,Brushes.Black,center.X-4,center.Y-7);
+                }
+            }
             int embedded=0,records=0;
             foreach(Cell c in Scene.Cells)if(c.Payload!=null)embedded++;
             foreach(var player in Scene.Groups)foreach(var group in player)records+=group.Count;
-            using(var brush=new SolidBrush(Color.LightSteelBlue))using(var font=new Font("Segoe UI",10)) {
-                g.DrawString(Scene.Name+"  |  64 x 64  |  "+Scene.Players+" player records  |  "+embedded+" embedded / "+records+" grouped records",font,brush,16,Height-62);
-                g.DrawString("Schematic terrain; grouped fleets are inspectable. Mission behavior is not implemented.",font,brush,16,Height-36);
+            using(var brush=new SolidBrush(Color.LightSteelBlue))using(var font=new Font("Segoe UI",9)) {
+                g.DrawString(Scene.Name+" · 64 x 64 · "+Scene.Players+" players · "+embedded+" embedded / "+records+" grouped records",font,brush,16,Height-72);
+                string detail=Deployment==null?"Schematic terrain and fleet records. Missions remain unavailable.":
+                    "Seed "+Deployment.Seed+" · "+Deployment.RandomCalls+" RNG calls · click a numbered fleet to inspect";
+                g.DrawString(PreviewProblem??detail,font,brush,new RectangleF(16,Height-50,Math.Max(0,Width-32),44));
+                if(Deployment!=null)g.DrawString("Fresh grouped deployment · earlier startup and embedded entities excluded",font,brush,16,Height-25);
             }
         }
     }

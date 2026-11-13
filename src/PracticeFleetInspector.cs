@@ -12,12 +12,14 @@ namespace FleetLab {
             internal string Label;
             internal byte[] Payload;
             internal int Owner;
+            internal PracticeFleetSnapshot Snapshot;
             public override string ToString() { return Label; }
         }
 
         readonly ComboBox records = new ComboBox();
         readonly ListBox units = new ListBox();
-        readonly Label details = new Label(), note = new Label();
+        readonly TextBox details = new TextBox();
+        readonly Label note = new Label();
         readonly FleetCanvas canvas;
         readonly ClassicMessages names;
         PracticeUnitCatalog catalog;
@@ -26,6 +28,8 @@ namespace FleetLab {
         internal PracticeFleetSnapshot CurrentFleet { get; private set; }
         internal int RecordCount { get { return records.Items.Count; } }
         internal int SelectedUnit { get { return units.SelectedIndex; } }
+        internal bool CanDeploy { get { return catalog != null; } }
+        internal event Action<int> FleetChanged;
 
         public PracticeFleetInspector(string programs, ClassicMessages messages) {
             names = messages;
@@ -44,7 +48,7 @@ namespace FleetLab {
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 25));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 90));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 112));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
             Controls.Add(layout);
@@ -58,6 +62,12 @@ namespace FleetLab {
             units.AccessibleName = "Recovered units";
             layout.Controls.Add(units, 0, 2);
             details.Dock = DockStyle.Fill;
+            details.Multiline = true;
+            details.ReadOnly = true;
+            details.ScrollBars = ScrollBars.Vertical;
+            details.BorderStyle = BorderStyle.None;
+            details.BackColor = BackColor;
+            details.ForeColor = ForeColor;
             details.AccessibleName = "Selected unit data";
             layout.Controls.Add(details, 0, 3);
             canvas = new FleetCanvas(this) { Dock = DockStyle.Fill, AccessibleName = "Schematic fleet occupancy" };
@@ -75,7 +85,14 @@ namespace FleetLab {
             records.SelectedIndex = index;
         }
 
-        public void SetScenario(Scenario scene) {
+        internal PracticeDeployment BuildDeployment(Scenario scene, uint seed) {
+            if (catalog == null) throw new InvalidDataException("Run Setup again to import the recovered unit tables.");
+            return new PracticeDeployment(catalog, scene, seed);
+        }
+
+        public void SetScenario(Scenario scene) { SetScenario(scene, null); }
+
+        internal void SetScenario(Scenario scene, PracticeDeployment deployment) {
             changing = true;
             records.Items.Clear();
             units.Items.Clear();
@@ -84,14 +101,23 @@ namespace FleetLab {
                 for (int player = 0; player < scene.Groups.Length; player++) {
                     for (int group = 0; group < scene.Groups[player].Length; group++) {
                         for (int record = 0; record < scene.Groups[player][group].Count; record++) {
+                            int index = records.Items.Count;
+                            if (deployment != null && index >= deployment.Fleets.Count)
+                                throw new InvalidDataException("Deployment does not match scenario records.");
                             records.Items.Add(new RecordChoice {
                                 Label = "Player " + (player + 1) + " · group " + (group + 1) + " · fleet " + (record + 1),
-                                Payload = scene.Groups[player][group][record], Owner = player
+                                Payload = scene.Groups[player][group][record], Owner = player,
+                                Snapshot = deployment == null ? null : deployment.Fleets[index]
                             });
                         }
                     }
                 }
             }
+            if (deployment != null && deployment.Fleets.Count != records.Items.Count)
+                throw new InvalidDataException("Deployment has extra scenario records.");
+            note.Text = deployment == null ?
+                "Schematic kind-2 record fixture. Enable seeded deployment to inspect original grouped kinds and world origins. Missions remain unavailable." :
+                "Seeded grouped deployment in fresh pools. Earlier startup, embedded entities and mission rules remain unfinished. Terrain is schematic.";
             changing = false;
             if (records.Items.Count != 0) records.SelectedIndex = 0;
             else { details.Text = "No grouped fleet records."; canvas.Invalidate(); }
@@ -113,7 +139,7 @@ namespace FleetLab {
                 return;
             }
             try {
-                CurrentFleet = PracticeFleetSnapshot.Create(catalog, choice.Payload, choice.Owner, Point.Empty, 0);
+                CurrentFleet = choice.Snapshot ?? PracticeFleetSnapshot.Create(catalog, choice.Payload, choice.Owner, Point.Empty, 0);
                 for (int i = 0; i < CurrentFleet.Units.Count; i++)
                     units.Items.Add((i + 1) + ". " + NameOf(CurrentFleet.Units[i].Type));
                 if (units.Items.Count != 0) units.SelectedIndex = 0;
@@ -121,6 +147,7 @@ namespace FleetLab {
             }
             catch (InvalidDataException e) { details.Text = "Unsupported fleet record: " + e.Message; }
             canvas.Invalidate();
+            if (FleetChanged != null) FleetChanged(records.SelectedIndex);
         }
 
         void UpdateDetails() {
@@ -133,8 +160,10 @@ namespace FleetLab {
             var unit = CurrentFleet.Units[index];
             var text = new StringBuilder();
             text.Append(NameOf(unit.Type)).Append(" · HP ").Append(unit.HitPoints).Append(" · length ").Append(unit.Length).AppendLine();
-            text.Append("Local cell ").Append(unit.X + 1).Append(',').Append(unit.Y + 1)
-                .Append(" · source speed ").Append(unit.Speed).AppendLine();
+            text.Append("Kind ").Append(CurrentFleet.Kind).Append(" · world origin ")
+                .Append(CurrentFleet.WorldOrigin.X).Append(',').Append(CurrentFleet.WorldOrigin.Y)
+                .Append(" · speed ").Append(unit.Speed).AppendLine();
+            text.Append("Local cell ").Append(unit.X + 1).Append(',').Append(unit.Y + 1).AppendLine();
             text.Append("Equipment selection A/B/C: ").Append(unit.SelectedEquipmentA).Append('/')
                 .Append(unit.SelectedEquipmentB).Append('/').Append(unit.SelectedEquipmentC).AppendLine();
             text.Append("Ammo (equipment ID:value): ");

@@ -73,7 +73,7 @@ namespace FleetLab {
 
     // Bounded fresh-pool constructor, recovered from 403210, 42CFE0, 42D070,
     // 42D120 and the color/speed/grid finalizers. World position is supplied;
-    // this does not execute original spawning, mission logic or local UI code.
+    // this constructor does not execute spawning, mission logic or local UI code.
     public sealed class PracticeFleetSnapshot {
         public const int ShipSlots = 1500, FleetSlots = 250, FleetBytes = 492;
         readonly byte[] ships = new byte[ShipSlots * PracticeUnitCatalog.RecordBytes];
@@ -82,6 +82,9 @@ namespace FleetLab {
         readonly ReadOnlyCollection<PracticeUnitRecord> units;
         public ReadOnlyCollection<PracticeUnitRecord> Units { get { return units; } }
         public int Owner { get; private set; }
+        public int Kind { get; private set; }
+        public int FleetSlot { get; private set; }
+        public int FirstShipSlot { get; private set; }
         public Point WorldOrigin { get; private set; }
         public uint InitialCounter { get; private set; }
         public uint NextCounter { get; private set; }
@@ -96,24 +99,31 @@ namespace FleetLab {
         }
 
         PracticeFleetSnapshot(PracticeUnitCatalog catalog, byte[] source, int owner,
-                              Point origin, uint counter) {
+                              Point origin, uint counter, int kind = 2,
+                              int fleetSlot = 0, int firstShipSlot = 0) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (source == null || source.Length != 400)
                 throw new InvalidDataException("A fleet record must contain exactly 400 bytes.");
             if (owner < 0 || owner > 3) throw new ArgumentOutOfRangeException("owner");
+            if (kind != 1 && kind != 2 && kind != 9) throw new ArgumentOutOfRangeException("kind");
+            if (fleetSlot < 0 || fleetSlot >= FleetSlots || firstShipSlot < 0 || firstShipSlot >= ShipSlots)
+                throw new ArgumentOutOfRangeException("fleetSlot");
             if (origin.X < short.MinValue || origin.X > short.MaxValue ||
                 origin.Y < short.MinValue || origin.Y > short.MaxValue)
                 throw new ArgumentOutOfRangeException("origin");
             Owner = owner;
+            Kind = kind;
+            FleetSlot = fleetSlot;
+            FirstShipSlot = firstShipSlot;
             WorldOrigin = origin;
             InitialCounter = counter;
             NextCounter = unchecked(counter + 1);
             payload = (byte[])source.Clone();
-            DWord(fleet, 0, 2);
+            DWord(fleet, 0, kind);
             Word(fleet, 6, owner);
             Word(fleet, 12, origin.X);
             Word(fleet, 14, origin.Y);
-            fleet[63] = 255;
+            fleet[63] = kind == 1 ? (byte)0 : (byte)255;
             fleet[484] = unchecked((byte)counter);
             fleet[485] = 2;
 
@@ -131,21 +141,22 @@ namespace FleetLab {
                         throw new InvalidDataException("This fleet record exceeds the six-slot roster.");
                     for (int x = column; x < 10 && payload[(row * 10 + x) * 4] != 1; x++)
                         payload[(row * 10 + x) * 4] = 1;
-                    int slot = records.Count;
+                    int slot = firstShipSlot + records.Count;
+                    if (slot >= ShipSlots) throw new InvalidDataException("Deployment exceeds the ship pool.");
                     Construct(catalog, type, slot, row, column);
-                    DWord(fleet, 16 + slot * 4, 0x4fc340 + slot * PracticeUnitCatalog.RecordBytes);
+                    DWord(fleet, 16 + records.Count * 4, 0x4fc340 + slot * PracticeUnitCatalog.RecordBytes);
                     records.Add(new PracticeUnitRecord(ships, slot));
                 }
             }
 
-            Array.Copy(catalog.Colors, 6, fleet, 464, 3);
+            Array.Copy(catalog.Colors, kind * 3, fleet, 464, 3);
             int speed = 0;
             foreach (var record in records) {
                 if (speed == 0) speed = unchecked((byte)record.Speed);
                 if (speed > record.Speed) speed = unchecked((byte)record.Speed);
             }
             Word(fleet, 60, speed);
-            for (int i = 0; i < 100; i++) DWord(fleet, 64 + i * 4, 3);
+            for (int i = 0; i < 100; i++) DWord(fleet, 64 + i * 4, kind == 2 ? 3 : 0);
             foreach (var record in records) {
                 for (int n = 0; n < record.Length; n++)
                     DWord(fleet, 64 + (record.X * 10 + record.Y + n) * 4, 2);
@@ -165,7 +176,7 @@ namespace FleetLab {
             Word(ships, at + 6, Owner);
             Word(ships, at + 8, row);
             Word(ships, at + 10, column);
-            Word(ships, at + 12, 0);
+            Word(ships, at + 12, FleetSlot);
 
             for (int i = 0; i < 35; i++) Word(ships, at + 196 + i * 2, 0);
             var equipment = new List<int>();
@@ -204,6 +215,10 @@ namespace FleetLab {
                                                     int owner, Point worldOrigin, uint initialCounter) {
             return new PracticeFleetSnapshot(catalog, payload, owner, worldOrigin, initialCounter);
         }
+        internal static PracticeFleetSnapshot CreateDeployment(PracticeUnitCatalog catalog, byte[] payload,
+                int owner, Point origin, uint counter, int kind, int fleetSlot, int firstShipSlot) {
+            return new PracticeFleetSnapshot(catalog, payload, owner, origin, counter, kind, fleetSlot, firstShipSlot);
+        }
         public int Occupancy(int x, int y) {
             if (x < 0 || x >= 10 || y < 0 || y >= 10) throw new ArgumentOutOfRangeException("x");
             return DWord(fleet, 64 + (x * 10 + y) * 4);
@@ -213,7 +228,7 @@ namespace FleetLab {
         public byte[] CopyFleetRecord() { return (byte[])fleet.Clone(); }
         public byte[] CopyFleetPool() {
             var result = new byte[FleetSlots * FleetBytes];
-            Array.Copy(fleet, result, fleet.Length);
+            Array.Copy(fleet, 0, result, FleetSlot * FleetBytes, fleet.Length);
             return result;
         }
         public byte[] CopyConsumedPayload() { return (byte[])payload.Clone(); }
