@@ -157,3 +157,5 @@ AI upscaling of original clips remains an optional stretch goal. It has not been
 - `outputs/`, `work/`: ignored private reports, recovery archives, tools and intermediate research.
 
 Original assets, executables, settings, generated binaries and historical packages stay out of Git. Keep `build/current/UserData` when cleaning the workspace. The current source and scripts plus an explicitly supplied supported original are sufficient to reproduce the playable build.
+
+Actual first Practice input study (checkpoint 216) confirms an explicit **Set Way Points** order and five fleet waypoint slots. Four observed map clicks match exact queue writes in the full fleet pool; two original runs also show queue consumption and movement. A default right-button press records a camera-drag origin. These are original-process observations with debugger pauses, not a completed movement, collision, pathfinding or mission implementation. The maintained map preview remains read-only.
