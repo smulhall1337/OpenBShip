@@ -12,7 +12,7 @@ namespace FleetLab {
 
     // Data-only last-round path in supported RIP B9A8...6A569:416A49..416A6B,
     // 416250 and42D120..42D329. Selected-unit UI refresh and media are excluded.
-    // This module is not connected to the current study's guarded firing path.
+    // CreateWithDepletion composes this before copying the projectile record.
     public static class PracticeUnitDepletion {
         static int Word(byte[] bytes,int at) {
             if(at<0||at>bytes.Length-2)throw new InvalidDataException("Equipment ammunition crosses the admitted ship pool.");

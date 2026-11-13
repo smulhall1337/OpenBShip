@@ -16,7 +16,8 @@ namespace FleetLab {
         readonly ComboBox source = new ComboBox(), weapon = new ComboBox(), target = new ComboBox();
         readonly NumericUpDown offsetX = new NumericUpDown(), offsetY = new NumericUpDown();
         readonly ListBox objects = new ListBox();
-        readonly Label clock = new Label(), ammo = new Label(), status = new Label();
+        readonly ListBox impacts = new ListBox();
+        readonly Label clock = new Label(), ammo = new Label(), status = new Label(), targetInfo = new Label();
         readonly TextBox details = new TextBox();
         readonly Button create = new Button();
         readonly TimedCanvas canvas;
@@ -33,7 +34,9 @@ namespace FleetLab {
             PracticeTimedWeaponCatalog catalog;
             try { catalog = PracticeTimedWeaponCatalog.Load(programs); }
             catch (IOException) { throw new InvalidDataException("Run Setup again to import the timed-weapon table."); }
-            initial = state = new PracticeTimedStudyState(catalog, deployment.CopyShipPool(), deployment.CopyFleetPool(), 0);
+            initial = state = new PracticeTimedStudyState(catalog, PracticeUnitCatalog.Load(programs),
+                File.ReadAllBytes(Path.Combine(programs,"ClassicVisuals.seqbin")),
+                deployment.CopyShipPool(), deployment.CopyFleetPool(), 0, 0);
             Text = "Recovered timed objects · manual study"; Size = new Size(1120, 820); MinimumSize = new Size(900, 640);
             StartPosition = FormStartPosition.CenterParent; BackColor = Color.FromArgb(12,23,35);
             ForeColor = Color.WhiteSmoke; Font = new Font("Segoe UI",9); KeyPreview = true;
@@ -45,7 +48,7 @@ namespace FleetLab {
             var scroll = new Panel { Dock=DockStyle.Fill,AutoScroll=true }; layout.Controls.Add(scroll,1,0);
             var side = new FlowLayoutPanel { Dock=DockStyle.Top,AutoSize=true,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(8,0,0,0) }; scroll.Controls.Add(side);
             Action<Control,int> add = delegate(Control c,int height) { c.Width=278;c.Height=height;c.Margin=new Padding(3,2,3,2);side.Controls.Add(c); };
-            add(clock,38);
+            add(clock,58);
             add(new Label { Text="Source unit" },20); add(source,28);
             add(new Label { Text="Test weapon (original ammo data)" },20); add(weapon,28); add(ammo,38);
             add(new Label { Text="Fixed target fleet" },20); add(target,28);
@@ -54,13 +57,18 @@ namespace FleetLab {
             foreach(var control in new[]{offsetX,offsetY}){control.Minimum=-639;control.Maximum=639;control.Width=100;}
             offsetX.AccessibleName="Timed target offset X";offsetY.AccessibleName="Timed target offset Y";
             offsets.Controls.Add(offsetX);offsets.Controls.Add(offsetY);add(offsets,32);
+            add(targetInfo,52);
+            var pickMiss = new Button { Text="Choose supported nonship cell",Name="timedPickMiss" };add(pickMiss,32);
             create.Text="Create test object";add(create,32);
             var steps = new FlowLayoutPanel { WrapContents=false };
             var one = new Button { Text="+40 ms",Width=100,Height=30,Name="timedOne" };
             var second = new Button { Text="+1 s",Width=100,Height=30,Name="timedSecond" };steps.Controls.Add(one);steps.Controls.Add(second);add(steps,36);
             var boundary = new Button { Text="Advance to expiry boundary",Name="timedBoundary" };add(boundary,32);
             var paused = new Button { Text="Advance paused +1 s",Name="timedPaused" };add(paused,32);
-            objects.IntegralHeight=false;objects.AccessibleName="Active timed objects";add(objects,100);
+            add(new Label { Text="Active projectiles" },20);
+            objects.IntegralHeight=false;objects.BackColor=BackColor;objects.ForeColor=ForeColor;objects.AccessibleName="Active timed objects";add(objects,80);
+            add(new Label { Text="Expiry effects (schematic)" },20);
+            impacts.IntegralHeight=false;impacts.BackColor=BackColor;impacts.ForeColor=ForeColor;impacts.AccessibleName="Active expiry effects";add(impacts,72);
             details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;details.AccessibleName="Selected timed object data";add(details,128);
             var reset = new Button { Text="Reset study",Name="timedReset" };add(reset,32);
             var close = new Button { Text="Close",DialogResult=DialogResult.Cancel };add(close,30);CancelButton=close;
@@ -75,7 +83,9 @@ namespace FleetLab {
             weapon.SelectedIndexChanged += delegate { if(!changing)UpdateSelection(); };
             target.SelectedIndexChanged += delegate { if(!changing)UpdateSelection(); };
             offsetX.ValueChanged += delegate { UpdateSelection(); };offsetY.ValueChanged += delegate { UpdateSelection(); };
-            objects.SelectedIndexChanged += delegate { if(!changing)UpdateSelection(); };
+            objects.SelectedIndexChanged += delegate { if(!changing){if(objects.SelectedIndex>=0){changing=true;impacts.SelectedIndex=-1;changing=false;}UpdateSelection();} };
+            impacts.SelectedIndexChanged += delegate { if(!changing){if(impacts.SelectedIndex>=0){changing=true;objects.SelectedIndex=-1;changing=false;}UpdateSelection();} };
+            pickMiss.Click += delegate { PickNonshipCell(); };
             create.Click += delegate { CreateObject(); };one.Click += delegate { AdvanceFrames(1,false); };second.Click += delegate { AdvanceFrames(25,false); };
             paused.Click += delegate { AdvanceFrames(25,true); };boundary.Click += delegate { AdvanceToBoundary(); };
             reset.Click += delegate { state=initial;RefreshState();SetStatus("Reset to the copied startup pools and clock0.",false); };
@@ -99,44 +109,55 @@ namespace FleetLab {
         }
         void LoadWeapons() {
             int previous=WeaponId;changing=true;weapon.Items.Clear();int chosen=-1;byte[] ships=state.Objects.CopyShipPool();
-            if(SourceSlot>=0)for(int id=14;id<=30;id++){int count=BitConverter.ToInt16(ships,SourceSlot*268+196+id*2);int index=weapon.Items.Add(new Choice { Id=id,Text=ClassicWeapons.Name(id)+" · "+(count==-1?"infinite":count.ToString()) });if(id==previous)chosen=index;else if(chosen<0&&(count==-1||count>=2))chosen=index;}
+            if(SourceSlot>=0)for(int id=14;id<=30;id++){int count=BitConverter.ToInt16(ships,SourceSlot*268+196+id*2);int index=weapon.Items.Add(new Choice { Id=id,Text=ClassicWeapons.Name(id)+" · "+(count==-1?"infinite":count.ToString()) });if(id==previous)chosen=index;else if(chosen<0&&(count==-1||count>=1))chosen=index;}
             if(weapon.Items.Count>0)weapon.SelectedIndex=chosen<0?0:chosen;changing=false;UpdateSelection();
         }
-        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual copied-state study: supplied 40 ms steps; fixed fleet targets. Test creation bypasses normal firing admission and media. Last-round depletion and expiry/impacts are unsupported."; }
+        void SetStatus(string message,bool boundary) { status.ForeColor=boundary?Color.Gold:Color.LightSteelBlue;status.Text=message+"\r\nManual copied-state study: supplied 40 ms steps and RNG seed0; fixed targets. Creation bypasses normal firing and media. Nonship expiry is supported; hit/defense, special projectiles and impacts outside the fleet grid stop before the unsupported update."; }
+        void PickNonshipCell() {
+            if(target.SelectedItem==null)return;int fleet=((Choice)target.SelectedItem).Id;byte[] f=state.Objects.CopyFleetPool();
+            for(int x=0;x<10;x++)for(int y=0;y<10;y++){int code=BitConverter.ToInt32(f,fleet*492+64+(x*10+y)*4);if(code!=0&&code!=1&&code!=3)continue;
+                changing=true;offsetX.Value=x;offsetY.Value=y;changing=false;UpdateSelection();SetStatus("Selected existing cell "+x+","+y+" with original code "+code+" for the supported nonship expiry branch.",false);return;}
+            SetStatus("This fleet has no supported nonship cell. Choose another fixed target.",true);
+        }
         void CreateObject() {
             if(!create.Enabled)return;
             try { state=state.Create(WeaponId,SourceSlot,((Choice)target.SelectedItem).Id,(int)offsetX.Value,(int)offsetY.Value);int created=state.LastCreatedSlot;RefreshState();if(created>=0)for(int i=0;i<objects.Items.Count;i++)if(((Choice)objects.Items[i]).Id==created){objects.SelectedIndex=i;break;}SetStatus(state.LastCreationOutcome==PracticeTimedCreationOutcome.Created?"Created test object "+(created+1)+".":state.LastCreationOutcome==PracticeTimedCreationOutcome.PoolFull?"The 80-record pool is full. Reset to clear it.":"This unit has no ammunition for that weapon.",false); }
             catch(NotSupportedException e){SetStatus(e.Message,true);}catch(InvalidDataException e){SetStatus(e.Message,true);}
         }
-        void AdvanceToBoundary() { if(objects.Items.Count==0){SetStatus("Create an object before advancing to its expiry boundary.",false);return;}AdvanceFrames(5000,false); }
-        void AdvanceFrames(int count,bool paused) {
-            int completed=0;string limit=null;
-            for(;completed<count;completed++)try{state=state.AdvanceFrame(paused);}catch(NotSupportedException){limit="Stopped before object expiry; impact behavior is not reconstructed.";break;}catch(InvalidDataException e){limit=e.Message;break;}
-            RefreshState();SetStatus("Advanced "+completed+" × 40 ms"+(paused?" with paused deadline compensation.":".")+(limit==null?(count==5000?" Reached the 5000-step guard; advance again to continue.":""):" "+limit),limit!=null);
+        void AdvanceToBoundary() { if(objects.Items.Count==0){SetStatus("Create an object before advancing to its expiry boundary.",false);return;}AdvanceFrames(5000,false,true); }
+        void AdvanceFrames(int count,bool paused,bool stopAtExpiry=false) {
+            int completed=0,expired=state.ExpiredObjects;string limit=null;
+            for(;completed<count;completed++)try{state=state.AdvanceFrame(paused);if(stopAtExpiry&&state.ExpiredObjects>expired){completed++;break;}}catch(NotSupportedException e){limit="Stopped before unsupported expiry: "+e.Message;break;}catch(InvalidDataException e){limit=e.Message;break;}
+            RefreshState();SetStatus("Advanced "+completed+" × 40 ms"+(paused?" with paused deadline compensation.":".")+(limit==null?(state.ExpiredObjects>expired?" Resolved "+(state.ExpiredObjects-expired)+" nonship expiry event(s).":stopAtExpiry&&completed==count?" Reached the 5000-step guard; advance again to continue.":""):" "+limit),limit!=null);
         }
         void RefreshState() {
-            int selected=SelectedObject;changing=true;objects.Items.Clear();byte[] timed=state.Objects.CopyTimedPool();
+            int selected=SelectedObject,effect=impacts.SelectedItem==null?-1:((Choice)impacts.SelectedItem).Id;changing=true;objects.Items.Clear();impacts.Items.Clear();byte[] timed=state.Objects.CopyTimedPool(),visuals=state.CopyEffectPool();
             for(int i=0;i<80;i++)if(BitConverter.ToInt32(timed,i*268)!=0){int index=objects.Items.Add(new Choice { Id=i,Text="#"+(i+1)+" · "+BitConverter.ToInt16(timed,i*268+8)+","+BitConverter.ToInt16(timed,i*268+10) });if(i==selected)objects.SelectedIndex=index;}
-            if(objects.SelectedIndex<0&&objects.Items.Count>0)objects.SelectedIndex=0;changing=false;
-            clock.Text="Clock "+state.ClockMilliseconds+" ms · "+objects.Items.Count+"/80 objects\r\nUpdates "+state.MovementFrames+" · paused "+state.PausedFrames;
-            canvas.SetPools(state.Objects.CopyFleetPool(),timed);LoadWeapons();UpdateSelection();
+            for(int i=0;i<40;i++)if(BitConverter.ToInt16(visuals,i*20)!=-1){int index=impacts.Items.Add(new Choice { Id=i,Text="Effect "+(i+1)+" · type "+BitConverter.ToInt32(visuals,i*20+16)+" · counter "+BitConverter.ToInt16(visuals,i*20+12) });if(i==effect)impacts.SelectedIndex=index;}
+            if(objects.SelectedIndex<0&&objects.Items.Count>0&&impacts.SelectedIndex<0)objects.SelectedIndex=0;
+            if(objects.SelectedIndex<0&&impacts.SelectedIndex<0&&impacts.Items.Count>0)impacts.SelectedIndex=0;changing=false;
+            clock.Text="Clock "+state.ClockMilliseconds+" ms · "+objects.Items.Count+"/80 objects · "+state.ActiveEffects+"/40 effects\r\nUpdates "+state.MovementFrames+" · paused "+state.PausedFrames+" · expired "+state.ExpiredObjects+"\r\nFixture RNG "+state.RandomState+" · calls "+state.RandomCalls+" · dropped effects "+state.DroppedEffects;
+            canvas.SetPools(state.Objects.CopyFleetPool(),timed,visuals);LoadWeapons();UpdateSelection();
         }
         void UpdateSelection() {
             if(changing)return;int count=0;if(SourceSlot>=0&&WeaponId>=14)count=BitConverter.ToInt16(state.Objects.CopyShipPool(),SourceSlot*268+196+WeaponId*2);
-            create.Enabled=SourceSlot>=0&&WeaponId>=14&&target.SelectedItem!=null&&(count==-1||count>=2);
-            ammo.Text=count==-1?"Infinite ammunition.":count==1?"Last round: depletion callback is unsupported.":count==0?"No ammunition for this weapon.":"Ammunition: "+count;
+            create.Enabled=SourceSlot>=0&&WeaponId>=14&&target.SelectedItem!=null&&(count==-1||count>=1);
+            ammo.Text=count==-1?"Infinite ammunition.":count==1?"Last round: includes order reset and equipment reevaluation.":count==0?"No ammunition for this weapon.":"Ammunition: "+count;
             int slot=SelectedObject;canvas.Selected=slot;
-            if(target.SelectedItem!=null){int id=((Choice)target.SelectedItem).Id;byte[] fleet=state.Objects.CopyFleetPool();canvas.TargetWorld=new Point(BitConverter.ToInt16(fleet,id*492+12)+(int)offsetX.Value,BitConverter.ToInt16(fleet,id*492+14)+(int)offsetY.Value);}
-            if(slot<0)details.Text="No active timed object.\r\nCreation and movement are isolated from the active Classic battle.";
+            if(target.SelectedItem!=null){int id=((Choice)target.SelectedItem).Id,x=(int)offsetX.Value,y=(int)offsetY.Value;byte[] fleet=state.Objects.CopyFleetPool();canvas.TargetWorld=new Point(BitConverter.ToInt16(fleet,id*492+12)+x,BitConverter.ToInt16(fleet,id*492+14)+y);
+                targetInfo.Text=x<0||x>=10||y<0||y>=10?"Offset is outside the 10 × 10 fleet grid. Expiry will stop.":"Target cell code "+BitConverter.ToInt32(fleet,id*492+64+(x*10+y)*4)+" at "+x+","+y+". Supported nonship codes: 0, 1, 3.";
+                if(WeaponId==19||WeaponId==21)targetInfo.Text="This test weapon's special expiry branch is unsupported.";}
+            if(slot<0&&impacts.SelectedItem!=null){byte[] e=state.CopyEffectPool();int at=((Choice)impacts.SelectedItem).Id*20;details.Text="Schematic effect "+(((Choice)impacts.SelectedItem).Id+1)+" · type "+BitConverter.ToInt32(e,at+16)+"\r\nFleet reference "+(BitConverter.ToInt16(e,at)+1)+" · local "+BitConverter.ToInt16(e,at+2)+", "+BitConverter.ToInt16(e,at+4)+"\r\nSprite bank "+BitConverter.ToInt32(e,at+8)+" · counter "+BitConverter.ToInt16(e,at+12)+"\r\nRing geometry is a modern schematic, not the original sprite renderer.";}
+            else if(slot<0)details.Text="No active timed object or expiry effect.\r\nThis study is isolated from the active Classic battle.";
             else { byte[] t=state.Objects.CopyTimedPool();int at=slot*268;uint deadline=BitConverter.ToUInt32(t,at+24);details.Text="Object "+(slot+1)+" · weapon "+BitConverter.ToInt32(t,at)+"\r\nWorld "+BitConverter.ToInt16(t,at+8)+", "+BitConverter.ToInt16(t,at+10)+"\r\nSource unit "+(BitConverter.ToInt16(t,at+16)+1)+" · target fleet "+(BitConverter.ToInt16(t,at+12)+1)+"\r\nDeadline "+deadline+" ms\r\nRemaining "+unchecked((int)(deadline-state.ClockMilliseconds))+" ms\r\nLast early return: "+(state.LastStoppedAtRecord<0?"none":"object "+(state.LastStoppedAtRecord+1)); }
             canvas.Invalidate();
         }
         sealed class TimedCanvas : Control {
-            readonly byte[] kinds=new byte[4096];byte[] fleets,timed;bool pendingPick;internal int Selected=-1;internal Point TargetWorld;internal event Action<Point> Picked;
+            readonly byte[] kinds=new byte[4096];byte[] fleets,timed,effects;bool pendingPick;internal int Selected=-1;internal Point TargetWorld;internal event Action<Point> Picked;
             internal TimedCanvas(Scenario scene){DoubleBuffered=true;BackColor=Color.FromArgb(8,19,30);for(int i=0;i<4096;i++)kinds[i]=scene.Cells[i].Kind;}
             RectangleF BoundsMap { get { float size=Math.Max(0,Math.Min(Width-24,Height-44));return new RectangleF((Width-size)/2,8,size,size); } }
             PointF Pixel(int x,int y){RectangleF b=BoundsMap;return new PointF(b.Left+x*b.Width/640f,b.Top+y*b.Height/640f);}
-            internal void SetPools(byte[] f,byte[] t){fleets=f;timed=t;Invalidate();}
+            internal void SetPools(byte[] f,byte[] t,byte[] v){fleets=f;timed=t;effects=v;Invalidate();}
             internal void CancelPick(){pendingPick=false;if(!IsDisposed&&!Disposing)Capture=false;}
             protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);if(e.Button==MouseButtons.Left&&BoundsMap.Contains(e.Location)){pendingPick=true;Capture=true;}}
             protected override void OnMouseCaptureChanged(EventArgs e){base.OnMouseCaptureChanged(e);if(!Capture)pendingPick=false;}
@@ -147,7 +168,8 @@ namespace FleetLab {
                 for(int i=0;i<250;i++)if(BitConverter.ToInt32(fleets,i*492)!=0){PointF p=Pixel(BitConverter.ToInt16(fleets,i*492+12),BitConverter.ToInt16(fleets,i*492+14));int owner=BitConverter.ToInt16(fleets,i*492+6);g.FillEllipse(owner==0?Brushes.LightSteelBlue:Brushes.Orange,p.X-4,p.Y-4,8,8);g.DrawString((i+1).ToString(),Font,Brushes.WhiteSmoke,p.X+4,p.Y-8);}
                 PointF target=Pixel(TargetWorld.X,TargetWorld.Y);g.DrawLine(Pens.Cyan,target.X-6,target.Y,target.X+6,target.Y);g.DrawLine(Pens.Cyan,target.X,target.Y-6,target.X,target.Y+6);
                 for(int i=0;i<80;i++)if(BitConverter.ToInt32(timed,i*268)!=0){PointF p=Pixel(BitConverter.ToInt16(timed,i*268+8),BitConverter.ToInt16(timed,i*268+10));g.FillEllipse(Brushes.Gold,p.X-3,p.Y-3,6,6);if(i==Selected){g.DrawEllipse(Pens.Gold,p.X-7,p.Y-7,14,14);g.DrawString("#"+(i+1),Font,Brushes.Gold,p.X+7,p.Y+2);}}
-                g.Restore(saved);g.DrawString("Schematic · blue/orange: fixed fleets · gold: timed objects · cyan: test target",Font,Brushes.LightSteelBlue,new RectangleF(8,Height-31,Math.Max(0,Width-16),30));
+                if(effects!=null)for(int i=0;i<40;i++){int at=i*20,fleet=BitConverter.ToInt16(effects,at);if(fleet<0||fleet>=250)continue;PointF p=Pixel(BitConverter.ToInt16(fleets,fleet*492+12)+BitConverter.ToInt16(effects,at+2),BitConverter.ToInt16(fleets,fleet*492+14)+BitConverter.ToInt16(effects,at+4));float radius=Math.Max(3,Math.Min(20,3+BitConverter.ToInt16(effects,at+12)*.35f));g.DrawEllipse(Pens.LightSkyBlue,p.X-radius,p.Y-radius,radius*2,radius*2);g.DrawString("E"+(i+1),Font,Brushes.LightSkyBlue,p.X+radius,p.Y+radius);}
+                g.Restore(saved);g.DrawString("Schematic · blue/orange: fleets · gold: projectiles · blue rings: effects · cyan: target",Font,Brushes.LightSteelBlue,new RectangleF(8,Height-31,Math.Max(0,Width-16),30));
             }
         }
     }

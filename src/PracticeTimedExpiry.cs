@@ -16,7 +16,7 @@ namespace FleetLab {
     // Complete416C40 caller composition for future objects and admitted shared
     // non-ship expiry callbacks only. Source RIP B9A8...6A569; network0,
     // local UI/media excluded. Visual-counter stepping40E0D0 is separate.
-    // The live study still uses its existing expiry guard.
+    // The extended manual study uses this caller and guards other callbacks.
     public sealed class PracticeTimedExpiryState {
         readonly byte[] timed,fleets,effects,visuals;
         public uint RandomState { get; private set; }

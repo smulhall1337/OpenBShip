@@ -18,7 +18,7 @@ namespace FleetLab {
 
     // Supported RIP B9A8...6A569:416DD0 non-ship cells0/1/3 ->416E35,
     // 4177A0 RNG path and420550 creator. Local UI/media and network excluded.
-    // This data boundary is not connected to the current study's expiry guard.
+    // The extended manual study admits this branch; hit paths stay guarded.
     public static class PracticeMissImpact {
         static int Word(byte[] b,int at){return BitConverter.ToInt16(b,at);}
         static int Dword(byte[] b,int at){return BitConverter.ToInt32(b,at);}
