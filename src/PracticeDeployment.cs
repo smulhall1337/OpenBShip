@@ -98,6 +98,7 @@ namespace FleetLab {
         public int UnitCount { get; private set; }
         public bool IncludesMapObjects { get; private set; }
         public int MapObjectCount { get; private set; }
+        public PracticeTerrainPool Terrain { get; private set; }
 
         public PracticeDeployment(PracticeUnitCatalog catalog, Scenario scene, uint seed)
             : this(catalog, scene, seed, false) { }
@@ -128,6 +129,7 @@ namespace FleetLab {
             var reservations = new List<PracticeFleetOrigin>();
             var earlierRandom = new NativeRandom(seed);
             if (includeObjects) {
+                Terrain = new PracticeTerrainPool(scene);
                 if (!catalog.HasMapObjectTables)
                     throw new InvalidDataException("Run Setup again to import first Practice object tables.");
                 // Source42B612..42B71F on fresh pools: IDs and sentinel fields.
