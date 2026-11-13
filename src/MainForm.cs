@@ -19,6 +19,8 @@ namespace FleetLab {
         readonly CheckBox mapObjects=new CheckBox();
         readonly Button waypointStudy=new Button();
         readonly Button timedStudy=new Button();
+        readonly Button prepareTimedStudy=new Button();
+        readonly Label timedStudyHint=new Label();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
@@ -94,7 +96,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.62 — recovered launch study";
+            Text="Battleship Fleet Lab 0.63 — recovered launch study";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -302,6 +304,11 @@ namespace FleetLab {
             timedStudy.Text="Timed objects…";timedStudy.AutoSize=true;timedStudy.Enabled=false;
             timedStudy.AccessibleDescription="Manual creation, motion and paused-deadline study for the selected player 1 fleet.";
             mapHeader.Controls.Add(timedStudy);
+            prepareTimedStudy.Text="Set up timed objects…";prepareTimedStudy.AutoSize=true;
+            prepareTimedStudy.AccessibleDescription="Open the supported first Practice map with seeded deployment, map objects and a player 1 grouped fleet selected. Keeps the current seed.";
+            mapHeader.Controls.Add(prepareTimedStudy);
+            timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
+            mapHeader.Controls.Add(timedStudyHint);
             map.Dock=DockStyle.Fill;
             practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
             seededDeployment.Enabled=practiceInspection.CanDeploy;
@@ -311,15 +318,21 @@ namespace FleetLab {
                 using(var study=new PracticeWaypointStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment))study.ShowDialog(this);
                 SuppressHeldControls();
             };
-            timedStudy.Click+=delegate {
-                if(!timedStudy.Enabled)return;
-                try {
-                    using(var study=new PracticeTimedStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment,
-                        Path.Combine(Path.GetDirectoryName(assets),"Programs"),practiceInspection.SelectedUnit,board.Messages))study.ShowDialog(this);
+            timedStudy.Click+=delegate {OpenTimedStudy();};
+            prepareTimedStudy.Click+=delegate {
+                if(!prepareTimedStudy.Enabled)return;
+                mapSelect.SelectedItem="BSSB201.SCN";
+                seededDeployment.Checked=true;
+                mapObjects.Checked=true;
+                if(!timedStudy.Enabled&&map.Deployment!=null&&map.Deployment.IncludesMapObjects) {
+                    for(int i=0;i<map.Deployment.Fleets.Count;i++) {
+                        var candidateFleet=map.Deployment.Fleets[i];
+                        if(candidateFleet.Owner==0&&(candidateFleet.Kind==1||candidateFleet.Kind==9)) {
+                            practiceInspection.ChooseRecord(i);break;
+                        }
+                    }
                 }
-                catch(InvalidDataException e) {MessageBox.Show(this,e.Message,"Timed-object study");}
-                catch(IOException e) {MessageBox.Show(this,e.Message,"Timed-object study");}
-                SuppressHeldControls();
+                OpenTimedStudy();
             };
             map.FleetSelected+=delegate(int index){practiceInspection.ChooseRecord(index);};
             inspect.Controls.Add(map);
@@ -418,6 +431,28 @@ namespace FleetLab {
             waypointStudy.Enabled=map.Deployment!=null&&map.Deployment.IncludesMapObjects&&selected!=null&&
                 selected.Owner==0&&(selected.Kind==1||selected.Kind==9);
             timedStudy.Enabled=waypointStudy.Enabled;
+            prepareTimedStudy.Visible=!timedStudy.Enabled;
+            prepareTimedStudy.Enabled=practiceInspection.CanIncludeMapObjects;
+            string reason=timedStudy.Enabled?"":!practiceInspection.CanIncludeMapObjects?
+                "Run Setup again to import the Practice tables.":map.PreviewProblem!=null?
+                map.PreviewProblem:map.Deployment==null||!map.Deployment.IncludesMapObjects?
+                "Requires BSSB201, seeded deployment and map objects.":
+                "Select a player 1 grouped fleet, or use Set up timed objects.";
+            timedStudyHint.Text=reason;
+            timedStudyHint.Visible=reason.Length!=0;
+            timedStudy.AccessibleDescription=timedStudy.Enabled?
+                "Manual creation, motion and paused-deadline study for the selected player 1 fleet.":reason;
+        }
+
+        void OpenTimedStudy() {
+            if(!timedStudy.Enabled)return;
+            try {
+                using(var study=new PracticeTimedStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment,
+                    Path.Combine(Path.GetDirectoryName(assets),"Programs"),practiceInspection.SelectedUnit,board.Messages))study.ShowDialog(this);
+            }
+            catch(InvalidDataException e) {MessageBox.Show(this,e.Message,"Timed-object study");}
+            catch(IOException e) {MessageBox.Show(this,e.Message,"Timed-object study");}
+            SuppressHeldControls();
         }
 
         void SuppressHeldControls() {

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.62.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.63.
 
 ## Requirements
 
@@ -100,7 +100,9 @@ Use **Step fleet** for one recovered movement update, or **10 updates** for up t
 
 This is a copied-state movement study with schematic terrain. One update is not an original frame, and source polls are explicit steps with no wall-clock pacing. The poll buttons now execute complete admitted batches in source order. Only the selected fleet receives queued orders in this study, so the other fleets remain idle and fixed. The study supplies zero auxiliary data and an inactive secondary pool. Active secondary objects, AI, pathfinding, point dragging/editing and mission execution remain unfinished. Unsupported modes or interactions report a limit while preserving that update. The study interface, reset and deselect controls are deliberate modern choices.
 
-The same first Practice preview now offers **Timed objects…** for a player 1 grouped fleet. Choose a source unit, an equipped test weapon and a fixed target fleet. Set the target offset with X/Y or a matched click on the schematic map, then use **Create test object**. **+40 ms**, **+1 s** and **Advance to expiry boundary** expose the recovered future-motion updates. **Advance paused +1 s** shifts deadlines while preserving positions. Select an object to inspect its coordinates, source, target and remaining time; **Reset study** restores the copied startup pools and clock. Controls scroll in smaller windows.
+To open the timed study directly, choose **Recovered maps → Set up timed objects…**. This selects BSSB201.SCN, enables seeded deployment and map objects, selects a supported player 1 grouped fleet and opens the study. It keeps the seed, active Classic battle and settings. If **Timed objects…** is greyed out, the adjacent explanation identifies the prerequisite; the setup shortcut prepares it automatically. Missing imported Practice tables require running Setup again.
+
+The same first Practice preview offers **Timed objects…** for a player 1 grouped fleet. Choose a source unit, an equipped test weapon and a fixed target fleet. Set the target offset with X/Y or a matched click on the schematic map, then use **Create test object**. **+40 ms**, **+1 s** and **Advance to expiry boundary** expose the recovered future-motion updates. **Advance paused +1 s** shifts deadlines while preserving positions. Select an object to inspect its coordinates, source, target and remaining time; **Reset study** restores the copied startup pools and clock. Controls scroll in smaller windows.
 
 Use **Create source launch pattern** for the original launch wrapper: Multi Head Missile requests three objects at adjacent target rows; other test weapons request one. The study shows created/requested counts and last-round updates. Its signed stock and capacity behavior follow the source helper, while normal firing admission remains bypassed. **Create test object** keeps the earlier single-object comparison. Adjacent offsets are preserved; an expiry outside the supported target grid stops atomically and can be reset.
 
@@ -191,6 +193,8 @@ The supplied original has a reproducible second-game limitation on this setup. A
 The original's default human roster name also appends across the observed second setup, and controlled AI startup scales carried weights again. Both are recorded as source behavior without imposing them on modern play. A decompiler listing or a running reference process is evidence, not recovered original source or a finished port.
 
 ## Validation and private research
+
+The v0.63 access fix passes the same 195 model/format and 119 real-form groups. Six additional production-modal checks cover opening from the default view, an enemy selection, missing map objects, another map and valid selections; they check seed, battle/settings preservation, minimum-window layout and clean closure. These are automated checks; user display and physical input acceptance remain separate.
 
 The packaged v0.62 passes 195 model/format groups and 119 real-form groups (314 total), 56 shutdown/lifecycle cases and silent Windows waveOut API checks. The timed-object study adds production-modal checks for creation, last-round depletion, capacity, stepping, pause, supported expiry, finite effects, ordinary nonlethal hits, fatal hits, fleet retirement, queued passive shots, unsupported branches, reset, keyboard edges, matched map clicks, scrolling and parent shutdown; these preserve the active battle, deployment and settings. The earlier seventeen-record view and 51 grouped preview selections still pass their original comparisons. The first Practice startup view adds 65 origin/label selections across five source contexts, with complete pools and selected records matching the original data, without replacing the active battle. Dedicated checks exercise the actual Debug menu, persistence across three processes, cancellation of active silent output, pause and callback behavior. Twelve paired rounds across the four original opponent settings preserve the same logical state with and without turn playback. A complete debug duel then plays its result movie, returns through the menus, starts a second battle, resolves its first shot and restores normal cinematic playback.
 
