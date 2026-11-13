@@ -346,6 +346,60 @@ namespace FleetLab {
                 Reject(delegate{PracticeUnitCatalog.ReadWithMapObjects(data[0],data[1],data[2],data[3],data[4],data[5],null);});
             });
 
+            check("First Practice primary terrain matches the original 500-record pool",delegate {
+                byte[] source=File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN"));
+                var terrain=PracticeTerrainPool.FirstPractice(source);
+                Require(terrain.Count==54&&terrain.Cells[0].Slot==0&&terrain.Cells[0].Origin==new Point(150,190),"Native terrain scan order/count");
+                Require(Hash(terrain.CopyRecords())=="1F28D6B86CAFAEED50F099D5BB093019744B352427D035795562E156A98B4DF2","Original full primary terrain pool");
+            });
+            check("Practice fleet steps match original numeric, collision and arrival fixtures",delegate {
+                // Original223 cases; current fields12..15,40..59,62,482,
+                // selected waypoint and complete auxiliary-buffer hash.
+                string[] fixtures={
+                    "Case000-F2-S1-V0,2,1,30,0,0,0,0,False,False,False,False,410140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case004-F2-S1-V4,2,1,30,10,0,0,0,False,False,False,False,410140015E019A01A401AE01B8014A01FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case022-F2-S3-V0,2,3,30,0,0,0,0,False,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case033-F2-S4-V0,2,4,30,0,0,0,0,False,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case048-F2-S5-V4,2,5,30,10,0,0,0,False,False,False,False,430141015E019A01A401AE01B8014A01FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case060-F2-S6-V5,2,6,-30,10,0,0,0,False,False,False,False,3D01410122019A01A401AE01B8014A01FE01080212021C0203FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case074-F2-S7-V8,2,7,1,1,0,0,0,False,False,False,False,410141019A01A401AE01B801FFFFFE01080212021C021C0202FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case075-F2-S7-V9,2,7,0,0,0,0,0,False,False,False,False,400140019A01A401AE01B801FFFFFE01080212021C021C0203FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case087-F3-S1-V10,3,1,-1,-1,0,0,0,False,False,False,False,3F013F019A01A401AE01B801FFFFFE01080212021C021C0200FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case099-F3-S3-V0,3,3,30,0,0,0,0,False,False,False,False,430140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case114-F3-S4-V4,3,4,30,10,0,0,0,False,False,False,False,440141015E019A01A401AE01B8014A01FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case129-F3-S5-V8,3,5,1,1,0,0,0,False,False,False,False,410141019A01A401AE01B801FFFFFE01080212021C021C0202FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case143-F3-S7-V0,3,7,30,0,0,0,0,False,False,False,False,470140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case154-FleetKind1,2,3,30,0,1,331,320,False,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C020108,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case155-FleetKind2,2,3,30,0,2,331,320,False,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C020108,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case156-FleetKind9,2,3,30,0,9,331,320,False,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case157-FleetKind10,2,3,30,0,10,331,320,False,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C020108,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case158-FleetKind11,2,3,30,0,11,331,320,False,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C020108,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case159-FleetEdgeX,2,3,30,0,1,332,320,False,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case160-FleetEdgeY,2,3,30,0,1,331,330,False,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case161-FleetCorner,2,3,30,0,1,331,329,False,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C020108,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case162-TerrainInside,2,3,30,0,1,331,320,True,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C0201FE,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case163-TerrainEdgeX,2,3,30,0,1,332,320,True,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case164-TerrainEdgeY,2,3,30,0,1,331,330,True,False,False,False,420140015E019A01A401AE01B8014001FE01080212021C0201FF,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case165-TerrainCorner,2,3,30,0,1,331,329,True,False,False,False,400140015E019A01A401AE01B8014001FE01080212021C0201FE,-1,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case166-ArrivalLock,2,3,2,0,0,0,0,False,True,False,False,4201400142019A01A401AE01B8014001FE01080212021C0201FF,-1,F4B9734FF8775BFD6C3B21561797C3A46CF307026023A8D33B6F87003C10A7DB",
+                    "Case167-ArrivalSelection,2,3,2,0,0,0,0,False,False,False,True,420140019A01A401AE01B801FFFFFE01080212021C021C0201FF,2,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                    "Case168-ArrivalOtherSelection,2,3,2,0,0,0,0,False,False,True,True,420140019A01A401AE01B801FFFFFE01080212021C021C0201FF,3,93B750CDABA989A539174CB4412E859A62F568A8D1EA1C5C8F1A257D5981404C",
+                };
+                foreach(string fixture in fixtures){
+                    string[] f=fixture.Split(',');var pool=new byte[250*492];var terrain=new byte[500*492];var aux=new byte[PracticeMovementState.AuxiliaryBytes];
+                    for(int i=0;i<250;i++)BitConverter.GetBytes((short)i).CopyTo(pool,i*492+4);
+                    int at=7*492,dx=int.Parse(f[3]),dy=int.Parse(f[4]);BitConverter.GetBytes(1).CopyTo(pool,at);BitConverter.GetBytes((short)320).CopyTo(pool,at+12);BitConverter.GetBytes((short)320).CopyTo(pool,at+14);BitConverter.GetBytes(short.Parse(f[2])).CopyTo(pool,at+60);pool[at+62]=3;pool[at+482]=255;pool[at+485]=byte.Parse(f[1]);
+                    for(int i=0;i<5;i++){BitConverter.GetBytes((short)(i==0?320+dx:400+i*10)).CopyTo(pool,at+40+i*2);BitConverter.GetBytes((short)(i==0?320+dy:500+i*10)).CopyTo(pool,at+50+i*2);}
+                    int collision=int.Parse(f[5]);if(collision!=0){bool isTerrain=bool.Parse(f[8]);byte[] buffer=isTerrain?terrain:pool;int offset=isTerrain?0:8*492;BitConverter.GetBytes(collision).CopyTo(buffer,offset);BitConverter.GetBytes(short.Parse(f[6])).CopyTo(buffer,offset+12);BitConverter.GetBytes(short.Parse(f[7])).CopyTo(buffer,offset+14);}
+                    if(bool.Parse(f[9]))BitConverter.GetBytes(1).CopyTo(aux,0x50+7*312);
+                    int selected=bool.Parse(f[10])?8:7;if(selected==8){BitConverter.GetBytes(17).CopyTo(aux,0x50+8*312);aux[0x3c+8*312]=17;}
+                    var expected=(byte[])pool.Clone();int position=0;foreach(int field in new[]{12,13,14,15,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,62,482})expected[at+field]=Convert.ToByte(f[12].Substring(position++*2,2),16);
+                    var state=new PracticeMovementState(pool,terrain,aux,selected,bool.Parse(f[11])?3:-1);var update=state.Step(7);
+                    Require(Hash(update.State.CopyFleetPool())==Hash(expected)&&update.State.SelectedWaypoint==int.Parse(f[13]),"Native movement/fleet selection "+f[0]);
+                    Require(Hash(update.State.CopyAuxiliary())==f[14],"Native complete movement auxiliary data "+f[0]);
+                    Require(Hash(state.CopyFleetPool())==Hash(pool),"Step mutated its input "+f[0]);
+                }
+            });
             check("Practice waypoint data matches 33 original append and selection contexts",delegate {
                 // Captured from supported Bs.exe41377C..4138BA, checkpoint217.
                 // name,kind,selection,type,x,y,terrain,before20B,after20B,selection,notification

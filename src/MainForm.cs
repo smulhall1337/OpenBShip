@@ -93,7 +93,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.54 — recovered waypoint data";
+            Text="Battleship Fleet Lab 0.55 — recovered fleet steps";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -304,7 +304,7 @@ namespace FleetLab {
             practiceInspection.FleetChanged+=delegate(int index){map.SelectedFleet=index;map.Invalidate();UpdateWaypointStudy();};
             waypointStudy.Click+=delegate {
                 if(!waypointStudy.Enabled)return;
-                using(var study=new PracticeWaypointStudy(map.Scene,practiceInspection.CurrentFleet))study.ShowDialog(this);
+                using(var study=new PracticeWaypointStudy(map.Scene,practiceInspection.CurrentFleet,map.Deployment))study.ShowDialog(this);
                 SuppressHeldControls();
             };
             map.FleetSelected+=delegate(int index){practiceInspection.ChooseRecord(index);};

@@ -24,16 +24,7 @@ namespace FleetLab {
                 throw new ArgumentOutOfRangeException("originalType");
             if (selectedWaypoint < -1 || selectedWaypoint > 4) throw new ArgumentOutOfRangeException("selectedWaypoint");
             record = (byte[])fleetRecord.Clone();
-            kind = BitConverter.ToInt32(record, 0);
-            if (kind != 1 && kind != 2 && kind != 9 && kind != 11)
-                throw new InvalidDataException("Unsupported waypoint-study fleet kind.");
-            if (Origin.X < 0 || Origin.X >= 640 || Origin.Y < 0 || Origin.Y >= 640)
-                throw new InvalidDataException("Fleet origin is outside the world.");
-            for (int i = 0; i < 5; i++) {
-                int x = Short(40 + i * 2), y = Short(50 + i * 2);
-                if (x != -1 && (x < 0 || x >= 640 || y < 0 || y >= 640))
-                    throw new InvalidDataException("Waypoint is outside the world.");
-            }
+            kind = ValidateRecord(record);
             for (int i = 0; i < kinds.Length; i++) {
                 if (scene.Cells[i] == null) throw new InvalidDataException("Missing waypoint terrain cell.");
                 kinds[i] = scene.Cells[i].Kind;
@@ -53,6 +44,29 @@ namespace FleetLab {
             return new Point(Short(40 + index * 2), Short(50 + index * 2));
         }
         public byte[] CopyRecord() { return (byte[])record.Clone(); }
+        static int ValidateRecord(byte[] data) {
+            int type = BitConverter.ToInt32(data, 0);
+            if (type != 1 && type != 2 && type != 9 && type != 11)
+                throw new InvalidDataException("Unsupported waypoint-study fleet kind.");
+            int ox = BitConverter.ToInt16(data, 12), oy = BitConverter.ToInt16(data, 14);
+            if (ox < 0 || ox >= 640 || oy < 0 || oy >= 640)
+                throw new InvalidDataException("Fleet origin is outside the world.");
+            for (int i = 0; i < 5; i++) {
+                int x = BitConverter.ToInt16(data, 40 + i * 2), y = BitConverter.ToInt16(data, 50 + i * 2);
+                if (x != -1 && (x < 0 || x >= 640 || y < 0 || y >= 640))
+                    throw new InvalidDataException("Waypoint is outside the world.");
+            }
+            return type;
+        }
+        internal void ApplyMovementRecord(byte[] data, int selectedWaypoint) {
+            if (data == null || data.Length != 492 || selectedWaypoint < -1 || selectedWaypoint > 4)
+                throw new InvalidDataException("Invalid movement queue update.");
+            data = (byte[])data.Clone();
+            if (ValidateRecord(data) != kind || BitConverter.ToInt16(data, 4) != Short(4))
+                throw new InvalidDataException("Movement queue changed fleet identity.");
+            Array.Copy(data, record, record.Length);
+            Selected = selectedWaypoint;
+        }
 
         public PracticeWaypointResult AppendOrSelect(Point world) {
             if (world.X < 0 || world.X >= 640 || world.Y < 0 || world.Y >= 640)
