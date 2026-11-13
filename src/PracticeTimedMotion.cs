@@ -28,7 +28,7 @@ namespace FleetLab {
         static void Short(byte[] data, int at, int value) {
             BitConverter.GetBytes(unchecked((short)value)).CopyTo(data, at);
         }
-        static int Component(int distance, int remainingUpdates) {
+        internal static int Component(int distance, int remainingUpdates) {
             // Original x87CW027F: integer operands, single-precision quotient
             // store, signed half adjustment, truncation, then 16bit position add.
             float value = (float)((double)distance / remainingUpdates);
