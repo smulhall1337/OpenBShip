@@ -81,6 +81,24 @@ namespace FleetLab {
                 Require(!wait.WorldWaitSatisfied(23)&&wait.WorldWaitSatisfied(24)&&!wait.WorldWaitSatisfied(0x7ffffff0),"Signed wait wrap/threshold");
                 Require(body.WorldWaitSatisfied(140)&&!body.WorldWaitSatisfied(139)&&!body.WorldWaitSatisfied(99),"Wait predicate uses wrong timestamp");
             });
+            check("Original paused deadlines preserve active flags, sentinel, wrap and opaque bytes",delegate {
+                var timed=new byte[OriginalPauseTimers.TimedRecordBytes];var ships=new byte[OriginalPauseTimers.ShipTimerBytes];
+                for(int i=0;i<1500;i++)W16(ships,i*52+8,-1);
+                BitConverter.GetBytes(1).CopyTo(timed,0);BitConverter.GetBytes(0xfffffffeu).CopyTo(timed,24);timed[25+268]=17;
+                BitConverter.GetBytes(uint.MaxValue).CopyTo(timed,79*268);BitConverter.GetBytes(1).CopyTo(timed,79*268+24);timed[79*268+267]=93;
+                W16(ships,8,0);BitConverter.GetBytes(uint.MaxValue).CopyTo(ships,4);W16(ships,1499*52+8,1499);BitConverter.GetBytes(0x80000000u).CopyTo(ships,1499*52+4);
+                var four=new byte[16];BitConverter.GetBytes(uint.MaxValue).CopyTo(four,12);var sixteen=new byte[64];BitConverter.GetBytes(uint.MaxValue).CopyTo(sixteen,0);BitConverter.GetBytes(0xfffffffeu).CopyTo(sixteen,60);
+                var state=new OriginalPauseTimers(timed,ships,four,sixteen,uint.MaxValue);string before=Hash(timed)+Hash(ships);var next=state.AdvancePausedFrame(-1,40);
+                byte[] t=next.CopyTimedRecords(),s=next.CopyShipTimers(),c=next.CopyFourCounters(),times=next.CopyTimestamps();
+                Require(BitConverter.ToUInt32(t,24)==38&&BitConverter.ToUInt32(t,79*268+24)==41&&t[25+268]==17&&t[79*268+267]==93,"Paused timed record boundary/opaque bytes");
+                Require(BitConverter.ToUInt32(s,4)==39&&BitConverter.ToUInt32(s,1499*52+4)==0x80000028u&&BitConverter.ToUInt32(s,52+4)==0,"Paused active ship timer boundary");
+                Require(BitConverter.ToUInt32(c,0)==40&&BitConverter.ToUInt32(c,12)==39&&BitConverter.ToUInt32(times,0)==uint.MaxValue&&BitConverter.ToUInt32(times,4)==40&&BitConverter.ToUInt32(times,60)==38&&next.GlobalCounter==39,"Paused counter/sentinel arithmetic");
+                Require(before==Hash(state.CopyTimedRecords())+Hash(state.CopyShipTimers())&&Object.ReferenceEquals(state,state.AdvancePausedFrame(0,40))&&Object.ReferenceEquals(state,state.AdvancePausedFrame(1,0)),"Pause input/no-op preservation");
+                timed[0]=0;ships[0]=91;four[0]=91;sixteen[0]=91;t[0]=0;s[0]=17;c[0]=17;times[0]=17;
+                Require(state.CopyTimedRecords()[0]==1&&state.CopyShipTimers()[0]==0&&state.CopyFourCounters()[0]==0&&state.CopyTimestamps()[0]==255&&next.CopyTimedRecords()[0]==1&&next.CopyShipTimers()[0]==0&&next.CopyFourCounters()[0]==40&&next.CopyTimestamps()[0]==255,"Pause buffer ownership");
+                Reject(delegate{new OriginalPauseTimers(null,ships,four,sixteen,0);});Reject(delegate{new OriginalPauseTimers(new byte[1],ships,four,sixteen,0);});
+                Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),new byte[1],four,sixteen,0);});Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),ships,new byte[1],sixteen,0);});Reject(delegate{new OriginalPauseTimers(state.CopyTimedRecords(),ships,four,new byte[1],0);});
+            });
             check("Original fleet batch boundaries, cycle wrap and world caller enumeration",delegate {
                 var start=new PracticeFleetScheduler(248,uint.MaxValue);
                 var last=start.TakeBatch();int[] slots=last.CopySlots();
