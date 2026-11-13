@@ -43,7 +43,7 @@ namespace FleetLab {
                 BitConverter.ToInt16(shipPool, unit + 4) != victimShip || BitConverter.ToInt16(fleetPool, parent * 492 + 4) != parent || weapon < 14 || weapon > 30 || attackerOwner < -1 || attackerOwner > 3 || owner < -1 || owner > 3)
                 throw new InvalidDataException("Segment damage contains an unsupported identity, hull coordinate, owner or weapon.");
             int cellAt = parent * 492 + 64 + (x * 10 + y) * 4, cell = BitConverter.ToInt32(fleetPool, cellAt);
-            if (cell != 2 && cell != 5 && cell != 6 && cell != 7 && cell != 8)
+            if (cell != 2 && cell != 4 && cell != 5 && cell != 6 && cell != 7 && cell != 8)
                 throw new NotSupportedException("This target cell is outside the admitted ship-segment states.");
             if (hp < 1 || cell != 8 && hp < 2) throw new NotSupportedException("Lethal segment damage requires unreconstructed destruction callbacks.");
             for (int column = 0; column < 4; column++) {

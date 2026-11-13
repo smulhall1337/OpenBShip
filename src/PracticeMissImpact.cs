@@ -24,6 +24,15 @@ namespace FleetLab {
         static int Dword(byte[] b,int at){return BitConverter.ToInt32(b,at);}
         static void Word(byte[] b,int at,int value){BitConverter.GetBytes(unchecked((short)value)).CopyTo(b,at);}
         static void Dword(byte[] b,int at,int value){BitConverter.GetBytes(value).CopyTo(b,at);}
+        internal static int MovieRandomCalls(int weapon,int kind) {
+            return (weapon>=14&&weapon<=18&&kind!=2&&kind!=3&&kind!=4)||(weapon==25||weapon==26)&&kind!=9?1:0;
+        }
+        internal static byte[] SpawnEffect(byte[] effectPool,byte[] visualRecords,int type,int target,int x,int y,out int slot) {
+            byte[] effects=(byte[])effectPool.Clone();slot=-1;
+            for(int i=0;i<40;i++)if(Word(effects,i*20)==-1){slot=i;break;}
+            if(slot>=0){int entry=slot*20;Word(effects,entry,target);Word(effects,entry+2,x);Word(effects,entry+4,y);Dword(effects,entry+8,Dword(visualRecords,type*20+8));Word(effects,entry+12,0);Dword(effects,entry+16,type);}
+            return effects;
+        }
         public static PracticeMissImpactResult Resolve(byte[] timedPool,byte[] fleetPool,byte[] effectPool,
                                                          byte[] visualRecords,int timedSlot,uint randomState) {
             if(timedPool==null||timedPool.Length!=21440||fleetPool==null||fleetPool.Length!=123000||effectPool==null||effectPool.Length!=800||visualRecords==null||visualRecords.Length!=580)
@@ -43,11 +52,10 @@ namespace FleetLab {
             var random=new NativeRandom(randomState);
             // Random choice is consumed before effect allocation, including
             // when the visual pool is full. Selection does not play media here.
-            if((weapon>=14&&weapon<=18&&kind!=2)||(weapon==25||weapon==26)&&kind!=9)random.Next();
-            byte[] timed=(byte[])timedPool.Clone(),effects=(byte[])effectPool.Clone();
-            Dword(timed,at,0);int type=kind==1||kind==9?27:28,slot=-1;
-            for(int i=0;i<40;i++)if(Word(effects,i*20)==-1){slot=i;break;}
-            if(slot>=0){int entry=slot*20;Word(effects,entry,target);Word(effects,entry+2,x);Word(effects,entry+4,y);Dword(effects,entry+8,Dword(visualRecords,type*20+8));Word(effects,entry+12,0);Dword(effects,entry+16,type);}
+            if(MovieRandomCalls(weapon,kind)!=0)random.Next();
+            byte[] timed=(byte[])timedPool.Clone();
+            Dword(timed,at,0);int type=kind==1||kind==9?27:28,slot;
+            byte[] effects=SpawnEffect(effectPool,visualRecords,type,target,x,y,out slot);
             return new PracticeMissImpactResult(timed,effects,random.State,random.Calls,slot,type);
         }
     }
