@@ -17,6 +17,7 @@ namespace FleetLab {
         readonly ComboBox mapSelect=new ComboBox();
         readonly CheckBox seededDeployment=new CheckBox();
         readonly CheckBox mapObjects=new CheckBox();
+        readonly Button waypointStudy=new Button();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
         readonly Timer visualTimer=new Timer();
@@ -92,7 +93,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.53 — first Practice startup data";
+            Text="Battleship Fleet Lab 0.54 — recovered waypoint data";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -294,11 +295,18 @@ namespace FleetLab {
             mapObjects.Text="Include map objects";mapObjects.AutoSize=true;mapObjects.Enabled=false;
             mapObjects.AccessibleName="Include first Practice map objects";
             mapHeader.Controls.Add(mapObjects);
-            mapHeader.Controls.Add(new Label {Text="Read-only preview",AutoSize=true,Padding=new Padding(8,4,0,0)});
+            waypointStudy.Text="Waypoint study…";waypointStudy.AutoSize=true;waypointStudy.Enabled=false;
+            waypointStudy.AccessibleDescription="Choose a player 1 grouped fleet in the first Practice startup preview.";
+            mapHeader.Controls.Add(waypointStudy);
             map.Dock=DockStyle.Fill;
             practiceInspection=new PracticeFleetInspector(Path.Combine(Path.GetDirectoryName(assets),"Programs"),board.Messages){Dock=DockStyle.Right};
             seededDeployment.Enabled=practiceInspection.CanDeploy;
-            practiceInspection.FleetChanged+=delegate(int index){map.SelectedFleet=index;map.Invalidate();};
+            practiceInspection.FleetChanged+=delegate(int index){map.SelectedFleet=index;map.Invalidate();UpdateWaypointStudy();};
+            waypointStudy.Click+=delegate {
+                if(!waypointStudy.Enabled)return;
+                using(var study=new PracticeWaypointStudy(map.Scene,practiceInspection.CurrentFleet))study.ShowDialog(this);
+                SuppressHeldControls();
+            };
             map.FleetSelected+=delegate(int index){practiceInspection.ChooseRecord(index);};
             inspect.Controls.Add(map);
             inspect.Controls.Add(practiceInspection);
@@ -387,7 +395,14 @@ namespace FleetLab {
                 map.PreviewProblem=e.Message;
             }
             finally {refreshingInspection=false;}
+            UpdateWaypointStudy();
             map.Invalidate();
+        }
+
+        void UpdateWaypointStudy() {
+            var selected=practiceInspection.CurrentFleet;
+            waypointStudy.Enabled=map.Deployment!=null&&map.Deployment.IncludesMapObjects&&selected!=null&&
+                selected.Owner==0&&(selected.Kind==1||selected.Kind==9);
         }
 
         void SuppressHeldControls() {
@@ -1665,25 +1680,3 @@ namespace FleetLab {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -346,6 +346,55 @@ namespace FleetLab {
                 Reject(delegate{PracticeUnitCatalog.ReadWithMapObjects(data[0],data[1],data[2],data[3],data[4],data[5],null);});
             });
 
+            check("Practice waypoint data matches 33 original append and selection contexts",delegate {
+                // Captured from supported Bs.exe41377C..4138BA, checkpoint217.
+                // name,kind,selection,type,x,y,terrain,before20B,after20B,selection,notification
+                string[] fixtures={
+                    "Blocked-K1,1,-1,1,417,367,2,FFFFFFFFFFFFFFFFFFFF00000000000000000000,FFFFFFFFFFFFFFFFFFFF00000000000000000000,-1,0",
+                    "Blocked-K11,11,-1,1,417,367,2,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "Blocked-K2,2,-1,1,417,367,2,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "Blocked-K9,9,-1,1,417,367,2,FFFFFFFFFFFFFFFFFFFF00000000000000000000,FFFFFFFFFFFFFFFFFFFF00000000000000000000,-1,0",
+                    "Boundary0,1,-1,1,0,0,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,0000FFFFFFFFFFFFFFFF00000000000000000000,-1,1",
+                    "Boundary10,1,-1,1,10,10,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,0A00FFFFFFFFFFFFFFFF0A000000000000000000,-1,1",
+                    "Boundary629,1,-1,1,629,629,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,6C02FFFFFFFFFFFFFFFF6C020000000000000000,-1,1",
+                    "Boundary630,1,-1,1,630,630,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,7602FFFFFFFFFFFFFFFF76020000000000000000,-1,1",
+                    "Boundary639,1,-1,1,639,639,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,7602FFFFFFFFFFFFFFFF76020000000000000000,-1,1",
+                    "Boundary9,1,-1,1,9,9,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,0000FFFFFFFFFFFFFFFF00000000000000000000,-1,1",
+                    "Duplicate0,1,-1,1,109,207,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,0,1",
+                    "Duplicate1,1,-1,1,119,217,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,1,1",
+                    "Duplicate2,1,-1,1,129,227,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,2,1",
+                    "Duplicate3,1,-1,1,139,237,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,3,1",
+                    "Duplicate4,1,-1,1,149,247,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,4,1",
+                    "DuplicateAfterHole,1,-1,1,149,249,1,6400FFFF780082008C00C800D200DC00E600F000,6400FFFF780082008C00C800D200DC00E600F000,4,1",
+                    "HoleFirst,1,-1,1,417,367,1,6400FFFF780082008C00C800D200DC00E600F000,64009A01780082008C00C8006801DC00E600F000,-1,1",
+                    "K1-Count0,1,-1,1,417,367,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "K1-Count2,1,-1,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E009A01FFFFFFFFC800D200680100000000,-1,1",
+                    "K1-Count5,1,-1,1,417,367,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,-1,0",
+                    "K11-Count0,11,-1,1,417,367,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "K11-Count2,11,-1,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E009A01FFFFFFFFC800D200680100000000,-1,1",
+                    "K11-Count5,11,-1,1,417,367,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,-1,0",
+                    "K2-Count0,2,-1,1,417,367,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "K2-Count2,2,-1,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E009A01FFFFFFFFC800D200680100000000,-1,1",
+                    "K2-Count5,2,-1,1,417,367,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,-1,0",
+                    "K9-Count0,9,-1,1,417,367,1,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                    "K9-Count2,9,-1,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E009A01FFFFFFFFC800D200680100000000,-1,1",
+                    "K9-Count5,9,-1,1,417,367,1,64006E00780082008C00C800D200DC00E600F000,64006E00780082008C00C800D200DC00E600F000,-1,0",
+                    "Selected0,1,0,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E00FFFFFFFFFFFFC800D200000000000000,0,0",
+                    "Selected2,1,2,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E00FFFFFFFFFFFFC800D200000000000000,2,0",
+                    "Selected4,1,4,1,417,367,1,64006E00FFFFFFFFFFFFC800D200000000000000,64006E00FFFFFFFFFFFFC800D200000000000000,4,0",
+                    "Type0-Blocked,1,-1,0,417,367,2,FFFFFFFFFFFFFFFFFFFF00000000000000000000,9A01FFFFFFFFFFFFFFFF68010000000000000000,-1,1",
+                };
+                foreach(string fixture in fixtures){
+                    string[] f=fixture.Split(',');var scene=new Scenario();for(int i=0;i<4096;i++)scene.Cells[i]=new Cell{Kind=1};
+                    int x=int.Parse(f[4]),y=int.Parse(f[5]);scene.At(x/10,y/10).Kind=byte.Parse(f[6]);
+                    var record=new byte[492];BitConverter.GetBytes(int.Parse(f[1])).CopyTo(record,0);BitConverter.GetBytes((short)380).CopyTo(record,12);BitConverter.GetBytes((short)350).CopyTo(record,14);record[482]=255;
+                    for(int i=0;i<20;i++)record[40+i]=Convert.ToByte(f[7].Substring(i*2,2),16);
+                    var expected=(byte[])record.Clone();for(int i=0;i<20;i++)expected[40+i]=Convert.ToByte(f[8].Substring(i*2,2),16);
+                    var queue=new PracticeWaypointQueue(record,scene,int.Parse(f[3]),int.Parse(f[2]));var result=queue.AppendOrSelect(new Point(x,y));
+                    Require(Hash(queue.CopyRecord())==Hash(expected)&&queue.Selected==int.Parse(f[9]),"Native waypoint record/selection "+f[0]);
+                    Require(((result==PracticeWaypointResult.Added||result==PracticeWaypointResult.Selected)?1:0)==int.Parse(f[10]),"Native waypoint outcome "+f[0]);
+                }
+            });
             check("Practice source counter wrap and extra equipment preserve pool bytes",delegate {
                 var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));
                 var scene=Scenario.Load(Path.Combine(assets,"Graphics","BS201.SCN"));
@@ -1605,12 +1654,3 @@ namespace FleetLab {
         }
     }
 }
-
-
-
-
-
-
-
-
-
