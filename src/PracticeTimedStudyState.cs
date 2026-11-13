@@ -38,6 +38,11 @@ namespace FleetLab {
         public int DestroyedUnits { get; private set; }
         public bool LastVictimDestroyed { get; private set; }
         public int MovieCounter { get; private set; }
+        int[] lastLaunchSlots = new int[0];
+        public int LastLaunchCount { get { return lastLaunchSlots.Length; } }
+        public int LastLaunchAttempts { get; private set; }
+        public int LastLaunchDepletions { get; private set; }
+        public int[] CopyLastLaunchSlots() { return (int[])lastLaunchSlots.Clone(); }
         public byte[] CopyScoreRegion() {
             if(scoreRegion==null)throw new InvalidOperationException("This study does not include ship-impact scores.");
             return (byte[])scoreRegion.Clone();
@@ -89,6 +94,7 @@ namespace FleetLab {
             units = before.units; visuals = before.visuals; effects = before.effects;
             impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
             destructionTables=before.destructionTables;DestroyedUnits=before.DestroyedUnits;LastVictimDestroyed=before.LastVictimDestroyed;MovieCounter=before.MovieCounter;
+            lastLaunchSlots=before.lastLaunchSlots;LastLaunchAttempts=before.LastLaunchAttempts;LastLaunchDepletions=before.LastLaunchDepletions;
             LastImpactOutcome=before.LastImpactOutcome;LastVictimShip=before.LastVictimShip;LastImpactPoints=before.LastImpactPoints;LastScatterAttempts=before.LastScatterAttempts;
             RandomState = before.RandomState; ExpiredObjects = before.ExpiredObjects;
             DroppedEffects = before.DroppedEffects; RandomCalls = before.RandomCalls;
@@ -107,6 +113,21 @@ namespace FleetLab {
             var next = new PracticeTimedStudyState(this, result.State,
                 WithTimedPool(result.State.CopyTimedPool(), IncludesDataExpiry ? result.CopyOrderPool() : null), ClockMilliseconds);
             next.LastCreationOutcome = result.Outcome; next.LastCreatedSlot = result.CreatedSlot;
+            next.lastLaunchSlots=new int[0];next.LastLaunchAttempts=next.LastLaunchDepletions=0;
+            return next;
+        }
+        // Explicit source launch pattern; existing Create remains one object.
+        // Creation and any last-round work complete before publishing the state.
+        public PracticeTimedStudyState Launch(int weapon, int sourceShip, int targetFleet, int offsetX, int offsetY) {
+            if(!IncludesDataExpiry)throw new NotSupportedException("Source launch patterns require the extended data study.");
+            var result=PracticeTimedLaunch.Apply(catalog,units,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),
+                PauseTimers.CopyShipTimers(),weapon,sourceShip,targetFleet,offsetX,offsetY,ClockMilliseconds,Objects.LastTargetFleet);
+            var next=new PracticeTimedStudyState(this,result.State,WithTimedPool(result.State.CopyTimedPool(),result.CopyOrderPool()),ClockMilliseconds);
+            next.lastLaunchSlots=result.CopyCreatedSlots();next.LastLaunchAttempts=result.AttemptedObjects;next.LastLaunchDepletions=result.LastRoundCallbacks;
+            next.LastCreatedSlot=next.LastLaunchCount==0?-1:next.lastLaunchSlots[next.LastLaunchCount-1];
+            bool full=true;byte[] timed=result.State.CopyTimedPool();for(int at=0;at<timed.Length;at+=268)if(BitConverter.ToInt32(timed,at)==0){full=false;break;}
+            next.LastCreationOutcome=next.LastLaunchCount>0?PracticeTimedCreationOutcome.Created:
+                result.AttemptedObjects>0&&full?PracticeTimedCreationOutcome.PoolFull:PracticeTimedCreationOutcome.NoAmmunition;
             return next;
         }
         public PracticeTimedStudyState AdvanceFrame(bool paused) {
