@@ -20,7 +20,7 @@ namespace FleetLab {
     // RIP B9A8...6A569: complete417E20 nonlethal data path,41A220 score and
     // 42D120 reevaluation. Local-owner mismatch/mode0 exclude actual media and
     // selected-unit refresh. Destruction/attached-object callbacks are guarded.
-    // This source-only component is not connected to the shipped study.
+    // The manual study uses this bounded path; destruction stays guarded.
     public static class PracticeSegmentDamage {
         internal static void Score(byte[] region, int attacker, int victim, short points) {
             if (attacker >= 0) { int at = attacker * 44; BitConverter.GetBytes(unchecked(BitConverter.ToInt32(region, at) + points)).CopyTo(region, at); }

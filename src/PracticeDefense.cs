@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace FleetLab {
     // Hash-pinned original region44D1D8..44D657, retained as a region rather
     // than inventing a single table layout for its overlapping lookup bases.
-    // This source-only model is not wired into the shipped study or Setup.
+    // Setup imports this region for the optional manual impact study.
     public sealed class PracticeDefenseTables {
         readonly byte[] data;
         public PracticeDefenseTables(byte[] sourceRegion) {
@@ -19,6 +19,9 @@ namespace FleetLab {
             data = (byte[])sourceRegion.Clone();
         }
         internal int BaseChance(int weapon, int targetKind) { return unchecked((sbyte)data[weapon * 13 + targetKind]); }
+        public static PracticeDefenseTables Load(string programs) {
+            return new PracticeDefenseTables(File.ReadAllBytes(Path.Combine(programs,"CombatMath.seqbin")));
+        }
         internal int PrimaryChance(int selection, int weapon) { return unchecked((sbyte)data[0x255 + selection * 35 + weapon]); }
         internal int SecondaryChance(int selection, int weapon) { return unchecked((sbyte)data[0x8D + selection * 35 + weapon]); }
         internal int[] CopyDamagePriority(bool primary) {
