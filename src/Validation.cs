@@ -62,6 +62,20 @@ namespace FleetLab {
                     output.Add("FAIL "+name+": "+e.Message);
                 }
             };
+            check("Original fleet batch boundaries, cycle wrap and world caller enumeration",delegate {
+                var start=new PracticeFleetScheduler(248,uint.MaxValue);
+                var last=start.TakeBatch();int[] slots=last.CopySlots();
+                Require(slots.Length==2&&slots[0]==248&&slots[1]==249&&last.Next.BatchStart==0&&last.Next.CompletedCycles==0,"Original final batch/cycle wrap");
+                slots[0]=-1;Require(last.CopySlots()[0]==248&&start.BatchStart==248&&start.CompletedCycles==uint.MaxValue,"Scheduler ownership");
+                var normal=new PracticeFleetScheduler(244,731).TakeWorldPoll(false);
+                Require(normal.BatchCount==2&&normal.CopySlots().Length==6&&normal.Next.BatchStart==0&&normal.Next.CompletedCycles==732,"Original normal two batches");
+                var extra=new PracticeFleetScheduler(0,0).TakeWorldPoll(true);
+                Require(extra.BatchCount==65&&extra.CopySlots().Length==258&&extra.Next.BatchStart==8&&extra.Next.CompletedCycles==1,"Original additional63batches");
+                var cursor=new PracticeFleetScheduler(0,0);int visited=0;
+                for(int n=0;n<63;n++){var batch=cursor.TakeBatch();visited+=batch.CopySlots().Length;cursor=batch.Next;}
+                Require(visited==250&&cursor.BatchStart==0&&cursor.CompletedCycles==1,"Original63batch cycle");
+                foreach(int invalid in new[]{-4,-1,1,2,3,249,250,252})RejectArgument(delegate{new PracticeFleetScheduler(invalid,0);});
+            });
             check("Battle checkpoint preserves manual deployments, repeated shuffles and selected shooter",delegate {
                 foreach(bool movies in new[]{false,true}) {
                     var game=new Game(731,RuleProfile.Recovered,OpponentKind.Original,2,movies);
