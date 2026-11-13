@@ -9,6 +9,9 @@ namespace FleetLab {
     // Data from the supported B9A8...6A569 executable. No executable code is
     // loaded here. Setup extracts the small, hash-pinned table regions below.
     public sealed class PracticeUnitCatalog {
+        // Colors/MapObjectColors are historical resource names. The bytes
+        // copied to fleet+464..466 serve visibility-distance tiers in418900;
+        // their names do not establish RGB semantics. Keep files/bytes stable.
         internal readonly byte[] Templates, Ammunition, Offense, Colors, Markers;
         internal readonly byte[] MapObjectTemplate, MapObjectColors;
         public bool HasMapObjectTables { get { return MapObjectTemplate != null; } }
