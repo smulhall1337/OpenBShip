@@ -83,12 +83,17 @@ namespace FleetLab
             get;
             private set;
         }
+        internal PracticeAircraftHomeSearchResult SearchResult
+        {
+            get;
+            private set;
+        }
         public int NoHomeGroups
         {
             get;
             private set;
         }
-        internal PracticeAircraftHomeBatchResult(PracticeAircraftResourceBatchResult batch,byte[] orders,int point,int invalidations,int docked,int noHome=0)
+        internal PracticeAircraftHomeBatchResult(PracticeAircraftResourceBatchResult batch,byte[] orders,int point,int invalidations,int docked,int noHome=0,PracticeAircraftHomeSearchResult search=null)
         {
             Batch=batch;
             primary=(byte[])orders.Clone();
@@ -96,6 +101,7 @@ namespace FleetLab
             Invalidations=invalidations;
             DockedGroups=docked;
             NoHomeGroups=noHome;
+            SearchResult=search;
         }
         public byte[] CopyPrimaryOrders()
         {
@@ -133,7 +139,8 @@ namespace FleetLab
             internal PracticeAircraftTables Tables;
             internal byte[] Primary;
             internal int Point,Invalidations,Docked,NoHome;
-            internal bool AllowNoHome;
+            internal bool AllowNoHome,SearchLandingCandidates;
+            internal PracticeAircraftHomeSearchResult SearchResult;
             internal int TravelActor=-1;
         }
         // Separate opt-in: low-resource helicopters/planes already at their
@@ -170,16 +177,16 @@ namespace FleetLab
         {
             return ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,null,actor);
         }
-        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false)
+        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false,bool searchLandingCandidates=false)
         {
             if(units==null||modes==null)throw new ArgumentNullException("aircraft return tables");
             if(primary==null||primary.Length!=78000)throw new InvalidDataException("Returning aircraft require complete primary orders.");
             var profile=new HomeDock
             {
-                Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor,AllowNoHome=allowEmptyAwacs
+                Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor,AllowNoHome=allowEmptyAwacs,SearchLandingCandidates=searchLandingCandidates
             };
             var batch=ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,profile,actor);
-            return new PracticeAircraftHomeBatchResult(batch,profile.Primary,profile.Point,profile.Invalidations,0,profile.NoHome);
+            return new PracticeAircraftHomeBatchResult(batch,profile.Primary,profile.Point,profile.Invalidations,0,profile.NoHome,profile.SearchResult);
         }
         internal static bool IsRecordedEarlySkip(byte[] fleets,int at)
         {
@@ -253,13 +260,25 @@ namespace FleetLab
                 {
                     if(docking!=null&&docking.AllowNoHome&&kind==5&&I(fleets,at+472)!=1)
                     {
-                        var fallback=PracticeAircraftHomeSearch.ApplyWithoutCandidates(ships,fleets,slot);
-                        ships=fallback.CopyShipPool();
-                        fleets=fallback.CopyFleetPool();
+                        if(docking.SearchLandingCandidates)
+                        {
+                            var search=PracticeAircraftHomeSearch.ApplyOffscreen(ships,fleets,slot);
+                            docking.SearchResult=search;
+                            ships=search.CopyShipPool();
+                            fleets=search.CopyFleetPool();
+                            if(search.FoundHome)BitConverter.GetBytes(1).CopyTo(fleets,at+472);
+                            else docking.NoHome++;
+                        }
+                        else
+                        {
+                            var fallback=PracticeAircraftHomeSearch.ApplyWithoutCandidates(ships,fleets,slot);
+                            ships=fallback.CopyShipPool();
+                            fleets=fallback.CopyFleetPool();
+                            docking.NoHome++;
+                        }
                         for(int n=0;n<5;n++)W(fleets,at+40+n*2,-1);
                         docking.Point=-1;
                         docking.Invalidations++;
-                        docking.NoHome++;
                         continue;
                     }
                     if(docking!=null&&docking.TravelActor==slot)
