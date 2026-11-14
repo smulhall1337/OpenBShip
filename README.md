@@ -234,6 +234,8 @@ The underlying source also matches 2,700 original admitted AA secondary-consumer
 
 A fresh public source build passes 179 checks and reports 70 explicit private skips. Setup verifies 1,492 assets and imports 39 resources. The documented launcher reaches a visible window and closes cleanly. The previous v0.69 package remains available locally for comparison. The request producer's AI timing, aircraft flight, mission integration and media remain separate work.
 
+Checkpoint 318 preserves the aircraft resource and at-home docking research in an integrity-checked private archive. A fresh restore rebuilds through public Setup, passes 179 checks with 70 private skips, and launches cleanly. Three original/maintained probe families reproduce all 123 files exactly. Seven verified temporary trees were retired after each file received an archive, retained-runtime or recovery receipt; current v0.70, previous v0.69 and user data remain available.
+
 Earlier checkpoint comparisons:
 Source checkpoints 300–302 add request generation and stored-aircraft creation/activation/docking APIs: 217 model/format checks pass (147 public checks and 70 explicit private skips). The producer matches 5,081 original contexts, activation/docking matches 5,169, and whole aircraft factories match 2,016; repeat captures match all 9/13/7 files. Another 20/18/22 focused malformed-input and ownership groups pass. Docking retains the source member-index order clearing, and allocation preserves dead-unit reservations and stale roster tails. Those data APIs preceded the packaged v0.68 study. The following figures describe earlier checkpoints.
 
