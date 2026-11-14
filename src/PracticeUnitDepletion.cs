@@ -45,11 +45,19 @@ namespace FleetLab {
         }
         public static PracticeUnitDepletionResult ConsumeLastRound(PracticeUnitCatalog catalog,byte[] shipPool,
                                                                     byte[] orderPool,int sourceShip,int weapon) {
+            return ConsumeCore(catalog,shipPool,orderPool,sourceShip,weapon,false);
+        }
+        internal static PracticeUnitDepletionResult ConsumeLastAircraftRound(PracticeUnitCatalog catalog,byte[] shipPool,
+                byte[] orderPool,int sourceShip,int weapon) {
+            return ConsumeCore(catalog,shipPool,orderPool,sourceShip,weapon,true);
+        }
+        static PracticeUnitDepletionResult ConsumeCore(PracticeUnitCatalog catalog,byte[] shipPool,
+                byte[] orderPool,int sourceShip,int weapon,bool antiAircraft) {
             if(catalog==null)throw new ArgumentNullException("catalog");
             if(shipPool==null||shipPool.Length!=402000||orderPool==null||orderPool.Length!=78000)
                 throw new InvalidDataException("Last-round data effects require complete ship and order pools.");
             if(sourceShip<0||sourceShip>=1500)throw new ArgumentOutOfRangeException("sourceShip");
-            if(weapon<14||weapon>30)throw new ArgumentOutOfRangeException("weapon");
+            if(antiAircraft?(weapon<1||weapon>3):(weapon<14||weapon>30))throw new ArgumentOutOfRangeException("weapon");
             int at=sourceShip*268;
             if(Word(shipPool,at+4)!=sourceShip||Word(shipPool,at+196+weapon*2)!=1)
                 throw new InvalidDataException("Last-round data effects require the matching unit and exactly one round.");

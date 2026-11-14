@@ -21,6 +21,10 @@ namespace FleetLab {
             if (weapon < 14 || weapon > 30) throw new ArgumentOutOfRangeException("weapon");
             return BitConverter.ToInt16(speeds, weapon * 2);
         }
+        internal int AntiAircraftSpeed(int weapon) {
+            if(weapon<1||weapon>3)throw new ArgumentOutOfRangeException("weapon");
+            return BitConverter.ToInt16(speeds,weapon*2);
+        }
     }
 
     public enum PracticeTimedCreationOutcome { Created, NoAmmunition, PoolFull }
@@ -81,9 +85,13 @@ namespace FleetLab {
                 int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool) {
             return CreateCore(weapon,sourceShip,targetFleet,offsetX,offsetY,gameMilliseconds,units,orderPool,true);
         }
+        internal PracticeTimedCreationUpdate CreateAntiAircraftObject(int weapon,int sourceShip,int targetFleet,
+                int offsetX,int offsetY,uint gameMilliseconds,PracticeUnitCatalog units,byte[] orderPool) {
+            return CreateCore(weapon,sourceShip,targetFleet,offsetX,offsetY,gameMilliseconds,units,orderPool,true,true);
+        }
         PracticeTimedCreationUpdate CreateCore(int weapon, int sourceShip, int targetFleet,
-                int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool, bool allowSignedStock = false) {
-            int speed = catalog.SourceSpeed(weapon);
+                int offsetX, int offsetY, uint gameMilliseconds, PracticeUnitCatalog units, byte[] orderPool, bool allowSignedStock = false,bool antiAircraft=false) {
+            int speed = antiAircraft?catalog.AntiAircraftSpeed(weapon):catalog.SourceSpeed(weapon);
             if (sourceShip < 0 || sourceShip >= 1500) throw new ArgumentOutOfRangeException("sourceShip");
             if (targetFleet < 0 || targetFleet >= 250) throw new ArgumentOutOfRangeException("targetFleet");
             if (offsetX < short.MinValue || offsetX > short.MaxValue) throw new ArgumentOutOfRangeException("offsetX");
@@ -100,7 +108,7 @@ namespace FleetLab {
             byte[] nextShips = CopyShipPool(), nextTimed = CopyTimedPool();
             byte[] nextOrders = orderPool;
             if (ammo == 1) {
-                var depleted = PracticeUnitDepletion.ConsumeLastRound(units, ships, orderPool, sourceShip, weapon);
+                var depleted = antiAircraft?PracticeUnitDepletion.ConsumeLastAircraftRound(units,ships,orderPool,sourceShip,weapon):PracticeUnitDepletion.ConsumeLastRound(units, ships, orderPool, sourceShip, weapon);
                 nextShips = depleted.CopyShipPool(); nextOrders = depleted.CopyOrderPool();
             }
             else if (ammo != -1) Short(nextShips, ammoAt, ammo - 1);
