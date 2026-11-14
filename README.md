@@ -2,14 +2,14 @@
 
 A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.68.
 
-The current build includes an isolated aircraft study that uses recovered creation, activation and docking routines. Automatic aircraft flight, attachment discovery, local-owner media and mission orchestration remain separate work. The secondary-target producer is available as a separate source API. After updating from an older build, rerun Setup to import all 38 runtime resources.
+The current build includes an isolated aircraft study that uses recovered creation, activation and docking routines. Automatic aircraft flight, attachment discovery, local-owner media and mission orchestration remain separate work. The secondary-target producer is available as a separate source API. After updating from an older build, rerun Setup to import all 39 runtime resources.
 
 ## Requirements
 
 - Windows x64 with the .NET Framework 4.x compiler at `%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe`.
 - An extracted copy of the supported English game. The folder must contain `Bs.exe`, `GRAPHICS`, `LWEBS`, `HWEBS` and `SFX`.
 
-Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs, original cursor resources and nineteen unit/object/math/firing/aircraft tables from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
+Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs, original cursor resources and twenty unit/object/math/firing/aircraft tables from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
 
 The supplied RIP and disc installer contain different executable builds. The supported RIP `Bs.exe` is 397,824 bytes; the installer cabinet's `Bs.exe` is 401,408 bytes with SHA-256 `AFB5D842D4DF17D3957EA31560D07113AD61452AFD2F1E7A9DC232E2D2C874B4`. Their code and data layouts differ. The installer also contains a separate `BShip.Exe`. These builds are preserved as separate research inputs; setup and the current reconstruction evidence support only the pinned RIP build above.
 
@@ -32,7 +32,7 @@ After setup, double-click **Launch.cmd** to play. Local `outputs/Inspect-*.cmd` 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it. After updating from a build before v0.68, rerun Setup once to import all 38 resources, including the aircraft mode tables; Build only compiles source. Settings are stored locally in `build\current\UserData\settings.txt`.
+Close that build before rebuilding it. After updating from a build before v0.68, rerun Setup once to import all 39 resources, including the aircraft mode and destruction tables; Build only compiles source. Settings are stored locally in `build\current\UserData\settings.txt`.
 
 Generated files belong in ignored `build/`. Only `build/current` is required to play. Preserve `build/current/UserData` when cleaning or moving the workspace: it holds your settings and saved battles. Old packaged builds and temporary verification workspaces are optional; they are not launch dependencies. Verified temporary copies are retired after their source, settings and evidence have a checked recovery path; the local workspace keeps the current build and one previous comparison build.
 
@@ -204,6 +204,7 @@ The project keeps two tracks: reconstruct observable source behavior, and make d
 | Stored aircraft and activation | Whole stored-aircraft factories match 2,016 original contexts, and activation/docking matches 5,169. Parent links, allocation exclusions, stale roster tails, loadouts, visibility and the source member-index firing-order clear agree. Twenty-four composed create/activate/dock histories match all 264 whole-pool observations. The aircraft study exposes these recovered data paths with supplied attachment selection and schematic rendering. Flight, natural attachment discovery, owner media and automatic mission behavior remain separate. |
 | Anti-aircraft raw launch API | `PracticeAntiAircraftLaunch.Apply` matches 5,184 complete original equipment 1–3 launch contexts, including full timed/ship/fleet/primary-order buffers, signed stock, last-round clearing, capacity and wrapped deadlines. Ordinary public constructors retain their weapon 14–30 scope. This source API is not wired into v0.68 automatic targeting or aircraft impacts. |
 | Aircraft defense API | `PracticeDefense.ResolveAntiAircraft` matches 38,880 complete original decisions for equipment 1–3 and aircraft kinds 3–5, final random state and whole ship buffers. Primary mount repetitions, selected secondary defense without mount/ammo admission, stance adjustments and the two transient defense bytes agree. Ordinary defense retains its earlier scope. Impact, damage, flight and automatic targeting remain separate. |
+| Aircraft destruction API | `PracticeAircraftDestruction.Resolve` matches 5,184 whole original zero-HP destruction calls, complete ship/fleet/effect/score pools, movie counter and final random state. It preserves selection-dependent retirement and the differing parent-link behavior for helicopter/plane and AWACS groups. Death-effect allocation and plane movie-choice randomness agree even with a full effect pool. This source API does not establish the projectile damage caller, automatic aircraft combat or audible playback. |
 | Actual original reference | Separate real processes complete one victory and one defeat through normal endings and menu returns using the accepted compatibility setup. Observation uses read-only memory access and ordinary window messages. This is distinct from the controlled interpreter/renderer studies and from physical input/audio acceptance. |
 | Modern usability | Keyboard/mouse navigation, pause/focus handling, cinematic presentation, deterministic restart, validated battle checkpoints, persistent settings and the debug movie bypass are intentional modern behavior. Turn movies appear behind the board with the accepted 30% surface transparency. |
 | Still incomplete | Non-Classic campaign/mission behavior, complete tutorials and scripts, networking, radar, native controller support, complete original application/device lifecycle and equivalence across other executable editions. Practice descriptions and scene previews do not establish playable original missions. |
@@ -223,6 +224,8 @@ The supplied original has a reproducible second-game limitation on this setup. A
 The original's default human roster name also appends across the observed second setup, and controlled AI startup scales carried weights again. Both are recorded as source behavior without imposing them on modern play. A decompiler listing or a running reference process is evidence, not recovered original source or a finished port.
 
 ## Validation and private research
+
+Source checkpoint 306 adds aircraft destruction and a separate pinned 22-byte score table: 227 model checks pass (157 public plus 70 private skips), with 36 focused guard/ownership groups. All ten native capture files repeat exactly. Updated public Setup verifies 1,492 assets and imports 39 resources. The packaged v0.68 UI remains unchanged; aircraft projectile impact composition is still separate work.
 
 Source checkpoint 305 adds the separate aircraft-defense decision profile: 224 model checks pass (154 public plus 70 private skips) and 24 focused scope/ownership groups pass. All eight native capture files repeat exactly. The 38,880 numeric contexts cover primary/secondary selections, mount counts, stance values and five supplied seeds; these are not gameplay scenarios. The packaged v0.68 build remains unchanged.
 
