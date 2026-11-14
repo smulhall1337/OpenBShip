@@ -23,10 +23,10 @@ namespace FleetLab
         readonly ComboBox parent=new ComboBox(),kind=new ComboBox(),mode=new ComboBox();
         readonly NumericUpDown link=new NumericUpDown();
         readonly Button create=new Button(),activate=new Button(),dock=new Button(),reset=new Button();
-        readonly Button combat=new Button();
+        readonly Button combat=new Button(),homeSearch=new Button();
         readonly HashSet<Keys> held=new HashSet<Keys>();
         readonly ListBox members=new ListBox();
-        readonly TextBox details=new TextBox();
+        readonly TextBox details=new TextBox(),homeDetails=new TextBox();
         readonly Label summary=new Label(),feedback=new Label();
         readonly AircraftCanvas canvas;
         internal PracticeAircraftStudyState StudyState
@@ -119,7 +119,7 @@ namespace FleetLab
             },72);
             add(new Label
             {
-                Text="Parent unit"
+                Text="Parent unit (creation input)"
             },22);
             parent.Name="aircraftParent";
             parent.AccessibleName="Supplied parent unit";
@@ -194,6 +194,16 @@ namespace FleetLab
             combat.AccessibleName=combat.Text;
             combat.AccessibleDescription="Activate a group, then open copied AA projectile travel and impact controls.";
             add(combat,36);
+            homeSearch.Text="Find available home (study)";
+            homeSearch.Name="aircraftHomeSearch";
+            homeSearch.AccessibleName=homeSearch.Text;
+            homeSearch.AccessibleDescription="Run the recovered offscreen home helper in this copy. Updates attachment and task only; aircraft do not move.";
+            add(homeSearch,36);
+            homeDetails.Name="aircraftHomeDetails";
+            homeDetails.AccessibleName="Home search result and candidates";
+            homeDetails.Multiline=true;homeDetails.ReadOnly=true;homeDetails.ScrollBars=ScrollBars.Vertical;
+            homeDetails.BackColor=BackColor;homeDetails.ForeColor=ForeColor;
+            add(homeDetails,156);
             summary.Name="aircraftSummary";
             summary.AccessibleName="Aircraft group state";
             add(summary,112);
@@ -238,6 +248,9 @@ namespace FleetLab
                 {
                     state=state.Transition(mode.SelectedIndex+1);
                 },"Mode applied. Flight, automatic targeting and missions are not running in this study.");
+            };
+            homeSearch.Click+=delegate {
+                Act(delegate {state=state.SearchHome();},"Home helper completed. Inspect its result and association below; aircraft remain fixed. Reset restores the starting copy.");
             };
             dock.Click+=delegate
             {
@@ -357,12 +370,17 @@ namespace FleetLab
             activate.Enabled=mode.Enabled=state.HasGroup&&state.Stored;
             dock.Enabled=state.HasGroup&&!state.Stored;
             combat.Enabled=state.HasGroup&&!state.Stored;
+            homeSearch.Enabled=state.Kind>=3&&state.Kind<=5;
+            var homes=new StringBuilder();
+            if(!homeSearch.Enabled)homes.AppendLine("Activate a group to inspect home candidates.");
+            else {homes.AppendLine(state.LastHomeFound.HasValue?(state.LastHomeFound.Value?"Result: available home linked.":"Result: no available home; source fallback state."):"Home helper has not run."); homes.AppendLine("Association fields: unit "+state.ParentShip+" · link "+state.Link);homes.AppendLine("Explicit searches: "+state.HomeSearches);var candidates=state.HomeCandidates;homes.AppendLine("Candidates in source order: "+candidates.Count);foreach(var candidate in candidates)homes.AppendLine("Fleet "+candidate.FleetSlot+" · unit "+candidate.UnitIdentity+" · distance "+candidate.Distance);homes.AppendLine("Candidates do not guarantee a free slot. This study does not move aircraft.");}
+            homeDetails.Text=homes.ToString();homeDetails.AccessibleDescription=homeDetails.Text;
             if(!state.HasGroup)summary.Text="No aircraft group created.\r\nReset restores the copied starting pools.";
             else
             {
                 var f=state.CopyFleetPool();
                 int at=state.FleetSlot*492;
-                summary.Text="Fleet "+state.FleetSlot+" · "+(state.Stored?"Stored":"Active")+" · kind "+state.Kind+"\r\nParent unit "+state.ParentShip+" · link "+state.Link+"\r\nWorld "+BitConverter.ToInt16(f,at+12)+", "+BitConverter.ToInt16(f,at+14)+" · speed "+BitConverter.ToInt16(f,at+60)+"\r\nTask "+state.Mode+" · visibility "+f[at+464]+"/"+f[at+465]+"/"+f[at+466];
+                summary.Text="Fleet "+state.FleetSlot+" · "+(state.Stored?"Stored":"Active")+" · kind "+state.Kind+"\r\nParent unit "+state.ParentShip+" · link "+state.Link+"\r\nWorld "+BitConverter.ToInt16(f,at+12)+", "+BitConverter.ToInt16(f,at+14)+" · speed "+BitConverter.ToInt16(f,at+60)+"\r\nTask "+state.Mode+" · return state "+BitConverter.ToInt32(f,at+472)+" · visibility "+f[at+464]+"/"+f[at+465]+"/"+f[at+466];
             }
             UpdateDetails();
             canvas.Invalidate();
