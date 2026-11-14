@@ -13,6 +13,16 @@ namespace FleetLab {
                 deployment.CopyShipPool(),deployment.CopyFleetPool(),0,731,PracticeDefenseTables.Load(p),PracticeDestructionTables.Load(p),
                 PracticeFiringRangeTable.Load(p),PracticeVisibility.Load(p),PracticeFiringRateTable.Load(p));
         }
+        // Independent source289 case0/1080 inputs: timed, ships, fleet,
+        // effects, scores. Their original output hashes are pinned below.
+        static byte[][] RetiredFixture(string assets,int weapon,int cell) {
+            byte[] ships=FiringFixture(assets).Objects.CopyShipPool(),timed=new byte[21440],fleets=new byte[123000],effects=new byte[800],scores=new byte[176];
+            Array.Copy(ships,7*268,timed,0,268);BitConverter.GetBytes(weapon).CopyTo(timed,0);W16(timed,4,0);W16(timed,12,0);W16(timed,18,2);W16(timed,20,3);BitConverter.GetBytes(0x4b47a0).CopyTo(timed,28);
+            W16(fleets,4,0);W16(fleets,6,1);W16(fleets,12,100);W16(fleets,14,100);BitConverter.GetBytes(cell).CopyTo(fleets,64+23*4);
+            for(int n=0;n<800;n++)effects[n]=(byte)((n*17+9)%251);for(int n=0;n<40;n++)W16(effects,n*20,-1);
+            for(int n=0;n<176;n++)scores[n]=(byte)(n*31+7);W16(scores,172,-2);BitConverter.GetBytes(0).CopyTo(scores,168);
+            return new[]{timed,ships,fleets,effects,scores};
+        }
         static void Require(bool condition,string message) {
             if(!condition)throw new Exception(message);
         }
@@ -474,6 +484,21 @@ namespace FleetLab {
                 var cleared=state.ClearOrders(7);Require(BitConverter.ToInt16(cleared.PauseTimers.CopyShipTimers(),7*52+8)==-1&&cleared.ClockMilliseconds==1000&&initial.ClockMilliseconds==0,"Clear and reset baseline");
                 Reject(delegate{new PracticeVisibility(new byte[624]);});Reject(delegate{new PracticeFiringRangeTable(new byte[70]);});Reject(delegate{new PracticeFiringRateTable(new byte[140]);});
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");RejectArgument(delegate{PracticeFiringRateTable.Load(p).Interval(17,1000,0);});
+            });
+            check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);
+                Require(Hash(data[0])=="D4FB7DF9492E7EECA05309936575DCF441D640804626F2B44BB6819A488F05D8"&&Hash(data[2])=="575680C602FD12D0C483D89C9893578CBDC69A2811E380C064D59D6B33D0F86E","Original289 no-victim inputs");
+                var result=PracticeImpact.ResolveWithDestruction(PracticeDefenseTables.Load(p),PracticeUnitCatalog.Load(p),File.ReadAllBytes(Path.Combine(p,"ClassicVisuals.seqbin")),data[0],data[1],data[2],data[3],data[4],0,0,PracticeDestructionTables.Load(p),37);
+                Require(result.Outcome==PracticeImpactOutcome.NoVictim&&!result.Retired&&result.RandomState==0&&result.RandomCalls==0&&result.MovieCounter==37,"Original289 retained projectile/counter");
+                Require(Hash(result.CopyTimedPool())=="D4FB7DF9492E7EECA05309936575DCF441D640804626F2B44BB6819A488F05D8"&&Hash(result.CopyEffectPool())=="5CB859B90F8E0AF206F329C7D98485866F7FF0C83B538B8AB4166C3756A84B35","Original289 no-victim whole outputs");
+            });
+            check("Retired fleet water expiry matches original RNG and type28 effect",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,14,0);byte[] visual=File.ReadAllBytes(Path.Combine(p,"ClassicVisuals.seqbin"));
+                Require(Hash(data[0])=="A40A73FA626618A8A4921D955554830E78154A9471534E07A4BC286F35037B61"&&Hash(data[2])=="B4D74A26B3868DF92E2DA5EA3DD6EBFF19836DCDD850071564F0BCA533D4EA66","Original289 water inputs");
+                var result=PracticeImpact.ResolveWithDestruction(PracticeDefenseTables.Load(p),PracticeUnitCatalog.Load(p),visual,data[0],data[1],data[2],data[3],data[4],0,0,PracticeDestructionTables.Load(p),37);
+                Require(result.Retired&&result.Outcome==PracticeImpactOutcome.NonshipCell&&result.RandomState==2531011u&&result.RandomCalls==1&&result.EffectSlot==0&&result.EffectType==28&&result.MovieCounter==37,"Original289 retired water result");
+                Require(Hash(result.CopyTimedPool())=="5D119DF10B460A422D6D0E364B40E81EC9C1A91E3613BFA751D165FA7801EFE2"&&Hash(result.CopyEffectPool())=="15A1DFF8D00D35372C22D8D14CFF2305626A698AEA2D32EEA365EF02D91F9515","Original289 water whole outputs");
+                bool legacyGuard=false;try{PracticeMissImpact.Resolve(data[0],data[2],data[3],visual,0,0);}catch(NotSupportedException){legacyGuard=true;}Require(legacyGuard,"Legacy no-destruction scope changed");
             });
             check("First Practice startup matches complete source pools across five initial random states",delegate {
                 var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));

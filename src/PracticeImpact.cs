@@ -33,8 +33,10 @@ namespace FleetLab {
 
     // Supported RIP B9A8...6A569: complete416DD0 ordinary-projectile callback,
     // including first matching unit,418030,417740/417F50,417990 and420550.
-    // Network0, local-owner mismatch/mode0; actual media, destruction, attached
-    // objects and special19/21 branches remain unsupported. No application loop.
+    // Network0, local-owner mismatch/mode0. Default Resolve excludes fatal
+    // damage; the explicit destruction continuation also admits retired-fleet
+    // water, passive and no-victim cells. Media/attached/special19/21 and a
+    // complete application loop remain separate.
     public static class PracticeImpact {
         static int Word(byte[] b,int at){return BitConverter.ToInt16(b,at);}
         static int Dword(byte[] b,int at){return BitConverter.ToInt32(b,at);}
@@ -65,10 +67,10 @@ namespace FleetLab {
             if(weapon<14||weapon>30||weapon==19||weapon==21)throw new NotSupportedException("This projectile uses an unreconstructed impact branch.");
             if(target<0||target>=250||x<0||x>=10||y<0||y>=10)throw new InvalidDataException("Impact target is outside the admitted fleet grid.");
             int fleet=target*492,kind=Dword(fleetPool,fleet),cell=Dword(fleetPool,fleet+64+(x*10+y)*4);
-            bool retiredPassive=destruction!=null&&kind==0&&cell==8;
-            if(!retiredPassive&&kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported impact fleet kind.");
-            if(destruction!=null&&((!retiredPassive&&kind!=1&&kind!=9)||Word(scoreRegion,172)!=-2))throw new NotSupportedException("Destructive impacts require fleet1/9 (or a retired fleet's resolved cell8) and the explicit offscreen local-owner context.");
-            if(cell==0||cell==1||cell==3){var miss=PracticeMissImpact.Resolve(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState);return new PracticeImpactResult(miss.CopyTimedPool(),shipPool,fleetPool,miss.CopyEffectPool(),scoreRegion,PracticeImpactOutcome.NonshipCell,miss.RandomState,miss.RandomCalls,-1,miss.EffectSlot,miss.EffectType,0,0,true,false,movieCounter);}
+            bool retiredFleet=destruction!=null&&kind==0&&cell>=0&&cell<=8;
+            if(!retiredFleet&&kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported impact fleet kind.");
+            if(destruction!=null&&((!retiredFleet&&kind!=1&&kind!=9)||Word(scoreRegion,172)!=-2))throw new NotSupportedException("Destructive impacts require fleet1/9 or supported retired-fleet cells and the explicit offscreen local-owner context.");
+            if(cell==0||cell==1||cell==3){var miss=retiredFleet?PracticeMissImpact.ResolveRetired(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState):PracticeMissImpact.Resolve(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState);return new PracticeImpactResult(miss.CopyTimedPool(),shipPool,fleetPool,miss.CopyEffectPool(),scoreRegion,PracticeImpactOutcome.NonshipCell,miss.RandomState,miss.RandomCalls,-1,miss.EffectSlot,miss.EffectType,0,0,true,false,movieCounter);}
             byte[] timed=(byte[])timedPool.Clone();
             if(cell==8){BitConverter.GetBytes(0).CopyTo(timed,at);return new PracticeImpactResult(timed,shipPool,fleetPool,effectPool,scoreRegion,PracticeImpactOutcome.PassiveCell,randomState,0,-1,-1,-1,0,0,true,false,movieCounter);}
             if(cell!=2&&cell!=4&&cell!=5&&cell!=6&&cell!=7)throw new NotSupportedException("Unsupported impact target-cell code.");
@@ -81,6 +83,7 @@ namespace FleetLab {
                 if(y>=Word(shipPool,unit+10)+length)continue;victim=unit/268;victimIndex=slot;break;
             }
             if(victim<0)return new PracticeImpactResult(timedPool,shipPool,fleetPool,effectPool,scoreRegion,PracticeImpactOutcome.NoVictim,randomState,0,-1,-1,-1,0,0,false,false,movieCounter);
+            if(retiredFleet)throw new NotSupportedException("An inactive fleet still references a matching live unit; its damage continuation is not reconstructed.");
             int victimAt=victim*268,type=Dword(shipPool,victimAt);
             if(type<1||type>4)throw new NotSupportedException("This matched unit has unreconstructed impact callbacks.");
             if(Word(shipPool,victimAt+12)!=target)throw new InvalidDataException("Matched unit belongs to another fleet.");

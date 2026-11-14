@@ -35,6 +35,17 @@ namespace FleetLab {
         }
         public static PracticeMissImpactResult Resolve(byte[] timedPool,byte[] fleetPool,byte[] effectPool,
                                                          byte[] visualRecords,int timedSlot,uint randomState) {
+            return ResolveCore(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState,false);
+        }
+        // Explicit destruction-profile continuation. A retired fleet can
+        // retain water cells; original dispatch still retires the projectile
+        // and requests type28, including RNG work before a full effect pool.
+        internal static PracticeMissImpactResult ResolveRetired(byte[] timedPool,byte[] fleetPool,byte[] effectPool,
+                                                         byte[] visualRecords,int timedSlot,uint randomState) {
+            return ResolveCore(timedPool,fleetPool,effectPool,visualRecords,timedSlot,randomState,true);
+        }
+        static PracticeMissImpactResult ResolveCore(byte[] timedPool,byte[] fleetPool,byte[] effectPool,
+                                                         byte[] visualRecords,int timedSlot,uint randomState,bool allowRetired) {
             if(timedPool==null||timedPool.Length!=21440||fleetPool==null||fleetPool.Length!=123000||effectPool==null||effectPool.Length!=800||visualRecords==null||visualRecords.Length!=580)
                 throw new InvalidDataException("Miss impact requires complete original pools and visual records.");
             string hash;using(var sha=SHA256.Create())hash=BitConverter.ToString(sha.ComputeHash(visualRecords)).Replace("-","");
@@ -47,7 +58,7 @@ namespace FleetLab {
             if(target<0||target>=250||x<0||x>=10||y<0||y>=10)
                 throw new InvalidDataException("Miss impact target is outside the admitted fleet grid.");
             int fleet=target*492,kind=Dword(fleetPool,fleet),cell=Dword(fleetPool,fleet+64+(x*10+y)*4);
-            if(kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported miss-impact fleet kind.");
+            if(!(allowRetired&&kind==0)&&kind!=1&&kind!=2&&kind!=9&&kind!=11)throw new NotSupportedException("Unsupported miss-impact fleet kind.");
             if(cell!=0&&cell!=1&&cell!=3)throw new NotSupportedException("Hit, defense and other target-cell expiry effects are not reconstructed.");
             var random=new NativeRandom(randomState);
             // Random choice is consumed before effect allocation, including
