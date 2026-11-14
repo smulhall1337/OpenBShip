@@ -6,6 +6,16 @@ namespace FleetLab
     public sealed class PracticeAircraftFlightBatchResult
     {
         readonly byte[] primary,auxiliary;
+        public int NoHomeGroups
+        {
+            get;
+            private set;
+        }
+        public int Invalidations
+        {
+            get;
+            private set;
+        }
         public PracticeAircraftResourceBatchResult Batch
         {
             get;
@@ -26,8 +36,10 @@ namespace FleetLab
             get;
             private set;
         }
-        internal PracticeAircraftFlightBatchResult(PracticeAircraftWaypointBatchResult waypoint,byte[] orders)
+        internal PracticeAircraftFlightBatchResult(PracticeAircraftWaypointBatchResult waypoint,byte[] orders,int noHomeGroups=0,int invalidations=0)
         {
+            NoHomeGroups=noHomeGroups;
+            Invalidations=invalidations;
             WaypointUpdate=waypoint;
             Batch=waypoint.Batch;
             SelectedWaypoint=waypoint.SelectedWaypoint;
@@ -36,6 +48,7 @@ namespace FleetLab
         }
         internal PracticeAircraftFlightBatchResult(PracticeAircraftReturnBatchResult returning)
         {
+            Invalidations=returning.Invalidations;
             ReturnUpdate=returning;
             Batch=returning.Batch;
             SelectedWaypoint=returning.SelectedWaypoint;
@@ -53,6 +66,12 @@ namespace FleetLab
     }
     public static class PracticeAircraftFlightBatch
     {
+        // Explicit opt-in: AWACS home fallback requires the full candidate search
+        // to be empty. Candidate-bearing searches remain guarded atomically.
+        public static PracticeAircraftFlightBatchResult AdvanceWithEmptyHomeFallback(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random)
+        {
+            return PracticeAircraftReturnBatch.AdvanceIncludingWaypoints(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true);
+        }
         public static PracticeAircraftFlightBatchResult AdvanceOffscreen(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random)
         {
             return PracticeAircraftReturnBatch.AdvanceIncludingWaypoints(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random);

@@ -97,11 +97,11 @@ namespace FleetLab
         {
             return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,false).ReturnUpdate;
         }
-        internal static PracticeAircraftFlightBatchResult AdvanceIncludingWaypoints(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random)
+        internal static PracticeAircraftFlightBatchResult AdvanceIncludingWaypoints(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowEmptyAwacs=false)
         {
-            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true);
+            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true,allowEmptyAwacs);
         }
-        static PracticeAircraftFlightBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowOrdinary)
+        static PracticeAircraftFlightBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowOrdinary,bool allowEmptyAwacs=false)
         {
             if(schedule==null)throw new ArgumentNullException("schedule");
             if(ships==null||ships.Length!=402000||fleets==null||fleets.Length!=123000||auxiliary==null||auxiliary.Length!=78336)throw new InvalidDataException("Returning aircraft require complete ship/fleet/auxiliary pools.");
@@ -116,7 +116,8 @@ namespace FleetLab
             }
             if(!visited)throw new NotSupportedException("The source batch does not visit the requested returning aircraft; batch preserved.");
             int at=actor*492,kind=I(fleets,at),state=I(fleets,at+472),task=I(fleets,at+476),speed=W(fleets,at+60);
-            if(kind<3||kind>5||W(fleets,at+4)!=actor||(state!=0&&state!=1)||(task!=1&&task!=2&&task!=4)||fleets[at+485]!=0||speed<0||speed>13)throw new NotSupportedException("Returning aircraft require kind3..5,state0/1,task1/2/4,flag0,speed0..13; batch preserved.");
+            if(kind<3||kind>5||W(fleets,at+4)!=actor||(state!=0&&state!=1&&!(allowEmptyAwacs&&kind==5&&state==2&&task==2))||(task!=1&&task!=2&&task!=4)||fleets[at+485]!=0||speed<0||speed>13)throw new NotSupportedException("Aircraft flight requires the admitted kind3..5, return/task/flag and source speed0..13 profile; batch preserved.");
+            if(state==2&&W(fleets,at+40)!=-1)throw new NotSupportedException("The no-home idle continuation requires an empty route; batch preserved.");
             var before=new Point(W(fleets,at+12),W(fleets,at+14));
             int parent=W(fleets,at+8);
             if(parent<0||parent>=1500)throw new InvalidDataException("Return association crosses the unit pool.");
@@ -124,7 +125,7 @@ namespace FleetLab
             if(homeFleet<0||homeFleet>=250)throw new InvalidDataException("Return association crosses the fleet pool.");
             var home=new Point(W(fleets,homeFleet*492+12),W(fleets,homeFleet*492+14));
             if(before.X<0||before.X>=640||before.Y<0||before.Y>=640||home.X<0||home.X>=640||home.Y<0||home.Y>=640)throw new NotSupportedException("Return origin/home must be in world0..639; batch preserved.");
-            var prepared=PracticeAircraftResourceBatch.ApplyBeforeReturn(tables,visuals,units,modes,ships,fleets,scores,effects,primary,schedule,movie,random,actor,point);
+            var prepared=PracticeAircraftResourceBatch.ApplyBeforeReturn(tables,visuals,units,modes,ships,fleets,scores,effects,primary,schedule,movie,random,actor,point,allowEmptyAwacs);
             var prefix=prepared.Batch;
             var s=prefix.CopyShipPool();
             var f=prefix.CopyFleetPool();
@@ -132,7 +133,7 @@ namespace FleetLab
             var aux=(byte[])auxiliary.Clone();
             int selected=prepared.SelectedWaypoint;
             if(I(f,at)==0)return new PracticeAircraftFlightBatchResult(new PracticeAircraftReturnBatchResult(prefix,s,f,p,aux,PracticeAircraftReturnOutcome.FleetRetired,before,before,home,false,selected,prepared.Invalidations));
-            if(I(f,at+472)==0&&allowOrdinary)return new PracticeAircraftFlightBatchResult(PracticeAircraftWaypointBatch.CompleteAfterResources(prefix,auxiliary,actor,selected,before),p);
+            if(allowOrdinary&&(I(f,at+472)==0||(allowEmptyAwacs&&kind==5&&I(f,at+472)==2)))return new PracticeAircraftFlightBatchResult(PracticeAircraftWaypointBatch.CompleteAfterResources(prefix,auxiliary,actor,selected,before),p,prepared.NoHomeGroups,prepared.Invalidations);
             if(I(f,at+472)!=1)throw new NotSupportedException("This visit remains ordinary flight; use the waypoint profile instead. Batch preserved.");
             bool started=state==0;
             W(f,at+40,home.X);
