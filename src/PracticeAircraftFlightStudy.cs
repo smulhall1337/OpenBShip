@@ -152,11 +152,11 @@ namespace FleetLab
             includeReturn.Text="Include recovered return / idle visits";
             includeReturn.Name="flightIncludeReturn";
             includeReturn.AccessibleName=includeReturn.Text;
-            includeReturn.AccessibleDescription="Opt in to resource-triggered home travel and docking during explicit visits. Visits continue with no supplied route. AWACS home-search remains outside this profile.";
+            includeReturn.AccessibleDescription="Opt in to resource-triggered home travel and docking during explicit visits. Visits continue with no supplied route. AWACS fallback is admitted only when its full home-candidate search is empty.";
             add(includeReturn,46);
             add(new Label
             {
-                Text="With this on, visits continue after a route ends. Low resources can send helicopters and planes home. No live clock or AI orders."
+                Text="Visits continue after a route ends. Low resources can send groups home; AWACS may report no available home. No live clock or AI."
             },66);
             includeReturn.CheckedChanged+=delegate
             {
@@ -295,7 +295,7 @@ namespace FleetLab
             {
                 try
                 {
-                    state=includeReturn.Checked?state.VisitIncludingReturn():state.VisitOnce();
+                    state=includeReturn.Checked?state.VisitIncludingEmptyHomeFallback():state.VisitOnce();
                     done++;
                     if(state.LastReturn!=null)
                     {
@@ -306,7 +306,7 @@ namespace FleetLab
                     else
                     {
                         var update=state.LastUpdate;
-                        Log("Visit "+state.Visits+": "+update.Before.X+","+update.Before.Y+" → "+update.After.X+","+update.After.Y+" · "+update.Outcome);
+                        Log("Visit "+state.Visits+": "+update.Before.X+","+update.Before.Y+" → "+update.After.X+","+update.After.Y+" · "+update.Outcome+(state.LastEmptyHomeResult?" · no available home":""));
                         if(update.Outcome==PracticeAircraftWaypointOutcome.ReachedLockedWaypoint)break;
                     }
                     if(!state.Active||(!includeReturn.Checked&&state.Route.Count==0))break;
@@ -323,7 +323,7 @@ namespace FleetLab
                 }
             }
             RefreshState();
-            feedback.Text=limit!=null?"Stopped after "+done+" visit(s): "+limit:"Advanced "+done+" explicit aircraft batch visit(s). "+(state.Stored?"Docked at the associated home. Apply mode 2 to reactivate, or reset.":!state.Active?"Group retired during the source resource pass. Reset to try another source preset.":state.ReturnState==1?"Returning to the associated home.":state.Route.Count==0?(includeReturn.Checked?"No route; further visits still consume resource96.":"Route complete."):"Other fleets remain fixed.");
+            feedback.Text=limit!=null?"Stopped after "+done+" visit(s): "+limit:"Advanced "+done+" explicit aircraft batch visit(s). "+(state.Stored?"Docked at the associated home. Apply mode 2 to reactivate, or reset.":!state.Active?"Group retired during the source resource pass. Reset to try another source preset.":state.ReturnState==1?"Returning to the associated home.":state.ReturnState==2&&state.Kind==5?"No available home. Remaining source resource continues to be consumed.":state.Route.Count==0?(includeReturn.Checked?"No route; further visits still consume resource96.":"Route complete."):"Other fleets remain fixed.");
         }
         void RefreshState()
         {
@@ -332,7 +332,7 @@ namespace FleetLab
             modeTwo.Enabled=active||state.Stored;
             queue.Enabled=active&&ready&&state.Route.Count<5;
             clear.Enabled=active&&state.Route.Count>0;
-            one.Enabled=ten.Enabled=active&&(includeReturn.Checked?state.ReturnProfileReady:ready&&state.Route.Count>0);
+            one.Enabled=ten.Enabled=active&&(includeReturn.Checked?state.ExtendedReturnProfileReady:ready&&state.Route.Count>0);
             var members=state.Members;
             int low=int.MaxValue,high=int.MinValue;
             foreach(var unit in members)
@@ -342,7 +342,7 @@ namespace FleetLab
                 high=Math.Max(high,value);
             }
             if(members.Count==0)low=high=0;
-            summary.Text="Fleet "+state.FleetSlot+" · "+(active?"active":state.Stored?"stored / docked":"retired")+" · kind "+state.Kind+"\r\nWorld "+state.Origin.X+", "+state.Origin.Y+" · source speed "+state.Speed+"\r\nLive units "+members.Count+" · resource96 "+low+"–"+high+"\r\nTask "+state.Task+" · return state "+state.ReturnState+"\r\nRoute "+state.Route.Count+"/5 · explicit visits "+state.Visits+"\r\n"+(state.Stored?"Docked; mode 2 can reactivate this copy.":state.ReturnState==1?(includeReturn.Checked?"Returning to the associated home.":"Returning; enable return visits to continue."):ready?"Manual stepping; no live clock.":active?"Apply mode2 for the admitted flight subset.":"Reset restores the starting aircraft.");
+            summary.Text="Fleet "+state.FleetSlot+" · "+(active?"active":state.Stored?"stored / docked":"retired")+" · kind "+state.Kind+"\r\nWorld "+state.Origin.X+", "+state.Origin.Y+" · source speed "+state.Speed+"\r\nLive units "+members.Count+" · resource96 "+low+"–"+high+"\r\nTask "+state.Task+" · return state "+state.ReturnState+"\r\nRoute "+state.Route.Count+"/5 · explicit visits "+state.Visits+"\r\nEmpty-home results "+state.EmptyHomeResults+"\r\n"+(state.Stored?"Docked; mode 2 can reactivate this copy.":state.ReturnState==2&&state.Kind==5?(includeReturn.Checked?"No home; resource96 still decreases.":"No home; enable return / idle visits."):state.ReturnState==1?(includeReturn.Checked?"Returning to the associated home.":"Returning; enable return visits to continue."):ready?"Manual stepping; no live clock.":active?"Apply mode2 for the admitted flight subset.":"Reset restores the starting aircraft.");
             var text=new StringBuilder();
             text.AppendLine("Copied live units:");
             foreach(var unit in members)text.AppendLine("Unit "+unit.Slot+" · HP "+unit.HitPoints+" · resource96 "+BitConverter.ToInt16(unit.CopyRecord(),96));
@@ -353,6 +353,7 @@ namespace FleetLab
             for(int n=0;n<state.Route.Count;n++)text.AppendLine("W"+(n+1)+": "+state.Route[n].X+", "+state.Route[n].Y);
             if(state.Route.Count==0)text.AppendLine("No supplied waypoints.");
             if(state.Stored)text.AppendLine("Source home waypoint is retained after docking.");
+            text.AppendLine("Empty-home results in this window: "+state.EmptyHomeResults);
             text.AppendLine("Recent actions:");
             foreach(string line in history)text.AppendLine(line);
             details.Text=text.ToString();

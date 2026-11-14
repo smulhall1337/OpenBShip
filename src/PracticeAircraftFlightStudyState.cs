@@ -105,6 +105,23 @@ namespace FleetLab
                 return Active&&(ReturnState==0||ReturnState==1)&&(Task==1||Task==2||Task==4)&&fleets[FleetSlot*492+485]==0;
             }
         }
+        public int EmptyHomeResults
+        {
+            get;
+            private set;
+        }
+        public bool LastEmptyHomeResult
+        {
+            get;
+            private set;
+        }
+        public bool ExtendedReturnProfileReady
+        {
+            get
+            {
+                return ReturnProfileReady||(Active&&Kind==5&&ReturnState==2&&Task==2&&Route.Count==0&&fleets[FleetSlot*492+485]==0);
+            }
+        }
         public bool Active
         {
             get
@@ -169,7 +186,7 @@ namespace FleetLab
             RandomState=731;
             MovieCounter=0;
         }
-        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last,PracticeAircraftReturnBatchResult returning=null)
+        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last,PracticeAircraftReturnBatchResult returning=null,int emptyHomeResults=-1,bool lastEmptyHome=false)
         {
             units=before.units;
             modes=before.modes;
@@ -188,6 +205,8 @@ namespace FleetLab
             RandomState=random;
             LastUpdate=last;
             LastReturn=returning;
+            EmptyHomeResults=emptyHomeResults<0?before.EmptyHomeResults:emptyHomeResults;
+            LastEmptyHomeResult=lastEmptyHome;
         }
         public PracticeAircraftFlightStudyState QueueSuppliedPoint(int x,int y)
         {
@@ -230,6 +249,12 @@ namespace FleetLab
             var result=PracticeAircraftFlightBatch.AdvanceOffscreen(destruction,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
             var b=result.Batch;
             return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),result.CopyPrimaryOrders(),result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result.WaypointUpdate,result.ReturnUpdate);
+        }
+        public PracticeAircraftFlightStudyState VisitIncludingEmptyHomeFallback()
+        {
+            var result=PracticeAircraftFlightBatch.AdvanceWithEmptyHomeFallback(destruction,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
+            var b=result.Batch;
+            return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),result.CopyPrimaryOrders(),result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result.WaypointUpdate,result.ReturnUpdate,checked(EmptyHomeResults+result.NoHomeGroups),result.NoHomeGroups!=0);
         }
         public byte[] CopyShipPool()
         {
