@@ -318,3 +318,5 @@ AI upscaling of original clips remains an optional stretch goal. It has not been
 - `outputs/`, `work/`: ignored private reports, recovery archives, tools and intermediate research.
 
 Original assets, executables, settings, generated binaries and historical packages stay out of Git. Keep `build/current/UserData` when cleaning the workspace. The current source and scripts plus an explicitly supplied supported original are sufficient to reproduce the playable build.
+
+The bounded automatic-home backend also matches 24 supplied AWACS histories through available-home docking, movement of the newly selected home, distant-home resource expiry, occupied-slot fallback and stored mode-2 relaunch. Native comparisons cover 5,616 complete observations across 5,454 manual source-batch visits. Aircraft creation, airfield placement and route inputs in these comparisons are supplied diagnostic data; AI cadence and mission integration remain unestablished. The v0.74 study still guards searches with candidates.
