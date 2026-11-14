@@ -2,7 +2,7 @@
 
 A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.67.
 
-The source also includes the recovered secondary-target producer and aircraft activation/docking data APIs. These are explicit studies, not automatic aircraft gameplay in v0.67. Aircraft activation configures existing stored fleets using six additional pinned tables; allocation, flight, local-owner media and mission orchestration remain separate work. After pulling these source changes, rerun Setup to import all 38 runtime resources before using the new APIs or validation fixtures.
+The source also includes the recovered secondary-target producer and aircraft creation/activation/docking data APIs. These are explicit studies, not automatic aircraft gameplay in v0.67. Aircraft activation configures existing stored fleets using six additional pinned tables; The stored-aircraft factory allocates its units and parent links; flight, attachment discovery, local-owner media and mission orchestration remain separate work. After pulling these source changes, rerun Setup to import all 38 runtime resources before using the new APIs or validation fixtures.
 
 ## Requirements
 
@@ -219,7 +219,7 @@ The original's default human roster name also appends across the observed second
 
 ## Validation and private research
 
-Source checkpoint 300 adds three original-derived request-generation checks: 211 model/format checks pass in a source build (141 public checks and 70 explicit private skips). Twenty focused malformed-input/ownership groups also pass. The instrumented and unpatched original agree on all 5,081 numeric contexts; the repeated instrumented capture matches all nine files. This is a source API milestone; the packaged v0.67 build and its UI remain at the validated behavior below.
+Source checkpoints 300–302 add request generation and stored-aircraft creation/activation/docking APIs: 217 model/format checks pass (147 public checks and 70 explicit private skips). The producer matches 5,081 original contexts, activation/docking matches 5,169, and whole aircraft factories match 2,016; repeat captures match all 9/13/7 files. Another 20/18/22 focused malformed-input and ownership groups pass. Docking retains the source member-index order clearing, and allocation preserves dead-unit reservations and stale roster tails. These are data API milestones; the packaged v0.67 build and its UI remain at the validated behavior below.
 
 The v0.67 package passes 208 model/format and 119 form groups (327 total), seven firing/movement/secondary modal cycles and eighteen earlier timed-study modal regressions. The secondary scheduler matches 20,483 original network-2 data cases (local launch skipped), enqueue matches 2,160 original cases, and ordinary local launches match 4,800 cases with distinct primary and secondary buffers. Thirty-two composed movement/dual-queue histories match 16,964 rows, 2,027 full-pool observations and all terminal buffers. Independent native repeats match 10/7/7/546 files for those four studies. The matrices are numeric contexts, not thousands of gameplay scenarios. Fresh public Setup/build passes 138 checks and explicitly skips 70 private comparisons. The original automatic request producer and equipment 1–3 impacts remain outside the runnable study.
 

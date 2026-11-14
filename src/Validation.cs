@@ -44,6 +44,11 @@ namespace FleetLab {
             for(int n=0;n<5;n++){W16(fleets,40+n*2,100+n*10);W16(fleets,50+n*2,-200-n);}for(int source=0;source<1500;source++){int at=source*52;BitConverter.GetBytes(17).CopyTo(orders,at);BitConverter.GetBytes(123456789+source).CopyTo(orders,at+4);BitConverter.GetBytes(0xdeadbeefu).CopyTo(orders,at+48);for(int n=0;n<10;n++){W16(orders,at+8+n*2,1+n);W16(orders,at+28+n*2,-100-n);}}
             return new[]{ships,fleets,orders};
         }
+        // Explicit whole-factory302 case0/1323 inputs, not a natural scenario.
+        static byte[][] AircraftFactoryFixture(string assets,int prefix) {
+            var catalog=PracticeUnitCatalog.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));var ships=new byte[402000];var fleets=new byte[123000];for(int n=0;n<1500;n++)W16(ships,n*268+4,n);for(int n=0;n<250;n++)PracticeFleetSnapshot.InitializeRootFleet(fleets,n*492,n);
+            for(int n=0;n<prefix;n++){int p=n*268;BitConverter.GetBytes(1).CopyTo(ships,p);W16(ships,p+14,1);W16(ships,p+72,10);W16(ships,p+8,2);W16(ships,p+10,2);}Array.Copy(catalog.Templates,5*268,ships,7*268,268);W16(ships,7*268+4,7);W16(ships,7*268+6,0);W16(ships,7*268+12,7);BitConverter.GetBytes(1).CopyTo(fleets,7*492);W16(fleets,7*492+6,0);W16(fleets,7*492+12,-32768);W16(fleets,7*492+14,32767);return new[]{ships,fleets};
+        }
         // Independent source289 case0/1080 inputs: timed, ships, fleet,
         // effects, scores. Their original output hashes are pinned below.
         static byte[][] RetiredFixture(string assets,int weapon,int cell) {
@@ -598,6 +603,15 @@ namespace FleetLab {
             });
             check("Aircraft transitions own their results and reject late unsupported members atomically",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var tables=PracticeAircraftTables.Load(p);var catalog=PracticeUnitCatalog.Load(p);var data=AircraftFixture(assets,6);var result=PracticeAircraftTransitions.ApplyOffscreen(tables,catalog,data[0],data[1],data[2],0,1,249,3,-2);var exposed=result.CopyShipPool();exposed[0]^=255;Require(Hash(result.CopyShipPool())=="7C16BF900856DFD24F9009DCA9CC340DC6DA32C65E6CFC9D4A161E2601122DDA","Mutable aircraft result");BitConverter.GetBytes(1).CopyTo(data[0],25*268);string ships=Hash(data[0]),fleets=Hash(data[1]),orders=Hash(data[2]);bool rejected=false;try{PracticeAircraftTransitions.ApplyOffscreen(tables,catalog,data[0],data[1],data[2],0,1,249,3,-2);}catch(NotSupportedException){rejected=true;}Require(rejected&&Hash(data[0])==ships&&Hash(data[1])==fleets&&Hash(data[2])==orders,"Late unsupported member published partial aircraft changes");
+            });
+            check("Stored helicopter creation matches whole original pools and parent link",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=AircraftFactoryFixture(assets,10);Require(Hash(data[0])=="4491A97AAD928DC2254023067D6D0E47E823E6F79B6FA72C2E881F88E809B675"&&Hash(data[1])=="BF9B19ACA18684D03510C7746276F5384D2EED7CAEF836A94C017F2FDED899D1","Original302 case0 input pools");var result=PracticeAircraftFactory.CreateOffscreen(PracticeUnitCatalog.Load(p),data[0],data[1],7,7,0,6,0,-2);Require(result.AllocatedUnits.Count==4&&result.AllocatedUnits[0]==10&&result.AllocatedUnits[3]==13,"Original302 sequential four-unit allocation");Require(Hash(result.CopyShipPool())=="9725B462401DB65346935FF51BEB03993B2552A875C4308CF104C661610F9C88"&&Hash(result.CopyFleetPool())=="7CCABF9B200418F1689154ABFB4D9CF73A0AB3C018E04D3C7880A09FC2B6DBCE","Original302 complete constructor/finalizer outputs");
+            });
+            check("Stored AWACS creation admits the final unit slot without reading past the pool",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=AircraftFactoryFixture(assets,1499);Require(Hash(data[0])=="FC41E07A52AA925334C83B4088212D0345C6266B0E4485DF9814E78038B9208F","Original302 case1323 input ships");var result=PracticeAircraftFactory.CreateOffscreen(PracticeUnitCatalog.Load(p),data[0],data[1],7,7,0,8,0,-2);Require(result.AllocatedUnits.Count==1&&result.AllocatedUnits[0]==1499&&Hash(result.CopyShipPool())=="15C70A88612EEBFB394A647625AC82C14C984571BE78CAE8F0DE9724AB38BF43"&&Hash(result.CopyFleetPool())=="5EFD803753B008B9B633D7AEAE42DFDC7322492E148CADC45821B580AAC88475","Original302 final-slot whole output");
+            });
+            check("Aircraft factory results are immutable and exhausted allocation fails atomically",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var catalog=PracticeUnitCatalog.Load(p);var data=AircraftFactoryFixture(assets,10);var result=PracticeAircraftFactory.CreateOffscreen(catalog,data[0],data[1],7,7,0,6,0,-2);var copy=result.CopyShipPool();copy[0]^=255;Require(Hash(result.CopyShipPool())=="9725B462401DB65346935FF51BEB03993B2552A875C4308CF104C661610F9C88","Factory mutable result");var exhausted=AircraftFactoryFixture(assets,1497);string ships=Hash(exhausted[0]),fleets=Hash(exhausted[1]);Reject(delegate{PracticeAircraftFactory.CreateOffscreen(catalog,exhausted[0],exhausted[1],7,7,0,6,0,-2);});Require(Hash(exhausted[0])==ships&&Hash(exhausted[1])==fleets,"Factory failure published allocated prefix or parent link");
             });
             check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);
