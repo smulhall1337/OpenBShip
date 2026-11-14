@@ -516,6 +516,41 @@ namespace FleetLab {
                 bool guarded=false;try{world.AdvanceFrame(false);}catch(NotSupportedException){guarded=true;}
                 Require(guarded&&world.Combat.ClockMilliseconds==1000&&world.Schedule.BatchStart==0&&Hash(world.Combat.Objects.CopyFleetPool())==Hash(unsupported)&&Hash(world.CopyAuxiliary())==aux,"Unsupported update published partial movement or clock");
             });
+            check("Secondary enqueue preserves the original five-slot capacity and shared header",delegate {
+                var ships=FiringFixture(assets).Objects.CopyShipPool();var orders=new byte[78000];for(int n=0;n<orders.Length;n++)orders[n]=(byte)(n*31+17);int at=7*52;
+                BitConverter.GetBytes(123456789).CopyTo(orders,at+4);for(int n=0;n<10;n++){W16(orders,at+8+n*2,n==4?-1:50+n);W16(orders,at+28+n*2,-500-n);}
+                Require(Hash(orders)=="E98070C7367CAD4A649FDE74CD47B845E3C2BFFECF6D715661A8128EA92B35F3","Original295 case860 input");
+                var queued=PracticeSecondaryFiringOrders.Enqueue(ships,orders,7,3,10,639,-639);
+                Require(queued.ReturnCode==12&&queued.SelectedSlot==4&&Hash(queued.CopyOrderPool())=="C04ADA81513613F1D5400E12E1F8A1B61587BFC354033903327CE9CA9F80A007","Original295 fifth-slot return/full pool");
+                var full=PracticeSecondaryFiringOrders.Enqueue(ships,queued.CopyOrderPool(),7,1,249,0,0);Require(full.ReturnCode==1&&full.SelectedSlot==-1&&Hash(full.CopyOrderPool())==Hash(queued.CopyOrderPool()),"Full secondary queue unexpectedly cleared on kind/target change");
+            });
+            check("Secondary consumption retains the original hole tail and omits the primary timer clamp",delegate {
+                var ships=FiringFixture(assets).Objects.CopyShipPool();var fleets=new byte[123000];var orders=new byte[78000];for(int n=0;n<orders.Length;n++)orders[n]=(byte)(n*31+17);for(int unit=0;unit<1500;unit++)for(int n=0;n<10;n++)W16(orders,unit*52+8+n*2,-1);
+                BitConverter.GetBytes(1).CopyTo(ships,0);W16(ships,6,-2);W16(ships,12,7);W16(ships,14,6);W16(ships,16,0);W16(ships,198,-1);for(int n=0;n<24;n++)BitConverter.GetBytes(n==0?1:35).CopyTo(ships,100+n*4);
+                BitConverter.GetBytes(6).CopyTo(fleets,7*492);W16(fleets,7*492+6,-2);BitConverter.GetBytes(2).CopyTo(fleets,10*492);W16(fleets,10*492+6,1);
+                BitConverter.GetBytes(1).CopyTo(orders,0);BitConverter.GetBytes(-1).CopyTo(orders,4);for(int n=0;n<10;n++){W16(orders,8+n*2,n==0?4:n==1?-1:n);W16(orders,28+n*2,100+n);}BitConverter.GetBytes(0x4b47a0+10*492).CopyTo(orders,48);
+                Require(Hash(orders)=="2DCFE3302F9A3BF0B3BC71685DA427FFC47919A1568E14CA5FD6D497342A80EC","Original294 case450 input");string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var ranges=PracticeFiringRangeTable.Load(p);var visibility=PracticeVisibility.Load(p);var rates=PracticeFiringRateTable.Load(p);
+                var update=PracticeSecondaryFiringOrders.AdvanceWithoutLaunch(ranges,visibility,rates,ships,fleets,orders,0,0,0,-2);
+                Require(update.ConsumedOrders==1&&update.RejectedOrders==0&&Hash(update.CopyOrderPool())=="FF6DECBF82CCED54F47037F1865FD7248B1DB82B05786BD4239BCE06AEAEB234","Original294 ten-slot shift with retained hole tail");
+                BitConverter.GetBytes(0x7ffffff0).CopyTo(orders,4);var future=PracticeSecondaryFiringOrders.AdvanceWithoutLaunch(ranges,visibility,rates,ships,fleets,orders,0x7ffff000u,0,0,-2);Require(future.ConsumedOrders==0&&Hash(future.CopyOrderPool())==Hash(orders),"Future secondary timer was clamped as though it were primary");
+            });
+            check("Secondary local launch clears primary requests on depletion without aliasing the queues",delegate {
+                var combat=FiringFixture(assets);byte[] ships=combat.Objects.CopyShipPool(),fleets=combat.Objects.CopyFleetPool(),orders=new byte[78000];
+                W16(ships,7*268+196+17*2,1);BitConverter.GetBytes(17).CopyTo(ships,7*268+100);BitConverter.GetBytes(1).CopyTo(fleets,10*492);W16(fleets,10*492+12,BitConverter.ToInt16(fleets,7*492+12)+10);W16(fleets,10*492+14,BitConverter.ToInt16(fleets,7*492+14));
+                for(int source=0;source<1500;source++)for(int n=0;n<10;n++)W16(orders,source*52+8+n*2,-1);int at=7*52;BitConverter.GetBytes(17).CopyTo(orders,at);BitConverter.GetBytes(999).CopyTo(orders,at+4);BitConverter.GetBytes(0x4b47a0+10*492).CopyTo(orders,at+48);for(int n=0;n<10;n++){W16(orders,at+8+n*2,n<2?4+n:-1);W16(orders,at+28+n*2,5+n%3);}
+                Require(Hash(ships)=="D77E7E366342A78D66C9E05764BA2C998CF91E2F13A92AF3EF642172B2BB187E"&&Hash(fleets)=="DD5A36A0CFBBA6B1C8B94527DD424A7BF5C8CF4B35211260F757BBC0249CA7D8"&&Hash(orders)=="FCC799803A188CE9FF98A48AEF95B1F5AD2082ED664B3B7FDEB039FFA83E58C8","Original296 case252 inputs");
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var objects=new PracticeTimedCreationState(PracticeTimedWeaponCatalog.Load(p),new byte[21440],ships,fleets,-1);
+                var update=PracticeSecondaryFiringOrders.AdvanceWithLaunch(PracticeFiringRangeTable.Load(p),PracticeVisibility.Load(p),PracticeFiringRateTable.Load(p),PracticeTimedWeaponCatalog.Load(p),PracticeUnitCatalog.Load(p),objects,orders,orders,1000,0,-2);
+                Require(update.ConsumedOrders==1&&update.CreatedObjects==1&&update.LastRoundCallbacks==1&&Hash(update.CopyOrderPool())=="A3BECEE1E1120934CD0F3A658843D1E4ED155A72EB1CEC50EC6BC5B6D41C483A"&&Hash(update.CopyPrimaryOrders())=="F2316E58BF84221FBE51280924B149CA08D6FF1E37D5A7D3B900ED6BA6385430","Original296 distinct primary clear and secondary shift/rate");
+                Require(Hash(update.Objects.CopyShipPool())=="116B793220A02346CE9E8B4F04694DBABDC98542A1C7A29F9D7CB13024578DF6"&&Hash(update.Objects.CopyTimedPool())=="5619D0BA66AB8E8E35456BF3B92A15817B0F65BE0017C3C640B9DB3A633CB175"&&Hash(orders)=="FCC799803A188CE9FF98A48AEF95B1F5AD2082ED664B3B7FDEB039FFA83E58C8","Original296 full ship/projectile buffers and immutable input");
+            });
+            check("Movement and both firing queues match the original ordered poll and asymmetric pause",delegate {
+                var world=WorldFixture(assets);var combat=world.Combat;for(int n=0;n<10;n++)combat=combat.QueueOrder(20,7,10,3,3);world=world.WithCombat(combat);for(int n=0;n<5;n++)world=world.QueueSecondaryOrder(20,7,10,3,3);
+                world=world.AdvanceFrame(false);Require(world.Combat.ClockMilliseconds==40&&world.Schedule.BatchStart==8&&world.SecondaryCreatedObjects==3&&world.Combat.ObjectsFromOrders==3,"Original297 first poll counts");
+                Require(Hash(world.Combat.Objects.CopyTimedPool())=="2971870A6D41E1974089AEB974B3AE800ECD9311102B39FF827D0CDFFF3432F9"&&Hash(world.Combat.Objects.CopyFleetPool())=="84F427C70863C14BA657B68203F6647D7E3920446CC21000C05D3F6AA50D58CA"&&Hash(world.CopySecondaryOrders())=="408B2577AF4000972335FCEA3306EBC5DC36887A6CB3A8CD683EA55C035C5D7E","Original297 secondary launch before motion and primary launch after motion");
+                string secondary=Hash(world.CopySecondaryOrders()),fleets=Hash(world.Combat.Objects.CopyFleetPool());uint timer=BitConverter.ToUInt32(world.Combat.PauseTimers.CopyShipTimers(),7*52+4);for(int n=0;n<25;n++)world=world.AdvanceFrame(true);
+                Require(world.Combat.ClockMilliseconds==1040&&world.Schedule.BatchStart==8&&Hash(world.CopySecondaryOrders())==secondary&&Hash(world.Combat.Objects.CopyFleetPool())==fleets&&BitConverter.ToUInt32(world.Combat.PauseTimers.CopyShipTimers(),7*52+4)==unchecked(timer+1000u),"Original411313 shifts primary but not secondary deadlines");
+            });
             check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);
                 Require(Hash(data[0])=="D4FB7DF9492E7EECA05309936575DCF441D640804626F2B44BB6819A488F05D8"&&Hash(data[2])=="575680C602FD12D0C483D89C9893578CBDC69A2811E380C064D59D6B33D0F86E","Original289 no-victim inputs");

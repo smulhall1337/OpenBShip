@@ -1,6 +1,11 @@
 using System;
 
 namespace FleetLab {
+    internal sealed class PracticeSecondaryStudyUpdate {
+        internal PracticeTimedStudyState Combat { get; private set; }
+        internal PracticeSecondaryOrderUpdate Firing { get; private set; }
+        internal PracticeSecondaryStudyUpdate(PracticeTimedStudyState combat,PracticeSecondaryOrderUpdate firing) { Combat=combat;Firing=firing; }
+    }
     // Copied-state composition for an explicit manual study. Fleets stay fixed
     // unless the separate PracticeWorldStudyState supplies a movement result;
     // supplied40ms deltas are numeric steps, not calibrated original frame pace.
@@ -144,6 +149,16 @@ namespace FleetLab {
         internal PracticeTimedStudyState WithFleetPool(byte[] fleetPool) {
             var objects=new PracticeTimedCreationState(catalog,Objects.CopyTimedPool(),Objects.CopyShipPool(),fleetPool,Objects.LastTargetFleet);
             return new PracticeTimedStudyState(this,objects,WithTimedPool(objects.CopyTimedPool()),ClockMilliseconds);
+        }
+        internal PracticeTimedStudyState WithObjectsAndPrimaryOrders(PracticeTimedCreationState objects,byte[] primaryOrders) {
+            if(objects==null)throw new ArgumentNullException("objects");
+            return new PracticeTimedStudyState(this,objects,WithTimedPool(objects.CopyTimedPool(),primaryOrders),ClockMilliseconds);
+        }
+        internal PracticeSecondaryStudyUpdate ProcessSecondaryOrders(byte[] orders,uint clock) {
+            if(!IncludesFiringOrders)throw new InvalidOperationException("Secondary firing requires the firing-data study.");
+            var update=PracticeSecondaryFiringOrders.AdvanceWithLaunch(firingRanges,visibility,firingRates,catalog,units,Objects,
+                PauseTimers.CopyShipTimers(),orders,clock,0,-2);
+            return new PracticeSecondaryStudyUpdate(WithObjectsAndPrimaryOrders(update.Objects,update.CopyPrimaryOrders()),update);
         }
         public PracticeFiringCheck CheckFiring(int sourceShip,int targetFleet,int weapon) {
             if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing rules.");

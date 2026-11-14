@@ -38,7 +38,7 @@ namespace FleetLab {
     }
 
     // Supported RIP B9A8...6A569, complete418BD0 in a bounded data context:
-    // unit types1..4, fleet kinds1/9, HP0, mode0/network0/playercount0,
+    // unit types1..4, fleet kinds1/9, HP0, mode0/network0/scenario-selector0,
     // local owner-2 and another selected fleet. Mission counters/endings,
     // live UI/media and transport/attached-object callbacks remain excluded.
     // The optional manual study uses this explicit context, without missions.
