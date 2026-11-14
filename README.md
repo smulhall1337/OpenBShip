@@ -250,6 +250,8 @@ Checkpoint 318 preserves the aircraft resource and at-home docking research in a
 
 Checkpoint 323 preserves v0.71 and the latest aircraft research in a verified private archive. A fresh restore rebuilds through public Setup, passes 191 checks with 70 private skips, launches cleanly and repeats the 19 home-search UI cycles. Seven original/model families reproduce 325 files exactly. Their manifests correct an earlier report: the home-candidate and landing captures contain 11 files each. Nineteen temporary trees were retired with verified per-file recovery receipts; current v0.71, previous v0.70 and user data remain available.
 
+Checkpoint 325 independently restores and rebuilds the latest source, passes 193 public checks with 70 private skips, launches cleanly and reproduces all 36 AWACS continuation capture files exactly. Five verified temporary trees were retired after per-file recovery checks. The playable v0.71 and previous v0.70 remain available; the source-only continuation does not add automatic aircraft flight.
+
 Earlier checkpoint comparisons:
 Source checkpoints 300–302 add request generation and stored-aircraft creation/activation/docking APIs: 217 model/format checks pass (147 public checks and 70 explicit private skips). The producer matches 5,081 original contexts, activation/docking matches 5,169, and whole aircraft factories match 2,016; repeat captures match all 9/13/7 files. Another 20/18/22 focused malformed-input and ownership groups pass. Docking retains the source member-index order clearing, and allocation preserves dead-unit reservations and stale roster tails. Those data APIs preceded the packaged v0.68 study. The following figures describe earlier checkpoints.
 
