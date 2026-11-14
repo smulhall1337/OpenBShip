@@ -180,7 +180,10 @@ namespace FleetLab
                 fleets[at+482]=255;
                 if(kind==0||kind==2||kind==6||kind==7||kind==8)continue;
                 if((kind==1||kind==11)&&I(fleets,at+472)==0&&I(fleets,at+476)==0&&W(fleets,at+40)==-1&& (kind==1?(fleets[at+485]==2||fleets[at+485]==3):fleets[at+485]==0))continue;
-                if(kind<3||kind>5||W(fleets,at+4)!=slot||I(fleets,at+472)!=0||W(fleets,at+40)!=-1||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
+                // 4279C2 skips a new AWACS home search in state2. The admitted
+                // empty-waypoint/task2 branch still consumes resource96.
+                bool fallbackIdle=docking!=null&&docking.AllowNoHome&&kind==5&&I(fleets,at+472)==2&&I(fleets,at+476)==2;
+                if(kind<3||kind>5||W(fleets,at+4)!=slot||(I(fleets,at+472)!=0&&!fallbackIdle)||W(fleets,at+40)!=-1||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
                 if(slot==249)throw new NotSupportedException("The recorded other selected fleet249 cannot also be the active aircraft in this profile.");
                 var unique=new HashSet<uint>();
                 for(int member=0;member<6;member++)
@@ -223,7 +226,7 @@ namespace FleetLab
                     uint reference=BitConverter.ToUInt32(fleets,at+16+member*4);
                     if(reference!=0&&I(ships,Ship(reference))!=0&&W(ships,Ship(reference)+96)<=threshold)returning=true;
                 }
-                if(returning)
+                if(returning&&!fallbackIdle)
                 {
                     if(docking!=null&&docking.AllowNoHome&&kind==5)
                     {
