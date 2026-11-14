@@ -123,8 +123,18 @@ namespace FleetLab
                 if(x!=-1&&(x<0||x>=640||y<0||y>=640))throw new InvalidDataException("Aircraft waypoint is outside the admitted world.");
             }
             var prefix=PracticeAircraftResourceBatch.ApplyBeforeWaypoint(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,actor);
+            return CompleteAfterResources(prefix,auxiliaryData,actor,selectedWaypoint,before);
+        }
+        internal static PracticeAircraftWaypointBatchResult CompleteAfterResources(PracticeAircraftResourceBatchResult prefix,byte[] auxiliaryData,int actor,int selectedWaypoint,Point before)
+        {
             var f=prefix.CopyFleetPool();
             var aux=(byte[])auxiliaryData.Clone();
+            int at=actor*492;
+            for(int n=0;n<5;n++)
+            {
+                int x=W(f,at+40+n*2),y=W(f,at+50+n*2);
+                if(x!=-1&&(x<0||x>=640||y<0||y>=640))throw new InvalidDataException("Aircraft waypoint is outside the admitted world.");
+            }
             if(I(f,at)==0)return new PracticeAircraftWaypointBatchResult(prefix,f,aux,PracticeAircraftWaypointOutcome.FleetRetired,before,before,false,selectedWaypoint);
             int tx=W(f,at+40),ty=W(f,at+50);
             if(tx==-1)return new PracticeAircraftWaypointBatchResult(prefix,f,aux,PracticeAircraftWaypointOutcome.NoWaypoint,before,before,false,selectedWaypoint);

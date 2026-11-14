@@ -95,6 +95,14 @@ namespace FleetLab
         }
         public static PracticeAircraftReturnBatchResult AdvanceOffscreen(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random)
         {
+            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,false).ReturnUpdate;
+        }
+        internal static PracticeAircraftFlightBatchResult AdvanceIncludingWaypoints(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random)
+        {
+            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true);
+        }
+        static PracticeAircraftFlightBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowOrdinary)
+        {
             if(schedule==null)throw new ArgumentNullException("schedule");
             if(ships==null||ships.Length!=402000||fleets==null||fleets.Length!=123000||auxiliary==null||auxiliary.Length!=78336)throw new InvalidDataException("Returning aircraft require complete ship/fleet/auxiliary pools.");
             if(actor<0||actor>=249)throw new ArgumentOutOfRangeException("actor");
@@ -123,7 +131,8 @@ namespace FleetLab
             var p=prepared.CopyPrimaryOrders();
             var aux=(byte[])auxiliary.Clone();
             int selected=prepared.SelectedWaypoint;
-            if(I(f,at)==0)return new PracticeAircraftReturnBatchResult(prefix,s,f,p,aux,PracticeAircraftReturnOutcome.FleetRetired,before,before,home,false,selected,prepared.Invalidations);
+            if(I(f,at)==0)return new PracticeAircraftFlightBatchResult(new PracticeAircraftReturnBatchResult(prefix,s,f,p,aux,PracticeAircraftReturnOutcome.FleetRetired,before,before,home,false,selected,prepared.Invalidations));
+            if(I(f,at+472)==0&&allowOrdinary)return new PracticeAircraftFlightBatchResult(PracticeAircraftWaypointBatch.CompleteAfterResources(prefix,auxiliary,actor,selected,before),p);
             if(I(f,at+472)!=1)throw new NotSupportedException("This visit remains ordinary flight; use the waypoint profile instead. Batch preserved.");
             bool started=state==0;
             W(f,at+40,home.X);
@@ -145,7 +154,7 @@ namespace FleetLab
                     outcome=PracticeAircraftReturnOutcome.Docked;
                 }
             }
-            return new PracticeAircraftReturnBatchResult(prefix,s,f,p,aux,outcome,before,after,home,started,selected,prepared.Invalidations);
+            return new PracticeAircraftFlightBatchResult(new PracticeAircraftReturnBatchResult(prefix,s,f,p,aux,outcome,before,after,home,started,selected,prepared.Invalidations));
         }
     }
 }
