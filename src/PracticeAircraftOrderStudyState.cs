@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 namespace FleetLab {
     // Supplied fixed-fleet study: secondary419970 before416C40, then inactive
     // primary416090 and finite40E0D0 effects. This is not the AI caller/phase.
@@ -11,6 +12,14 @@ namespace FleetLab {
         readonly PracticeFiringRateTable rates;
         readonly byte[] secondary;
         readonly int[] created;
+        readonly PracticeSecondaryTargetChoice[] requests;
+        public int RequestPolls { get; private set; }
+        public int GeneratedOrders { get; private set; }
+        public int AcceptedRequests { get; private set; }
+        public int LastGenerated { get; private set; }
+        public int LastAccepted { get; private set; }
+        public int LastRequestDraws { get; private set; }
+        public IList<PracticeSecondaryTargetChoice> LastRequests { get { return Array.AsReadOnly(requests); } }
         public PracticeTimedStudyState Combat { get; private set; }
         public int LastQueueReturnCode { get; private set; }
         public int LastQueueSlot { get; private set; }
@@ -39,11 +48,23 @@ namespace FleetLab {
         }
         PracticeAircraftOrderStudyState(PracticeTimedStudyState combat,PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,
                 PracticeFiringRangeTable ranges,PracticeVisibility visibility,PracticeFiringRateTable rates,byte[] orders) {
-            Combat=combat;this.weapons=weapons;this.units=units;this.ranges=ranges;this.visibility=visibility;this.rates=rates;secondary=(byte[])orders.Clone();created=new int[0];LastQueueSlot=-1;
+            Combat=combat;this.weapons=weapons;this.units=units;this.ranges=ranges;this.visibility=visibility;this.rates=rates;secondary=(byte[])orders.Clone();created=new int[0];requests=new PracticeSecondaryTargetChoice[0];LastQueueSlot=-1;
         }
         PracticeAircraftOrderStudyState(PracticeAircraftOrderStudyState before,PracticeTimedStudyState combat,byte[] orders,int[] slots) {
             Combat=combat;weapons=before.weapons;units=before.units;ranges=before.ranges;visibility=before.visibility;rates=before.rates;secondary=(byte[])orders.Clone();created=(int[])slots.Clone();
             LastQueueReturnCode=before.LastQueueReturnCode;LastQueueSlot=before.LastQueueSlot;Polls=before.Polls;ConsumedOrders=before.ConsumedOrders;RejectedOrders=before.RejectedOrders;CreatedObjects=before.CreatedObjects;
+            requests=before.requests;RequestPolls=before.RequestPolls;GeneratedOrders=before.GeneratedOrders;AcceptedRequests=before.AcceptedRequests;LastGenerated=before.LastGenerated;LastAccepted=before.LastAccepted;LastRequestDraws=before.LastRequestDraws;
+        }
+        PracticeAircraftOrderStudyState(PracticeAircraftOrderStudyState before,PracticeSecondaryTargetingResult result)
+            :this(before,before.Combat.WithRandomState(result.RandomState,result.RandomCalls),result.CopyOrderPool(),new int[0]) {
+            requests=new PracticeSecondaryTargetChoice[result.Choices.Count];for(int n=0;n<requests.Length;n++)requests[n]=result.Choices[n];
+            RequestPolls++;GeneratedOrders+=result.AttemptedOrders;AcceptedRequests+=result.AcceptedOrders;
+            LastGenerated=result.AttemptedOrders;LastAccepted=result.AcceptedOrders;LastRequestDraws=result.RandomCalls;
+        }
+        // One explicit419790 poll. The application caller's phase/cadence is
+        // not implied; shared RNG advances even when every target queue is full.
+        public PracticeAircraftOrderStudyState ProduceRequests() {
+            return new PracticeAircraftOrderStudyState(this,PracticeSecondaryTargeting.Generate(ranges,Combat.Objects.CopyShipPool(),Combat.Objects.CopyFleetPool(),secondary,Combat.RandomState));
         }
         public PracticeFiringCheck CheckFiring(int source,int target,int weapon) {
             if(weapon<1||weapon>3)throw new ArgumentOutOfRangeException("weapon");

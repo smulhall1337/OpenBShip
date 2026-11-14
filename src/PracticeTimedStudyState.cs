@@ -155,6 +155,12 @@ namespace FleetLab {
             return new OriginalPauseTimers(timed, orderPool ?? PauseTimers.CopyShipTimers(), PauseTimers.CopyFourCounters(),
                                            PauseTimers.CopyTimestamps(), PauseTimers.GlobalCounter);
         }
+        // Explicit request polls share the original RNG stream with impacts.
+        internal PracticeTimedStudyState WithRandomState(uint state,int calls) {
+            if(calls<0)throw new ArgumentOutOfRangeException("calls");
+            var next=new PracticeTimedStudyState(this,Objects,PauseTimers,ClockMilliseconds);
+            next.RandomState=state;next.RandomCalls+=calls;return next;
+        }
         // Preserve combat, timer, score and RNG history while replacing the
         // owned fleet snapshot after an admitted movement batch. No update is
         // published until the caller's remaining combat pass also succeeds.
