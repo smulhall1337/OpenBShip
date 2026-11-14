@@ -86,6 +86,25 @@ namespace FleetLab
                 return new Point(BitConverter.ToInt16(fleets,FleetSlot*492+12),BitConverter.ToInt16(fleets,FleetSlot*492+14));
             }
         }
+        public PracticeAircraftReturnBatchResult LastReturn
+        {
+            get;
+            private set;
+        }
+        public bool Stored
+        {
+            get
+            {
+                return Kind>=6&&Kind<=8;
+            }
+        }
+        public bool ReturnProfileReady
+        {
+            get
+            {
+                return Active&&(ReturnState==0||ReturnState==1)&&(Task==1||Task==2||Task==4)&&fleets[FleetSlot*492+485]==0;
+            }
+        }
         public bool Active
         {
             get
@@ -150,7 +169,7 @@ namespace FleetLab
             RandomState=731;
             MovieCounter=0;
         }
-        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last)
+        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last,PracticeAircraftReturnBatchResult returning=null)
         {
             units=before.units;
             modes=before.modes;
@@ -168,6 +187,7 @@ namespace FleetLab
             MovieCounter=movie;
             RandomState=random;
             LastUpdate=last;
+            LastReturn=returning;
         }
         public PracticeAircraftFlightStudyState QueueSuppliedPoint(int x,int y)
         {
@@ -189,9 +209,14 @@ namespace FleetLab
         }
         public PracticeAircraftFlightStudyState ApplyModeTwo()
         {
-            if(!Active)throw new InvalidOperationException("Reset the flight study before applying a mode to a retired group.");
-            var stored=PracticeAircraftTransitions.ApplyOffscreen(modes,units,ships,fleets,primary,FleetSlot,0,249,SelectedWaypoint,-2);
-            var active=PracticeAircraftTransitions.ApplyOffscreen(modes,units,stored.CopyShipPool(),stored.CopyFleetPool(),stored.CopyPrimaryOrders(),FleetSlot,2,249,stored.SelectedWaypoint,-2);
+            if(!Active&&!Stored)throw new InvalidOperationException("Reset the flight study before applying a mode to a retired group.");
+            PracticeAircraftTransitionResult active;
+            if(Stored)active=PracticeAircraftTransitions.ApplyOffscreen(modes,units,ships,fleets,primary,FleetSlot,2,249,SelectedWaypoint,-2);
+            else
+            {
+                var stored=PracticeAircraftTransitions.ApplyOffscreen(modes,units,ships,fleets,primary,FleetSlot,0,249,SelectedWaypoint,-2);
+                active=PracticeAircraftTransitions.ApplyOffscreen(modes,units,stored.CopyShipPool(),stored.CopyFleetPool(),stored.CopyPrimaryOrders(),FleetSlot,2,249,stored.SelectedWaypoint,-2);
+            }
             return new PracticeAircraftFlightStudyState(this,active.CopyShipPool(),active.CopyFleetPool(),scores,effects,auxiliary,active.CopyPrimaryOrders(),active.SelectedWaypoint,Visits,MovieCounter,RandomState,null);
         }
         public PracticeAircraftFlightStudyState VisitOnce()
@@ -199,6 +224,12 @@ namespace FleetLab
             var result=PracticeAircraftWaypointBatch.AdvanceOffscreen(destruction,visuals,ships,fleets,scores,effects,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
             var b=result.Batch;
             return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),primary,result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result);
+        }
+        public PracticeAircraftFlightStudyState VisitIncludingReturn()
+        {
+            var result=PracticeAircraftFlightBatch.AdvanceOffscreen(destruction,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
+            var b=result.Batch;
+            return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),result.CopyPrimaryOrders(),result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result.WaypointUpdate,result.ReturnUpdate);
         }
         public byte[] CopyShipPool()
         {
