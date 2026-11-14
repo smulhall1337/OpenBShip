@@ -14,6 +14,28 @@ namespace FleetLab
         readonly PracticeAircraftDestructionTable destruction;
         readonly byte[] visuals;
         readonly byte[] ships,fleets,scores,effects,auxiliary,primary;
+        public bool SuppliedTestAirfield
+        {
+            get;
+            private set;
+        }
+        public int AvailableHomeResults
+        {
+            get;
+            private set;
+        }
+        public PracticeAircraftHomeSearchSummary LastHomeSearch
+        {
+            get;
+            private set;
+        }
+        public bool CanPrepareTestAirfield
+        {
+            get
+            {
+                return !SuppliedTestAirfield&&Kind==5&&ProfileReady&&BitConverter.ToInt32(ships,100*268)==0&&BitConverter.ToInt32(fleets,30*492)==0;
+            }
+        }
         public int FleetSlot
         {
             get;
@@ -186,7 +208,7 @@ namespace FleetLab
             RandomState=731;
             MovieCounter=0;
         }
-        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last,PracticeAircraftReturnBatchResult returning=null,int emptyHomeResults=-1,bool lastEmptyHome=false)
+        PracticeAircraftFlightStudyState(PracticeAircraftFlightStudyState before,byte[] s,byte[] f,byte[] score,byte[] effect,byte[] aux,byte[] orders,int point,int visits,int movie,uint random,PracticeAircraftWaypointBatchResult last,PracticeAircraftReturnBatchResult returning=null,int emptyHomeResults=-1,bool lastEmptyHome=false,bool suppliedTestAirfield=false,int availableHomeResults=-1,PracticeAircraftHomeSearchSummary homeSearch=null)
         {
             units=before.units;
             modes=before.modes;
@@ -207,6 +229,55 @@ namespace FleetLab
             LastReturn=returning;
             EmptyHomeResults=emptyHomeResults<0?before.EmptyHomeResults:emptyHomeResults;
             LastEmptyHomeResult=lastEmptyHome;
+            SuppliedTestAirfield=before.SuppliedTestAirfield||suppliedTestAirfield;
+            AvailableHomeResults=availableHomeResults<0?before.AvailableHomeResults:availableHomeResults;
+            LastHomeSearch=homeSearch??before.LastHomeSearch;
+        }
+        // Synthetic diagnostic fixture, matching the supplied native comparison.
+        // This does not recover map placement or the original airfield factory.
+        public PracticeAircraftFlightStudyState PrepareTestAirfield()
+        {
+            if(!CanPrepareTestAirfield)throw new InvalidOperationException("An active, outbound AWACS and unused unit100 / fleet30 are required for the test airfield.");
+            if(PracticeAircraftHomeSearch.FindCandidates(ships,fleets,FleetSlot).Count!=0)throw new InvalidOperationException("The test airfield requires a copy with no existing landing candidates.");
+            int parent=BitConverter.ToInt16(fleets,FleetSlot*492+8);
+            if(parent<0||parent>=1500)throw new InvalidDataException("Associated parent crosses its pool.");
+            int home=BitConverter.ToInt16(ships,parent*268+12);
+            if(home<0||home>=250)throw new InvalidDataException("Associated home crosses its pool.");
+            int x=BitConverter.ToInt16(fleets,home*492+12)+60,y=BitConverter.ToInt16(fleets,home*492+14)-20;
+            if(x<0||x>=640||y<0||y>=640)throw new InvalidOperationException("The supplied airfield would be outside the study world.");
+            var s=(byte[])ships.Clone();
+            var f=(byte[])fleets.Clone();
+            int af=30*492,au=100*268,owner=BitConverter.ToInt16(f,FleetSlot*492+6);
+            Action<byte[],int,int> word=delegate(byte[] b,int at,int value)
+            {
+                BitConverter.GetBytes((short)value).CopyTo(b,at);
+            };
+            Action<byte[],int,int> integer=delegate(byte[] b,int at,int value)
+            {
+                BitConverter.GetBytes(value).CopyTo(b,at);
+            };
+            integer(f,af,11);
+            word(f,af+4,30);
+            word(f,af+6,owner);
+            word(f,af+12,x);
+            word(f,af+14,y);
+            for(int n=0;n<6;n++)integer(f,af+16+n*4,0);
+            integer(f,af+16,0x4fc340+au);
+            for(int n=0;n<100;n++)integer(f,af+64+n*4,0);
+            integer(s,au,20);
+            word(s,au+4,100);
+            word(s,au+6,owner);
+            word(s,au+8,2);
+            word(s,au+10,3);
+            word(s,au+12,30);
+            word(s,au+14,3);
+            word(s,au+16,3);
+            for(int n=0;n<4;n++)
+            {
+                integer(s,au+56+n*4,0);
+                integer(f,af+64+(23+n)*4,2);
+            }
+            return new PracticeAircraftFlightStudyState(this,s,f,scores,effects,auxiliary,primary,SelectedWaypoint,Visits,MovieCounter,RandomState,null,null,-1,false,true);
         }
         public PracticeAircraftFlightStudyState QueueSuppliedPoint(int x,int y)
         {
@@ -255,6 +326,12 @@ namespace FleetLab
             var result=PracticeAircraftFlightBatch.AdvanceWithEmptyHomeFallback(destruction,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
             var b=result.Batch;
             return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),result.CopyPrimaryOrders(),result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result.WaypointUpdate,result.ReturnUpdate,checked(EmptyHomeResults+result.NoHomeGroups),result.NoHomeGroups!=0);
+        }
+        public PracticeAircraftFlightStudyState VisitIncludingHomeSearch()
+        {
+            var result=PracticeAircraftFlightBatch.AdvanceWithHomeSearch(destruction,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,new PracticeFleetScheduler(FleetSlot/4*4,0),FleetSlot,SelectedWaypoint,MovieCounter,RandomState);
+            var b=result.Batch;
+            return new PracticeAircraftFlightStudyState(this,b.CopyShipPool(),b.CopyFleetPool(),b.CopyScoreRegion(),b.CopyEffectPool(),result.CopyAuxiliary(),result.CopyPrimaryOrders(),result.SelectedWaypoint,checked(Visits+1),b.MovieCounter,b.RandomState,result.WaypointUpdate,result.ReturnUpdate,checked(EmptyHomeResults+result.NoHomeGroups),result.NoHomeGroups!=0,false,checked(AvailableHomeResults+(result.HomeSearch!=null&&result.HomeSearch.FoundHome?1:0)),result.HomeSearch);
         }
         public byte[] CopyShipPool()
         {

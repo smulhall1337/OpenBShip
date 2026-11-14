@@ -14,6 +14,7 @@ namespace FleetLab
         readonly NumericUpDown targetX=new NumericUpDown(),targetY=new NumericUpDown();
         readonly Button modeTwo=new Button(),queue=new Button(),clear=new Button(),one=new Button(),ten=new Button(),reset=new Button();
         readonly CheckBox includeReturn=new CheckBox();
+        readonly Button prepareHome=new Button();
         readonly Label summary=new Label(),feedback=new Label();
         readonly TextBox details=new TextBox();
         readonly FlightCanvas canvas;
@@ -99,6 +100,22 @@ namespace FleetLab
             {
                 Text="Mode 1 helicopters have zero source resource. Mode 2 provides a usable source preset. No seconds or fuel calibration is implied."
             },60);
+            prepareHome.Text="Prepare test airfield (copy)";
+            prepareHome.Name="flightPrepareHome";
+            prepareHome.AccessibleName=prepareHome.Text;
+            prepareHome.AccessibleDescription="Supplies a test airfield near the associated home for an active AWACS. Synthetic placement in this flight copy only. Reset removes it.";
+            add(prepareHome,36);
+            add(new Label
+            {
+                Text="Optional AWACS test: supplies an airfield near home. Enable return visits to inspect automatic selection and docking. Reset removes it."
+            },66);
+            prepareHome.Click+=delegate
+            {
+                Act(delegate
+                {
+                    state=state.PrepareTestAirfield();Log("Supplied test airfield unit100 / fleet30 in this flight copy only.");
+                },"Test airfield prepared in this copy. Enable return / idle visits, queue a distant point and advance visits.");
+            };
             add(new Label
             {
                 Text="Test waypoint · world coordinates"
@@ -152,7 +169,7 @@ namespace FleetLab
             includeReturn.Text="Include recovered return / idle visits";
             includeReturn.Name="flightIncludeReturn";
             includeReturn.AccessibleName=includeReturn.Text;
-            includeReturn.AccessibleDescription="Opt in to resource-triggered home travel and docking during explicit visits. Visits continue with no supplied route. AWACS fallback is admitted only when its full home-candidate search is empty.";
+            includeReturn.AccessibleDescription="Opt in to resource-triggered home travel and docking during explicit visits. Visits continue with no supplied route. AWACS searches available landing slots and relinks its home, or reports no available home.";
             add(includeReturn,46);
             add(new Label
             {
@@ -166,7 +183,7 @@ namespace FleetLab
             };
             summary.Name="flightSummary";
             summary.AccessibleName="Aircraft position, resource and route state";
-            add(summary,140);
+            add(summary,160);
             details.Name="flightDetails";
             details.AccessibleName="Copied units and visit history";
             details.Multiline=true;
@@ -295,8 +312,10 @@ namespace FleetLab
             {
                 try
                 {
-                    state=includeReturn.Checked?state.VisitIncludingEmptyHomeFallback():state.VisitOnce();
+                    var beforeSearch=state.LastHomeSearch;
+                    state=includeReturn.Checked?state.VisitIncludingHomeSearch():state.VisitOnce();
                     done++;
+                    if(state.LastHomeSearch!=null&&state.LastHomeSearch!=beforeSearch) Log("Home search: "+state.LastHomeSearch.CandidateCount+" candidate(s); "+(state.LastHomeSearch.FoundHome?"selected unit "+state.LastHomeSearch.ParentUnit+", link "+state.LastHomeSearch.Link:"no available home"));
                     if(state.LastReturn!=null)
                     {
                         var update=state.LastReturn;
@@ -330,6 +349,7 @@ namespace FleetLab
             if(IsDisposed||Disposing)return;
             bool active=state.Active,ready=state.ProfileReady;
             modeTwo.Enabled=active||state.Stored;
+            prepareHome.Enabled=state.CanPrepareTestAirfield;
             queue.Enabled=active&&ready&&state.Route.Count<5;
             clear.Enabled=active&&state.Route.Count>0;
             one.Enabled=ten.Enabled=active&&(includeReturn.Checked?state.ExtendedReturnProfileReady:ready&&state.Route.Count>0);
@@ -342,7 +362,7 @@ namespace FleetLab
                 high=Math.Max(high,value);
             }
             if(members.Count==0)low=high=0;
-            summary.Text="Fleet "+state.FleetSlot+" · "+(active?"active":state.Stored?"stored / docked":"retired")+" · kind "+state.Kind+"\r\nWorld "+state.Origin.X+", "+state.Origin.Y+" · source speed "+state.Speed+"\r\nLive units "+members.Count+" · resource96 "+low+"–"+high+"\r\nTask "+state.Task+" · return state "+state.ReturnState+"\r\nRoute "+state.Route.Count+"/5 · explicit visits "+state.Visits+"\r\nEmpty-home results "+state.EmptyHomeResults+"\r\n"+(state.Stored?"Docked; mode 2 can reactivate this copy.":state.ReturnState==2&&state.Kind==5?(includeReturn.Checked?"No home; resource96 still decreases.":"No home; enable return / idle visits."):state.ReturnState==1?(includeReturn.Checked?"Returning to the associated home.":"Returning; enable return visits to continue."):ready?"Manual stepping; no live clock.":active?"Apply mode2 for the admitted flight subset.":"Reset restores the starting aircraft.");
+            summary.Text="Fleet "+state.FleetSlot+" · "+(active?"active":state.Stored?"stored / docked":"retired")+" · kind "+state.Kind+"\r\nWorld "+state.Origin.X+", "+state.Origin.Y+" · source speed "+state.Speed+"\r\nLive units "+members.Count+" · resource96 "+low+"–"+high+"\r\nTask "+state.Task+" · return state "+state.ReturnState+"\r\nRoute "+state.Route.Count+"/5 · explicit visits "+state.Visits+"\r\nHome results "+state.AvailableHomeResults+" available / "+state.EmptyHomeResults+" unavailable\r\n"+(state.Stored?"Docked; mode 2 can reactivate this copy.":state.ReturnState==2&&state.Kind==5?(includeReturn.Checked?"No home; resource96 still decreases.":"No home; enable return / idle visits."):state.ReturnState==1?(includeReturn.Checked?"Returning to the associated home.":"Returning; enable return visits to continue."):ready?"Manual stepping; no live clock.":active?"Apply mode2 for the admitted flight subset.":"Reset restores the starting aircraft.");
             var text=new StringBuilder();
             text.AppendLine("Copied live units:");
             foreach(var unit in members)text.AppendLine("Unit "+unit.Slot+" · HP "+unit.HitPoints+" · resource96 "+BitConverter.ToInt16(unit.CopyRecord(),96));
@@ -353,7 +373,10 @@ namespace FleetLab
             for(int n=0;n<state.Route.Count;n++)text.AppendLine("W"+(n+1)+": "+state.Route[n].X+", "+state.Route[n].Y);
             if(state.Route.Count==0)text.AppendLine("No supplied waypoints.");
             if(state.Stored)text.AppendLine("Source home waypoint is retained after docking.");
-            text.AppendLine("Empty-home results in this window: "+state.EmptyHomeResults);
+            text.AppendLine("Available-home results in this window: "+state.AvailableHomeResults);
+            text.AppendLine("No-home results in this window: "+state.EmptyHomeResults);
+            if(state.SuppliedTestAirfield)text.AppendLine("Supplied test airfield: unit100 / fleet30. Synthetic creation and placement; this copy only.");
+            if(state.LastHomeSearch!=null)text.AppendLine("Most recent home search: "+state.LastHomeSearch.CandidateCount+" candidate(s); "+(state.LastHomeSearch.FoundHome?"selected unit "+state.LastHomeSearch.ParentUnit+", link "+state.LastHomeSearch.Link:"no available slot"));
             text.AppendLine("Recent actions:");
             foreach(string line in history)text.AppendLine(line);
             details.Text=text.ToString();
@@ -473,6 +496,11 @@ namespace FleetLab
                         g.FillEllipse(brush,p.X-3,p.Y-3,6,6);
                         if(kind!=11)g.DrawString(slot.ToString(),owner.Font,brush,p.X+4,p.Y+3);
                     }
+                    if(slot==30&&state.SuppliedTestAirfield)
+                    {
+                        g.DrawRectangle(Pens.PaleTurquoise,p.X-6,p.Y-6,12,12);
+                        g.DrawString("Test airfield",owner.Font,Brushes.PaleTurquoise,Math.Min(r.Right-90,p.X+8),Math.Min(r.Bottom-18,p.Y+20));
+                    }
                 }
                 var origin=Project(state.Origin);
                 var previous=origin;
@@ -529,7 +557,7 @@ namespace FleetLab
                     g.DrawLine(Pens.IndianRed,origin.X-7,origin.Y-7,origin.X+7,origin.Y+7);
                     g.DrawLine(Pens.IndianRed,origin.X-7,origin.Y+7,origin.X+7,origin.Y-7);
                 }
-                g.DrawString("Fleet "+state.FleetSlot,owner.Font,Brushes.Gold,origin.X+12,origin.Y-22);
+                g.DrawString("Fleet "+state.FleetSlot,owner.Font,Brushes.Gold,origin.X+12,origin.Y-32);
             }
         }
     }
