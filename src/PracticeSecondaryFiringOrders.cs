@@ -30,9 +30,9 @@ namespace FleetLab {
         public byte[] CopyPrimaryOrders() { if(primary==null)throw new InvalidOperationException("This update did not include local launch data.");return (byte[])primary.Clone(); }
     }
     // Pinned RIP B9A8...6A569:419B20/419AF0/419970, pool4E4310.
-    // Separate from primary496FA0. The observed419790 producer selects
-    // equipment1..3 against fleet kinds3/4/5; its AI/target selection and local
-    // projectile callbacks are NOT executed here. Network2 skips local launch.
+    // Separate from primary496FA0. The observed419790 request producer is a
+    // separate API. Explicit ordinary and AA launch profiles execute admitted
+    // local data callbacks; AdvanceWithoutLaunch retains network2 scope.
     public static class PracticeSecondaryFiringOrders {
         static void Pool(byte[] orders) { if(orders==null||orders.Length!=78000)throw new InvalidDataException("Secondary orders require the complete 1500x52 pool."); }
         public static byte[] Clear(byte[] orders,int source) { return PracticeFireQueue.Clear(orders,source); }
@@ -67,9 +67,18 @@ namespace FleetLab {
             return Advance(ranges,visibility,rates,objects.CopyShipPool(),objects.CopyFleetPool(),secondaryOrders,clock,1000,
                 visibilityFlag,localOwner,weapons,units,objects,primaryOrders);
         }
+        // Separate opt-in for admitted AA1..3 ->416570/416A00. Supplied queues,
+        // fixed aircraft and local-owner media exclusion; no producer/AI phase.
+        public static PracticeSecondaryOrderUpdate AdvanceWithAntiAircraftLaunch(PracticeFiringRangeTable ranges,PracticeVisibility visibility,
+                PracticeFiringRateTable rates,PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,
+                PracticeTimedCreationState objects,byte[] primaryOrders,byte[] secondaryOrders,uint clock,byte visibilityFlag,short localOwner) {
+            if(weapons==null||units==null||objects==null)throw new ArgumentNullException("launch state");Pool(primaryOrders);
+            return Advance(ranges,visibility,rates,objects.CopyShipPool(),objects.CopyFleetPool(),secondaryOrders,clock,1000,
+                visibilityFlag,localOwner,weapons,units,objects,primaryOrders,true);
+        }
         static PracticeSecondaryOrderUpdate Advance(PracticeFiringRangeTable ranges,PracticeVisibility visibility,
                 PracticeFiringRateTable rates,byte[] ships,byte[] fleets,byte[] orders,uint clock,int scale,byte visibilityFlag,short localOwner,
-                PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,PracticeTimedCreationState objects,byte[] primaryOrders) {
+                PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,PracticeTimedCreationState objects,byte[] primaryOrders,bool antiAircraft=false) {
             if(ranges==null||visibility==null||rates==null)throw new ArgumentNullException("tables");
             Pool(orders);
             if(ships==null||ships.Length!=402000||fleets==null||fleets.Length!=123000)throw new InvalidDataException("Secondary firing requires complete ship/fleet pools.");
@@ -90,13 +99,20 @@ namespace FleetLab {
                 }
                 if(!allowed){ClearX(next,at);rejected++;continue;}
                 if(objects!=null) {
-                    if(weapon<14||weapon>30)throw new NotSupportedException("Secondary local launches currently admit ordinary weapons14..30; equipment1..3 is not reconstructed.");
+                    if(antiAircraft?weapon<1||weapon>3:weapon<14||weapon>30)throw new NotSupportedException(antiAircraft?"The aircraft secondary launch profile admits equipment1..3 only.":"The ordinary secondary launch profile admits weapons14..30 only; use the separate aircraft profile for equipment1..3.");
                     if(BitConverter.ToInt16(ships,source*268+6)==localOwner)throw new NotSupportedException("Local-owner media callbacks are outside the secondary data profile.");
                     int target=(int)(((long)reference-0x4b47a0)/492);
-                    var launch=PracticeTimedLaunch.Apply(weapons,units,objects.CopyTimedPool(),ships,fleets,primary,
-                        weapon,source,target,BitConverter.ToInt16(next,at+8),BitConverter.ToInt16(next,at+28),clock,objects.LastTargetFleet);
-                    objects=launch.State;ships=objects.CopyShipPool();fleets=objects.CopyFleetPool();primary=launch.CopyOrderPool();
-                    created.AddRange(launch.CopyCreatedSlots());attempts+=launch.AttemptedObjects;lastRounds+=launch.LastRoundCallbacks;
+                    if(antiAircraft) {
+                        var launch=PracticeAntiAircraftLaunch.Apply(weapons,units,objects.CopyTimedPool(),ships,fleets,primary,
+                            weapon,source,target,BitConverter.ToInt16(next,at+8),BitConverter.ToInt16(next,at+28),clock,objects.LastTargetFleet);
+                        objects=launch.State;ships=objects.CopyShipPool();fleets=objects.CopyFleetPool();primary=launch.CopyOrderPool();
+                        attempts++;if(launch.Outcome==PracticeTimedCreationOutcome.Created)created.Add(launch.CreatedSlot);if(launch.DepletedLastRound)lastRounds++;
+                    } else {
+                        var launch=PracticeTimedLaunch.Apply(weapons,units,objects.CopyTimedPool(),ships,fleets,primary,
+                            weapon,source,target,BitConverter.ToInt16(next,at+8),BitConverter.ToInt16(next,at+28),clock,objects.LastTargetFleet);
+                        objects=launch.State;ships=objects.CopyShipPool();fleets=objects.CopyFleetPool();primary=launch.CopyOrderPool();
+                        created.AddRange(launch.CopyCreatedSlots());attempts+=launch.AttemptedObjects;lastRounds+=launch.LastRoundCallbacks;
+                    }
                 }
                 // Source shifts TEN coordinate pairs, even though enqueue
                 // searches five. Tail coordinates and stale last Y matter.
