@@ -30,7 +30,7 @@ namespace FleetLab {
             internal int Unit, Row, HP, CellAt, Cell, Owner;
         }
         internal static Target CheckTarget(PracticeUnitCatalog catalog, byte[] shipPool,
-                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, bool allowDestruction = false) {
+                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, bool allowDestruction = false,bool aircraft=false) {
             if (catalog == null) throw new ArgumentNullException("catalog");
             if (shipPool == null || shipPool.Length != 402000 || fleetPool == null || fleetPool.Length != 123000 || scoreRegion == null || scoreRegion.Length != 176)
                 throw new InvalidDataException("Segment damage requires complete ship/fleet pools and the original 176-byte score region.");
@@ -38,9 +38,9 @@ namespace FleetLab {
             int unit = victimShip * 268, type = BitConverter.ToInt32(shipPool, unit), owner = BitConverter.ToInt16(shipPool, unit + 6);
             int parent = BitConverter.ToInt16(shipPool, unit + 12), length = BitConverter.ToInt16(shipPool, unit + 14), hp = BitConverter.ToInt16(shipPool, unit + 16);
             int row = y - BitConverter.ToInt16(shipPool, unit + 10);
-            if (type < 1 || type > 4) throw new NotSupportedException("This unit type has unreconstructed segment callbacks.");
+            if (aircraft?(type<8||type>10):(type<1||type>4)) throw new NotSupportedException("This unit type is outside the admitted segment callback profile.");
             if (parent < 0 || parent >= 250 || length < 1 || length > 6 || row < 0 || row >= length || x < 0 || x >= 10 || y < 0 || y >= 10 || x != BitConverter.ToInt16(shipPool, unit + 8) ||
-                BitConverter.ToInt16(shipPool, unit + 4) != victimShip || BitConverter.ToInt16(fleetPool, parent * 492 + 4) != parent || weapon < 14 || weapon > 30 || attackerOwner < -1 || attackerOwner > 3 || owner < -1 || owner > 3)
+                BitConverter.ToInt16(shipPool, unit + 4) != victimShip || BitConverter.ToInt16(fleetPool, parent * 492 + 4) != parent || (aircraft?(weapon<1||weapon>3):(weapon<14||weapon>30)) || attackerOwner < -1 || attackerOwner > 3 || owner < -1 || owner > 3)
                 throw new InvalidDataException("Segment damage contains an unsupported identity, hull coordinate, owner or weapon.");
             int cellAt = parent * 492 + 64 + (x * 10 + y) * 4, cell = BitConverter.ToInt32(fleetPool, cellAt);
             if (cell != 2 && cell != 4 && cell != 5 && cell != 6 && cell != 7 && cell != 8)
@@ -58,8 +58,8 @@ namespace FleetLab {
             return ApplyCore(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, null);
         }
         internal static PracticeSegmentDamageResult ApplyCore(PracticeUnitCatalog catalog, byte[] shipPool,
-                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, PracticeDamageContinuation continuation) {
-            Target target = CheckTarget(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation != null);
+                byte[] fleetPool, byte[] scoreRegion, int victimShip, int x, int y, int weapon, int attackerOwner, PracticeDamageContinuation continuation,bool aircraft=false) {
+            Target target = CheckTarget(catalog, shipPool, fleetPool, scoreRegion, victimShip, x, y, weapon, attackerOwner, continuation != null||aircraft,aircraft);
             int unit = target.Unit, row = target.Row, hp = target.HP, cellAt = target.CellAt, cell = target.Cell, owner = target.Owner;
             byte[] ships = (byte[])shipPool.Clone(), fleets = (byte[])fleetPool.Clone(), scores = (byte[])scoreRegion.Clone();
             int removed = 0, points = 0;
@@ -78,7 +78,10 @@ namespace FleetLab {
             BitConverter.GetBytes(8).CopyTo(fleets, cellAt);
             if (continuation != null && BitConverter.ToInt16(ships, unit + 16) == 0)
                 return continuation.Destroy(ships, fleets, scores, victimShip, attackerOwner, removed, lost, points);
-            PracticeUnitDepletion.Reevaluate(catalog, ships, unit);
+            // The aircraft impact caller immediately composes its separately
+            // recovered destruction path at zeroHP; the source does not first
+            // reevaluate equipment on that branch.
+            if(!aircraft||BitConverter.ToInt16(ships,unit+16)!=0)PracticeUnitDepletion.Reevaluate(catalog, ships, unit);
             return new PracticeSegmentDamageResult(ships, fleets, scores, removed, lost, points);
         }
     }
