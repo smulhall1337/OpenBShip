@@ -103,9 +103,10 @@ namespace FleetLab
         }
     }
     // Pinned RIP B9A8...6A569 whole427670 comparison: idle aircraft resource96
-    // consumption/expiry with source cursor semantics. Separate opt-in admits
-    // at-home helicopter/plane docking and an empty-home AWACS fallback. No travel,
-    // landing-slot selection/relinking, attack tasks, UI/media or frame pacing claim.
+    // consumption/expiry with source cursor semantics. Public opt-ins admit
+    // at-home helicopter/plane docking and an empty-home AWACS fallback. The
+    // bounded return API uses a separate internal actor prefix. Home selection,
+    // attack tasks, UI/media and frame pacing remain separate.
     public static class PracticeAircraftResourceBatch
     {
         static int W(byte[] b,int p)
@@ -133,6 +134,7 @@ namespace FleetLab
             internal byte[] Primary;
             internal int Point,Invalidations,Docked,NoHome;
             internal bool AllowNoHome;
+            internal int TravelActor=-1;
         }
         // Separate opt-in: low-resource helicopters/planes already at their
         // associated home origin. No return travel or carrier search is implied.
@@ -168,6 +170,17 @@ namespace FleetLab
         {
             return ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,null,actor);
         }
+        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point)
+        {
+            if(units==null||modes==null)throw new ArgumentNullException("aircraft return tables");
+            if(primary==null||primary.Length!=78000)throw new InvalidDataException("Returning aircraft require complete primary orders.");
+            var profile=new HomeDock
+            {
+                Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor
+            };
+            var batch=ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,profile,actor);
+            return new PracticeAircraftHomeBatchResult(batch,profile.Primary,profile.Point,profile.Invalidations,0);
+        }
         internal static bool IsRecordedEarlySkip(byte[] fleets,int at)
         {
             int kind=I(fleets,at);
@@ -193,7 +206,7 @@ namespace FleetLab
                 // 4279C2 skips a new AWACS home search in state2. The admitted
                 // empty-waypoint/task2 branch still consumes resource96.
                 bool fallbackIdle=docking!=null&&docking.AllowNoHome&&kind==5&&I(fleets,at+472)==2&&I(fleets,at+476)==2;
-                if(kind<3||kind>5||W(fleets,at+4)!=slot||(I(fleets,at+472)!=0&&!fallbackIdle)||(W(fleets,at+40)!=-1&&slot!=waypointActor)||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
+                if(kind<3||kind>5||W(fleets,at+4)!=slot||(I(fleets,at+472)!=0&&!fallbackIdle&&!(docking!=null&&docking.TravelActor==slot&&I(fleets,at+472)==1))||(W(fleets,at+40)!=-1&&slot!=waypointActor)||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
                 if(slot==249)throw new NotSupportedException("The recorded other selected fleet249 cannot also be the active aircraft in this profile.");
                 var unique=new HashSet<uint>();
                 for(int member=0;member<6;member++)
@@ -238,6 +251,20 @@ namespace FleetLab
                 }
                 if(returning&&!fallbackIdle)
                 {
+                    if(docking!=null&&docking.TravelActor==slot)
+                    {
+                        int state=I(fleets,at+472);
+                        if(kind==5&&state!=1)throw new NotSupportedException("AWACS return initiation requires its home-search continuation; batch preserved.");
+                        if(state==0)
+                        {
+                            BitConverter.GetBytes(1).CopyTo(fleets,at+472);
+                            for(int n=0;n<5;n++)W(fleets,at+40+n*2,-1);
+                            docking.Point=-1;
+                            docking.Invalidations++;
+                        }
+                        else if(state!=1)throw new NotSupportedException("Return initiation state is outside this profile; batch preserved.");
+                        continue;
+                    }
                     if(docking!=null&&docking.AllowNoHome&&kind==5)
                     {
                         var fallback=PracticeAircraftHomeSearch.ApplyWithoutCandidates(ships,fleets,slot);

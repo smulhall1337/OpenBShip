@@ -80,6 +80,23 @@ namespace FleetLab
         {
             BitConverter.GetBytes(value).CopyTo(b,at);
         }
+        internal static Point MoveToward(byte[] f,int actor,Point before,int tx,int ty)
+        {
+            int at=actor*492,speed=W(f,at+60);
+            if(speed<1||speed>13)throw new NotSupportedException("Live waypoint movement needs verified positive speed1..13; batch preserved.");
+            int dx=tx-before.X,dy=ty-before.Y,distance=Math.Max(Math.Abs(dx),Math.Abs(dy));
+            float denominator=(float)(distance/(speed*.5));
+            int px=before.X,py=before.Y;
+            if(denominator!=0)
+            {
+                px+=PracticeMovementState.Component(dx,denominator);
+                py+=PracticeMovementState.Component(dy,denominator);
+                W(f,at+12,px);
+                W(f,at+14,py);
+                f[at+62]=(byte)(Math.Abs(dy)<Math.Abs(dx)?(dx>0?1:3):(dy>0?2:0));
+            }
+            return new Point(px,py);
+        }
         public static PracticeAircraftWaypointBatchResult AdvanceOffscreen(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,byte[] auxiliaryData,PracticeFleetScheduler schedule,int actor,int selectedWaypoint,int movieCounter,uint randomState)
         {
             if(schedule==null)throw new ArgumentNullException("schedule");
@@ -111,19 +128,8 @@ namespace FleetLab
             if(I(f,at)==0)return new PracticeAircraftWaypointBatchResult(prefix,f,aux,PracticeAircraftWaypointOutcome.FleetRetired,before,before,false,selectedWaypoint);
             int tx=W(f,at+40),ty=W(f,at+50);
             if(tx==-1)return new PracticeAircraftWaypointBatchResult(prefix,f,aux,PracticeAircraftWaypointOutcome.NoWaypoint,before,before,false,selectedWaypoint);
-            speed=W(f,at+60);
-            if(speed<1||speed>13)throw new NotSupportedException("Live waypoint movement needs verified positive speed1..13; batch preserved.");
-            int dx=tx-before.X,dy=ty-before.Y,distance=Math.Max(Math.Abs(dx),Math.Abs(dy));
-            float denominator=(float)(distance/(speed*.5));
-            int px=before.X,py=before.Y;
-            if(denominator!=0)
-            {
-                px+=PracticeMovementState.Component(dx,denominator);
-                py+=PracticeMovementState.Component(dy,denominator);
-                W(f,at+12,px);
-                W(f,at+14,py);
-                f[at+62]=(byte)(Math.Abs(dy)<Math.Abs(dx)?(dx>0?1:3):(dy>0?2:0));
-            }
+            var position=MoveToward(f,actor,before,tx,ty);
+            int px=position.X,py=position.Y;
             bool arrived=px==tx&&py==ty,consumed=false;
             if(arrived&&I(aux,0x50+actor*312)!=1)
             {
