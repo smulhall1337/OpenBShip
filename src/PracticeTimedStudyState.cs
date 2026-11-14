@@ -19,6 +19,7 @@ namespace FleetLab {
         readonly byte[] visuals;
         readonly PracticeDefenseTables impactTables;
         readonly PracticeDestructionTables destructionTables;
+        readonly PracticeAircraftDestructionTable aircraftDestruction;
         readonly PracticeFiringRangeTable firingRanges;
         readonly PracticeVisibility visibility;
         readonly PracticeFiringRateTable firingRates;
@@ -43,7 +44,8 @@ namespace FleetLab {
         public int LastImpactPoints { get; private set; }
         public int LastScatterAttempts { get; private set; }
         public bool IncludesShipImpacts { get { return impactTables != null; } }
-        public bool IncludesDestruction { get { return destructionTables != null; } }
+        public bool IncludesDestruction { get { return destructionTables != null||aircraftDestruction!=null; } }
+        public bool IsAircraftStudy {get{return aircraftDestruction!=null;}}
         public int DestroyedUnits { get; private set; }
         public bool LastVictimDestroyed { get; private set; }
         public int MovieCounter { get; private set; }
@@ -107,6 +109,15 @@ namespace FleetLab {
             if(destruction==null)throw new ArgumentNullException("destruction");
             destructionTables=destruction;
         }
+        private PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,byte[] visuals,
+                byte[] ships,byte[] fleets,uint clock,uint random,PracticeDefenseTables defenses,PracticeAircraftDestructionTable aircraft,bool aircraftProfile)
+                :this(weapons,units,visuals,ships,fleets,clock,random,defenses) {
+            if(aircraft==null)throw new ArgumentNullException("aircraft");aircraftDestruction=aircraft;
+        }
+        public static PracticeTimedStudyState ForAircraft(PracticeTimedWeaponCatalog weapons,PracticeUnitCatalog units,byte[] visuals,
+                byte[] ships,byte[] fleets,uint clock,uint random,PracticeDefenseTables defenses,PracticeAircraftDestructionTable aircraft) {
+            return new PracticeTimedStudyState(weapons,units,visuals,ships,fleets,clock,random,defenses,aircraft,true);
+        }
         // Optional local firing-data composition. All ten X sentinels are
         // explicitly cleared in this fresh study fixture; the old inactive-
         // order constructors and their comparison inputs remain unchanged.
@@ -127,6 +138,7 @@ namespace FleetLab {
             units = before.units; visuals = before.visuals; effects = before.effects;
             impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
             destructionTables=before.destructionTables;DestroyedUnits=before.DestroyedUnits;LastVictimDestroyed=before.LastVictimDestroyed;MovieCounter=before.MovieCounter;
+            aircraftDestruction=before.aircraftDestruction;
             firingRanges=before.firingRanges;visibility=before.visibility;firingRates=before.firingRates;
             LastQueueReturnCode=before.LastQueueReturnCode;LastQueueSlot=before.LastQueueSlot;FiringPolls=before.FiringPolls;
             ConsumedOrders=before.ConsumedOrders;RejectedOrders=before.RejectedOrders;ObjectsFromOrders=before.ObjectsFromOrders;
@@ -184,6 +196,7 @@ namespace FleetLab {
             next.LastOrdersConsumed=update.ConsumedOrders;next.LastOrdersRejected=update.RejectedOrders;next.LastOrdersCreated=update.CreatedObjects;return next;
         }
         public PracticeTimedStudyState Create(int weapon, int sourceShip, int targetFleet, int offsetX, int offsetY) {
+            if(IsAircraftStudy)throw new NotSupportedException("Use LaunchAntiAircraft in this explicit aircraft profile.");
             PracticeTimedCreationUpdate result = IncludesDataExpiry ?
                 Objects.CreateWithDepletion(weapon, sourceShip, targetFleet, offsetX, offsetY, ClockMilliseconds, units, PauseTimers.CopyShipTimers()) :
                 Objects.Create(weapon, sourceShip, targetFleet, offsetX, offsetY, ClockMilliseconds);
@@ -196,6 +209,7 @@ namespace FleetLab {
         // Explicit source launch pattern; existing Create remains one object.
         // Creation and any last-round work complete before publishing the state.
         public PracticeTimedStudyState Launch(int weapon, int sourceShip, int targetFleet, int offsetX, int offsetY) {
+            if(IsAircraftStudy)throw new NotSupportedException("Use LaunchAntiAircraft in this explicit aircraft profile.");
             if(!IncludesDataExpiry)throw new NotSupportedException("Source launch patterns require the extended data study.");
             var result=PracticeTimedLaunch.Apply(catalog,units,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),
                 PauseTimers.CopyShipTimers(),weapon,sourceShip,targetFleet,offsetX,offsetY,ClockMilliseconds,Objects.LastTargetFleet);
@@ -207,6 +221,12 @@ namespace FleetLab {
                 result.AttemptedObjects>0&&full?PracticeTimedCreationOutcome.PoolFull:PracticeTimedCreationOutcome.NoAmmunition;
             return next;
         }
+        public PracticeTimedStudyState LaunchAntiAircraft(int weapon,int sourceShip,int targetFleet,int x,int y) {
+            if(!IsAircraftStudy)throw new InvalidOperationException("Anti-aircraft launch requires the aircraft study profile.");
+            var result=PracticeAntiAircraftLaunch.Apply(catalog,units,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),PauseTimers.CopyShipTimers(),weapon,sourceShip,targetFleet,x,y,ClockMilliseconds,Objects.LastTargetFleet);
+            var next=new PracticeTimedStudyState(this,result.State,WithTimedPool(result.State.CopyTimedPool(),result.CopyOrderPool()),ClockMilliseconds);
+            next.LastCreationOutcome=result.Outcome;next.LastCreatedSlot=result.CreatedSlot;next.lastLaunchSlots=result.CreatedSlot<0?new int[0]:new[]{result.CreatedSlot};next.LastLaunchAttempts=1;next.LastLaunchDepletions=result.DepletedLastRound?1:0;return next;
+        }
         public PracticeTimedStudyState AdvanceFrame(bool paused) {
             uint nextClock = unchecked(ClockMilliseconds + StepMilliseconds);
             if (paused) {
@@ -216,7 +236,8 @@ namespace FleetLab {
                 next.PausedFrames++; return next;
             }
             if(IncludesShipImpacts) {
-                var update=new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,destructionTables,MovieCounter).Advance(nextClock,StepMilliseconds);
+                var impact=IsAircraftStudy?PracticeTimedImpactState.ForAircraft(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,aircraftDestruction,MovieCounter):new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,destructionTables,MovieCounter);
+                var update=impact.Advance(nextClock,StepMilliseconds);
                 var nextEffects=new PracticeVisualPool(update.State.CopyEffectPool(),visuals).Advance();
                 var updatedObjects=new PracticeTimedCreationState(catalog,update.State.CopyTimedPool(),update.State.CopyShipPool(),update.State.CopyFleetPool(),Objects.LastTargetFleet);
                 var next=new PracticeTimedStudyState(this,updatedObjects,WithTimedPool(update.State.CopyTimedPool()),nextClock);
