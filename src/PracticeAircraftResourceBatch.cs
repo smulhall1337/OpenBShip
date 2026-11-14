@@ -60,9 +60,46 @@ namespace FleetLab
             return (byte[])effects.Clone();
         }
     }
+    public sealed class PracticeAircraftHomeBatchResult
+    {
+        readonly byte[] primary;
+        public PracticeAircraftResourceBatchResult Batch
+        {
+            get;
+            private set;
+        }
+        public int SelectedWaypoint
+        {
+            get;
+            private set;
+        }
+        public int Invalidations
+        {
+            get;
+            private set;
+        }
+        public int DockedGroups
+        {
+            get;
+            private set;
+        }
+        internal PracticeAircraftHomeBatchResult(PracticeAircraftResourceBatchResult batch,byte[] orders,int point,int invalidations,int docked)
+        {
+            Batch=batch;
+            primary=(byte[])orders.Clone();
+            SelectedWaypoint=point;
+            Invalidations=invalidations;
+            DockedGroups=docked;
+        }
+        public byte[] CopyPrimaryOrders()
+        {
+            return (byte[])primary.Clone();
+        }
+    }
     // Pinned RIP B9A8...6A569 whole427670 comparison: idle aircraft resource96
-    // consumption/expiry with source cursor semantics. No waypoint movement,
-    // automatic return/landing, attack tasks, UI/media or frame pacing claim.
+    // consumption/expiry with source cursor semantics. Separate opt-in admits
+    // at-home helicopter/plane docking. No travel, carrier search, attack tasks,
+    // UI/media or frame pacing claim.
     public static class PracticeAircraftResourceBatch
     {
         static int W(byte[] b,int p)
@@ -83,7 +120,32 @@ namespace FleetLab
             if(delta<0||delta>=402000||delta%268!=0)throw new InvalidDataException("Aircraft member reference is outside its complete pool.");
             return (int)delta;
         }
+        sealed class HomeDock
+        {
+            internal PracticeUnitCatalog Units;
+            internal PracticeAircraftTables Tables;
+            internal byte[] Primary;
+            internal int Point,Invalidations,Docked;
+        }
+        // Separate opt-in: low-resource helicopters/planes already at their
+        // associated home origin. No return travel or carrier search is implied.
+        public static PracticeAircraftHomeBatchResult ApplyWithAtHomeDocking(PracticeAircraftDestructionTable tables,byte[] visuals, PracticeUnitCatalog units,PracticeAircraftTables aircraftTables,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion, byte[] effectPool,byte[] primaryOrders,PracticeFleetScheduler schedule,int movieCounter,uint randomState,int selectedWaypoint)
+        {
+            if(units==null||aircraftTables==null)throw new ArgumentNullException("home docking tables");
+            if(primaryOrders==null||primaryOrders.Length!=78000)throw new InvalidDataException("Home docking requires the complete primary-order pool.");
+            if(selectedWaypoint< -1||selectedWaypoint>4)throw new ArgumentOutOfRangeException("selectedWaypoint");
+            var docking=new HomeDock
+            {
+                Units=units,Tables=aircraftTables,Primary=(byte[])primaryOrders.Clone(),Point=selectedWaypoint
+            };
+            var batch=ApplyCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,docking);
+            return new PracticeAircraftHomeBatchResult(batch,docking.Primary,docking.Point,docking.Invalidations,docking.Docked);
+        }
         public static PracticeAircraftResourceBatchResult Apply(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState)
+        {
+            return ApplyCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,null);
+        }
+        static PracticeAircraftResourceBatchResult ApplyCore(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState,HomeDock docking)
         {
             if(tables==null||schedule==null)throw new ArgumentNullException("aircraft batch");
             if(shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||scoreRegion==null||scoreRegion.Length!=176||effectPool==null||effectPool.Length!=800)throw new InvalidDataException("Aircraft resource batches require complete source pools.");
@@ -136,11 +198,32 @@ namespace FleetLab
                 if(associated<0||associated>=1500)throw new InvalidDataException("Aircraft associated unit is outside its pool.");
                 int home=W(ships,associated*268+12);
                 if(home<0||home>=250)throw new InvalidDataException("Aircraft home fleet is outside its pool.");
-                int threshold=Math.Max(Math.Abs(W(fleets,home*492+12)-W(fleets,at+12)),Math.Abs(W(fleets,home*492+14)-W(fleets,at+14)))+20;
+                int distance=Math.Max(Math.Abs(W(fleets,home*492+12)-W(fleets,at+12)),Math.Abs(W(fleets,home*492+14)-W(fleets,at+14)));
+                int threshold=distance+20;
+                bool returning=false;
                 for(int member=0;member<6;member++)
                 {
                     uint reference=BitConverter.ToUInt32(fleets,at+16+member*4);
-                    if(reference!=0&&I(ships,Ship(reference))!=0&&W(ships,Ship(reference)+96)<=threshold)throw new NotSupportedException("The automatic aircraft return/landing threshold is outside this idle resource profile; batch preserved.");
+                    if(reference!=0&&I(ships,Ship(reference))!=0&&W(ships,Ship(reference)+96)<=threshold)returning=true;
+                }
+                if(returning)
+                {
+                    int currentTask=I(fleets,at+476);
+                    if(docking==null||kind==5||distance!=0||(currentTask!=1&&currentTask!=2&&currentTask!=4))throw new NotSupportedException("The automatic return/landing continuation is outside this batch profile; batch preserved.");
+                    BitConverter.GetBytes(1).CopyTo(fleets,at+472);
+                    for(int n=0;n<5;n++)W(fleets,at+40+n*2,-1);
+                    docking.Point=-1;
+                    docking.Invalidations++;
+                    W(fleets,at+40,W(fleets,home*492+12));
+                    W(fleets,at+50,W(fleets,home*492+14));
+                    var landed=PracticeAircraftTransitions.ApplyOffscreen(docking.Tables,docking.Units,ships,fleets,docking.Primary,slot,0,249,docking.Point,-2);
+                    ships=landed.CopyShipPool();
+                    fleets=landed.CopyFleetPool();
+                    docking.Primary=landed.CopyPrimaryOrders();
+                    docking.Point=landed.SelectedWaypoint;
+                    docking.Invalidations+=landed.Invalidations;
+                    docking.Docked++;
+                    continue;
                 }
                 int task=I(fleets,at+476);
                 if(task!=1&&task!=2&&task!=4)throw new NotSupportedException("Aircraft attack/target-follow tasks require a separate batch study; batch preserved.");
