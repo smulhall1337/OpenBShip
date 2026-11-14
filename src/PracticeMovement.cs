@@ -88,7 +88,7 @@ namespace FleetLab {
             return otherX + 10 > x && x + 10 > otherX && otherY + 10 > y && y + 10 > otherY;
         }
         static bool Collidable(int kind) { return kind == 1 || kind == 2 || kind == 10 || kind == 11 || kind == 12; }
-        static int Component(int delta, float denominator) {
+        internal static int Component(int delta, float denominator) {
             // Source x87CW027F plus explicit single-precision stores. Preserve
             // signed half adjustment, truncation and final overshoot clamp.
             float value = (float)(delta / (double)denominator);

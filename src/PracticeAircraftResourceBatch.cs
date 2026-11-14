@@ -162,7 +162,18 @@ namespace FleetLab
         {
             return ApplyCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,null);
         }
-        static PracticeAircraftResourceBatchResult ApplyCore(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState,HomeDock docking)
+        // Shared source prefix for the separately bounded waypoint body. Public
+        // idle/return profiles keep their original empty-waypoint admission.
+        internal static PracticeAircraftResourceBatchResult ApplyBeforeWaypoint(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,PracticeFleetScheduler schedule,int movie,uint random,int actor)
+        {
+            return ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,null,actor);
+        }
+        internal static bool IsRecordedEarlySkip(byte[] fleets,int at)
+        {
+            int kind=I(fleets,at);
+            return kind==0||kind==2||kind==6||kind==7||kind==8||((kind==1||kind==11)&&I(fleets,at+472)==0&&I(fleets,at+476)==0&&W(fleets,at+40)==-1&&(kind==1?(fleets[at+485]==2||fleets[at+485]==3):fleets[at+485]==0));
+        }
+        static PracticeAircraftResourceBatchResult ApplyCore(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState,HomeDock docking,int waypointActor=-1)
         {
             if(tables==null||schedule==null)throw new ArgumentNullException("aircraft batch");
             if(shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||scoreRegion==null||scoreRegion.Length!=176||effectPool==null||effectPool.Length!=800)throw new InvalidDataException("Aircraft resource batches require complete source pools.");
@@ -178,12 +189,11 @@ namespace FleetLab
             {
                 int at=slot*492,kind=I(fleets,at);
                 fleets[at+482]=255;
-                if(kind==0||kind==2||kind==6||kind==7||kind==8)continue;
-                if((kind==1||kind==11)&&I(fleets,at+472)==0&&I(fleets,at+476)==0&&W(fleets,at+40)==-1&& (kind==1?(fleets[at+485]==2||fleets[at+485]==3):fleets[at+485]==0))continue;
+                if(IsRecordedEarlySkip(fleets,at))continue;
                 // 4279C2 skips a new AWACS home search in state2. The admitted
                 // empty-waypoint/task2 branch still consumes resource96.
                 bool fallbackIdle=docking!=null&&docking.AllowNoHome&&kind==5&&I(fleets,at+472)==2&&I(fleets,at+476)==2;
-                if(kind<3||kind>5||W(fleets,at+4)!=slot||(I(fleets,at+472)!=0&&!fallbackIdle)||W(fleets,at+40)!=-1||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
+                if(kind<3||kind>5||W(fleets,at+4)!=slot||(I(fleets,at+472)!=0&&!fallbackIdle)||(W(fleets,at+40)!=-1&&slot!=waypointActor)||fleets[at+485]!=0) throw new NotSupportedException("Only idle active aircraft and the recorded neighboring early-skip fleets are admitted; batch preserved.");
                 if(slot==249)throw new NotSupportedException("The recorded other selected fleet249 cannot also be the active aircraft in this profile.");
                 var unique=new HashSet<uint>();
                 for(int member=0;member<6;member++)
