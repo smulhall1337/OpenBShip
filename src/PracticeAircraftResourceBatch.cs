@@ -83,13 +83,19 @@ namespace FleetLab
             get;
             private set;
         }
-        internal PracticeAircraftHomeBatchResult(PracticeAircraftResourceBatchResult batch,byte[] orders,int point,int invalidations,int docked)
+        public int NoHomeGroups
+        {
+            get;
+            private set;
+        }
+        internal PracticeAircraftHomeBatchResult(PracticeAircraftResourceBatchResult batch,byte[] orders,int point,int invalidations,int docked,int noHome=0)
         {
             Batch=batch;
             primary=(byte[])orders.Clone();
             SelectedWaypoint=point;
             Invalidations=invalidations;
             DockedGroups=docked;
+            NoHomeGroups=noHome;
         }
         public byte[] CopyPrimaryOrders()
         {
@@ -98,8 +104,8 @@ namespace FleetLab
     }
     // Pinned RIP B9A8...6A569 whole427670 comparison: idle aircraft resource96
     // consumption/expiry with source cursor semantics. Separate opt-in admits
-    // at-home helicopter/plane docking. No travel, carrier search, attack tasks,
-    // UI/media or frame pacing claim.
+    // at-home helicopter/plane docking and an empty-home AWACS fallback. No travel,
+    // landing-slot selection/relinking, attack tasks, UI/media or frame pacing claim.
     public static class PracticeAircraftResourceBatch
     {
         static int W(byte[] b,int p)
@@ -125,21 +131,32 @@ namespace FleetLab
             internal PracticeUnitCatalog Units;
             internal PracticeAircraftTables Tables;
             internal byte[] Primary;
-            internal int Point,Invalidations,Docked;
+            internal int Point,Invalidations,Docked,NoHome;
+            internal bool AllowNoHome;
         }
         // Separate opt-in: low-resource helicopters/planes already at their
         // associated home origin. No return travel or carrier search is implied.
         public static PracticeAircraftHomeBatchResult ApplyWithAtHomeDocking(PracticeAircraftDestructionTable tables,byte[] visuals, PracticeUnitCatalog units,PracticeAircraftTables aircraftTables,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion, byte[] effectPool,byte[] primaryOrders,PracticeFleetScheduler schedule,int movieCounter,uint randomState,int selectedWaypoint)
+        {
+            return ApplyReturnBatch(tables,visuals,units,aircraftTables,shipPool,fleetPool,scoreRegion,effectPool,primaryOrders,schedule,movieCounter,randomState,selectedWaypoint,false);
+        }
+        // Separate opt-in: an idle AWACS may enter the original no-home state
+        // only when its complete roster candidate search is empty.
+        public static PracticeAircraftHomeBatchResult ApplyWithAwacsNoHomeFallback(PracticeAircraftDestructionTable tables,byte[] visuals, PracticeUnitCatalog units,PracticeAircraftTables aircraftTables,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion, byte[] effectPool,byte[] primaryOrders,PracticeFleetScheduler schedule,int movieCounter,uint randomState,int selectedWaypoint)
+        {
+            return ApplyReturnBatch(tables,visuals,units,aircraftTables,shipPool,fleetPool,scoreRegion,effectPool,primaryOrders,schedule,movieCounter,randomState,selectedWaypoint,true);
+        }
+        static PracticeAircraftHomeBatchResult ApplyReturnBatch(PracticeAircraftDestructionTable tables,byte[] visuals, PracticeUnitCatalog units,PracticeAircraftTables aircraftTables,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion, byte[] effectPool,byte[] primaryOrders,PracticeFleetScheduler schedule,int movieCounter,uint randomState,int selectedWaypoint,bool allowNoHome)
         {
             if(units==null||aircraftTables==null)throw new ArgumentNullException("home docking tables");
             if(primaryOrders==null||primaryOrders.Length!=78000)throw new InvalidDataException("Home docking requires the complete primary-order pool.");
             if(selectedWaypoint< -1||selectedWaypoint>4)throw new ArgumentOutOfRangeException("selectedWaypoint");
             var docking=new HomeDock
             {
-                Units=units,Tables=aircraftTables,Primary=(byte[])primaryOrders.Clone(),Point=selectedWaypoint
+                Units=units,Tables=aircraftTables,Primary=(byte[])primaryOrders.Clone(),Point=selectedWaypoint,AllowNoHome=allowNoHome
             };
             var batch=ApplyCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,docking);
-            return new PracticeAircraftHomeBatchResult(batch,docking.Primary,docking.Point,docking.Invalidations,docking.Docked);
+            return new PracticeAircraftHomeBatchResult(batch,docking.Primary,docking.Point,docking.Invalidations,docking.Docked,docking.NoHome);
         }
         public static PracticeAircraftResourceBatchResult Apply(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState)
         {
@@ -208,6 +225,17 @@ namespace FleetLab
                 }
                 if(returning)
                 {
+                    if(docking!=null&&docking.AllowNoHome&&kind==5)
+                    {
+                        var fallback=PracticeAircraftHomeSearch.ApplyWithoutCandidates(ships,fleets,slot);
+                        ships=fallback.CopyShipPool();
+                        fleets=fallback.CopyFleetPool();
+                        for(int n=0;n<5;n++)W(fleets,at+40+n*2,-1);
+                        docking.Point=-1;
+                        docking.Invalidations++;
+                        docking.NoHome++;
+                        continue;
+                    }
                     int currentTask=I(fleets,at+476);
                     if(docking==null||kind==5||distance!=0||(currentTask!=1&&currentTask!=2&&currentTask!=4))throw new NotSupportedException("The automatic return/landing continuation is outside this batch profile; batch preserved.");
                     BitConverter.GetBytes(1).CopyTo(fleets,at+472);
