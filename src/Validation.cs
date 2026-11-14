@@ -23,6 +23,17 @@ namespace FleetLab {
             Require(Hash(fleets)=="CE287384954A28AA300A73814E2B056EBB36F00E73C8BA78BBCC9897F29DA79E","Original292 supplied routes");
             return PracticeWorldStudyState.ForStudy(combat.WithFleetPool(fleets),deployment,7);
         }
+        // Prepared original300 cases1/3/7. These are explicit numeric input
+        // pools, not a claim to recreate an original aircraft deployment.
+        static byte[][] SecondaryTargetFixture(int mask,int queue) {
+            var ships=new byte[402000];for(int n=0;n<1500;n++)W16(ships,n*268+4,n);
+            var fleets=new byte[123000];for(int n=0;n<250;n++)W16(fleets,n*492+4,n);
+            var orders=new byte[78000];for(int n=0;n<1500;n++){int at=n*52;BitConverter.GetBytes(99).CopyTo(orders,at);BitConverter.GetBytes(123456789+n).CopyTo(orders,at+4);BitConverter.GetBytes(0xdeadbeefu).CopyTo(orders,at+48);for(int p=0;p<10;p++){W16(orders,at+8+p*2,-1);W16(orders,at+28+p*2,-400-p);}}
+            BitConverter.GetBytes(1).CopyTo(fleets,0);W16(fleets,12,100);W16(fleets,14,100);
+            for(int n=0;n<6;n++){int u=7+n,at=u*268;BitConverter.GetBytes(1+n%4).CopyTo(ships,at);W16(ships,at+6,-2);W16(ships,at+12,249);W16(ships,at+14,6);BitConverter.GetBytes(0x4fc340+u*268).CopyTo(fleets,16+n*4);for(int e=0;e<24;e++)BitConverter.GetBytes(14).CopyTo(ships,at+100+e*4);int equipment=n%6*4+n%4;BitConverter.GetBytes(1+n%3).CopyTo(ships,at+100+equipment*4);if(equipment<23)BitConverter.GetBytes(1+(n+1)%3).CopyTo(ships,at+100+(equipment+1)*4);for(int p=0;p<10;p++)W16(orders,u*52+8+p*2,queue==2&&p<5?50+p:-1);}
+            int[] targets={2,10,248},starts={20,30,40};for(int t=0;t<3;t++){int at=targets[t]*492;BitConverter.GetBytes(3).CopyTo(fleets,at);W16(fleets,at+6,1);W16(fleets,at+12,100+(t==0?7:t==1?1:0));W16(fleets,at+14,100);for(int n=0;n<6;n++){int u=starts[t]+n,p=u*268;BitConverter.GetBytes(1).CopyTo(ships,p);W16(ships,p+8,n+1);W16(ships,p+10,n*10+4);W16(ships,p+14,1+n%6);BitConverter.GetBytes(t==0&&mask==2?0:0x4fc340+u*268).CopyTo(fleets,at+16+n*4);}}
+            return new[]{ships,fleets,orders};
+        }
         // Independent source289 case0/1080 inputs: timed, ships, fleet,
         // effects, scores. Their original output hashes are pinned below.
         static byte[][] RetiredFixture(string assets,int weapon,int cell) {
@@ -550,6 +561,21 @@ namespace FleetLab {
                 Require(Hash(world.Combat.Objects.CopyTimedPool())=="2971870A6D41E1974089AEB974B3AE800ECD9311102B39FF827D0CDFFF3432F9"&&Hash(world.Combat.Objects.CopyFleetPool())=="84F427C70863C14BA657B68203F6647D7E3920446CC21000C05D3F6AA50D58CA"&&Hash(world.CopySecondaryOrders())=="408B2577AF4000972335FCEA3306EBC5DC36887A6CB3A8CD683EA55C035C5D7E","Original297 secondary launch before motion and primary launch after motion");
                 string secondary=Hash(world.CopySecondaryOrders()),fleets=Hash(world.Combat.Objects.CopyFleetPool());uint timer=BitConverter.ToUInt32(world.Combat.PauseTimers.CopyShipTimers(),7*52+4);for(int n=0;n<25;n++)world=world.AdvanceFrame(true);
                 Require(world.Combat.ClockMilliseconds==1040&&world.Schedule.BatchStart==8&&Hash(world.CopySecondaryOrders())==secondary&&Hash(world.Combat.Objects.CopyFleetPool())==fleets&&BitConverter.ToUInt32(world.Combat.PauseTimers.CopyShipTimers(),7*52+4)==unchecked(timer+1000u),"Original411313 shifts primary but not secondary deadlines");
+            });
+            check("Secondary target generation matches original cached first-fleet choices and full order pool",delegate {
+                var data=SecondaryTargetFixture(0,0);Require(Hash(data[0])=="348544572BA1D396CC2DB8A3C2C2AFF3DFF67317EF3884B300EB1FFCEDD9E6B6"&&Hash(data[1])=="7FF0B10477E5A04AECBCDAE8228502A10B93AE2F28B3035FB2B1ABA44BE75DA9"&&Hash(data[2])=="A1DAA9489051E1036A8D35E094BAF4A51B782B64F9A85DF2DB4B2873375D108C","Original300 case1 complete inputs");
+                var result=PracticeSecondaryTargeting.Generate(PracticeFiringRangeTable.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs")),data[0],data[1],data[2],0);
+                Require(result.RandomCalls==12&&result.RandomState==3989110284u&&result.AttemptedOrders==6&&result.AcceptedOrders==6&&Hash(result.CopyOrderPool())=="C66406910523DEE6651344E775B2FF30410119D81011EB8786C6AB046224089C","Original300 producer complete output/counters");
+                Require(result.Choices[0].SourceShip==7&&result.Choices[0].TargetFleet==2&&result.Choices[0].TargetShip==22&&result.Choices[0].Weapon==1&&result.Choices[0].X==3&&result.Choices[0].Y==24,"Original300 first choice; nearer later fleet must not win");
+            });
+            check("Secondary target generation preserves no-live-member and full-queue RNG behavior",delegate {
+                var ranges=PracticeFiringRangeTable.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));var empty=SecondaryTargetFixture(2,0);var absent=PracticeSecondaryTargeting.Generate(ranges,empty[0],empty[1],empty[2],0);
+                Require(absent.RandomCalls==6&&absent.RandomState==773150046u&&absent.AttemptedOrders==0&&Hash(absent.CopyOrderPool())=="A1DAA9489051E1036A8D35E094BAF4A51B782B64F9A85DF2DB4B2873375D108C","Original300 case7 keeps empty first target instead of switching fleets");
+                var full=SecondaryTargetFixture(0,2);var rejected=PracticeSecondaryTargeting.Generate(ranges,full[0],full[1],full[2],0);Require(rejected.RandomCalls==12&&rejected.RandomState==3989110284u&&rejected.AttemptedOrders==6&&rejected.AcceptedOrders==0&&Hash(rejected.CopyOrderPool())=="4F96887DAD3D0753D6F0172B119C3F48AA04CF2CCC4DF923B6BCA549D24AA592","Original300 case3 still consumes both draws before full-queue rejection");
+            });
+            check("Secondary generation publishes immutable results and rejects later malformed records atomically",delegate {
+                var ranges=PracticeFiringRangeTable.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));var data=SecondaryTargetFixture(0,0);var result=PracticeSecondaryTargeting.Generate(ranges,data[0],data[1],data[2],0);var exposed=result.CopyOrderPool();exposed[0]^=255;Require(Hash(result.CopyOrderPool())=="C66406910523DEE6651344E775B2FF30410119D81011EB8786C6AB046224089C","Producer exposed mutable result bytes");
+                W16(data[0],8*268+4,7);string ships=Hash(data[0]),fleets=Hash(data[1]),orders=Hash(data[2]);Reject(delegate{PracticeSecondaryTargeting.Generate(ranges,data[0],data[1],data[2],0);});Require(Hash(data[0])==ships&&Hash(data[1])==fleets&&Hash(data[2])==orders,"Later malformed source ID published a partial queue/RNG update");
             });
             check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);
