@@ -1,7 +1,8 @@
 using System;
 
 namespace FleetLab {
-    // Copied-state composition for an explicit manual study. Fleets stay fixed;
+    // Copied-state composition for an explicit manual study. Fleets stay fixed
+    // unless the separate PracticeWorldStudyState supplies a movement result;
     // supplied40ms deltas are numeric steps, not calibrated original frame pace.
     // The auxiliary pause-timer regions are an inactive fixture, not recovered
     // application initialization. The optional extended constructor admits
@@ -92,7 +93,7 @@ namespace FleetLab {
             if(sourceTables==null)throw new ArgumentNullException("sourceTables");
             impactTables=sourceTables;scoreRegion=new byte[176];BitConverter.GetBytes((short)-2).CopyTo(scoreRegion,172);
         }
-        // Explicit offscreen mode0/playercount0 destruction composition. This
+        // Explicit offscreen mode0/scenario-selector0 destruction composition. This
         // models data and selection counters, without live media or missions.
         public PracticeTimedStudyState(PracticeTimedWeaponCatalog weapons, PracticeUnitCatalog unitCatalog,
                 byte[] visualRecords, byte[] ships, byte[] fleets, uint initialClock, uint randomState,
@@ -136,6 +137,13 @@ namespace FleetLab {
         OriginalPauseTimers WithTimedPool(byte[] timed, byte[] orderPool = null) {
             return new OriginalPauseTimers(timed, orderPool ?? PauseTimers.CopyShipTimers(), PauseTimers.CopyFourCounters(),
                                            PauseTimers.CopyTimestamps(), PauseTimers.GlobalCounter);
+        }
+        // Preserve combat, timer, score and RNG history while replacing the
+        // owned fleet snapshot after an admitted movement batch. No update is
+        // published until the caller's remaining combat pass also succeeds.
+        internal PracticeTimedStudyState WithFleetPool(byte[] fleetPool) {
+            var objects=new PracticeTimedCreationState(catalog,Objects.CopyTimedPool(),Objects.CopyShipPool(),fleetPool,Objects.LastTargetFleet);
+            return new PracticeTimedStudyState(this,objects,WithTimedPool(objects.CopyTimedPool()),ClockMilliseconds);
         }
         public PracticeFiringCheck CheckFiring(int sourceShip,int targetFleet,int weapon) {
             if(!IncludesFiringOrders)throw new InvalidOperationException("This study does not include firing rules.");

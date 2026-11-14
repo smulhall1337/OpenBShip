@@ -13,6 +13,16 @@ namespace FleetLab {
                 deployment.CopyShipPool(),deployment.CopyFleetPool(),0,731,PracticeDefenseTables.Load(p),PracticeDestructionTables.Load(p),
                 PracticeFiringRangeTable.Load(p),PracticeVisibility.Load(p),PracticeFiringRateTable.Load(p));
         }
+        // Original292 context023: deployment143514006, RNG731, two supplied
+        // eastbound routes. Whole-pool source hashes are independent fixtures.
+        static PracticeWorldStudyState WorldFixture(string assets) {
+            string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");
+            var deployment=PracticeDeployment.FirstPractice(PracticeUnitCatalog.Load(p),File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB201.SCN")),143514006u);
+            var combat=FiringFixture(assets);byte[] fleets=combat.Objects.CopyFleetPool();
+            foreach(int fleet in new[]{7,10}){int at=fleet*492;for(int n=0;n<5;n++)W16(fleets,at+40+n*2,-1);W16(fleets,at+40,BitConverter.ToInt16(fleets,at+12)+30);W16(fleets,at+50,BitConverter.ToInt16(fleets,at+14));}
+            Require(Hash(fleets)=="CE287384954A28AA300A73814E2B056EBB36F00E73C8BA78BBCC9897F29DA79E","Original292 supplied routes");
+            return PracticeWorldStudyState.ForStudy(combat.WithFleetPool(fleets),deployment,7);
+        }
         // Independent source289 case0/1080 inputs: timed, ships, fleet,
         // effects, scores. Their original output hashes are pinned below.
         static byte[][] RetiredFixture(string assets,int weapon,int cell) {
@@ -484,6 +494,27 @@ namespace FleetLab {
                 var cleared=state.ClearOrders(7);Require(BitConverter.ToInt16(cleared.PauseTimers.CopyShipTimers(),7*52+8)==-1&&cleared.ClockMilliseconds==1000&&initial.ClockMilliseconds==0,"Clear and reset baseline");
                 Reject(delegate{new PracticeVisibility(new byte[624]);});Reject(delegate{new PracticeFiringRangeTable(new byte[70]);});Reject(delegate{new PracticeFiringRateTable(new byte[140]);});
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");RejectArgument(delegate{PracticeFiringRateTable.Load(p).Interval(17,1000,0);});
+            });
+            check("Moving fleets and queued shots match the first original combined poll",delegate {
+                var world=WorldFixture(assets);var combat=world.Combat;for(int n=0;n<10;n++)combat=combat.QueueOrder(20,7,10,3,3);
+                var next=world.WithCombat(combat).AdvanceFrame(false);
+                Require(next.Combat.ClockMilliseconds==40&&next.Schedule.BatchStart==8&&next.Schedule.CompletedCycles==0&&next.Combat.ObjectsFromOrders==3,"Original292 first poll counters");
+                Require(Hash(next.Combat.Objects.CopyFleetPool())=="4584538D956EC712CBCA898B52C6389EFCB4AAED6DB49B567CEF3752B942517A"&&Hash(next.Combat.Objects.CopyTimedPool())=="D4DE083D4BC2E943733A898CA9F62F31917D2A45990994F230C51ECA826ED671","Original292 movement before firing");
+                Require(Hash(next.Combat.PauseTimers.CopyShipTimers())=="2960AB9B4469B031472CFAC5CA3B37F9921D5AE98F0096546DD5266694F3C7CC"&&world.Combat.ClockMilliseconds==0&&world.Schedule.BatchStart==0,"Original292 orders/immutable input");
+            });
+            check("Combined moving-target history matches the original terminal buffers",delegate {
+                var world=WorldFixture(assets);var combat=world.Combat;for(int n=0;n<10;n++)combat=combat.QueueOrder(20,7,10,3,3);world=world.WithCombat(combat);
+                for(int n=0;n<512;n++)world=world.AdvanceFrame(false);
+                Require(world.Combat.ClockMilliseconds==20480&&world.Schedule.BatchStart==64&&world.Schedule.CompletedCycles==16&&world.MovedFleetUpdates>0&&world.Combat.RandomState==731,"Original292 terminal counters");
+                Require(Hash(world.Combat.Objects.CopyFleetPool())=="F80BF0C5E58EE231145E5C21E63E567F28431F00B9F040EFA36E0862F926517C"&&Hash(world.Combat.Objects.CopyTimedPool())=="F69A8B74403067F3F92C80041D35DE1CC9BC6DFD13C885DD7F7CADC993D5ED7B"&&Hash(world.Combat.PauseTimers.CopyShipTimers())=="84D40A6E49ED66CF35B4730C19911D52F3D76D9A0FC5B4FF6D944C98FDFB1E80","Original292 terminal complete pools");
+            });
+            check("Combined study holds movement during pause and rejects unsupported batches atomically",delegate {
+                var world=WorldFixture(assets);world=world.WithCombat(world.Combat.QueueOrder(20,7,10,3,3));string fleets=Hash(world.Combat.Objects.CopyFleetPool()),aux=Hash(world.CopyAuxiliary());
+                for(int n=0;n<25;n++)world=world.AdvanceFrame(true);
+                Require(world.Combat.ClockMilliseconds==1000&&world.Schedule.BatchStart==0&&world.Schedule.CompletedCycles==0&&world.MovedFleetUpdates==0&&Hash(world.Combat.Objects.CopyFleetPool())==fleets&&Hash(world.CopyAuxiliary())==aux&&BitConverter.ToUInt32(world.Combat.PauseTimers.CopyShipTimers(),7*52+4)==1000,"Paused movement/cursor/deadlines");
+                byte[] unsupported=world.Combat.Objects.CopyFleetPool();BitConverter.GetBytes(9).CopyTo(unsupported,0);world=world.WithCombat(world.Combat.WithFleetPool(unsupported));
+                bool guarded=false;try{world.AdvanceFrame(false);}catch(NotSupportedException){guarded=true;}
+                Require(guarded&&world.Combat.ClockMilliseconds==1000&&world.Schedule.BatchStart==0&&Hash(world.Combat.Objects.CopyFleetPool())==Hash(unsupported)&&Hash(world.CopyAuxiliary())==aux,"Unsupported update published partial movement or clock");
             });
             check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);

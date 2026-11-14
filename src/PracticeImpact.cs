@@ -44,7 +44,7 @@ namespace FleetLab {
                 byte[] timedPool,byte[] shipPool,byte[] fleetPool,byte[] effectPool,byte[] scoreRegion,int timedSlot,uint randomState) {
             return ResolveCore(tables,units,visualRecords,timedPool,shipPool,fleetPool,effectPool,scoreRegion,timedSlot,randomState,null,0);
         }
-        // Explicit mode0/network0/playercount0/localowner-2/other selected fleet
+        // Explicit mode0/network0/scenario-selector0/localowner-2/other selected fleet
         // continuation. The default API retains its nonlethal boundary.
         public static PracticeImpactResult ResolveWithDestruction(PracticeDefenseTables tables,PracticeUnitCatalog units,byte[] visualRecords,
                 byte[] timedPool,byte[] shipPool,byte[] fleetPool,byte[] effectPool,byte[] scoreRegion,int timedSlot,uint randomState,
