@@ -34,6 +34,16 @@ namespace FleetLab {
             int[] targets={2,10,248},starts={20,30,40};for(int t=0;t<3;t++){int at=targets[t]*492;BitConverter.GetBytes(3).CopyTo(fleets,at);W16(fleets,at+6,1);W16(fleets,at+12,100+(t==0?7:t==1?1:0));W16(fleets,at+14,100);for(int n=0;n<6;n++){int u=starts[t]+n,p=u*268;BitConverter.GetBytes(1).CopyTo(ships,p);W16(ships,p+8,n+1);W16(ships,p+10,n*10+4);W16(ships,p+14,1+n%6);BitConverter.GetBytes(t==0&&mask==2?0:0x4fc340+u*268).CopyTo(fleets,at+16+n*4);}}
             return new[]{ships,fleets,orders};
         }
+        // Supplied original301 case0/4050 input: six template8 members and
+        // a copied associated unit. This is not natural aircraft allocation.
+        static byte[][] AircraftFixture(string assets,int kind) {
+            string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var catalog=PracticeUnitCatalog.Load(p);var initial=FiringFixture(assets);var ships=initial.Objects.CopyShipPool();var fleets=initial.Objects.CopyFleetPool();var orders=new byte[78000];
+            Array.Copy(catalog.Templates,5*268,ships,7*268,268);W16(ships,7*268+4,7);W16(ships,7*268+6,0);W16(ships,7*268+12,7);
+            for(int n=0;n<492;n++)fleets[n]=(byte)(n*7+19);BitConverter.GetBytes(kind).CopyTo(fleets,0);W16(fleets,4,0);W16(fleets,6,0);W16(fleets,8,7);W16(fleets,12,-123);W16(fleets,14,456);W16(fleets,60,111);BitConverter.GetBytes(123).CopyTo(fleets,472);BitConverter.GetBytes(77).CopyTo(fleets,476);fleets[486]=13;
+            for(int n=0;n<6;n++){int slot=20+n,at=slot*268;Array.Copy(catalog.Templates,8*268,ships,at,268);W16(ships,at+4,slot);W16(ships,at+6,0);W16(ships,at+8,4);W16(ships,at+10,4);W16(ships,at+12,0);BitConverter.GetBytes(0x4fc340+slot*268).CopyTo(fleets,16+n*4);}
+            for(int n=0;n<5;n++){W16(fleets,40+n*2,100+n*10);W16(fleets,50+n*2,-200-n);}for(int source=0;source<1500;source++){int at=source*52;BitConverter.GetBytes(17).CopyTo(orders,at);BitConverter.GetBytes(123456789+source).CopyTo(orders,at+4);BitConverter.GetBytes(0xdeadbeefu).CopyTo(orders,at+48);for(int n=0;n<10;n++){W16(orders,at+8+n*2,1+n);W16(orders,at+28+n*2,-100-n);}}
+            return new[]{ships,fleets,orders};
+        }
         // Independent source289 case0/1080 inputs: timed, ships, fleet,
         // effects, scores. Their original output hashes are pinned below.
         static byte[][] RetiredFixture(string assets,int weapon,int cell) {
@@ -576,6 +586,18 @@ namespace FleetLab {
             check("Secondary generation publishes immutable results and rejects later malformed records atomically",delegate {
                 var ranges=PracticeFiringRangeTable.Load(Path.Combine(Path.GetDirectoryName(assets),"Programs"));var data=SecondaryTargetFixture(0,0);var result=PracticeSecondaryTargeting.Generate(ranges,data[0],data[1],data[2],0);var exposed=result.CopyOrderPool();exposed[0]^=255;Require(Hash(result.CopyOrderPool())=="C66406910523DEE6651344E775B2FF30410119D81011EB8786C6AB046224089C","Producer exposed mutable result bytes");
                 W16(data[0],8*268+4,7);string ships=Hash(data[0]),fleets=Hash(data[1]),orders=Hash(data[2]);Reject(delegate{PracticeSecondaryTargeting.Generate(ranges,data[0],data[1],data[2],0);});Require(Hash(data[0])==ships&&Hash(data[1])==fleets&&Hash(data[2])==orders,"Later malformed source ID published a partial queue/RNG update");
+            });
+            check("Aircraft activation matches the original complete pools and mode visibility",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=AircraftFixture(assets,6);Require(Hash(data[0])=="A586361BBF7B8D1D257463ED23077D16D443BDD7535EAF04D1BC3BC4E07E851F"&&Hash(data[1])=="C53B8C469B8FCDF9564A91E430723398F4974354C5DB6FE2E8D335D56A31601F"&&Hash(data[2])=="EEEF99F950AC35104BFC9406955E0932BCD48B912BCE96E3AC547AD37DBD775E","Original301 case0 input pools");
+                var result=PracticeAircraftTransitions.ApplyOffscreen(PracticeAircraftTables.Load(p),PracticeUnitCatalog.Load(p),data[0],data[1],data[2],0,1,249,3,-2);
+                Require(result.Outcome==PracticeAircraftTransitionOutcome.Activated&&result.ConfiguredMembers==6&&result.SelectedWaypoint== -1&&result.Invalidations==1,"Original301 activation callbacks");Require(Hash(result.CopyShipPool())=="7C16BF900856DFD24F9009DCA9CC340DC6DA32C65E6CFC9D4A161E2601122DDA"&&Hash(result.CopyFleetPool())=="87CABB7A54287A809FA81BE4E19C1A4ECFF54C1CAD139EF457FD0032A3CEE35F"&&Hash(result.CopyPrimaryOrders())==Hash(data[2]),"Original301 case0 complete outputs");
+            });
+            check("Aircraft docking preserves the source member-index order clearing",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=AircraftFixture(assets,3);Require(Hash(data[1])=="3FFB4A0BAA06E93E75B1C04F13A7DBE980D9EDD9FB3FAB5977E851DB74D79841","Original301 case4050 input fleet");
+                var result=PracticeAircraftTransitions.ApplyOffscreen(PracticeAircraftTables.Load(p),PracticeUnitCatalog.Load(p),data[0],data[1],data[2],0,0,249,3,-2);Require(result.Outcome==PracticeAircraftTransitionOutcome.Docked&&result.SelectedWaypoint==3&&result.Invalidations==0,"Original301 docking continuation");Require(Hash(result.CopyShipPool())==Hash(data[0])&&Hash(result.CopyFleetPool())=="9D90921D97EDE3663160D06A427D8509EA95E83AB4B3A68D0DD10964350758C0"&&Hash(result.CopyPrimaryOrders())=="06E1919D77D16163849B386946D6FD7C45554627022D2A011AF4A4EC0227058C","Original301 dock whole pools");var orders=result.CopyPrimaryOrders();Require(BitConverter.ToInt16(orders,8)== -1&&BitConverter.ToInt16(orders,20*52+8)==1,"Source clears member position, not unit slot20");
+            });
+            check("Aircraft transitions own their results and reject late unsupported members atomically",delegate {
+                string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var tables=PracticeAircraftTables.Load(p);var catalog=PracticeUnitCatalog.Load(p);var data=AircraftFixture(assets,6);var result=PracticeAircraftTransitions.ApplyOffscreen(tables,catalog,data[0],data[1],data[2],0,1,249,3,-2);var exposed=result.CopyShipPool();exposed[0]^=255;Require(Hash(result.CopyShipPool())=="7C16BF900856DFD24F9009DCA9CC340DC6DA32C65E6CFC9D4A161E2601122DDA","Mutable aircraft result");BitConverter.GetBytes(1).CopyTo(data[0],25*268);string ships=Hash(data[0]),fleets=Hash(data[1]),orders=Hash(data[2]);bool rejected=false;try{PracticeAircraftTransitions.ApplyOffscreen(tables,catalog,data[0],data[1],data[2],0,1,249,3,-2);}catch(NotSupportedException){rejected=true;}Require(rejected&&Hash(data[0])==ships&&Hash(data[1])==fleets&&Hash(data[2])==orders,"Late unsupported member published partial aircraft changes");
             });
             check("Retired fleet stale ship cell preserves the original unmatched projectile",delegate {
                 string p=Path.Combine(Path.GetDirectoryName(assets),"Programs");var data=RetiredFixture(assets,17,2);

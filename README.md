@@ -2,12 +2,14 @@
 
 A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. The current game source is v0.67.
 
+The source also includes the recovered secondary-target producer and aircraft activation/docking data APIs. These are explicit studies, not automatic aircraft gameplay in v0.67. Aircraft activation configures existing stored fleets using six additional pinned tables; allocation, flight, local-owner media and mission orchestration remain separate work. After pulling these source changes, rerun Setup to import all 38 runtime resources before using the new APIs or validation fixtures.
+
 ## Requirements
 
 - Windows x64 with the .NET Framework 4.x compiler at `%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe`.
 - An extracted copy of the supported English game. The folder must contain `Bs.exe`, `GRAPHICS`, `LWEBS`, `HWEBS` and `SFX`.
 
-Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs, original cursor resources and thirteen unit/object/math/firing tables from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
+Original game assets and executables are **not included**. Setup checks the supplied files against the current asset manifest and extracts the small runtime programs, original cursor resources and nineteen unit/object/math/firing/aircraft tables from `Bs.exe`. The supported executable has SHA-256 `B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569`.
 
 The supplied RIP and disc installer contain different executable builds. The supported RIP `Bs.exe` is 397,824 bytes; the installer cabinet's `Bs.exe` is 401,408 bytes with SHA-256 `AFB5D842D4DF17D3957EA31560D07113AD61452AFD2F1E7A9DC232E2D2C874B4`. Their code and data layouts differ. The installer also contains a separate `BShip.Exe`. These builds are preserved as separate research inputs; setup and the current reconstruction evidence support only the pinned RIP build above.
 
