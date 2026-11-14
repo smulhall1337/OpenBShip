@@ -23,7 +23,7 @@ namespace FleetLab
         readonly ComboBox parent=new ComboBox(),kind=new ComboBox(),mode=new ComboBox();
         readonly NumericUpDown link=new NumericUpDown();
         readonly Button create=new Button(),activate=new Button(),dock=new Button(),reset=new Button();
-        readonly Button combat=new Button(),homeSearch=new Button();
+        readonly Button combat=new Button(),homeSearch=new Button(),flight=new Button();
         readonly HashSet<Keys> held=new HashSet<Keys>();
         readonly ListBox members=new ListBox();
         readonly TextBox details=new TextBox(),homeDetails=new TextBox();
@@ -194,6 +194,11 @@ namespace FleetLab
             combat.AccessibleName=combat.Text;
             combat.AccessibleDescription="Activate a group, then open copied AA projectile travel and impact controls.";
             add(combat,36);
+            flight.Text="Waypoint flight study…";
+            flight.Name="aircraftFlight";
+            flight.AccessibleName=flight.Text;
+            flight.AccessibleDescription="Open manual waypoint flight in another copy. Parent aircraft records remain unchanged.";
+            add(flight,36);
             homeSearch.Text="Find available home (study)";
             homeSearch.Name="aircraftHomeSearch";
             homeSearch.AccessibleName=homeSearch.Text;
@@ -248,6 +253,15 @@ namespace FleetLab
                 {
                     state=state.Transition(mode.SelectedIndex+1);
                 },"Mode applied. Flight, automatic targeting and missions are not running in this study.");
+            };
+            flight.Click+=delegate {
+                if(!flight.Enabled)return;
+                try {using(var study=new PracticeAircraftFlightStudy(programs,state))study.ShowDialog(this);}
+                catch(InvalidDataException e){feedback.Text=e.Message;}
+                catch(IOException e){feedback.Text="Run Setup again to import current flight tables. "+e.Message;}
+                catch(UnauthorizedAccessException e){feedback.Text=e.Message;}
+                catch(InvalidOperationException e){feedback.Text=e.Message;}
+                held.Clear();
             };
             homeSearch.Click+=delegate {
                 Act(delegate {state=state.SearchHome();},"Home helper completed. Inspect its result and association below; aircraft remain fixed. Reset restores the starting copy.");
@@ -371,6 +385,7 @@ namespace FleetLab
             dock.Enabled=state.HasGroup&&!state.Stored;
             combat.Enabled=state.HasGroup&&!state.Stored;
             homeSearch.Enabled=state.Kind>=3&&state.Kind<=5;
+            flight.Enabled=homeSearch.Enabled;
             var homes=new StringBuilder();
             if(!homeSearch.Enabled)homes.AppendLine("Activate a group to inspect home candidates.");
             else {homes.AppendLine(state.LastHomeFound.HasValue?(state.LastHomeFound.Value?"Result: available home linked.":"Result: no available home; source fallback state."):"Home helper has not run."); homes.AppendLine("Association fields: unit "+state.ParentShip+" · link "+state.Link);homes.AppendLine("Explicit searches: "+state.HomeSearches);var candidates=state.HomeCandidates;homes.AppendLine("Candidates in source order: "+candidates.Count);foreach(var candidate in candidates)homes.AppendLine("Fleet "+candidate.FleetSlot+" · unit "+candidate.UnitIdentity+" · distance "+candidate.Distance);homes.AppendLine("Candidates do not guarantee a free slot. This study does not move aircraft.");}
