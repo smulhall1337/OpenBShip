@@ -8,6 +8,23 @@ namespace FleetLab
 {
     public sealed class PracticeAircraftCombatStudy : Form
     {
+        sealed class QueueModeCheckBox : CheckBox
+        {
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+                if(Enabled)return;
+                // The Windows themed disabled caption can become black on
+                // this dark study surface. Keep the native glyph and a legible
+                // caption while the pending-shot mode lock remains in force.
+                int left=CheckBoxRenderer.GetGlyphSize(e.Graphics,System.Windows.Forms.VisualStyles.CheckBoxState.CheckedDisabled).Width+5;
+                var textBounds=new Rectangle(left,0,Math.Max(0,Width-left),Height);
+                Color background=BackColor.A==255?BackColor:Parent==null?Color.FromArgb(12,23,35):Parent.BackColor;
+                using(var brush=new SolidBrush(background))e.Graphics.FillRectangle(brush,textBounds);
+                TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,Color.LightSteelBlue,
+                    TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.WordBreak);
+            }
+        }
         sealed class Choice
         {
             internal int Id;
@@ -21,11 +38,18 @@ namespace FleetLab
         readonly PracticeTimedWeaponCatalog weapons;
         readonly PracticeUnitCatalog units;
         readonly ClassicMessages names;
+        readonly string programsRoot;
         readonly int targetFleet;
         PracticeTimedStudyState state;
+        PracticeAircraftOrderStudyState orderStudy;
         readonly ComboBox source=new ComboBox(),weapon=new ComboBox(),target=new ComboBox();
         readonly NumericUpDown stock=new NumericUpDown(),row=new NumericUpDown();
         readonly Button equip=new Button(),fire=new Button(),one=new Button(),second=new Button(),paused=new Button(),boundary=new Button(),liveRow=new Button(),reset=new Button();
+        readonly CheckBox queueMode=new QueueModeCheckBox();
+        readonly Button nearby=new Button(),produce=new Button(),clearOrders=new Button();
+        readonly Label queueHelp=new Label(),queueSummary=new Label();
+        readonly TextBox requestRecords=new TextBox();
+        Control[] queueControls;
         readonly Label summary=new Label(),battery=new Label(),feedback=new Label();
         readonly TextBox records=new TextBox(),outcome=new TextBox();
         readonly CombatCanvas canvas;
@@ -73,6 +97,7 @@ namespace FleetLab
         {
             if(aircraft==null||!aircraft.HasGroup||aircraft.Stored)throw new ArgumentException("Activate an aircraft group before opening timed combat.","aircraft");
             names=messages;
+            programsRoot=programs;
             targetFleet=aircraft.FleetSlot;
             weapons=PracticeTimedWeaponCatalog.Load(programs);
             units=PracticeUnitCatalog.Load(programs);
@@ -226,7 +251,37 @@ namespace FleetLab
             paused.Name="airCombatPaused";
             paused.Text="Pause +1 second";
             add(paused,32);
-
+            queueMode.Name="airCombatQueueMode";
+            queueMode.Text="Use recovered AA request queue";
+            queueMode.AccessibleName="Optional recovered AA queue mode";
+            add(queueMode,34);
+            queueHelp.Text="Optional copied study. Prepare moves this aircraft fleet beside the battery fleet and sets that fleet's three visibility bytes to 255. Poll scans all eligible copied units. AI poll timing is separate.";
+            add(queueHelp,94);
+            nearby.Name="airCombatNearby";
+            nearby.Text="Prepare nearby visible test target";
+            add(nearby,36);
+            produce.Name="airCombatProduce";
+            produce.Text="Poll recovered request producer";
+            add(produce,36);
+            clearOrders.Name="airCombatClearOrders";
+            clearOrders.Text="Clear all pending requests";
+            add(clearOrders,34);
+            queueSummary.Name="airCombatQueueSummary";
+            queueSummary.AccessibleName="Firing admission and request queue totals";
+            add(queueSummary,126);
+            requestRecords.Name="airCombatRequestRecords";
+            requestRecords.AccessibleName="Pending secondary queues and last generated requests";
+            requestRecords.Multiline=true;
+            requestRecords.ReadOnly=true;
+            requestRecords.ScrollBars=ScrollBars.Vertical;
+            requestRecords.BackColor=BackColor;
+            requestRecords.ForeColor=ForeColor;
+            add(requestRecords,160);
+            queueControls=new Control[]
+            {
+                queueHelp,nearby,produce,clearOrders,queueSummary,requestRecords
+            };
+            foreach(var c in queueControls)c.Visible=false;
             summary.Name="airCombatSummary";
             summary.AccessibleName="Combat clock projectiles and copied scores";
             add(summary,116);
@@ -289,9 +344,29 @@ namespace FleetLab
             {
                 ChooseLiveRow();
             };
+            queueMode.CheckedChanged+=delegate
+            {
+                ChangeQueueMode();
+            };
+            nearby.Click+=delegate
+            {
+                PrepareNearby();
+            };
+            produce.Click+=delegate
+            {
+                ProduceRequests();
+            };
+            clearOrders.Click+=delegate
+            {
+                ClearRequests();
+            };
             reset.Click+=delegate
             {
                 state=initial;
+                orderStudy=null;
+                changing=true;
+                queueMode.Checked=false;
+                changing=false;
                 equipped=false;
                 equippedSource=equippedWeapon=-1;
                 canvas.CancelPick();
@@ -355,6 +430,175 @@ namespace FleetLab
             }
             return base.ProcessCmdKey(ref m,keyData);
         }
+        void ChangeQueueMode()
+        {
+            if(changing)return;
+            try
+            {
+                if(ActiveShots||(orderStudy!=null&&orderStudy.QueuedSources>0))throw new InvalidOperationException("Resolve or clear pending requests and projectiles before changing queue mode.");
+                orderStudy=queueMode.Checked?PracticeAircraftOrderStudyState.ForStudy(state,weapons,units, PracticeFiringRangeTable.Load(programsRoot),PracticeVisibility.Load(programsRoot),PracticeFiringRateTable.Load(programsRoot)):null;
+                RefreshState();
+                feedback.Text=orderStudy==null?"Raw test-shot mode selected.":"Queue mode selected. Prepare a nearby visible copied target, queue a shot or poll the recovered producer, then advance time. Poll timing remains explicit.";
+            }
+            catch(IOException e)
+            {
+                RestoreQueueMode("Queue resources unavailable. Run Setup again. "+e.Message);
+            }
+            catch(InvalidDataException e)
+            {
+                RestoreQueueMode("Queue resources unavailable. Run Setup again. "+e.Message);
+            }
+            catch(UnauthorizedAccessException e)
+            {
+                RestoreQueueMode("Queue resources unavailable. Run Setup again. "+e.Message);
+            }
+            catch(NotSupportedException e)
+            {
+                RestoreQueueMode(e.Message);
+            }
+            catch(InvalidOperationException e)
+            {
+                RestoreQueueMode(e.Message);
+            }
+        }
+        void RestoreQueueMode(string message)
+        {
+            changing=true;
+            queueMode.Checked=orderStudy!=null;
+            changing=false;
+            RefreshState();
+            feedback.Text=message;
+        }
+        void PrepareNearby()
+        {
+            if(!nearby.Enabled)return;
+            byte[] ships=state.Objects.CopyShipPool(),fleets=state.Objects.CopyFleetPool();
+            int parent=BitConverter.ToInt16(ships,SourceId*268+12);
+            int x=BitConverter.ToInt16(fleets,parent*492+12),y=BitConverter.ToInt16(fleets,parent*492+14);
+            int previousX=BitConverter.ToInt16(fleets,targetFleet*492+12),previousY=BitConverter.ToInt16(fleets,targetFleet*492+14);
+            int nearbyX=x==short.MaxValue?x-1:x+1;
+            BitConverter.GetBytes((short)nearbyX).CopyTo(fleets,targetFleet*492+12);
+            BitConverter.GetBytes((short)y).CopyTo(fleets,targetFleet*492+14);
+            for(int n=464;n<=466;n++)fleets[parent*492+n]=255;
+            var edited=state.WithFleetPool(fleets);
+            var next=orderStudy.WithCombatForStudy(edited);
+            orderStudy=next;
+            state=next.Combat;
+            RefreshState();
+            feedback.Text="Copied aircraft origin "+previousX+","+previousY+" → "+nearbyX+","+y+". Copied battery fleet visibility bytes set to 255. Parent study and source material preserved.";
+        }
+        void ProduceRequests()
+        {
+            if(!produce.Enabled)return;
+            try
+            {
+                var next=orderStudy.ProduceRequests();
+                orderStudy=next;
+                state=next.Combat;
+                RefreshState();
+                feedback.Text="Explicit producer poll "+next.RequestPolls+": "+next.LastGenerated+" requests, "+next.LastAccepted+" accepted, "+next.LastRequestDraws+" RNG draws. All eligible copied units were scanned.";
+            }
+            catch(InvalidDataException e)
+            {
+                feedback.Text=e.Message;
+            }
+            catch(NotSupportedException e)
+            {
+                feedback.Text=e.Message;
+            }
+        }
+        void ClearRequests()
+        {
+            if(!clearOrders.Enabled)return;
+            var next=orderStudy;
+            byte[] pending=next.CopySecondaryOrders();
+            int count=0;
+            for(int n=0;n<1500;n++)if(BitConverter.ToInt16(pending,n*52+8)!=-1)
+            {
+                next=next.Clear(n);
+                count++;
+            }
+            orderStudy=next;
+            state=next.Combat;
+            RefreshState();
+            feedback.Text="Cleared "+count+" copied request queues. Active projectiles continue.";
+        }
+        void AdvanceQueueEvent()
+        {
+            UseWaitCursor=true;
+            try
+            {
+                var next=orderStudy;
+                int beforeCallbacks=state.ExpiryCallbacks,beforeEffects=state.ActiveEffects,count=0;
+                for(;count<5000;)
+                {
+                    next=next.AdvanceFrame(false);
+                    count++;
+                    if(next.LastConsumed>0||next.LastRejected>0||next.Combat.ExpiryCallbacks!=beforeCallbacks||next.Combat.ActiveEffects!=beforeEffects)break;
+                }
+                orderStudy=next;
+                state=next.Combat;
+                RefreshState();
+                feedback.Text="Advanced "+count+" source updates. Queued shots created "+next.CreatedObjects+" · rejected orders "+next.RejectedOrders+" · impact callbacks "+state.ExpiryCallbacks+".";
+            }
+            catch(InvalidDataException e)
+            {
+                feedback.Text=e.Message;
+            }
+            catch(NotSupportedException e)
+            {
+                feedback.Text=e.Message;
+            }
+            finally
+            {
+                UseWaitCursor=false;
+            }
+        }
+        void RefreshQueueRecords()
+        {
+            if(orderStudy==null)
+            {
+                queueSummary.Text="";
+                requestRecords.Text="";
+                return;
+            }
+            string admission="No selected source or live target";
+            if(SourceId>=0&&TargetId>=0)
+            {
+                try
+                {
+                    var check=orderStudy.CheckFiring(SourceId,targetFleet,WeaponId);
+                    admission=check.Allowed?"Allowed":check.Denial.ToString();
+                    if(check.Distance>=0)admission+=" · distance "+check.Distance+" / range "+check.Range;
+                }
+                catch(InvalidDataException e)
+                {
+                    admission=e.Message;
+                }
+                catch(NotSupportedException e)
+                {
+                    admission=e.Message;
+                }
+            }
+            queueSummary.Text="Clock "+state.ClockMilliseconds+" ms · RNG "+state.RandomState+"\r\nSelection admission: "+admission+"\r\nQueued sources "+orderStudy.QueuedSources+" · fired "+orderStudy.CreatedObjects+"\r\nConsumed "+orderStudy.ConsumedOrders+" · rejected "+orderStudy.RejectedOrders+"\r\nExplicit producer polls "+orderStudy.RequestPolls+"\r\nLast poll: "+orderStudy.LastGenerated+" requests / "+orderStudy.LastAccepted+" accepted / "+orderStudy.LastRequestDraws+" draws";
+            var text=new StringBuilder("Pending secondary queues:\r\n");
+            byte[] pending=orderStudy.CopySecondaryOrders();
+            for(int n=0;n<1500;n++)
+            {
+                int at=n*52;
+                if(BitConverter.ToInt16(pending,at+8)==-1)continue;
+                text.Append("Unit "+n+" · AA "+BitConverter.ToInt32(pending,at)+" · timer "+BitConverter.ToInt32(pending,at+4)+": ");
+                for(int p=0;p<10;p++)
+                {
+                    int x=BitConverter.ToInt16(pending,at+8+p*2);
+                    if(x!=-1)text.Append("("+x+","+BitConverter.ToInt16(pending,at+28+p*2)+") ");
+                }
+                text.AppendLine();
+            }
+            text.AppendLine("Last recovered producer poll:");
+            foreach(var choice in orderStudy.LastRequests)text.AppendLine("Unit "+choice.SourceShip+" → fleet "+choice.TargetFleet+" / unit "+choice.TargetShip+" · AA "+choice.Weapon+" · "+choice.X+","+choice.Y+" · return "+choice.QueueReturnCode);
+            requestRecords.Text=text.ToString();
+        }
         void Configure()
         {
             if(!equip.Enabled)return;
@@ -362,7 +606,10 @@ namespace FleetLab
             {
                 var before=state.Objects.CopyShipPool();
                 int previous=BitConverter.ToInt32(before,SourceId*268+100);
-                state=PracticeAircraftTestBattery.Configure(state,weapons,units,SourceId,WeaponId,(int)stock.Value);
+                var configured=PracticeAircraftTestBattery.Configure(state,weapons,units,SourceId,WeaponId,(int)stock.Value);
+                var nextOrders=orderStudy==null?null:orderStudy.WithCombatForStudy(configured);
+                state=configured;
+                orderStudy=nextOrders;
                 equipped=true;
                 equippedSource=SourceId;
                 equippedWeapon=WeaponId;
@@ -391,6 +638,14 @@ namespace FleetLab
                 lastTargetId=TargetId;
                 lastX=BitConverter.ToInt16(ships,TargetId*268+8);
                 lastY=BitConverter.ToInt16(ships,TargetId*268+10)+(int)row.Value-1;
+                if(orderStudy!=null)
+                {
+                    orderStudy=orderStudy.Queue(SourceId,targetFleet,WeaponId,lastX,lastY);
+                    state=orderStudy.Combat;
+                    RefreshState();
+                    feedback.Text="Queued copied AA request: return "+orderStudy.LastQueueReturnCode+", slot "+orderStudy.LastQueueSlot+". Admission occurs when its timer is due.";
+                    return;
+                }
                 state=state.LaunchAntiAircraft(WeaponId,SourceId,targetFleet,lastX,lastY);
                 RefreshState();
                 feedback.Text=state.LastCreationOutcome==PracticeTimedCreationOutcome.Created?"Created projectile "+state.LastCreatedSlot+". Advance time to travel and impact; original rounding may hold early coordinates.":"No projectile created: "+state.LastCreationOutcome+".";
@@ -410,9 +665,19 @@ namespace FleetLab
             UseWaitCursor=true;
             try
             {
-                var next=state;
-                for(int n=0;n<count;n++)next=next.AdvanceFrame(pause);
-                state=next;
+                if(orderStudy==null)
+                {
+                    var next=state;
+                    for(int n=0;n<count;n++)next=next.AdvanceFrame(pause);
+                    state=next;
+                }
+                else
+                {
+                    var next=orderStudy;
+                    for(int n=0;n<count;n++)next=next.AdvanceFrame(pause);
+                    orderStudy=next;
+                    state=next.Combat;
+                }
                 RefreshState();
                 feedback.Text=pause?"Clock advanced while flight, effects and RNG were held; active deadlines were compensated.":"Advanced "+count+" source updates. Impact callbacks "+state.ExpiryCallbacks+" · destroyed aircraft "+state.DestroyedUnits+".";
             }
@@ -432,6 +697,11 @@ namespace FleetLab
         void AdvanceBoundary()
         {
             if(!boundary.Enabled)return;
+            if(orderStudy!=null)
+            {
+                AdvanceQueueEvent();
+                return;
+            }
             byte[] timed=state.Objects.CopyTimedPool();
             int least=int.MaxValue;
             for(int n=0;n<80;n++)
@@ -507,9 +777,24 @@ namespace FleetLab
         {
             if(changing)return;
             bool active=ActiveShots;
-            source.Enabled=weapon.Enabled=stock.Enabled=equip.Enabled=!active&&source.Items.Count>0;
+            bool queued=orderStudy!=null&&orderStudy.QueuedSources>0;
+            source.Enabled=weapon.Enabled=stock.Enabled=equip.Enabled=!active&&!queued&&source.Items.Count>0;
             target.Enabled=row.Enabled=liveRow.Enabled=!active&&TargetId>=0;
-            boundary.Enabled=active;
+            boundary.Enabled=active||queued;
+            queueMode.Enabled=!active&&!queued;
+            // Showing previously uncreated WinForms children can change their
+            // z-order, which FlowLayoutPanel also uses as its layout order.
+            // Restore the optional block immediately after its checkbox.
+            int queueIndex=queueMode.Parent.Controls.GetChildIndex(queueMode)+1;
+            foreach(var c in queueControls) {
+                c.Visible=orderStudy!=null;
+                queueMode.Parent.Controls.SetChildIndex(c,queueIndex++);
+            }
+            nearby.Enabled=orderStudy!=null&&!active&&!queued&&SourceId>=0&&TargetId>=0;
+            produce.Enabled=orderStudy!=null&&equipped;
+            clearOrders.Enabled=orderStudy!=null&&queued;
+            fire.Text=orderStudy==null?"Fire test AA shot (raw)":"Queue selected AA request (raw)";
+            boundary.Text=orderStudy==null?"Advance to next deadline":"Advance to next firing / impact";
             var ships=state.Objects.CopyShipPool();
             if(TargetId>=0)
             {
@@ -520,8 +805,9 @@ namespace FleetLab
                 changing=false;
             }
             int count=SourceId<0||WeaponId<1?0:BitConverter.ToInt16(ships,SourceId*268+196+WeaponId*2);
-            fire.Enabled=equipped&&equippedSource==SourceId&&equippedWeapon==WeaponId&&TargetId>=0&&(!active||TargetId==lastTargetId)&&(count==-1||count>0);
+            fire.Enabled=equipped&&equippedSource==SourceId&&equippedWeapon==WeaponId&&TargetId>=0&&(orderStudy!=null||!active||TargetId==lastTargetId)&&(orderStudy!=null||count==-1||count>0);
             battery.Text=SourceId<0?"No opposing surface unit is available.":"Copied unit "+SourceId+" · AA stock "+count+"\r\n"+(equipped&&equippedSource==SourceId&&equippedWeapon==WeaponId?"Copied mount prepared.":"Equip / rearm the copied battery before firing.");
+            RefreshQueueRecords();
             canvas.Invalidate();
         }
         void PickCell(Point cell)
@@ -648,7 +934,7 @@ namespace FleetLab
                 int source=owner.SourceId*268,parent=BitConverter.ToInt16(ships,source+12);
                 Point start=new Point(BitConverter.ToInt16(fleets,parent*492+12)+BitConverter.ToInt16(ships,source+8),BitConverter.ToInt16(fleets,parent*492+14)+BitConverter.ToInt16(ships,source+10));
                 int tx=owner.lastX,ty=owner.lastY;
-                if(!owner.ActiveShots&&owner.TargetId>=0)
+                if(owner.TargetId>=0)
                 {
                     int u=owner.TargetId*268;
                     tx=BitConverter.ToInt16(ships,u+8);
@@ -656,32 +942,31 @@ namespace FleetLab
                 }
                 Point end=new Point(BitConverter.ToInt16(fleets,fleet+12)+tx,BitConverter.ToInt16(fleets,fleet+14)+ty);
                 var timed=owner.state.Objects.CopyTimedPool();
-                int minX=Math.Min(start.X,end.X),maxX=Math.Max(start.X,end.X),minY=Math.Min(start.Y,end.Y),maxY=Math.Max(start.Y,end.Y);
+                var starts=new List<Point>();var ends=new List<Point>();var positions=new List<Point>();
                 for(int n=0;n<80;n++)if(BitConverter.ToInt32(timed,n*268)!=0)
                 {
-                    int x=BitConverter.ToInt16(timed,n*268+8),y=BitConverter.ToInt16(timed,n*268+10);
-                    minX=Math.Min(minX,x);
-                    maxX=Math.Max(maxX,x);
-                    minY=Math.Min(minY,y);
-                    maxY=Math.Max(maxY,y);
+                    int at=n*268,unit=BitConverter.ToInt16(timed,at+16),target=BitConverter.ToInt16(timed,at+12);
+                    positions.Add(new Point(BitConverter.ToInt16(timed,at+8),BitConverter.ToInt16(timed,at+10)));
+                    if(unit<0||unit>=1500||target<0||target>=250)continue;
+                    int origin=BitConverter.ToInt16(ships,unit*268+12);if(origin<0||origin>=250)continue;
+                    starts.Add(new Point(BitConverter.ToInt16(fleets,origin*492+12)+BitConverter.ToInt16(ships,unit*268+8),BitConverter.ToInt16(fleets,origin*492+14)+BitConverter.ToInt16(ships,unit*268+10)));
+                    ends.Add(new Point(BitConverter.ToInt16(fleets,target*492+12)+BitConverter.ToInt16(timed,at+18),BitConverter.ToInt16(fleets,target*492+14)+BitConverter.ToInt16(timed,at+20)));
                 }
+                if(starts.Count==0){starts.Add(start);ends.Add(end);}
+                int minX=starts[0].X,maxX=minX,minY=starts[0].Y,maxY=minY;
+                Action<Point> include=delegate(Point p){minX=Math.Min(minX,p.X);maxX=Math.Max(maxX,p.X);minY=Math.Min(minY,p.Y);maxY=Math.Max(maxY,p.Y);};
+                foreach(var p in starts)include(p);foreach(var p in ends)include(p);foreach(var p in positions)include(p);
                 Func<Point,PointF> plot=delegate(Point p)
                 {
                     return new PointF(world.X+18+(p.X-minX)*(world.Width-36)/Math.Max(1,maxX-minX),world.Y+18+(p.Y-minY)*(world.Height-36)/Math.Max(1,maxY-minY));
                 };
-                var a=plot(start);
-                var z=plot(end);
-                e.Graphics.DrawLine(Pens.SlateGray,a,z);
-                e.Graphics.FillEllipse(Brushes.LightSkyBlue,a.X-4,a.Y-4,8,8);
-                e.Graphics.FillEllipse(Brushes.Gold,z.X-4,z.Y-4,8,8);
-                e.Graphics.DrawString("S",owner.Font,Brushes.WhiteSmoke,a.X,a.Y+4);
-                e.Graphics.DrawString("T",owner.Font,Brushes.WhiteSmoke,z.X,z.Y+4);
-                for(int n=0;n<80;n++)if(BitConverter.ToInt32(timed,n*268)!=0)
-                {
-                    var p=plot(new Point(BitConverter.ToInt16(timed,n*268+8),BitConverter.ToInt16(timed,n*268+10)));
-                    e.Graphics.FillEllipse(Brushes.HotPink,p.X-4,p.Y-4,8,8);
+                for(int n=0;n<starts.Count;n++) {
+                    var a=plot(starts[n]);var z=plot(ends[n]);e.Graphics.DrawLine(Pens.SlateGray,a,z);
+                    e.Graphics.FillEllipse(Brushes.LightSkyBlue,a.X-4,a.Y-4,8,8);e.Graphics.FillEllipse(Brushes.Gold,z.X-4,z.Y-4,8,8);
+                    e.Graphics.DrawString("S",owner.Font,Brushes.WhiteSmoke,a.X,a.Y+4);e.Graphics.DrawString("T",owner.Font,Brushes.WhiteSmoke,z.X,z.Y+4);
                 }
-                e.Graphics.DrawString("World travel · source → target · pink: active shots",owner.Font,Brushes.LightSteelBlue,world.X,world.Bottom+4);
+                foreach(var position in positions){var p=plot(position);e.Graphics.FillEllipse(Brushes.HotPink,p.X-4,p.Y-4,8,8);}
+                e.Graphics.DrawString("World travel · blue: sources · gold: targets · pink: shots",owner.Font,Brushes.LightSteelBlue,world.X,world.Bottom+4);
             }
         }
     }
