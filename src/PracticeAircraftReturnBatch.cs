@@ -97,11 +97,11 @@ namespace FleetLab
         {
             return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,false).ReturnUpdate;
         }
-        internal static PracticeAircraftFlightBatchResult AdvanceIncludingWaypoints(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowEmptyAwacs=false,bool searchLandingCandidates=false)
+        internal static PracticeAircraftFlightBatchResult AdvanceIncludingWaypoints(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowEmptyAwacs=false,bool searchLandingCandidates=false,bool singleActor=false)
         {
-            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true,allowEmptyAwacs,searchLandingCandidates);
+            return AdvanceCore(tables,visuals,units,modes,ships,fleets,scores,effects,primary,auxiliary,schedule,actor,point,movie,random,true,allowEmptyAwacs,searchLandingCandidates,singleActor);
         }
-        static PracticeAircraftFlightBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowOrdinary,bool allowEmptyAwacs=false,bool searchLandingCandidates=false)
+        static PracticeAircraftFlightBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,byte[] auxiliary,PracticeFleetScheduler schedule,int actor,int point,int movie,uint random,bool allowOrdinary,bool allowEmptyAwacs=false,bool searchLandingCandidates=false,bool singleActor=false)
         {
             if(schedule==null)throw new ArgumentNullException("schedule");
             if(ships==null||ships.Length!=402000||fleets==null||fleets.Length!=123000||auxiliary==null||auxiliary.Length!=78336)throw new InvalidDataException("Returning aircraft require complete ship/fleet/auxiliary pools.");
@@ -112,7 +112,7 @@ namespace FleetLab
             foreach(int slot in schedule.TakeBatch().CopySlots())
             {
                 if(slot==actor)visited=true;
-                else if(!PracticeAircraftResourceBatch.IsRecordedEarlySkip(fleets,slot*492))throw new NotSupportedException("Other visited fleets must take recorded early skips; batch preserved.");
+                else if(!singleActor&&!PracticeAircraftResourceBatch.IsRecordedEarlySkip(fleets,slot*492))throw new NotSupportedException("Other visited fleets must take recorded early skips; batch preserved.");
             }
             if(!visited)throw new NotSupportedException("The source batch does not visit the requested returning aircraft; batch preserved.");
             int at=actor*492,kind=I(fleets,at),state=I(fleets,at+472),task=I(fleets,at+476),speed=W(fleets,at+60);
@@ -125,7 +125,7 @@ namespace FleetLab
             if(homeFleet<0||homeFleet>=250)throw new InvalidDataException("Return association crosses the fleet pool.");
             var home=new Point(W(fleets,homeFleet*492+12),W(fleets,homeFleet*492+14));
             if(before.X<0||before.X>=640||before.Y<0||before.Y>=640||home.X<0||home.X>=640||home.Y<0||home.Y>=640)throw new NotSupportedException("Return origin/home must be in world0..639; batch preserved.");
-            var prepared=PracticeAircraftResourceBatch.ApplyBeforeReturn(tables,visuals,units,modes,ships,fleets,scores,effects,primary,schedule,movie,random,actor,point,allowEmptyAwacs,searchLandingCandidates);
+            var prepared=PracticeAircraftResourceBatch.ApplyBeforeReturn(tables,visuals,units,modes,ships,fleets,scores,effects,primary,schedule,movie,random,actor,point,allowEmptyAwacs,searchLandingCandidates,singleActor);
             var prefix=prepared.Batch;
             var s=prefix.CopyShipPool();
             var f=prefix.CopyFleetPool();

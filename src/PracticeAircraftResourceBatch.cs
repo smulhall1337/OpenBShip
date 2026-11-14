@@ -177,7 +177,7 @@ namespace FleetLab
         {
             return ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,null,actor);
         }
-        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false,bool searchLandingCandidates=false)
+        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false,bool searchLandingCandidates=false,bool singleActor=false)
         {
             if(units==null||modes==null)throw new ArgumentNullException("aircraft return tables");
             if(primary==null||primary.Length!=78000)throw new InvalidDataException("Returning aircraft require complete primary orders.");
@@ -185,7 +185,7 @@ namespace FleetLab
             {
                 Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor,AllowNoHome=allowEmptyAwacs,SearchLandingCandidates=searchLandingCandidates
             };
-            var batch=ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,profile,actor);
+            var batch=ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,profile,actor,singleActor);
             return new PracticeAircraftHomeBatchResult(batch,profile.Primary,profile.Point,profile.Invalidations,0,profile.NoHome,profile.SearchResult);
         }
         internal static bool IsRecordedEarlySkip(byte[] fleets,int at)
@@ -193,7 +193,7 @@ namespace FleetLab
             int kind=I(fleets,at);
             return kind==0||kind==2||kind==6||kind==7||kind==8||((kind==1||kind==11)&&I(fleets,at+472)==0&&I(fleets,at+476)==0&&W(fleets,at+40)==-1&&(kind==1?(fleets[at+485]==2||fleets[at+485]==3):fleets[at+485]==0));
         }
-        static PracticeAircraftResourceBatchResult ApplyCore(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState,HomeDock docking,int waypointActor=-1)
+        static PracticeAircraftResourceBatchResult ApplyCore(PracticeAircraftDestructionTable tables,byte[] visuals,byte[] shipPool,byte[] fleetPool, byte[] scoreRegion,byte[] effectPool,PracticeFleetScheduler schedule,int movieCounter,uint randomState,HomeDock docking,int waypointActor=-1,bool singleActor=false)
         {
             if(tables==null||schedule==null)throw new ArgumentNullException("aircraft batch");
             if(shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||scoreRegion==null||scoreRegion.Length!=176||effectPool==null||effectPool.Length!=800)throw new InvalidDataException("Aircraft resource batches require complete source pools.");
@@ -207,6 +207,7 @@ namespace FleetLab
             int members=0,retired=0;
             foreach(int slot in plan.CopySlots())
             {
+                if(singleActor&&slot!=waypointActor)continue;
                 int at=slot*492,kind=I(fleets,at);
                 fleets[at+482]=255;
                 if(IsRecordedEarlySkip(fleets,at))continue;
