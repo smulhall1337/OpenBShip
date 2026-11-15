@@ -20,6 +20,7 @@ namespace FleetLab {
         readonly PracticeDefenseTables impactTables;
         readonly PracticeDestructionTables destructionTables;
         readonly PracticeAircraftDestructionTable aircraftDestruction;
+        bool includeStoredAircraftImpacts;
         readonly PracticeFiringRangeTable firingRanges;
         readonly PracticeVisibility visibility;
         readonly PracticeFiringRateTable firingRates;
@@ -138,7 +139,7 @@ namespace FleetLab {
             units = before.units; visuals = before.visuals; effects = before.effects;
             impactTables=before.impactTables;scoreRegion=before.scoreRegion;ExpiryCallbacks=before.ExpiryCallbacks;
             destructionTables=before.destructionTables;DestroyedUnits=before.DestroyedUnits;LastVictimDestroyed=before.LastVictimDestroyed;MovieCounter=before.MovieCounter;
-            aircraftDestruction=before.aircraftDestruction;
+            aircraftDestruction=before.aircraftDestruction;includeStoredAircraftImpacts=before.includeStoredAircraftImpacts;
             firingRanges=before.firingRanges;visibility=before.visibility;firingRates=before.firingRates;
             LastQueueReturnCode=before.LastQueueReturnCode;LastQueueSlot=before.LastQueueSlot;FiringPolls=before.FiringPolls;
             ConsumedOrders=before.ConsumedOrders;RejectedOrders=before.RejectedOrders;ObjectsFromOrders=before.ObjectsFromOrders;
@@ -167,6 +168,20 @@ namespace FleetLab {
         internal PracticeTimedStudyState WithFleetPool(byte[] fleetPool) {
             var objects=new PracticeTimedCreationState(catalog,Objects.CopyTimedPool(),Objects.CopyShipPool(),fleetPool,Objects.LastTargetFleet);
             return new PracticeTimedStudyState(this,objects,WithTimedPool(objects.CopyTimedPool()),ClockMilliseconds);
+        }
+        internal PracticeTimedStudyState WithStoredAircraftImpacts() {
+            if(!IsAircraftStudy)throw new NotSupportedException("Stored aircraft impacts require the aircraft combat profile.");
+            var next=new PracticeTimedStudyState(this,Objects,PauseTimers,ClockMilliseconds);next.includeStoredAircraftImpacts=true;return next;
+        }
+        // Carry every shared movement/resource pool into the existing combat
+        // history. Replacing fleets alone would lose resource use and docking.
+        internal PracticeTimedStudyState WithMixedFleetBatch(PracticeMixedFleetBatchResult batch) {
+            if(batch==null)throw new ArgumentNullException("batch");
+            if(!IsAircraftStudy||IncludesFiringOrders)throw new NotSupportedException("Mixed aircraft movement requires the aircraft combat profile.");
+            var objects=new PracticeTimedCreationState(catalog,Objects.CopyTimedPool(),batch.CopyShipPool(),batch.CopyFleetPool(),Objects.LastTargetFleet);
+            var next=new PracticeTimedStudyState(this,objects,WithTimedPool(objects.CopyTimedPool(),batch.CopyPrimaryOrders()),ClockMilliseconds);
+            next.scoreRegion=batch.CopyScoreRegion();next.effects=new PracticeVisualPool(batch.CopyEffectPool(),visuals);
+            next.RandomState=batch.RandomState;next.MovieCounter=batch.MovieCounter;return next;
         }
         internal PracticeTimedStudyState WithObjectsAndPrimaryOrders(PracticeTimedCreationState objects,byte[] primaryOrders) {
             if(objects==null)throw new ArgumentNullException("objects");
@@ -242,7 +257,7 @@ namespace FleetLab {
                 next.PausedFrames++; return next;
             }
             if(IncludesShipImpacts) {
-                var impact=IsAircraftStudy?PracticeTimedImpactState.ForAircraft(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,aircraftDestruction,MovieCounter):new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,destructionTables,MovieCounter);
+                var impact=IsAircraftStudy?PracticeTimedImpactState.ForAircraft(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,aircraftDestruction,MovieCounter,includeStoredAircraftImpacts):new PracticeTimedImpactState(units,impactTables,visuals,Objects.CopyTimedPool(),Objects.CopyShipPool(),Objects.CopyFleetPool(),effects.CopyEffectPool(),scoreRegion,RandomState,destructionTables,MovieCounter);
                 var update=impact.Advance(nextClock,StepMilliseconds);
                 var nextEffects=new PracticeVisualPool(update.State.CopyEffectPool(),visuals).Advance();
                 var updatedObjects=new PracticeTimedCreationState(catalog,update.State.CopyTimedPool(),update.State.CopyShipPool(),update.State.CopyFleetPool(),Objects.LastTargetFleet);

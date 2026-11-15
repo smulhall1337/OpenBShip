@@ -112,6 +112,10 @@ namespace FleetLab
         {
             return ResolveCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,victim,index,clearHull,attacker,movieCounter,randomState,false);
         }
+        internal static PracticeAircraftDestructionResult ResolveIncludingStored(PracticeAircraftDestructionTable tables,byte[] visuals, byte[] ships,byte[] fleets,byte[] scores,byte[] effects,int victim,int index,int attacker,int movie,uint random)
+        {
+            return ResolveCore(tables,visuals,ships,fleets,scores,effects,victim,index,false,attacker,movie,random,false,true);
+        }
         // Original427786 resource-expiry caller passes a live HP field to
         //418BD0(clearHull=1,attacker=-1). Its HP is deliberately retained.
         public static PracticeAircraftDestructionResult RetireForEmptyResource(PracticeAircraftDestructionTable tables,byte[] visuals, byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,int victim,int index,int movieCounter,uint randomState)
@@ -120,7 +124,7 @@ namespace FleetLab
             if(W(shipPool,victim*268+96)!=0)throw new NotSupportedException("Resource retirement requires the caller's zero resource96 field.");
             return ResolveCore(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,victim,index,true,-1,movieCounter,randomState,true);
         }
-        static PracticeAircraftDestructionResult ResolveCore(PracticeAircraftDestructionTable tables,byte[] visuals, byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,int victim,int index,bool clearHull,int attacker,int movieCounter,uint randomState,bool allowLiveHP)
+        static PracticeAircraftDestructionResult ResolveCore(PracticeAircraftDestructionTable tables,byte[] visuals, byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,int victim,int index,bool clearHull,int attacker,int movieCounter,uint randomState,bool allowLiveHP,bool includeStored=false)
         {
             if(tables==null)throw new ArgumentNullException("tables");
             if(shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||scoreRegion==null||scoreRegion.Length!=176||effectPool==null||effectPool.Length!=800)throw new InvalidDataException("Aircraft destruction requires complete original pools and scores.");
@@ -130,7 +134,7 @@ namespace FleetLab
             if(type<8||type>10||!allowLiveHP&&W(shipPool,unit+16)!=0)throw new NotSupportedException("Aircraft destruction requires a type8..10 unit at zero HP.");
             if(parent<0||parent>=250||owner< -1||owner>3||W(shipPool,unit+4)!=victim||length<1||length>6||x<0||x>=10||y<0||y+length>10)throw new InvalidDataException("Unsupported aircraft destruction identity, hull or owner.");
             int fleet=parent*492,kind=I(fleetPool,fleet),expected=type==8?5:type==9?4:3;
-            if(kind!=expected||W(scoreRegion,172)!=-2)throw new NotSupportedException("Aircraft destruction requires the matching active aircraft kind and offscreen owner context.");
+            if((kind!=expected&&(!includeStored||kind!=expected+3))||W(scoreRegion,172)!=-2)throw new NotSupportedException("Aircraft destruction requires the matching admitted aircraft kind and offscreen owner context.");
             if(W(fleetPool,fleet+4)!=parent||I(fleetPool,fleet+16+index*4)!=0x4fc340+unit)throw new InvalidDataException("Aircraft destruction fleet/member identity differs.");
             for(int n=0;n<6;n++)
             {

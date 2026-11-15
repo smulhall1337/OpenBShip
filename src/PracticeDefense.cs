@@ -65,8 +65,12 @@ namespace FleetLab {
                 byte[] shipPool,byte[] fleetPool,int timedSlot,int victimShip,uint randomState) {
             return ResolveCore(tables,timedPool,shipPool,fleetPool,timedSlot,victimShip,randomState,true);
         }
+        internal static PracticeDefenseDecision ResolveAircraftIncludingStored(PracticeDefenseTables tables,byte[] timedPool,
+                byte[] shipPool,byte[] fleetPool,int timedSlot,int victimShip,uint randomState) {
+            return ResolveCore(tables,timedPool,shipPool,fleetPool,timedSlot,victimShip,randomState,true,true);
+        }
         static PracticeDefenseDecision ResolveCore(PracticeDefenseTables tables,byte[] timedPool,
-                byte[] shipPool,byte[] fleetPool,int timedSlot,int victimShip,uint randomState,bool antiAircraft) {
+                byte[] shipPool,byte[] fleetPool,int timedSlot,int victimShip,uint randomState,bool antiAircraft,bool includeStored=false) {
             if (tables == null) throw new ArgumentNullException("tables");
             if (timedPool == null || timedPool.Length != 21440 || shipPool == null || shipPool.Length != 402000 || fleetPool == null || fleetPool.Length != 123000)
                 throw new InvalidDataException("Defense decisions require complete original timed, ship and fleet pools.");
@@ -78,7 +82,7 @@ namespace FleetLab {
             if ((antiAircraft?(weapon<1||weapon>3):(weapon<14||weapon>30)) || target < 0 || target >= 250 || parent < 0 || parent >= 250 || length < 0 || length > 6 || BitConverter.ToInt16(shipPool, unit + 4) != victimShip)
                 throw new InvalidDataException("Unsupported defense identity, weapon or equipment-row extent.");
             int kind = BitConverter.ToInt32(fleetPool, target * 492), primary = BitConverter.ToInt32(shipPool, unit + 76), secondary = BitConverter.ToInt32(shipPool, unit + 80);
-            if ((antiAircraft?(kind<3||kind>5):(kind!=1&&kind!=2&&kind!=9&&kind!=11)) || (primary != 0 && (primary < 4 || primary > 8)) || (secondary != 0 && (secondary < 9 || secondary > 13)))
+            if ((antiAircraft?(kind<3||kind>(includeStored?8:5)):(kind!=1&&kind!=2&&kind!=9&&kind!=11)) || (primary != 0 && (primary < 4 || primary > 8)) || (secondary != 0 && (secondary < 9 || secondary > 13)))
                 throw new NotSupportedException("Unsupported defense fleet kind or equipment selection.");
             if(antiAircraft&&(BitConverter.ToInt32(shipPool,unit)<8||BitConverter.ToInt32(shipPool,unit)>10))throw new NotSupportedException("The aircraft defense profile requires source unit types8..10.");
             byte[] ships = (byte[])shipPool.Clone(); var random = new NativeRandom(randomState); int attempts = 0;

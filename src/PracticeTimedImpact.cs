@@ -32,6 +32,7 @@ namespace FleetLab {
         readonly PracticeDefenseTables tables;
         readonly PracticeDestructionTables destruction;
         readonly PracticeAircraftDestructionTable aircraftDestruction;
+        readonly bool includeStored;
         readonly byte[] visuals,timed,ships,fleets,effects,scores;
         public uint RandomState { get; private set; }
         public int MovieCounter { get; private set; }
@@ -41,19 +42,19 @@ namespace FleetLab {
                 :this(unitCatalog,sourceTables,visualRecords,timedPool,shipPool,fleetPool,effectPool,scoreRegion,randomState,destructionTables,movieCounter,null) { }
         private PracticeTimedImpactState(PracticeUnitCatalog unitCatalog,PracticeDefenseTables sourceTables,byte[] visualRecords,
                 byte[] timedPool,byte[] shipPool,byte[] fleetPool,byte[] effectPool,byte[] scoreRegion,uint randomState,
-                PracticeDestructionTables destructionTables,int movieCounter,PracticeAircraftDestructionTable aircraftTables) {
+                PracticeDestructionTables destructionTables,int movieCounter,PracticeAircraftDestructionTable aircraftTables,bool includeStored=false) {
             if(unitCatalog==null)throw new ArgumentNullException("unitCatalog");if(sourceTables==null)throw new ArgumentNullException("sourceTables");
             if(timedPool==null||timedPool.Length!=21440||shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||effectPool==null||effectPool.Length!=800||scoreRegion==null||scoreRegion.Length!=176)
                 throw new InvalidDataException("Timed impact stepping requires complete original pools and score region.");
             new PracticeVisualPool(effectPool,visualRecords);
             if(movieCounter<short.MinValue||movieCounter>short.MaxValue)throw new ArgumentOutOfRangeException("movieCounter");
-            destruction=destructionTables;aircraftDestruction=aircraftTables;MovieCounter=movieCounter;
+            destruction=destructionTables;aircraftDestruction=aircraftTables;MovieCounter=movieCounter;this.includeStored=includeStored;
             units=unitCatalog;tables=sourceTables;visuals=(byte[])visualRecords.Clone();timed=(byte[])timedPool.Clone();ships=(byte[])shipPool.Clone();fleets=(byte[])fleetPool.Clone();effects=(byte[])effectPool.Clone();scores=(byte[])scoreRegion.Clone();RandomState=randomState;
         }
         public static PracticeTimedImpactState ForAircraft(PracticeUnitCatalog units,PracticeDefenseTables defenses,byte[] visuals,
-                byte[] timed,byte[] ships,byte[] fleets,byte[] effects,byte[] scores,uint randomState,PracticeAircraftDestructionTable aircraft,int movieCounter=0) {
+                byte[] timed,byte[] ships,byte[] fleets,byte[] effects,byte[] scores,uint randomState,PracticeAircraftDestructionTable aircraft,int movieCounter=0,bool includeStoredTargets=false) {
             if(aircraft==null)throw new ArgumentNullException("aircraft");
-            return new PracticeTimedImpactState(units,defenses,visuals,timed,ships,fleets,effects,scores,randomState,null,movieCounter,aircraft);
+            return new PracticeTimedImpactState(units,defenses,visuals,timed,ships,fleets,effects,scores,randomState,null,movieCounter,aircraft,includeStoredTargets);
         }
         static int Word(byte[] b,int at){return BitConverter.ToInt16(b,at);}
         static void Word(byte[] b,int at,int value){BitConverter.GetBytes(unchecked((short)value)).CopyTo(b,at);}
@@ -70,7 +71,7 @@ namespace FleetLab {
                 int at=slot*268;if(BitConverter.ToInt32(t,at)==0)continue;
                 int remaining=unchecked((int)(BitConverter.ToUInt32(t,at+24)-gameMilliseconds)),updates=remaining/(int)priorDeltaMilliseconds;
                 if(remaining<=0){
-                    last=aircraftDestruction!=null?PracticeAircraftImpact.Resolve(tables,units,aircraftDestruction,visuals,t,s,f,e,score,slot,random,counter):destruction==null?PracticeImpact.Resolve(tables,units,visuals,t,s,f,e,score,slot,random):PracticeImpact.ResolveWithDestruction(tables,units,visuals,t,s,f,e,score,slot,random,destruction,counter);
+                    last=aircraftDestruction!=null&&includeStored?PracticeAircraftImpact.ResolveIncludingStoredTargets(tables,units,aircraftDestruction,visuals,t,s,f,e,score,slot,random,counter):aircraftDestruction!=null?PracticeAircraftImpact.Resolve(tables,units,aircraftDestruction,visuals,t,s,f,e,score,slot,random,counter):destruction==null?PracticeImpact.Resolve(tables,units,visuals,t,s,f,e,score,slot,random):PracticeImpact.ResolveWithDestruction(tables,units,visuals,t,s,f,e,score,slot,random,destruction,counter);
                     t=last.CopyTimedPool();s=last.CopyShipPool();f=last.CopyFleetPool();e=last.CopyEffectPool();score=last.CopyScoreRegion();random=last.RandomState;calls+=last.RandomCalls;callbacks++;if(last.Retired)retired++;if(last.EffectRequested&&last.EffectSlot<0)dropped++;if(last.VictimDestroyed)destroyed++;if(destruction!=null||aircraftDestruction!=null)counter=last.MovieCounter;
                 }
                 // Original callback precedes the whole-pass quotient-zero
@@ -80,7 +81,7 @@ namespace FleetLab {
                 int x=Word(t,at+8),y=Word(t,at+10),dx=Word(f,fleet+12)-x+Word(t,at+18),dy=Word(f,fleet+14)-y+Word(t,at+20);
                 Word(t,at+8,x+PracticeTimedMotionState.Component(dx,updates));Word(t,at+10,y+PracticeTimedMotionState.Component(dy,updates));moved++;
             }
-            var next=new PracticeTimedImpactState(units,tables,visuals,t,s,f,e,score,random,destruction,counter,aircraftDestruction);
+            var next=new PracticeTimedImpactState(units,tables,visuals,t,s,f,e,score,random,destruction,counter,aircraftDestruction,includeStored);
             return new PracticeTimedImpactUpdate(next,moved,callbacks,retired,dropped,stopped,calls,last,destroyed);
         }
         public byte[] CopyTimedPool(){return (byte[])timed.Clone();}
