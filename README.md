@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.81**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.82**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps and inventory lookup. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,492 assets, extracts 40 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,492 assets, extracts 41 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.79 or earlier to import all 40 runtime resources. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.81 or earlier to import all 41 runtime resources. Build only compiles source.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -117,6 +117,9 @@ The default unit is slot 0, source type 20, length 5:
 2. **Reset → Supply one state 8 / HP length−1 → One recovered cell step** changes 8→7 and HP 4→5. A second step returns without changing state 7 because the source leaf stops when HP equals length.
 3. **Find type in aligned four-fleet block**, with type 19, finds unit slot 2. Type 0 finds no matching referenced unit in this copy. Lookup is read-only.
 
+The same study can run the recovered **startup pass** once per copied layout. Choose **Early diagnostic block 0–3**, set **Startup player count** to **1**, and **Load layout / player count**. Press **Run recovered startup pass (once)**: it fills one type-19 inventory and creates stored AWACS data at fleet 4, linked to home unit 0. This is stored data; flight does not run in this window. Select fleet 1, unit 2 and scroll to the details to inspect stocks such as IDs 14:80, 17:150 and 34:10.
+
+The default later block 32–35 gets inventory but no AWACS for counts 0–4. The source uses base position and the supplied startup count for that eligibility. Only one installation is supplied; the count does not create other player bases. Layout/count changes remain pending until Load; Reset restores the applied construction before startup. The button disables after one pass because calling the original routine again can allocate another AWACS. The separate source API preserves that repeated-call behavior.
 One recovered step changes only the first eligible cell: 5→2, 6→5, 7→6 or 8→7; only the last transition increments the signed HP field. This does not reconstruct the complete repair system or restore equipment records. Damage, location and explicit calls are diagnostic inputs. The active support caller remains guarded; constructor output alone does not establish a valid running installation.
 
 ## Other recovered studies
@@ -149,7 +152,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.81 source, focused checks pass **336 model groups**. A fresh public checkout passes **266**, with **70 explicit skips** for optional private evidence. Form checks pass **123**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.82 source, focused checks pass **342 model groups**. A fresh public checkout passes **272**, with **70 explicit skips** for optional private evidence. Form checks pass **125**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

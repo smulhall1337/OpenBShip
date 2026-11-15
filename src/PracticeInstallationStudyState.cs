@@ -7,6 +7,27 @@ namespace FleetLab
     public sealed class PracticeInstallationStudyState
     {
         readonly byte[] originalShips,originalFleets,ships,fleets;
+        readonly PracticeInstallationInitialization initialization;
+        public int FirstFleetSlot
+        {
+            get;
+            private set;
+        }
+        public int PlayerCount
+        {
+            get;
+            private set;
+        }
+        public bool StartupApplied
+        {
+            get;
+            private set;
+        }
+        public PracticeInstallationInitializationResult LastInitialization
+        {
+            get;
+            private set;
+        }
         public int RecoveryCalls
         {
             get;
@@ -23,9 +44,17 @@ namespace FleetLab
             private set;
         }
         public const int FirstFleet=32, UnitCount=10;
-        public PracticeInstallationStudyState(string programs)
+        public PracticeInstallationStudyState(string programs) : this(programs,FirstFleet,0)
         {
-            var result=PracticeAirfieldFactory.Load(programs).CreateFresh(FirstFleet,new System.Drawing.Point(400,370),0,1);
+        }
+        public PracticeInstallationStudyState(string programs,int firstFleet,int playerCount)
+        {
+            if(firstFleet!=0&&firstFleet!=32)throw new ArgumentOutOfRangeException("firstFleet");
+            if(playerCount<0||playerCount>4)throw new ArgumentOutOfRangeException("playerCount");
+            initialization=PracticeInstallationInitialization.Load(programs);
+            FirstFleetSlot=firstFleet;
+            PlayerCount=playerCount;
+            var result=PracticeAirfieldFactory.Load(programs).CreateFresh(firstFleet,new System.Drawing.Point(400,370),0,1);
             ships=originalShips=result.CopyShipPool();
             fleets=originalFleets=result.CopyFleetPool();
         }
@@ -33,6 +62,11 @@ namespace FleetLab
         {
             originalShips=before.originalShips;
             originalFleets=before.originalFleets;
+            initialization=before.initialization;
+            FirstFleetSlot=before.FirstFleetSlot;
+            PlayerCount=before.PlayerCount;
+            StartupApplied=before.StartupApplied;
+            LastInitialization=before.LastInitialization;
             ships=s;
             fleets=f;
             RecoveryCalls=before.RecoveryCalls;
@@ -51,7 +85,7 @@ namespace FleetLab
         {
             if(unit<0||unit>=UnitCount)throw new ArgumentOutOfRangeException("unit");
             int fleet=W(ships,unit*268+12);
-            if(fleet<FirstFleet||fleet>=FirstFleet+4)throw new InvalidDataException("Study unit is outside the copied installation.");
+            if(fleet<FirstFleetSlot||fleet>=FirstFleetSlot+4)throw new InvalidDataException("Study unit is outside the copied installation.");
             return fleet;
         }
         public byte[] CopyShipPool()
@@ -68,6 +102,19 @@ namespace FleetLab
             next.RecoveryCalls=0;
             next.ChangedCells=0;
             next.LastRecovery=null;
+            next.StartupApplied=false;
+            next.LastInitialization=null;
+            return next;
+        }
+        // Modern study guard: the source startup pass can allocate another
+        // AWACS on every call. One explicit pass per copy avoids hidden repeats.
+        public PracticeInstallationStudyState InitializeStartup()
+        {
+            if(StartupApplied)throw new InvalidOperationException("Reset or load a fresh construction copy before another startup pass.");
+            var result=initialization.ApplyOffscreen(ships,fleets,PlayerCount);
+            var next=new PracticeInstallationStudyState(this,result.CopyShipPool(),result.CopyFleetPool());
+            next.StartupApplied=true;
+            next.LastInitialization=result;
             return next;
         }
         public PracticeInstallationStudyState SupplyDamage(int unit,bool hpBoundary)

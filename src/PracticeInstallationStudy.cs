@@ -9,6 +9,11 @@ namespace FleetLab
     public sealed class PracticeInstallationStudy : Form
     {
         PracticeInstallationStudyState state;
+        readonly string programs;
+        readonly ComboBox construction=new ComboBox();
+        readonly NumericUpDown players=new NumericUpDown();
+        readonly Button load=new Button(),initialize=new Button();
+        readonly Label applied=new Label();
         readonly ComboBox fleet=new ComboBox(),query=new ComboBox();
         readonly ListBox members=new ListBox();
         readonly Button mixed=new Button(),boundary=new Button(),one=new Button(),many=new Button(),reset=new Button(),find=new Button();
@@ -16,7 +21,7 @@ namespace FleetLab
         readonly TextBox details=new TextBox();
         readonly InstallationCanvas canvas;
         readonly HashSet<Keys> held=new HashSet<Keys>();
-        bool changing;
+        bool changing,pending;
         internal PracticeInstallationStudyState StudyState
         {
             get
@@ -33,6 +38,7 @@ namespace FleetLab
         }
         public PracticeInstallationStudy(string programs)
         {
+            this.programs=programs;
             state=new PracticeInstallationStudyState(programs);
             Text="Installation constructor and recovery leaves · diagnostic copy";
             Name="installationStudy";
@@ -80,13 +86,47 @@ namespace FleetLab
                     b.FlatAppearance.BorderColor=Color.SteelBlue;
                     b.BackColor=Color.FromArgb(28,55,76);
                     b.ForeColor=Color.WhiteSmoke;
+                    b.EnabledChanged+=delegate { if(b.IsDisposed||b.Disposing)return;b.BackColor=b.Enabled?Color.FromArgb(28,55,76):Color.LightGray;b.ForeColor=b.Enabled?Color.WhiteSmoke:Color.Black; };
                 }
                 side.Controls.Add(c);
             };
             add(new Label
             {
-                Text="Original compound construction in fresh copied pools: fleets32–35, ten units. Location and damage below are supplied test inputs. These controls call recovered leaves, not the active support system, AI or missions."
+                Text="Original compound construction in fresh copied pools: four fleets, ten installation units. Location and damage below are supplied test inputs. These controls call recovered routines, not the active support system, AI or missions."
             },104);
+            add(new Label
+            {
+                Text="Supplied construction layout"
+            },22);
+            construction.Name="installationConstruction";
+            construction.AccessibleName="Supplied construction layout";
+            construction.DropDownStyle=ComboBoxStyle.DropDownList;
+            construction.Items.AddRange(new object[]
+            {
+                "Later diagnostic block 32–35","Early diagnostic block 0–3"
+            });
+            construction.SelectedIndex=0;
+            add(construction,30);
+            add(new Label
+            {
+                Text="Startup player count (applied on Load)"
+            },22);
+            players.Name="installationPlayers";
+            players.AccessibleName="Startup player count";
+            players.Minimum=0;
+            players.Maximum=4;
+            add(players,30);
+            load.Name="installationLoad";
+            load.Text="Load layout / player count";
+            load.AccessibleName=load.Text;
+            add(load,36);
+            initialize.Name="installationInitialize";
+            initialize.Text="Run recovered startup pass (once)";
+            initialize.AccessibleName=initialize.Text;
+            add(initialize,36);
+            applied.Name="installationApplied";
+            applied.AccessibleName="Applied construction and startup results";
+            add(applied,112);
             add(new Label
             {
                 Text="Copied fleet / inventory lookup anchor"
@@ -200,6 +240,33 @@ namespace FleetLab
                 RefreshMembers();
                 feedback.Text="Original construction copy restored. Supplied damage and recovery history cleared.";
             };
+            EventHandler selectionChanged=delegate
+            {
+                pending=true;
+                RefreshView();
+                feedback.Text="Layout/count changed. Load applies them to a fresh construction copy; the current copy still uses the applied values.";
+            };
+            construction.SelectedIndexChanged+=selectionChanged;
+            players.ValueChanged+=selectionChanged;
+            load.Click+=delegate
+            {
+                if(Apply(delegate
+                {
+                    return new PracticeInstallationStudyState(this.programs,construction.SelectedIndex==0?32:0,(int)players.Value);
+                },"Fresh construction layout/count loaded. Startup pass has not run."))
+                {
+                    pending=false;
+                    lookup.Text="";
+                    RefreshFleetChoices();
+                }
+            };
+            initialize.Click+=delegate
+            {
+                Apply(delegate
+                {
+                    return state.InitializeStartup();
+                },"Startup pass applied: copied type19 stocks initialized; eligible stored AWACS data created. Reset or Load permits another study pass.");
+            };
             find.Click+=delegate
             {
                 int anchor=(int)fleet.SelectedItem,type=(int)query.SelectedItem;
@@ -234,7 +301,7 @@ namespace FleetLab
             }
             if(button.Enabled)button.PerformClick();
         }
-        void Apply(Func<PracticeInstallationStudyState> action,string message)
+        bool Apply(Func<PracticeInstallationStudyState> action,string message)
         {
             try
             {
@@ -242,6 +309,7 @@ namespace FleetLab
                 state=next;
                 RefreshView();
                 feedback.Text=message;
+                return true;
             }
             catch(ArgumentException e)
             {
@@ -255,6 +323,24 @@ namespace FleetLab
             {
                 feedback.Text=e.Message;
             }
+            catch(InvalidOperationException e)
+            {
+                feedback.Text=e.Message;
+            }
+            catch(IOException e)
+            {
+                feedback.Text=e.Message;
+            }
+            return false;
+        }
+        void RefreshFleetChoices()
+        {
+            changing=true;
+            fleet.Items.Clear();
+            for(int n=0;n<4;n++)fleet.Items.Add(state.FirstFleetSlot+n);
+            fleet.SelectedIndex=0;
+            changing=false;
+            RefreshMembers();
         }
         void Recover(int maximum)
         {
@@ -286,6 +372,9 @@ namespace FleetLab
         {
             if(IsDisposed||Disposing)return;
             int unit=SelectedUnit;
+            initialize.Enabled=!state.StartupApplied;
+            initialize.Text=state.StartupApplied?"Startup pass applied":"Run recovered startup pass (once)";
+            applied.Text=(pending?"Selection pending until Load.\r\n":"")+"Applied block "+state.FirstFleetSlot+"–"+(state.FirstFleetSlot+3)+" / startup players "+state.PlayerCount+".\r\n"+(state.StartupApplied?"Stocks written: "+state.LastInitialization.StockReferences+" / stored AWACS created: "+state.LastInitialization.CreatedAircraftFleets.Count+".":"Startup has not run. One supplied installation; no other player bases are created.");
             bool selected=unit>=0;
             mixed.Enabled=boundary.Enabled=one.Enabled=many.Enabled=selected;
             if(!selected)
@@ -299,7 +388,7 @@ namespace FleetLab
             int at=unit*268,type=BitConverter.ToInt32(ships,at),length=BitConverter.ToInt16(ships,at+14),hp=BitConverter.ToInt16(ships,at+16);
             summary.Text="Unit "+unit+" / source type "+type+"\r\nFleet "+BitConverter.ToInt16(ships,at+12)+" / owner "+BitConverter.ToInt16(ships,at+6)+"\r\nLocal "+BitConverter.ToInt16(ships,at+8)+", "+BitConverter.ToInt16(ships,at+10)+" / length "+length+" / HP "+hp+"\r\nRecovery calls "+state.RecoveryCalls+" / changed cells "+state.ChangedCells+"\r\n"+(hp==length?"HP equals length: the leaf returns early.":"The first cell in states5–8 can change.");
             var text=new StringBuilder();
-            text.AppendLine("Constructor32–35 / origin400,370 / owner0 / raw byte1.");
+            text.AppendLine("Constructor"+state.FirstFleetSlot+"–"+(state.FirstFleetSlot+3)+" / origin400,370 / owner0 / raw byte1.");
             text.AppendLine("Original templates, allocation, ammo and grids. Map placement and active support caller remain separate.");
             for(int n=0;n<length;n++)
             {
@@ -308,6 +397,22 @@ namespace FleetLab
                 text.AppendLine();
             }
             text.AppendLine("AA ammo1/2/3: "+BitConverter.ToInt16(ships,at+198)+" / "+BitConverter.ToInt16(ships,at+200)+" / "+BitConverter.ToInt16(ships,at+202));
+            if(type==19)
+            {
+                text.AppendLine("Inventory stock (source ID:count):");
+                for(int n=0;n<35;n++)
+                {
+                    int amount=BitConverter.ToInt16(ships,at+196+n*2);
+                    if(amount!=0)text.Append(n+":"+amount+"  ");
+                }
+                text.AppendLine();
+            }
+            for(int n=0;n<4;n++)
+            {
+                uint link=BitConverter.ToUInt32(ships,at+56+n*4);
+                if(link!=0)text.AppendLine("Association link "+n+": normalized "+link.ToString("X8")+".");
+            }
+            if(state.LastInitialization!=null)foreach(int child in state.LastInitialization.CreatedAircraftFleets)text.AppendLine("Startup created stored kind"+BitConverter.ToInt32(state.CopyFleetPool(),child*492)+" at fleet"+child+" (data only).");
             var r=state.LastRecovery;
             if(r!=null)text.AppendLine("Last call: "+(r.Changed?"cell "+r.GridCell+" / "+r.BeforeState+"→"+r.AfterState:"no changed cell")+" / HP "+r.BeforeHP+"→"+r.AfterHP+".");
             details.Text=text.ToString();
@@ -338,7 +443,7 @@ namespace FleetLab
                 int unit=owner.SelectedUnit;
                 for(int n=0;n<4;n++)
                 {
-                    int slot=32+n,at=slot*492;
+                    int slot=owner.state.FirstFleetSlot+n,at=slot*492;
                     float x=10+(n%2)*(size+14),y=50+(n/2)*(size+40),cell=size/10;
                     g.DrawString("Fleet "+slot+" · world "+BitConverter.ToInt16(fleets,at+12)+", "+BitConverter.ToInt16(fleets,at+14),owner.Font,Brushes.LightSteelBlue,x,y-23);
                     for(int gx=0;gx<10;gx++)for(int gy=0;gy<10;gy++)
@@ -356,6 +461,7 @@ namespace FleetLab
                     }
                 }
                 g.DrawString("Rows = localX; columns = localY. Gold = selected unit.\r\n2 occupied · 3 empty · 5–8 supplied/recovered source states.",owner.Font,Brushes.LightSteelBlue,10,Height-65);
+                if(owner.state.LastInitialization!=null&&owner.state.LastInitialization.CreatedAircraftFleets.Count>0)g.DrawString("Startup stored AWACS fleet "+owner.state.LastInitialization.CreatedAircraftFleets[0]+" · no flight updates here",owner.Font,Brushes.PaleTurquoise,10,Height-25);
             }
         }
     }
