@@ -125,6 +125,23 @@ namespace FleetLab
         }
         public PracticeAircraftWorldStudyState AdvanceFrame(bool paused)
         {
+            return AdvanceCore(paused,false);
+        }
+        internal PracticeAircraftWorldStudyState AdvanceWithRequestProducer(bool paused,bool produceRequests)
+        {
+            return AdvanceCore(paused,produceRequests);
+        }
+        static void RequireInactiveSupport(byte[] fleets)
+        {
+            for(int slot=0;slot<250;slot++)if(BitConverter.ToInt32(fleets,slot*492)==2)
+                throw new NotSupportedException("The recovered request phase currently requires no kind2 fleets: its preceding support helper has active supply branches outside this study.");
+        }
+        internal void CheckRequestPhaseProfile()
+        {
+            RequireInactiveSupport(Combat.Objects.CopyFleetPool());
+        }
+        PracticeAircraftWorldStudyState AdvanceCore(bool paused,bool produceRequests)
+        {
             if(paused)return Copy(Orders.AdvanceFrame(true),auxiliary,SelectedWaypoint,Schedule);
             var combat=Combat;
             var aux=auxiliary;
@@ -142,7 +159,16 @@ namespace FleetLab
                 invalidations+=result.Invalidations;
             }
             // Publish only after movement, launch, impacts and effects all succeed.
-            var next=Copy(Orders.WithCombatForStudy(combat).AdvanceFrame(false),aux,point,schedule);
+            var orders=Orders.WithCombatForStudy(combat);
+            if(produceRequests)
+            {
+                // Original410E62 calls4297F0 first. It is a whole verified
+                // no-op in this no-kind2 profile; its active supply path is
+                // deliberately guarded rather than silently omitted.
+                RequireInactiveSupport(combat.Objects.CopyFleetPool());
+                orders=orders.ProduceRequests();
+            }
+            var next=Copy(orders.AdvanceFrame(false),aux,point,schedule);
             next.LastAircraftVisits=air;
             next.LastSurfaceVisits=surface;
             next.AircraftVisits+=air;
