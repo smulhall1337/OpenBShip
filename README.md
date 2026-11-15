@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.87**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.88**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -143,6 +143,14 @@ Invoke-Item $output
 
 Use one SCN filename from `Assets\Graphics`. The default export contains 12 files: complete unit/fleet pools, installation/unit/fleet CSVs, four grids, source inputs, a scope note and a manifest covering the other 11 files. Existing files/directories are preserved. The maintained pass matches complete pools and owner counters from 120 original-code map scans: 494 compound installations across 1,976 tagged cells. These are data cases, not completed missions. No random draws occur in this stage.
 
+### Copied spawn-zone study
+
+In the same window, open **Spawn zones (study)**. It applies the recovered random-map zone rebuilding rule to supplied reservations: the constructed base fleets and up to 500 SCN kind-2 terrain cells. Other map objects and grouped fleets are not reserved. This copied profile does not run natural random-map or mission startup.
+
+For the default **BSSB202.SCN**, the readout shows **4 base fleet reservations + 53 terrain cells**, **3,605 open cells**, and owners **0:1815 / 1:1790**. Blue/orange/green/violet show source owner sectors 0–3; dark cells are blocked, and gold follows the selected base. The player count comes from the SCN header. Fleet/unit selection changes only the highlight and details.
+
+The rule excludes world edges 0 and 630 and reserves inclusive ±10 squares around every nonzero primary/secondary record, regardless of owner. It preserves the source's stored **57.2957725** angle constant and integer truncation. Replacing it with `180 / π` changes sector-boundary ownership. The routine uses no random draws. Its maintained implementation matches 48 complete original grids covering six reservation profiles, player counts 1–4 and two x87 precision settings; opaque blocked owner bytes and input data remain preserved. These are numerical/data cases, not missions. The mask is currently available through this study and its source API.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -207,7 +215,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.87 source, focused checks pass **365 model groups**. A fresh public checkout passes **294**, with **71 explicit skips** for optional private evidence. Form checks pass **132**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.88 source, focused checks pass **371 model groups**. A fresh public checkout passes **299**, with **72 explicit skips** for optional private evidence. Form checks pass **134**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

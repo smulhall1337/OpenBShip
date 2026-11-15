@@ -100,7 +100,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.87 — recovered map installation construction";
+            Text="Battleship Fleet Lab 0.88 — recovered spawn-zone geometry";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -956,6 +956,27 @@ namespace FleetLab {
                 catch(Exception e) { failed++; results.Add("FAIL "+name+": "+e.Message); }
             };
             Action<bool,string> require=delegate(bool ok,string message) { if(!ok)throw new Exception(message); };
+            check("Map spawn-zone tab exposes recovered sectors and supplied reservation counts",delegate {
+                using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
+                    ((TabControl)study.Controls.Find("mapInstallationViews",true)[0]).SelectedIndex=2;
+                    var label=(Label)study.Controls.Find("mapSpawnZoneSummary",true)[0];
+                    require(study.SpawnZones.AvailableCells==3605&&label.Visible&&label.Text.Contains("4 base fleets + 53 terrain cells")&&label.Text.Contains("0:1815 / 1:1790"),"Spawn-zone readout/profile");
+                    study.Size=study.MinimumSize;Application.DoEvents();require(study.Controls.Find("mapSpawnZones",true)[0].Width>400,"Spawn-zone minimum layout");study.Close();
+                }
+            });
+            check("Spawn-zone copy stays stable on selection and survives rejected source loads",delegate {
+                using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();var zones=study.SpawnZones;
+                    ((ComboBox)study.Controls.Find("mapInstallationFleet",true)[0]).SelectedIndex=2;
+                    require(Object.ReferenceEquals(zones,study.SpawnZones),"Fleet selection rebuilt/changed zones");
+                    var source=(ComboBox)study.Controls.Find("mapInstallationSource",true)[0];
+                    for(int n=0;n<source.Items.Count;n++)if(source.Items[n].ToString().Equals("BSSB418.SCN",StringComparison.OrdinalIgnoreCase))source.SelectedIndex=n;
+                    ((Button)study.Controls.Find("mapInstallationLoad",true)[0]).PerformClick();require(Object.ReferenceEquals(zones,study.SpawnZones),"Rejected source changed zones");
+                    for(int n=0;n<source.Items.Count;n++)if(source.Items[n].ToString().Equals("BSSB201.SCN",StringComparison.OrdinalIgnoreCase))source.SelectedIndex=n;
+                    ((Button)study.Controls.Find("mapInstallationLoad",true)[0]).PerformClick();require(!Object.ReferenceEquals(zones,study.SpawnZones)&&study.SpawnZones.PrimaryReservations==0&&study.SpawnZones.SecondaryReservations==54,"Empty-base source retained old reservations");
+                }
+            });
             check("Map installation view exposes copied source placement, fleet and unit grids",delegate {
                 var previous=State;var previousScene=map.Scene;
                 using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {

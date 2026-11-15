@@ -15,16 +15,18 @@ namespace FleetLab
         readonly ComboBox maps=new ComboBox(),fleet=new ComboBox();
         readonly ListBox bases=new ListBox(),members=new ListBox();
         readonly Button load=new Button();
-        readonly Label status=new Label(),feedback=new Label();
+        readonly Label status=new Label(),feedback=new Label(),zonesSummary=new Label();
         readonly TextBox details=new TextBox();
         readonly TabControl views=new TabControl();
-        readonly StudyCanvas world,grid;
+        readonly StudyCanvas world,grid,zoneView;
         readonly HashSet<Keys> held=new HashSet<Keys>();
         PracticeMapInstallations state;
+        PracticeSpawnZoneResult zones;
         Scenario scene;
         byte[] ships,fleets;
         bool changing;
         internal PracticeMapInstallations StudyState { get { return state; } }
+        internal PracticeSpawnZoneResult SpawnZones { get { return zones; } }
         internal int SelectedFleet { get { return bases.SelectedIndex<0||fleet.SelectedIndex<0?-1:((PracticeMapInstallation)bases.SelectedItem).FirstFleet+fleet.SelectedIndex; } }
         internal int SelectedUnit { get { return members.SelectedIndex<0?-1:(int)members.SelectedItem; } }
         [DllImport("user32.dll")]static extern short GetAsyncKeyState(int key);
@@ -33,7 +35,7 @@ namespace FleetLab
             this.assets=assets;
             if(!File.Exists(Path.Combine(assets,"Graphics","BSSB202.SCN")))throw new InvalidDataException("Run Setup.ps1 again to import the SCN map library for this study.");
             factory=PracticeAirfieldFactory.Load(programs);
-            Text="Map installations · recovered construction stage";
+            Text="Map installations · construction and spawn-zone studies";
             Name="mapInstallationStudy";
             StartPosition=FormStartPosition.CenterParent;
             Size=new Size(1100,800);
@@ -50,12 +52,16 @@ namespace FleetLab
             views.Dock=DockStyle.Fill;
             var placement=new TabPage("Map placement"){BackColor=BackColor};
             var occupancy=new TabPage("Fleet grid"){BackColor=BackColor};
+            var spawn=new TabPage("Spawn zones (study)"){BackColor=BackColor};
             views.TabPages.Add(placement);
             views.TabPages.Add(occupancy);
+            views.TabPages.Add(spawn);
             world=new StudyCanvas(this,true){Dock=DockStyle.Fill,Name="mapInstallationWorld",AccessibleName="Schematic map and constructed installation footprints"};
             grid=new StudyCanvas(this,false){Dock=DockStyle.Fill,Name="mapInstallationGrid",AccessibleName="Selected fleet grid, rows local X, columns local Y"};
+            zoneView=new StudyCanvas(this,true,true){Dock=DockStyle.Fill,Name="mapSpawnZones",AccessibleName="Recovered spawn sectors with supplied base and terrain reservations"};
             placement.Controls.Add(world);
             occupancy.Controls.Add(grid);
+            spawn.Controls.Add(zoneView);
             layout.Controls.Add(views,0,0);
             var scroll=new Panel{Dock=DockStyle.Fill,AutoScroll=true,Name="mapInstallationScroll"};
             var side=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(4)};
@@ -76,6 +82,10 @@ namespace FleetLab
             status.Name="mapInstallationStatus";
             status.AccessibleName="Applied map and construction counts";
             add(status,94);
+            zonesSummary.Name="mapSpawnZoneSummary";
+            zonesSummary.AccessibleName="Spawn-zone player counts and supplied reservation scope";
+            zonesSummary.Visible=false;
+            add(zonesSummary,104);
             feedback.Name="mapInstallationFeedback";
             feedback.AccessibleName="Map load result";
             add(feedback,70);
@@ -109,6 +119,7 @@ namespace FleetLab
             bases.SelectedIndexChanged+=delegate{if(!changing)RefreshMembers();};
             fleet.SelectedIndexChanged+=delegate{if(!changing)RefreshMembers();};
             members.SelectedIndexChanged+=delegate{if(!changing)RefreshView();};
+            views.SelectedIndexChanged+=delegate{zonesSummary.Visible=views.SelectedIndex==2;};
             KeyUp+=delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};
             Deactivate+=delegate{held.Clear();};
             Activated+=delegate{foreach(var key in new[]{Keys.Enter,Keys.Space,Keys.Escape})if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);};
@@ -137,9 +148,11 @@ namespace FleetLab
                 byte[] input=File.ReadAllBytes(Path.Combine(assets,"Graphics",name));
                 var next=PracticeMapInstallations.Create(factory,input,name);
                 var nextScene=Scenario.Load(input,name);
+                var nextZones=PracticeSpawnZones.ForMapBaseStudy(nextScene,next.CopyFleetPool());
                 changing=true;
                 state=next;
                 scene=nextScene;
+                zones=nextZones;
                 ships=state.CopyShipPool();
                 fleets=state.CopyFleetPool();
                 bases.Items.Clear();
@@ -149,6 +162,10 @@ namespace FleetLab
                 changing=false;
                 status.Text="Applied: "+state.SourceName+"\r\n"+state.CandidateCells+" tagged cells / "+state.DuplicateCells+" duplicates\r\n"+state.Installations.Count+" installations / "+state.NextFleetSlot+" fleets / "+state.UnitCount+" units\r\nNo random draws or running simulation.";
                 feedback.Text=state.Installations.Count==0?"No base tags in this map. Empty construction is expected; grouped fleets are outside this pass.":"Copied base pass loaded. Select an installation and fleet; use Fleet grid to inspect its roster.";
+                var counts=zones.CopyOwnerCounts();
+                var ownerText=new StringBuilder();
+                for(int n=0;n<zones.PlayerCount;n++)ownerText.Append((n==0?"":" / ")+n+":"+counts[n]);
+                zonesSummary.Text="Spawn-zone study · "+zones.PlayerCount+" players\r\n"+zones.AvailableCells+" open cells · owners "+ownerText+"\r\nReservations: "+zones.PrimaryReservations+" base fleets + "+zones.SecondaryReservations+" terrain cells. Other map objects are not reserved.";
                 RefreshMembers();
             }
             catch(InvalidDataException e){feedback.Text="Load rejected; current copy preserved. "+e.Message;}
@@ -198,12 +215,14 @@ namespace FleetLab
             details.Text=text.ToString();
             world.Invalidate();
             grid.Invalidate();
+            zoneView.Invalidate();
         }
         sealed class StudyCanvas : Control
         {
+            static readonly Color[] ZoneColors={Color.FromArgb(35,95,130),Color.FromArgb(168,94,35),Color.FromArgb(48,115,81),Color.FromArgb(111,65,128)};
             readonly PracticeMapInstallationStudy owner;
-            readonly bool placement;
-            public StudyCanvas(PracticeMapInstallationStudy owner,bool placement){this.owner=owner;this.placement=placement;DoubleBuffered=true;ResizeRedraw=true;}
+            readonly bool placement,spawn;
+            public StudyCanvas(PracticeMapInstallationStudy owner,bool placement,bool spawn=false){this.owner=owner;this.placement=placement;this.spawn=spawn;DoubleBuffered=true;ResizeRedraw=true;}
             protected override void OnPaint(PaintEventArgs e)
             {
                 base.OnPaint(e);
@@ -217,6 +236,11 @@ namespace FleetLab
                     {
                         var c=owner.scene.At(x,y);
                         Color color=c.Kind==1?Color.FromArgb(24,55,77):c.Kind==2?Color.FromArgb(123,145,91):c.Kind==4?Color.FromArgb(44,84,106):c.Kind==7?Color.Turquoise:Color.IndianRed;
+                        if(spawn)
+                        {
+                            int? sectorOwner=owner.zones.OwnerAt(x,y);
+                            color=sectorOwner.HasValue?ZoneColors[sectorOwner.Value]:Color.FromArgb(25,30,38);
+                        }
                         using(var brush=new SolidBrush(color))g.FillRectangle(brush,left+x*cell,top+y*cell,cell+.1f,cell+.1f);
                     }
                     for(int n=0;n<owner.state.Installations.Count;n++)
@@ -228,7 +252,7 @@ namespace FleetLab
                         float lx=Math.Max(left,Math.Min(left+size-24,left+item.SourceCell.X*cell)),ly=Math.Max(top,top+item.SourceCell.Y*cell-18);
                         using(var brush=new SolidBrush(color))g.DrawString(label,owner.Font,brush,lx,ly);
                     }
-                    g.DrawString("Schematic SCN cells · gold = selected compound footprint\r\nWorld X across, Y down; one cell = 10 source units.\r\nOnly base construction is applied; map objects and missions are absent.",owner.Font,Brushes.LightSteelBlue,new RectangleF(12,Height-78,Math.Max(1,Width-24),72));
+                    g.DrawString(spawn?"Recovered sectors · owners 0 blue / 1 orange / 2 green / 3 violet\r\nDark = blocked; gold = selected base. World X across, Y down.\r\nSupplied base/terrain reservations; other objects and missions excluded.":"Schematic SCN cells · gold = selected compound footprint\r\nWorld X across, Y down; one cell = 10 source units.\r\nOnly base construction is applied; map objects and missions are absent.",owner.Font,Brushes.LightSteelBlue,new RectangleF(12,Height-78,Math.Max(1,Width-24),72));
                 }
                 else
                 {
