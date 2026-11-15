@@ -16,7 +16,7 @@ namespace FleetLab {
    var reserved=new HashSet<int>();for(int f=0;f<250;f++){int at=f*492,kind=I(fleets,at);if(kind!=2&&kind!=10)continue;for(int n=0;n<6;n++){uint r=BitConverter.ToUInt32(fleets,at+16+n*4);if(r==0)continue;int p=Reference(r);if(I(ships,p)==0)reserved.Add(W(ships,p+4));}}
    for(int unit=0;unit<1500;unit++){int at=unit*268;if(I(ships,at)!=0||unit<1499&&(I(ships,at+268)==22||I(ships,at+268)==23)||reserved.Contains(unit))continue;return unit;}throw new InvalidDataException("Stored-aircraft creation has no admitted free unit slot; no partial result was published.");
   }
-  static void Construct(PracticeUnitCatalog catalog,byte[] ships,int slot,int type,int owner,int fleet,int x,int y){
+  internal static void Construct(PracticeUnitCatalog catalog,byte[] ships,int slot,int type,int owner,int fleet,int x,int y){
    int at=slot*268;Array.Copy(catalog.Templates,type*268,ships,at,268);W(ships,at+4,slot);W(ships,at+6,owner);W(ships,at+8,x);W(ships,at+10,y);W(ships,at+12,fleet);int length=W(ships,at+14);if(length<1||length>6)throw new InvalidDataException("Unsupported aircraft template extent.");
    for(int n=0;n<35;n++)W(ships,at+196+n*2,0);for(int n=0;n<length*4;n++){int weapon=I(ships,at+100+n*4);if(weapon<0||weapon>39)throw new InvalidDataException("Unsupported stored-aircraft equipment.");int destination=at+196+weapon*2;if(destination>ships.Length-2)throw new InvalidDataException("Aircraft ammunition crosses the pool boundary.");int amount=W(catalog.Ammunition,weapon*2);W(ships,destination,amount==-1?-1:W(ships,destination)+amount);}PracticeUnitDepletion.Reevaluate(catalog,ships,at);
   }

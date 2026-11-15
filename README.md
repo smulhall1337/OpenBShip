@@ -1,8 +1,8 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.82**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.83**.
 
-The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps and inventory lookup. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
+The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
 Original assets and executables are **not included**. This is an incremental reconstruction, with explicit limits on the original behavior established so far.
 
@@ -93,7 +93,7 @@ The airfield's creation and placement are synthetic. Home selection, relinking, 
 
 ## Original compound airfield constructor
 
-The data-only constructor reproduces the original four-fleet, ten-unit installation from the pinned executable, including allocation, templates, ammunition and grid records. It is separate from the shared study's copied home and is not yet connected to map placement, support updates or missions.
+The data-only constructor reproduces the original four-fleet, ten-unit installation from the pinned executable, including allocation, templates, ammunition and grid records. It is separate from the shared study's copied home and the prepared paired yard below. Original map placement and mission integration remain separate.
 
 After running Setup for the new installation-template resource, export a standalone diagnostic copy:
 
@@ -120,7 +120,24 @@ The default unit is slot 0, source type 20, length 5:
 The same study can run the recovered **startup pass** once per copied layout. Choose **Early diagnostic block 0–3**, set **Startup player count** to **1**, and **Load layout / player count**. Press **Run recovered startup pass (once)**: it fills one type-19 inventory and creates stored AWACS data at fleet 4, linked to home unit 0. This is stored data; flight does not run in this window. Select fleet 1, unit 2 and scroll to the details to inspect stocks such as IDs 14:80, 17:150 and 34:10.
 
 The default later block 32–35 gets inventory but no AWACS for counts 0–4. The source uses base position and the supplied startup count for that eligibility. Only one installation is supplied; the count does not create other player bases. Layout/count changes remain pending until Load; Reset restores the applied construction before startup. The button disables after one pass because calling the original routine again can allocate another AWACS. The separate source API preserves that repeated-call behavior.
-One recovered step changes only the first eligible cell: 5→2, 6→5, 7→6 or 8→7; only the last transition increments the signed HP field. This does not reconstruct the complete repair system or restore equipment records. Damage, location and explicit calls are diagnostic inputs. The active support caller remains guarded; constructor output alone does not establish a valid running installation.
+One recovered step changes only the first eligible cell: 5→2, 6→5, 7→6 or 8→7; only the last transition increments the signed HP field. This does not reconstruct the complete repair system or restore equipment records. Damage, location and explicit calls are diagnostic inputs. The general support caller remains guarded; constructor output alone does not establish a valid running installation. The separate paired yard below supplies the required roster explicitly.
+
+## Prepared paired yard study
+
+Open **Recovered maps → Installation study… → Paired yard study…**. This independent copy supplies one valid target/marker pair, an inventory depot and the source fleet. It does not change the parent installation, battle or settings.
+
+With the default type-2 profile:
+
+1. **Admit prepared ship** moves the gold target from source fleet 7 to yard fleet 34. The source fleet becomes empty; the marker saves its return mapping and the yard's original cells.
+2. **One recovered worker pass** raises HP from 2 to 3 and transfers one ammunition type. The ship stays in the bay.
+3. **Up to 20 passes / stop on return** completes the remaining calls and stops after **five total worker passes**. The ship returns to fleet 7, with its original coordinates and an intact source grid. Worker controls then disable.
+4. **Reset applied profile** restores the prepared copy before admission.
+
+Scroll to select other source types, marker capacities, supplied hull/ammunition/depot states or an escort. **Load selected profile** applies them. Selections remain pending until Load; Reset uses the applied profile. Type 1 needs capacity 5: loading it with a type-22 capacity-4 marker reports the invalid fit and preserves the current state. An empty depot releases the default ship on its first worker pass. An escort keeps the source fleet live while the target is away.
+
+These are explicit calls with no world-clock advancement. One worker pass can change one damaged cell and transfer one ammunition type. With no applicable ammunition transfer, the recovered release path forces full HP and restores the source cells, even if intermediate cell recovery was incomplete. This reproduces the admitted source behavior; it is not a physical repair model.
+
+Original comparisons cover **264 supplied histories / 5,808 complete pool observations**, using six real unit templates, fitting type-22/23 markers, three hull states, ammunition/depot variants and an optional escort. Three original display endpoints are adapted to count requests in the owned-image probes; actual original UI rendering is outside that comparison. The study shows those counts separately. General yard discovery, command admission in the running original application, multi-bay support, missions and the full AI remain unfinished. The shared-world kind-2 support guard remains in place.
 
 ## Other recovered studies
 
@@ -143,7 +160,7 @@ These studies have independent reset controls and preserve their parents. They d
 | Classic battle | Playable and repeatable. The reconstruction does not establish complete fidelity to every original mode, rule or orchestration path. |
 | Resource and media formats | Maintained readers, pinned extraction manifests and reused original assets. Complete original media orchestration remains separate. |
 | First Practice startup and movement | Bounded original comparisons for deployment, terrain, waypoint queues, collisions, fleet batches and carried scheduler state. Other maps and active secondary objects are not generally supported. |
-| Aircraft and combat | Verified creation/modes, resources, available-home selection, return/docking, AA requests, launch, impacts, destruction and shared copied histories. Selected-aircraft UI transfer, active supply behavior and complete attack tasks remain guarded or absent. |
+| Aircraft and combat | Verified creation/modes, resources, available-home selection, return/docking, AA requests, launch, impacts, destruction and shared copied histories. A separate prepared yard recovers bounded admission/supply/return calls; general active supply, selected-aircraft UI transfer and complete attack tasks remain guarded or absent. |
 | Full original application | Complete AI, missions/tutorial orchestration, network play and original input/application timing remain unfinished. A launched process or one passing study is not acceptance of a whole original battle. |
 
 Source evidence uses the pinned executable identity above. Native probes execute admitted original routines or documented instruction fragments in an owned image with imports fenced; source addresses, copied inputs and adapted endpoints are recorded privately. Complete pool comparisons establish the recorded profiles, not every possible game state. Modern diagnostic presets and schematic UI remain labeled separately from recovered behavior.
@@ -152,7 +169,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.82 source, focused checks pass **342 model groups**. A fresh public checkout passes **272**, with **70 explicit skips** for optional private evidence. Form checks pass **125**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.83 source, focused checks pass **348 model groups**. A fresh public checkout passes **278**, with **70 explicit skips** for optional private evidence. Form checks pass **128**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

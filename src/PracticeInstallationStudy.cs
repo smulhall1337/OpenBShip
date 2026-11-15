@@ -4,6 +4,7 @@ using System.Text;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 namespace FleetLab
 {
     public sealed class PracticeInstallationStudy : Form
@@ -28,6 +29,14 @@ namespace FleetLab
             {
                 return state;
             }
+        }
+        [DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
+        void SuppressHeld()
+        {
+            foreach(var key in new[]
+            {
+                Keys.Enter,Keys.Space,Keys.Escape
+            })if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);
         }
         int SelectedUnit
         {
@@ -86,7 +95,12 @@ namespace FleetLab
                     b.FlatAppearance.BorderColor=Color.SteelBlue;
                     b.BackColor=Color.FromArgb(28,55,76);
                     b.ForeColor=Color.WhiteSmoke;
-                    b.EnabledChanged+=delegate { if(b.IsDisposed||b.Disposing)return;b.BackColor=b.Enabled?Color.FromArgb(28,55,76):Color.LightGray;b.ForeColor=b.Enabled?Color.WhiteSmoke:Color.Black; };
+                    b.EnabledChanged+=delegate
+                    {
+                        if(b.IsDisposed||b.Disposing)return;
+                        b.BackColor=b.Enabled?Color.FromArgb(28,55,76):Color.LightGray;
+                        b.ForeColor=b.Enabled?Color.WhiteSmoke:Color.Black;
+                    };
                 }
                 side.Controls.Add(c);
             };
@@ -153,6 +167,27 @@ namespace FleetLab
                 b.Text=text;
                 b.AccessibleName=text;
                 add(b,36);
+            };
+            var yard=new Button();
+            button(yard,"installationYard","Paired yard study…");
+            yard.Click+=delegate
+            {
+                try
+                {
+                    using(var child=new PracticeYardStudy(this.programs))child.ShowDialog(this);
+                }
+                catch(IOException e)
+                {
+                    feedback.Text=e.Message;
+                }
+                catch(NotSupportedException e)
+                {
+                    feedback.Text=e.Message;
+                }
+                finally
+                {
+                    SuppressHeld();
+                }
             };
             button(mixed,"installationMixed","Supply mixed cells / HP 0");
             button(boundary,"installationBoundary","Supply one state 8 / HP length−1");

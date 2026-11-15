@@ -99,7 +99,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.82 — installation startup and stored AWACS";
+            Text="Battleship Fleet Lab 0.83 — paired yard supply and return";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -1760,6 +1760,24 @@ namespace FleetLab {
                     var load=(Button)study.Controls.Find("installationLoad",true)[0];load.PerformClick();require(study.StudyState.FirstFleetSlot==0&&study.StudyState.PlayerCount==4,"Explicit load did not apply pending controls");((Button)study.Controls.Find("installationInitialize",true)[0]).PerformClick();load.PerformClick();require(!study.StudyState.StartupApplied&&study.StudyState.LastInitialization==null&&BitConverter.ToInt32(study.StudyState.CopyFleetPool(),4*492)==0,"Load with unchanged controls retained previous startup");study.Close();
                 }
             });
+            check("Paired yard form admits a ship and stops its bounded worker action at original return",delegate {
+                using(var study=new PracticeYardStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);
+                    var admit=(Button)study.Controls.Find("yardAdmit",true)[0];var one=(Button)study.Controls.Find("yardOne",true)[0];var many=(Button)study.Controls.Find("yardMany",true)[0];require(admit.Enabled&&!one.Enabled&&!many.Enabled,"Initial yard action guards");admit.PerformClick();require(!admit.Enabled&&one.Enabled,"Admission action guards");one.PerformClick();require(study.StudyState.WorkerCalls==1&&!study.StudyState.Returned&&BitConverter.ToInt16(study.StudyState.CopyShipPool(),16)==3,"Original369 first worker outcome");many.PerformClick();require(study.StudyState.Returned&&study.StudyState.WorkerCalls==5&&!one.Enabled&&!many.Enabled,"Bounded worker missed source fifth-pass return");var state=study.StudyState;PumpVisuals(60);require(Object.ReferenceEquals(state,study.StudyState),"Manual yard study advanced without a command");study.Close();
+                }
+            });
+            check("Paired yard form keeps profile changes pending and preserves state on invalid fit",delegate {
+                using(var study=new PracticeYardStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);var initial=study.StudyState;
+                    ((ComboBox)study.Controls.Find("yardShip",true)[0]).SelectedIndex=3;require(Object.ReferenceEquals(initial,study.StudyState),"Pending ship selector changed applied copy");((Button)study.Controls.Find("yardLoad",true)[0]).PerformClick();require(Object.ReferenceEquals(initial,study.StudyState)&&((Label)study.Controls.Find("yardFeedback",true)[0]).Text.Contains("does not fit"),"Rejected fit changed state or hid reason");((ComboBox)study.Controls.Find("yardMarker",true)[0]).SelectedIndex=1;((Button)study.Controls.Find("yardLoad",true)[0]).PerformClick();require(BitConverter.ToInt32(study.StudyState.CopyShipPool(),0)==1,"Explicit load did not apply fitting profile");((ComboBox)study.Controls.Find("yardShip",true)[0]).SelectedIndex=0;((Button)study.Controls.Find("yardAdmit",true)[0]).PerformClick();((Button)study.Controls.Find("yardReset",true)[0]).PerformClick();require(!study.StudyState.Entered&&BitConverter.ToInt32(study.StudyState.CopyShipPool(),0)==1,"Reset applied a pending profile");study.Close();
+                }
+            });
+            check("Paired yard form suppresses held worker confirmations and supports released edges",delegate {
+                using(var study=new PracticeYardStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);((Button)study.Controls.Find("yardAdmit",true)[0]).PerformClick();var one=(Button)study.Controls.Find("yardOne",true)[0];study.ActiveControl=one;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var down=typeof(PracticeYardStudy).GetMethod("OnKeyDown",flags);var up=typeof(Form).GetMethod("OnKeyUp",flags);down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.WorkerCalls==1,"Held yard confirmation repeated");up.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.WorkerCalls==2,"Released yard confirmation failed");study.Close();study.Dispose();require(study.IsDisposed,"Yard close/dispose failed");
+                }
+            });
+
             results.Add("UI checks passed="+(results.Count-failed-skipped)+" failed="+failed+(skipped>0?" skipped="+skipped:""));
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");
             File.WriteAllLines(report,results.ToArray());
