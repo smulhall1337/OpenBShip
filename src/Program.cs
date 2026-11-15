@@ -8,6 +8,7 @@ namespace FleetLab {
             try {
                 if(args.Length==2&&args[0]=="--audio-check")return WaveOutput.CheckDevice(Path.GetFullPath(args[1]));
                 if(args.Length==2&&args[0]=="--self-check")return Validation.Run(assets,Path.GetFullPath(args[1]));
+                if(args.Length==2&&args[0]=="--export-airfield-study"){PracticeAirfieldExport.Save(Path.Combine(root,"Programs"),args[1]);return 0;}
                 if(args.Length==2&&args[0]=="--export-practice-text"){ClassicMenuText.ExportPractice(assets,args[1]);return 0;}
                 if(args.Length==2&&args[0]=="--render-software-practice-preview"){new ClassicPracticeScene(assets).SavePreview(args[1]);return 0;}
                 if(args.Length==2&&args[0]=="--render-software-practice-scroll-preview"){new ClassicPracticeScene(assets).SaveDescriptionComparison(14,12,args[1]);return 0;}

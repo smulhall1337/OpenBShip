@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.79**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.80**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The latest study combines aircraft flight, home selection, AA requests, projectiles and effects on a supplied clock. It includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback for watching those steps.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,492 assets, extracts 39 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,492 assets, extracts 40 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.68 or earlier to import all 39 runtime resources. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.79 or earlier to import all 40 runtime resources. Build only compiles source.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -91,6 +91,22 @@ Choose **AWACS**, then **AWACS · supplied airfield**, and Load. With generated 
 
 The airfield's creation and placement are synthetic. Home selection, relinking, travel, docking and combat updates are checked against the original code. This preset requires AWACS; an incompatible Load reports the reason and preserves the current copy. Longer low-resource returns can exhaust resources before arrival, even without AA fire. Combat can also change an aircraft's fate.
 
+## Original compound airfield constructor
+
+The data-only constructor reproduces the original four-fleet, ten-unit installation from the pinned executable, including allocation, templates, ammunition and grid records. It is separate from the shared study's copied home and is not yet connected to map placement, support updates or missions.
+
+After running Setup for the new installation-template resource, export a standalone diagnostic copy:
+
+```powershell
+$exe = Join-Path $PWD 'build\current\BattleshipLab.exe'
+$output = Join-Path $PWD 'build\airfield-export'
+$run = Start-Process -FilePath $exe -ArgumentList @('--export-airfield-study', ('"{0}"' -f $output)) -Wait -PassThru
+$run.ExitCode
+Invoke-Item $output
+```
+
+Choose a new output directory each time; existing exports are preserved. The folder contains unit/fleet CSVs, four occupancy grids, complete normalized data pools, a hash manifest and a scope note. This uses supplied fresh pools, fleet slots 30–33, origin 400,370, owner 0 and flag 1. It does not change the running battle or saved settings. Original constructor comparisons cover 708 admitted cases; incomplete capacity, malformed resources and invalid destinations reject without changing caller pools.
+
 ## Other recovered studies
 
 **Recovered maps** also provides:
@@ -121,7 +137,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.79 source, focused checks pass **324 model groups**. A fresh public checkout passes **254**, with **70 explicit skips** for optional private evidence. Form checks pass **121**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.80 source, focused checks pass **329 model groups**. A fresh public checkout passes **259**, with **70 explicit skips** for optional private evidence. Form checks pass **121**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
