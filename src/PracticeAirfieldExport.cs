@@ -18,9 +18,23 @@ namespace FleetLab
         }
         public static void Save(string programs,string destination)
         {
+            SaveCore(programs,destination,new Point(400,370),0,null);
+        }
+        public static void SaveRadial(string programs,string destination,uint seed,int players,int owner)
+        {
             string output=Path.GetFullPath(destination);
             if(Directory.Exists(output)||File.Exists(output))throw new IOException("Choose a new export directory; existing files are preserved.");
-            var result=PracticeAirfieldFactory.Load(programs).CreateFresh(30,new Point(400,370),0,1);
+            var plan=PracticeInstallationOrigin.Find(new byte[123000],new byte[246000],players,owner,seed);
+            SaveCore(programs,destination,plan.Origin,(short)owner,new[]
+            {
+                "Recovered42D5E0 radial origin, then42C4A0 compound construction in fresh copied pools.","Seed="+seed,"Players="+players,"Owner="+owner,"OriginX="+plan.Origin.X,"OriginY="+plan.Origin.Y,"RandomState="+plan.RandomState,"RandomCalls="+plan.RandomCalls,"Attempts="+plan.Attempts,"Primary/secondary reservation pools are supplied empty. Source constant0.017453292 retained. Seed and call order are supplied; natural mission RNG/map/terrain/startup/support flow remains separate."
+            });
+        }
+        static void SaveCore(string programs,string destination,Point origin,short owner,string[] originNotes)
+        {
+            string output=Path.GetFullPath(destination);
+            if(Directory.Exists(output)||File.Exists(output))throw new IOException("Choose a new export directory; existing files are preserved.");
+            var result=PracticeAirfieldFactory.Load(programs).CreateFresh(30,origin,owner,1);
             var ships=result.CopyShipPool();
             var fleets=result.CopyFleetPool();
             Directory.CreateDirectory(output);
@@ -57,8 +71,9 @@ namespace FleetLab
             File.WriteAllLines(Path.Combine(output,"Fleets.csv"),records.ToArray());
             File.WriteAllLines(Path.Combine(output,"Readme.txt"),new[]
             {
-                "OpenBShip recovered compound airfield constructor — standalone diagnostic copy.", "Pinned RIP Bs.exe SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569; source42C4A0..42C80D and unit/grid helpers.", "Supplied fresh pools, first fleet30, origin400,370, owner0, flag1; four kind2 fleets and ten original-template units. Creation/placement is supplied, not a loaded mission.", "Ships.bin:1500records/268bytes; Fleets.bin:250records/492bytes; little endian. Six member references use original normalized base4FC340, four aircraft links base4B47A0. These files contain data, never executable code.", "Grid CSV: first index(localX) selects row; localY selects column; source3 is empty kind2 grid and source2 is occupied. Original coordinate convention retained.", "This constructor is not installed into the shared flight study. Kind2 support/supply continuation, map caller, mission placement, AI and application timing remain separate. The shared study's synthetic home is preserved.", "This export creates a new directory and does not change the active game, saved settings or source media."
+                "OpenBShip recovered compound airfield constructor — standalone diagnostic copy.", "Pinned RIP Bs.exe SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569; source42C4A0..42C80D and unit/grid helpers.", "Supplied fresh pools, first fleet30, origin"+origin.X+","+origin.Y+", owner"+owner+", flag1; four kind2 fleets and ten original-template units. Creation/placement is supplied, not a loaded mission.", "Ships.bin:1500records/268bytes; Fleets.bin:250records/492bytes; little endian. Six member references use original normalized base4FC340, four aircraft links base4B47A0. These files contain data, never executable code.", "Grid CSV: first index(localX) selects row; localY selects column; source3 is empty kind2 grid and source2 is occupied. Original coordinate convention retained.", "This constructor is not installed into the shared flight study. Kind2 support/supply continuation, map caller, mission placement, AI and application timing remain separate. The shared study's synthetic home is preserved.", "This export creates a new directory and does not change the active game, saved settings or source media."
             });
+            if(originNotes!=null)File.WriteAllLines(Path.Combine(output,"Origin-Inputs.txt"),originNotes);
             var manifest=new List<string>
             {
                 "File,Bytes,SHA256"

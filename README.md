@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.85**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.86**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -107,6 +107,20 @@ Invoke-Item $output
 
 Choose a new output directory each time; existing exports are preserved. The folder contains unit/fleet CSVs, four occupancy grids, complete normalized data pools, a hash manifest and a scope note. This uses supplied fresh pools, fleet slots 30–33, origin 400,370, owner 0 and flag 1. It does not change the running battle or saved settings. Original constructor comparisons cover 708 admitted cases; incomplete capacity, malformed resources and invalid destinations reject without changing caller pools.
 
+The constructor can also use the recovered radial-origin planner. Supply a new export directory, a 32-bit unsigned seed, player count 1–4 and owner −1 through players−1:
+
+```powershell
+$exe = Join-Path $PWD 'build\current\BattleshipLab.exe'
+$output = Join-Path $PWD 'build\radial-airfield-export'
+$run = Start-Process -FilePath $exe -ArgumentList @('--export-radial-airfield-study', ('"{0}"' -f $output), '0', '2', '0') -Wait -PassThru
+$run.ExitCode
+Invoke-Item $output
+```
+
+This example chooses origin **390,370**, using two random draws with resulting state **505908858**, then constructs the four fleets. The 11-file export adds **Origin-Inputs.txt**, and its manifest covers the other ten files. Existing directories are preserved. The seed and empty reservation pools are supplied inputs; this does not reproduce a mission's earlier random history or install the result into gameplay.
+
+The planner retains the source's stored angle constant, sector margins, radius range, integer truncation, 10-unit snapping and inclusive reservation boxes. Its maintained API also accepts complete primary and secondary reservation pools. A bounded retry failure preserves caller data and publishes no partial result. Original comparisons cover 10,752 seeded/reservation cases, 217,600 angle/radius/precision combinations and 210 complete origin-plus-constructor cases. Numerical combinations are not counts of playable scenarios. Terrain lookup, natural map startup and active support remain separate.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -171,7 +185,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.85 source, focused checks pass **354 model groups**. A fresh public checkout passes **284**, with **70 explicit skips** for optional private evidence. Form checks pass **129**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.86 source, focused checks pass **358 model groups**. A fresh public checkout passes **288**, with **70 explicit skips** for optional private evidence. Form checks pass **129**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
