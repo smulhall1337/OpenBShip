@@ -122,7 +122,7 @@ namespace FleetLab
             preset.Name="clockPreset";
             choice(preset,"Prepared scenario",new object[]
             {
-                "Flight and fire","Moving battery and aircraft","Retire before impact · resource 0","Return before impact · resource 20","Clock wrap · flight and fire"
+                "Flight and fire","Moving battery and aircraft","Retire before impact · resource 0","Return before impact · resource 20","Clock wrap · flight and fire","AWACS · supplied airfield"
             });
             seed.Name="clockSeed";
             choice(seed,"Supplied random seed",new object[]
@@ -149,7 +149,7 @@ namespace FleetLab
             add(load,36);
             loaded.Name="clockLoaded";
             loaded.AccessibleName="Applied preset";
-            add(loaded,128);
+            add(loaded,150);
             queue.Name="clockQueue";
             queue.Text="Queue one AA order (raw)";
             queue.AccessibleName=queue.Text;
@@ -360,7 +360,7 @@ namespace FleetLab
         }
         static string PresetName(PracticeAircraftClockPreset value)
         {
-            return value==PracticeAircraftClockPreset.MovingBattery?"Moving battery and aircraft":value==PracticeAircraftClockPreset.EmptyResource?"Retire before impact":value==PracticeAircraftClockPreset.ReturnBeforeImpact?"Return before impact":value==PracticeAircraftClockPreset.ClockWrap?"Clock wrap":"Flight and fire";
+            return value==PracticeAircraftClockPreset.SuppliedAirfield?"AWACS supplied airfield":value==PracticeAircraftClockPreset.MovingBattery?"Moving battery and aircraft":value==PracticeAircraftClockPreset.EmptyResource?"Retire before impact":value==PracticeAircraftClockPreset.ReturnBeforeImpact?"Return before impact":value==PracticeAircraftClockPreset.ClockWrap?"Clock wrap":"Flight and fire";
         }
         void RefreshState()
         {
@@ -373,7 +373,7 @@ namespace FleetLab
             for(int n=0;n<80;n++)if(I(t,n*268)!=0)active++;
             var text=new StringBuilder();
             text.AppendLine("Applied: "+(loadedKind==6?"helicopters":loadedKind==7?"planes":"AWACS")+" / AA "+loadedWeapon+" / "+PresetName(loadedPreset)+" / RNG seed "+loadedSeed);
-            text.AppendLine("Fixed map seed 143514006; attachment parent 7 / link 0.");
+            text.AppendLine("Fixed map seed 143514006; initial attachment parent 7 / link 0.");
             text.AppendLine("Battery unit14, fleet "+W(s,14*268+12)+"; selected surface7.");
             for(int n=0;n<6;n++)
             {
@@ -386,6 +386,7 @@ namespace FleetLab
                 text.AppendLine("Unit "+u/268+" · HP "+W(s,u+16)+" · resource96 "+resource+" · local "+W(s,u+8)+", "+W(s,u+10));
             }
             var q=state.Orders.CopySecondaryOrders();
+            text.AppendLine("Current associated home unit "+W(f,at+8)+" / link "+W(f,at+10));
             text.AppendLine("Battery queue head "+W(q,14*52+8)+", "+W(q,14*52+28)+" · deadline "+BitConverter.ToUInt32(q,14*52+4));
             text.AppendLine("Selected surface waypoint index "+state.SelectedWaypoint+" (supplied initial4).");
             for(int n=0;n<80;n++)if(I(t,n*268)!=0)text.AppendLine("Shot "+n+" at "+W(t,n*268+8)+", "+W(t,n*268+10)+" · deadline "+BitConverter.ToUInt32(t,n*268+24));
@@ -401,7 +402,7 @@ namespace FleetLab
             foreach(var line in history)text.AppendLine(line);
             details.Text=text.ToString();
             summary.Text="Clock "+c.ClockMilliseconds+" ms · normal "+c.MovementFrames+" / paused "+c.PausedFrames+"\r\nNext batch "+state.Schedule.BatchStart+" · wraps "+state.Schedule.CompletedCycles+"\r\nAircraft "+(k==0?"retired":k>=6&&k<=8?"stored / docked":"active")+" · kind "+k+" · live units "+live+"\r\nWorld "+W(f,at+12)+", "+W(f,at+14)+" · resource96 "+resource+"\r\nAircraft visits "+state.AircraftVisits+" · surface visits "+state.SurfaceVisits+"\r\nAA stock "+W(s,14*268+196+loadedWeapon*2)+" · queued batteries "+state.Orders.QueuedSources+"\r\nShots "+active+" · effects "+c.ActiveEffects+"\r\nCreated "+state.Orders.CreatedObjects+" · expired "+c.ExpiredObjects+" · rejected "+state.Orders.RejectedOrders+"\r\nImpact "+(c.LastImpactOutcome.HasValue?c.LastImpactOutcome.ToString():"none")+" · destroyed "+c.DestroyedUnits+"\r\nRNG "+c.RandomState+" · movie counter "+c.MovieCounter;
-            if(!pending)loaded.Text="Applied preset: "+PresetName(loadedPreset)+"\r\nMode2 · initial resource "+(loadedPreset==PracticeAircraftClockPreset.EmptyResource?0:loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact?20:2000)+" · nearby visible battery.\r\n"+(loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact?(loadedKind==8?"AWACS has no airfield here; it will exhaust its resources and retire.":"Aircraft start at their carrier and dock before the shot arrives."):loadedPreset==PracticeAircraftClockPreset.EmptyResource?"Aircraft retire on their first scheduler visit.":"Aircraft route: 40 units east, 30 units south. Battery is one unit west at load.");
+            if(!pending)loaded.Text="Applied preset: "+PresetName(loadedPreset)+"\r\nMode2 · initial resource "+(loadedPreset==PracticeAircraftClockPreset.EmptyResource?0:loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact||loadedPreset==PracticeAircraftClockPreset.SuppliedAirfield?20:2000)+" · nearby visible battery.\r\n"+(loadedPreset==PracticeAircraftClockPreset.SuppliedAirfield?"Copied airfield at 410, 370. AWACS starts nearby with resource 20. AA may destroy it before docking.":loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact?(loadedKind==8?"AWACS has no airfield here; it will exhaust its resources and retire.":"Aircraft start at their carrier and dock before the shot arrives."):loadedPreset==PracticeAircraftClockPreset.EmptyResource?"Aircraft retire on their first scheduler visit.":"Aircraft route: 40 units east, 30 units south. Battery is one unit west at load.");
             summary.Text+="\r\n"+(loadedRequests?"Request phase "+requestClock.PhaseCounter+" · producer passes "+requestClock.ProducerPasses:"Requests: manual");
             if(!pending&&loadedRequests)loaded.Text+="\r\nAA requests: phase13 / initial counter "+loadedPhaseStart+".";
             queue.Enabled=!loadedRequests&&k>=3&&k<=5&&W(s,14*268+196+loadedWeapon*2)>0&&state.Orders.QueuedSources==0;
@@ -439,6 +440,13 @@ namespace FleetLab
                 };
                 include(W(f,air+12),W(f,air+14));
                 include(W(f,battery+12),W(f,battery+14));
+                for(int n=0;n<5;n++)
+                {
+                    int x=W(f,air+40+n*2);
+                    if(x==-1)break;
+                    include(x,W(f,air+50+n*2));
+                }
+                if(I(f,30*492)==11)include(W(f,30*492+12),W(f,30*492+14));
                 for(int n=0;n<80;n++)if(I(t,n*268)!=0)include(W(t,n*268+8),W(t,n*268+10));
                 Func<float,float,PointF> plot=delegate(float x,float y)
                 {
@@ -457,11 +465,13 @@ namespace FleetLab
                     e.Graphics.DrawLine(grid,a,b);
                 }
                 e.Graphics.DrawRectangle(Pens.SteelBlue,world.X,world.Y,world.Width,world.Height);
-                PointF ship=plot(W(f,battery+12),W(f,battery+14)),aircraft=plot(W(f,air+12),W(f,air+14)),home=plot(W(f,7*492+12),W(f,7*492+14));
+                int associated=W(f,air+8),homeFleet=associated>=0&&associated<1500?W(s,associated*268+12):7;
+                if(homeFleet<0||homeFleet>=250)homeFleet=7;
+                PointF ship=plot(W(f,battery+12),W(f,battery+14)),aircraft=plot(W(f,air+12),W(f,air+14)),home=plot(W(f,homeFleet*492+12),W(f,homeFleet*492+14));
                 e.Graphics.FillRectangle(Brushes.LightSkyBlue,ship.X-5,ship.Y-5,10,10);
                 e.Graphics.DrawString("Battery fleet "+W(f,battery+12)+", "+W(f,battery+14),owner.Font,Brushes.LightSkyBlue,world.X+8,world.Bottom-38);
                 e.Graphics.DrawEllipse(Pens.LightSteelBlue,home.X-7,home.Y-7,14,14);
-                e.Graphics.DrawString("Home "+W(f,7*492+12)+", "+W(f,7*492+14),owner.Font,Brushes.LightSteelBlue,world.X+8,world.Bottom-21);
+                e.Graphics.DrawString("Home "+W(f,homeFleet*492+12)+", "+W(f,homeFleet*492+14),owner.Font,Brushes.LightSteelBlue,world.X+8,world.Bottom-21);
                 PointF prior=aircraft;
                 for(int n=0;n<5;n++)
                 {
@@ -472,13 +482,19 @@ namespace FleetLab
                     e.Graphics.DrawEllipse(Pens.Goldenrod,point.X-3,point.Y-3,6,6);
                     prior=point;
                 }
+                if(I(f,30*492)==11)
+                {
+                    var field=plot(W(f,30*492+12),W(f,30*492+14));
+                    using(var pen=new Pen(Color.MediumAquamarine,2))e.Graphics.DrawRectangle(pen,field.X-7,field.Y-7,14,14);
+                    e.Graphics.DrawString("Copied airfield "+W(f,30*492+12)+", "+W(f,30*492+14),owner.Font,Brushes.MediumAquamarine,world.X+8,world.Y+8);
+                }
                 if(I(f,air)==0)
                 {
                     e.Graphics.DrawLine(Pens.Gray,aircraft.X-6,aircraft.Y-6,aircraft.X+6,aircraft.Y+6);
                     e.Graphics.DrawLine(Pens.Gray,aircraft.X-6,aircraft.Y+6,aircraft.X+6,aircraft.Y-6);
                 }
                 else e.Graphics.FillEllipse(I(f,air)>=6?Brushes.SlateGray:Brushes.Gold,aircraft.X-5,aircraft.Y-5,10,10);
-                e.Graphics.DrawString("Aircraft "+W(f,air+12)+", "+W(f,air+14),owner.Font,Brushes.Gold,aircraft.X+8,aircraft.Y-21);
+                string aircraftLabel="Aircraft "+W(f,air+12)+", "+W(f,air+14);var labelSize=e.Graphics.MeasureString(aircraftLabel,owner.Font);float labelX=Math.Max(world.X+4,Math.Min(aircraft.X+8,world.Right-labelSize.Width-4)),labelY=Math.Max(world.Y+4,aircraft.Y-21);e.Graphics.DrawString(aircraftLabel,owner.Font,Brushes.Gold,labelX,labelY);
                 for(int n=0;n<80;n++)if(I(t,n*268)!=0)
                 {
                     var p=plot(W(t,n*268+8),W(t,n*268+10));

@@ -4,7 +4,7 @@ namespace FleetLab
 {
     public enum PracticeAircraftClockPreset
     {
-        Flight, MovingBattery, EmptyResource, ReturnBeforeImpact, ClockWrap
+        Flight, MovingBattery, EmptyResource, ReturnBeforeImpact, ClockWrap, SuppliedAirfield
     }
     // Deliberate diagnostic inputs, separate from recovered update rules.
     // Fixed first-Practice seed143514006 and one supplied parent7 attachment.
@@ -45,16 +45,46 @@ namespace FleetLab
         public PracticeAircraftWorldStudyState Create(int storedKind,int weapon,PracticeAircraftClockPreset preset,uint randomSeed)
         {
             if(storedKind<6||storedKind>8||weapon<1||weapon>3||!Enum.IsDefined(typeof(PracticeAircraftClockPreset),preset))throw new ArgumentOutOfRangeException("preset");
+            if(preset==PracticeAircraftClockPreset.SuppliedAirfield&&storedKind!=8)throw new InvalidOperationException("Choose AWACS for the supplied airfield preset.");
             var deployment=PracticeDeployment.FirstPractice(units,scene,143514006u);
             var attachment=new PracticeAircraftStudyState(units,modes,deployment).Create(7,storedKind,0).Transition(2);
             var ships=attachment.CopyShipPool();
             var fleets=attachment.CopyFleetPool();
             int at=AircraftFleet*492,u=BatteryUnit*268,home=BitConverter.ToInt16(ships,u+12),x=BitConverter.ToInt16(fleets,at+12),y=BitConverter.ToInt16(fleets,at+14);
+            if(preset==PracticeAircraftClockPreset.SuppliedAirfield)
+            {
+                W(fleets,at+12,397);
+                W(fleets,at+14,370);
+                x=397;
+                y=370;
+                int af=30*492,au=100*268;
+                I(fleets,af,11);
+                W(fleets,af+4,30);
+                W(fleets,af+6,0);
+                W(fleets,af+12,410);
+                W(fleets,af+14,370);
+                for(int n=0;n<6;n++)I(fleets,af+16+n*4,0);
+                I(fleets,af+16,0x4fc340+au);
+                for(int n=0;n<100;n++)I(fleets,af+64+n*4,0);
+                I(ships,au,20);
+                W(ships,au+4,100);
+                W(ships,au+6,0);
+                W(ships,au+8,2);
+                W(ships,au+10,3);
+                W(ships,au+12,30);
+                W(ships,au+14,3);
+                W(ships,au+16,3);
+                for(int n=0;n<4;n++)
+                {
+                    I(ships,au+56+n*4,0);
+                    I(fleets,af+64+(23+n)*4,2);
+                }
+            }
             W(fleets,249*492+4,249);
             W(fleets,home*492+12,x-1);
             W(fleets,home*492+14,y);
             for(int n=464;n<=466;n++)fleets[home*492+n]=255;
-            int resource=preset==PracticeAircraftClockPreset.EmptyResource?0:preset==PracticeAircraftClockPreset.ReturnBeforeImpact?20:2000;
+            int resource=preset==PracticeAircraftClockPreset.EmptyResource?0:preset==PracticeAircraftClockPreset.ReturnBeforeImpact||preset==PracticeAircraftClockPreset.SuppliedAirfield?20:2000;
             for(int n=0;n<6;n++)
             {
                 uint reference=BitConverter.ToUInt32(fleets,at+16+n*4);
