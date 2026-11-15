@@ -26,6 +26,13 @@ namespace FleetLab
         PracticeAircraftRequestClock requestClock;
         readonly CheckBox useRequests=new CheckBox();
         readonly NumericUpDown phase=new NumericUpDown();
+        readonly Button play=new Button();
+        readonly Timer playback=new Timer
+        {
+            Interval=40
+        };
+        int playbackRemaining;
+        bool playbackTick,playbackDisposed;
         internal PracticeAircraftWorldStudyState StudyState
         {
             get
@@ -95,7 +102,7 @@ namespace FleetLab
             };
             add(new Label
             {
-                Text="Diagnostic copy of the first Practice map. Presets supply attachment, battery, visibility, routes and resources. Updates use recovered rules; no real-time flight, full AI, audio or missions."
+                Text="Diagnostic copy of the first Practice map. Presets supply attachment, battery, visibility, routes and resources. Updates use recovered rules; no full AI, original application pacing, audio or missions."
             },90);
             Action<ComboBox,string,object[]> choice=delegate(ComboBox c,string text,object[] items)
             {
@@ -174,6 +181,14 @@ namespace FleetLab
             pause.Text="25 paused steps (+1 s)";
             pause.AccessibleName=pause.Text;
             add(pause,36);
+            play.Name="clockPlay";
+            play.Text="Watch 32 polls (debug)";
+            play.AccessibleName="Watch or stop 32 supplied source polls";
+            add(play,36);
+            add(new Label
+            {
+                Text="Watch supplies one 40 ms step per UI timer tick, then stops after 32. It can run slower under load. It stops on focus loss or another action. This is a viewing aid, not recovered application pacing."
+            },104);
             add(new Label
             {
                 Text="One poll: two fleet batches, optional phase-13 requests, AA launch, projectiles and effects. Aircraft move on their scheduler visit. Paused steps hold the phase, flight, queues and effects, and compensate projectile deadlines."
@@ -203,6 +218,7 @@ namespace FleetLab
             layout.SetColumnSpan(feedback,2);
             EventHandler changed=delegate
             {
+                StopPlayback("Playback stopped because a selection changed.");
                 pending=true;
                 if(state!=null)
                 {
@@ -257,6 +273,20 @@ namespace FleetLab
             {
                 Advance(25,true);
             };
+            play.Click+=delegate
+            {
+                if(playbackRemaining>0)
+                {
+                    StopPlayback("Playback stopped. The current copy is preserved.");
+                    return;
+                }
+                if(state==null||IsDisposed||Disposing)return;
+                playbackRemaining=32;
+                play.Text="Stop watching (32 left)";
+                feedback.Text="Watching 32 supplied polls. Focus loss or another action stops playback; there is no catch-up or automatic resume.";
+                playback.Start();
+            };
+            playback.Tick+=PlaybackTick;
             KeyUp+=delegate(object sender,KeyEventArgs e)
             {
                 held.Remove(e.KeyCode);
@@ -264,8 +294,57 @@ namespace FleetLab
             Deactivate+=delegate
             {
                 held.Clear();
+                StopPlayback("Playback stopped on focus loss. Press Watch to start another 32 polls.");
             };
             LoadPreset();
+        }
+        void StopPlayback(string message)
+        {
+            bool wasRunning=playbackRemaining>0;
+            if(!playbackDisposed)playback.Stop();
+            playbackRemaining=0;
+            if(!play.IsDisposed)play.Text="Watch 32 polls (debug)";
+            if(wasRunning&&message!=null&&!feedback.IsDisposed)feedback.Text=message;
+        }
+        void PlaybackTick(object sender,EventArgs e)
+        {
+            if(playbackTick)return;
+            if(IsDisposed||Disposing||playbackRemaining<=0)
+            {
+                StopPlayback(null);
+                return;
+            }
+            playbackTick=true;
+            try
+            {
+                if(!Advance(1,false))return;
+                if(playbackRemaining==1)StopPlayback("Finished watching 32 supplied polls. The copy is ready for manual inspection.");
+                else
+                {
+                    playbackRemaining--;
+                    play.Text="Stop watching ("+playbackRemaining+" left)";
+                }
+            }
+            finally
+            {
+                playbackTick=false;
+            }
+        }
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            StopPlayback(null);
+            base.OnFormClosing(e);
+        }
+        protected override void Dispose(bool disposing)
+        {
+            if(disposing&&!playbackDisposed)
+            {
+                StopPlayback(null);
+                playback.Tick-=PlaybackTick;
+                playback.Dispose();
+                playbackDisposed=true;
+            }
+            base.Dispose(disposing);
         }
         protected override void OnKeyDown(KeyEventArgs e)
         {
@@ -291,6 +370,7 @@ namespace FleetLab
         }
         void LoadPreset()
         {
+            StopPlayback(null);
             try
             {
                 int nextKind=6+kind.SelectedIndex,nextWeapon=weapon.SelectedIndex+1;
@@ -322,8 +402,9 @@ namespace FleetLab
         {
             return e is ArgumentException||e is InvalidDataException||e is InvalidOperationException||e is NotSupportedException;
         }
-        void Act(Func<PracticeAircraftWorldStudyState,PracticeAircraftWorldStudyState> action,string message)
+        bool Act(Func<PracticeAircraftWorldStudyState,PracticeAircraftWorldStudyState> action,string message)
         {
+            if(!playbackTick)StopPlayback(null);
             try
             {
                 var next=action(state);
@@ -332,16 +413,19 @@ namespace FleetLab
                 if(history.Count>40)history.RemoveAt(0);
                 RefreshState();
                 feedback.Text=message;
+                return true;
             }
             catch(Exception e)
             {
                 if(!Expected(e))throw;
+                StopPlayback(null);
                 feedback.Text="Step rejected; current copy preserved. "+e.Message;
+                return false;
             }
         }
-        void Advance(int count,bool paused)
+        bool Advance(int count,bool paused)
         {
-            Act(delegate(PracticeAircraftWorldStudyState before)
+            return Act(delegate(PracticeAircraftWorldStudyState before)
             {
                 if(loadedRequests)
                 {
@@ -494,7 +578,10 @@ namespace FleetLab
                     e.Graphics.DrawLine(Pens.Gray,aircraft.X-6,aircraft.Y+6,aircraft.X+6,aircraft.Y-6);
                 }
                 else e.Graphics.FillEllipse(I(f,air)>=6?Brushes.SlateGray:Brushes.Gold,aircraft.X-5,aircraft.Y-5,10,10);
-                string aircraftLabel="Aircraft "+W(f,air+12)+", "+W(f,air+14);var labelSize=e.Graphics.MeasureString(aircraftLabel,owner.Font);float labelX=Math.Max(world.X+4,Math.Min(aircraft.X+8,world.Right-labelSize.Width-4)),labelY=Math.Max(world.Y+4,aircraft.Y-21);e.Graphics.DrawString(aircraftLabel,owner.Font,Brushes.Gold,labelX,labelY);
+                string aircraftLabel="Aircraft "+W(f,air+12)+", "+W(f,air+14);
+                var labelSize=e.Graphics.MeasureString(aircraftLabel,owner.Font);
+                float labelX=Math.Max(world.X+4,Math.Min(aircraft.X+8,world.Right-labelSize.Width-4)),labelY=Math.Max(world.Y+4,aircraft.Y-21);
+                e.Graphics.DrawString(aircraftLabel,owner.Font,Brushes.Gold,labelX,labelY);
                 for(int n=0;n<80;n++)if(I(t,n*268)!=0)
                 {
                     var p=plot(W(t,n*268+8),W(t,n*268+10));

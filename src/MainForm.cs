@@ -98,7 +98,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.78 — AWACS home and shared combat clock";
+            Text="Battleship Fleet Lab 0.79 — bounded flight and AA playback";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -313,7 +313,7 @@ namespace FleetLab {
             aircraftStudy.AccessibleDescription="Create, activate and dock one supplied aircraft group in an isolated first Practice copy using the entered seed.";
             mapHeader.Controls.Add(aircraftStudy);
             aircraftClockStudy.Text="Shared flight / AA…";aircraftClockStudy.AutoSize=true;aircraftClockStudy.Name="openAircraftClockStudy";
-            aircraftClockStudy.AccessibleDescription="Open fixed first-Practice diagnostic presets with a shared manually stepped aircraft and AA clock.";mapHeader.Controls.Add(aircraftClockStudy);
+            aircraftClockStudy.AccessibleDescription="Open fixed first-Practice diagnostic presets with shared aircraft and AA steps and optional bounded playback.";mapHeader.Controls.Add(aircraftClockStudy);
             aircraftClockStudy.Click+=delegate {try {using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(IOException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}SuppressHeldControls();};
             timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
             mapHeader.Controls.Add(timedStudyHint);
@@ -1701,6 +1701,30 @@ namespace FleetLab {
                 foreach(Ship ship in State.Enemy.Ships)foreach(Point p in ship.Cells)if(p!=target)State.Enemy.Shoot(p);
                 State.Fire(target);UpdateView();require(State.Phase==Phase.Finished&&board.VisualEffectCount==1,"Final sinking visual missing");
                 var entry=new List<ClassicVisualEntry>(board.VisualEntries)[0];board.DamageTick+=entry.Spec.LastCounter;board.SynchronizeVisualEffects();require(board.VisualEffectCount==0,"Finished entry never retired");NewGame();
+            });
+            check("Bounded flight playback uses actual timer delivery and stops at 32 polls",delegate {
+                using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);
+                    ((ComboBox)study.Controls.Find("clockKind",true)[0]).SelectedIndex=2;((ComboBox)study.Controls.Find("clockPreset",true)[0]).SelectedIndex=5;
+                    ((CheckBox)study.Controls.Find("clockUseRequests",true)[0]).Checked=true;((NumericUpDown)study.Controls.Find("clockPhase",true)[0]).Value=12;
+                    ((Button)study.Controls.Find("clockLoad",true)[0]).PerformClick();var play=(Button)study.Controls.Find("clockPlay",true)[0];play.PerformClick();
+                    var watch=Stopwatch.StartNew();while(study.StudyState.Combat.MovementFrames<32&&watch.ElapsedMilliseconds<10000)PumpVisuals(10);
+                    var stopped=study.StudyState;require(stopped.Combat.MovementFrames==32&&stopped.Combat.ClockMilliseconds==1280&&play.Text=="Watch 32 polls (debug)","Timer exceeded or missed finite poll count");
+                    PumpVisuals(100);require(Object.ReferenceEquals(stopped,study.StudyState),"Finite playback resumed by itself");
+                    var one=(Button)study.Controls.Find("clockOne",true)[0];one.PerformClick();one.PerformClick();var c=study.StudyState.Combat;
+                    require(c.ClockMilliseconds==1360&&BitConverter.ToInt32(c.Objects.CopyFleetPool(),13*492)==8&&BitConverter.ToInt16(c.Objects.CopyFleetPool(),13*492+8)==100&&c.RandomState==2006221698u,"Original355 phase12 short-return docking fixture after timed32/manual2");study.Close();
+                }
+            });
+            check("Flight playback stops on focus loss, reset and disposal without automatic resume",delegate {
+                using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);
+                    var play=(Button)study.Controls.Find("clockPlay",true)[0];play.PerformClick();var watch=Stopwatch.StartNew();while(study.StudyState.Combat.MovementFrames==0&&watch.ElapsedMilliseconds<5000)PumpVisuals(5);require(study.StudyState.Combat.MovementFrames>0,"No actual timer tick before focus test");
+                    var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                    typeof(Form).GetMethod("OnDeactivate",flags).Invoke(study,new object[]{EventArgs.Empty});var held=study.StudyState;PumpVisuals(100);require(Object.ReferenceEquals(held,study.StudyState)&&play.Text=="Watch 32 polls (debug)","Focus loss continued playback");
+                    typeof(Form).GetMethod("OnActivated",flags).Invoke(study,new object[]{EventArgs.Empty});PumpVisuals(80);require(Object.ReferenceEquals(held,study.StudyState),"Focus restore resumed playback");
+                    play.PerformClick();((Button)study.Controls.Find("clockLoad",true)[0]).PerformClick();held=study.StudyState;PumpVisuals(100);require(held.Combat.MovementFrames==0&&Object.ReferenceEquals(held,study.StudyState),"Reset left a queued timer update");
+                    play.PerformClick();study.Close();study.Dispose();PumpVisuals(100);require(study.IsDisposed,"Closing active playback did not dispose study");
+                }
             });
             results.Add("UI checks passed="+(results.Count-failed-skipped)+" failed="+failed+(skipped>0?" skipped="+skipped:""));
             results.Add("These checks use the real form and button/tab events offscreen. Key events are simulated; desktop focus and physical input remain separate checks.");

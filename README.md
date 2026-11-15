@@ -1,8 +1,8 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.78**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.79**.
 
-The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The latest study combines aircraft flight, home selection, AA requests, projectiles and effects on a manually stepped clock. It includes a copied AWACS airfield and an optional recovered request-phase gate.
+The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The latest study combines aircraft flight, home selection, AA requests, projectiles and effects on a supplied clock. It includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback for watching those steps.
 
 Original assets and executables are **not included**. This is an incremental reconstruction, with explicit limits on the original behavior established so far.
 
@@ -62,6 +62,8 @@ Open **Recovered maps → Shared flight / AA…**. This opens a separate copy of
 
 Presets deliberately supply attachments, equipment, ammunition, visibility, routes and resources. The updates use recovered rules; placements and schematic graphics are diagnostic inputs. The clock advances only through the controls. It does not establish original application pacing or complete AI behavior.
 
+**Watch 32 polls (debug)** supplies one 40 ms step per Windows UI timer tick, then stops after 32. It uses the same updates as the manual controls. Under load, viewing can take longer; there is no catch-up. Click **Stop watching** to inspect the current state. Focus loss, selector changes, another action, reset or closing stop playback, with no automatic resume. This optional viewing aid starts off and does not change the recovered simulation rules.
+
 ### Manual flight and fire
 
 The default helicopter preset is ready to use:
@@ -119,7 +121,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.78 source, focused checks pass **324 model groups**. A fresh public checkout passes **254**, with **70 explicit skips** for optional private evidence. Form checks pass **119**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.79 source, focused checks pass **324 model groups**. A fresh public checkout passes **254**, with **70 explicit skips** for optional private evidence. Form checks pass **121**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
