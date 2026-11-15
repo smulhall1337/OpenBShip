@@ -15,7 +15,7 @@ namespace FleetLab
         readonly ComboBox ship=new ComboBox(),marker=new ComboBox(),hull=new ComboBox(),ammo=new ComboBox(),supplies=new ComboBox();
         readonly CheckBox escort=new CheckBox();
         readonly Button admit=new Button(),one=new Button(),many=new Button(),reset=new Button(),load=new Button();
-        readonly Label summary=new Label(),feedback=new Label(),profile=new Label();
+        readonly Label summary=new Label(),feedback=new Label(),profile=new Label(),admission=new Label();
         readonly TextBox details=new TextBox();
         readonly YardCanvas canvas;
         readonly HashSet<Keys> held=new HashSet<Keys>();
@@ -157,6 +157,9 @@ namespace FleetLab
             profile.Name="yardProfile";
             profile.AccessibleName="Pending yard profile";
             add(profile,54);
+            admission.Name="yardAdmission";
+            admission.AccessibleName="Read-only original admission gate";
+            add(admission,104);
             details.Name="yardDetails";
             details.AccessibleName="Ammunition, inventory and source context";
             details.Multiline=true;
@@ -295,6 +298,8 @@ namespace FleetLab
             admit.Enabled=!state.Entered;
             one.Enabled=many.Enabled=state.Entered&&!state.Returned;
             profile.Text=pending?"Selection pending until Load. Reset uses the applied profile.":"Selectors match the applied profile.";
+            var gate=state.CheckAdmission();
+            admission.Text="Read-only source gate "+gate.SourceReturn+" ("+(gate.Available?"available":"unavailable")+").\r\n"+gate.Reason+"\r\nAvailability alone does not establish safe entry.";
             var text=new StringBuilder();
             text.AppendLine("Ammo ID: ship / depot (nonzero values)");
             for(int n=0;n<35;n++)
@@ -354,7 +359,8 @@ namespace FleetLab
                     }
                     int below=top+size+18;
                     string phase=!owner.state.Entered?"Prepared at source":owner.state.Returned?"Returned to source":"Admitted to paired bay";
-                    g.DrawString(phase+" · HP "+W(s,16)+" / "+W(s,14)+" · worker passes "+owner.state.WorkerCalls,Font,white,new RectangleF(10,below,Width-20,46));
+                    var gate=owner.state.CheckAdmission();
+                    g.DrawString(phase+" · HP "+W(s,16)+" / "+W(s,14)+" · worker passes "+owner.state.WorkerCalls+"\nRead-only gate "+gate.SourceReturn+" ("+(gate.Available?"available":"unavailable")+")",Font,white,new RectangleF(10,below,Width-20,46));
                     g.DrawString("Gold: target ship. Numbers: original cell states.\nTeal: state 2; red: supplied damage; gray: yard background.\nCoordinates retain the source X-row / Y-column convention.",Font,muted,new RectangleF(10,below+50,Width-20,82));
                     g.DrawString("Schematic diagnostic grids; placement is supplied.\nThis window runs explicit admission and support calls, with no world clock, discovery or mission execution.",Font,muted,new RectangleF(10,below+140,Width-20,100));
                 }

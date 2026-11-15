@@ -99,7 +99,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.83 — paired yard supply and return";
+            Text="Battleship Fleet Lab 0.84 — recovered yard admission gate";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -1775,6 +1775,12 @@ namespace FleetLab {
             check("Paired yard form suppresses held worker confirmations and supports released edges",delegate {
                 using(var study=new PracticeYardStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
                     study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);((Button)study.Controls.Find("yardAdmit",true)[0]).PerformClick();var one=(Button)study.Controls.Find("yardOne",true)[0];study.ActiveControl=one;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var down=typeof(PracticeYardStudy).GetMethod("OnKeyDown",flags);var up=typeof(Form).GetMethod("OnKeyUp",flags);down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.WorkerCalls==1,"Held yard confirmation repeated");up.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.WorkerCalls==2,"Released yard confirmation failed");study.Close();study.Dispose();require(study.IsDisposed,"Yard close/dispose failed");
+                }
+            });
+
+            check("Yard admission readout follows source gate without enabling repeated study entry",delegate {
+                using(var study=new PracticeYardStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);var label=(Label)study.Controls.Find("yardAdmission",true)[0];var admit=(Button)study.Controls.Find("yardAdmit",true)[0];require(label.Text.Contains("gate 0 (available)"),"Prepared gate readout");admit.PerformClick();require(label.Text.Contains("gate 1 (unavailable)"),"Admitted gate readout");((Button)study.Controls.Find("yardMany",true)[0]).PerformClick();var state=study.StudyState;require(state.Returned&&state.WorkerCalls==5&&label.Text.Contains("gate 0 (available)")&&!admit.Enabled,"Read-only availability bypassed study once guard");PumpVisuals(50);require(Object.ReferenceEquals(state,study.StudyState),"Admission readout changed study state");((Button)study.Controls.Find("yardReset",true)[0]).PerformClick();require(admit.Enabled&&label.Text.Contains("gate 0 (available)"),"Reset admission readout");study.Close();
                 }
             });
 

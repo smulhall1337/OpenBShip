@@ -176,9 +176,14 @@ namespace FleetLab
                 TextRequests++;
             }
         }
+        public PracticeYardAdmissionResult CheckAdmission()
+        {
+            return PracticeYardAdmission.Check(ships,fleets,TargetUnit,0);
+        }
         public PracticeYardStudyState Enter()
         {
             if(Entered)throw new InvalidOperationException("Reset the prepared fixture before admitting it again.");
+            if(!CheckAdmission().Available)throw new NotSupportedException("The read-only source gate rejects this prepared copy.");
             if(I(ships,0)==0||(I(fleets,7*492)!=1&&I(fleets,7*492)!=9)||fleets[7*492+482]!=34||I(fleets,34*492)!=2||W(fleets,34*492+6)!=0||I(ships,100*268)!=0||W(ships,14)>W(ships,101*268+14))throw new NotSupportedException("Only the prepared, fitting paired-yard admission is supported.");
             var next=Copy();
             var s=next.ships;
