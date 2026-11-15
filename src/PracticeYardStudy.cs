@@ -170,7 +170,7 @@ namespace FleetLab
             add(details,250);
             add(new Label
             {
-                Text="One prepared paired bay: blank unit 100 before marker 101, depot 102, local owner 0. This is separate from map placement, discovery, missions and the guarded general support caller. Three source display endpoints are counted, not rendered."
+                Text="One prepared paired bay: blank unit 100 before marker 101, depot 102, local owner 0. This is separate from map placement, discovery, missions and the guarded general support caller. Source selection maintenance is retained; three display requests are counted. UI/camera rendering is omitted."
             },130);
             var close=new Button();
             button(close,"yardClose","Close study");
@@ -311,7 +311,7 @@ namespace FleetLab
             text.AppendLine("Source selected fleet: "+state.SelectedFleet+" / unit: "+state.SelectedUnit);
             text.AppendLine("Display requests since prepared:");
             text.AppendLine("text "+state.TextRequests+" / map "+state.MapRequests+" / refresh "+state.RefreshRequests);
-            text.AppendLine("These counters are not actual original UI playback.");
+            text.AppendLine("Selection maintenance is retained; UI/camera rendering is separate.");
             text.AppendLine("Source reserved flag: "+f[7*492+490]+" / source state: "+I(f,7*492+472));
             text.AppendLine("Yard block state: "+I(f,32*492+472));
             details.Text=text.ToString();

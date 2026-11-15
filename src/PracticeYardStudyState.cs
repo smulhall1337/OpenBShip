@@ -5,7 +5,8 @@ namespace FleetLab
     // Explicit paired-yard fixture and bounded data-only command/worker path.
     // RIP SHA256 B9A8AEFD1E5CED839670DF69B47C596175F38A3C99E33E584FFDD32D2006A569.
     // Source VA 428EE0/429060/4297F0/4294F0/429730/429BF0; 268-byte units, 492-byte fleets.
-    // Actual display endpoints and original discovery/UI/mission flow are separate.
+    // Source4085D0 selection maintenance retained; rendering/camera work and original
+    // discovery/UI/mission flow are separate. Fixture starts selected fleet7/unitnull.
     public sealed class PracticeYardStudyState
     {
         readonly PracticeUnitCatalog units;
@@ -136,7 +137,7 @@ namespace FleetLab
             this.units=units;
             this.ships=ships;
             this.fleets=fleets;
-            SelectedFleet=249;
+            SelectedFleet=7;
             SelectedUnit=-1;
         }
         PracticeYardStudyState Copy()
@@ -175,6 +176,28 @@ namespace FleetLab
                 for(int n=first;n<first+4;n++)I(fleets,n*492+472,live?0:4);
                 TextRequests++;
             }
+        }
+        // Both source display paths call 4085D0 before their rendering work.
+        // Preserve that data/selection maintenance; selected-fleet fallback
+        // 42C380 is deliberately outside this valid-source-fleet fixture.
+        void MaintainSelection()
+        {
+            if(SelectedFleet<0||SelectedFleet>=250||I(fleets,SelectedFleet*492)==0)throw new NotSupportedException("Selected-fleet fallback is outside the paired-yard profile.");
+            if(SelectedUnit>=0&&I(ships,SelectedUnit*268)!=0&&W(ships,SelectedUnit*268+12)==W(fleets,SelectedFleet*492+4))return;
+            for(int member=0;member<6;member++)
+            {
+                int unit=Ref(fleets,SelectedFleet,member);
+                if(unit<0||I(ships,unit*268)==0)continue;
+                SelectedUnit=unit;
+                fleets[SelectedFleet*492+468]=(byte)member;
+                return;
+            }
+            SelectedUnit=Ref(fleets,SelectedFleet,0);
+        }
+        void Refresh()
+        {
+            MaintainSelection();
+            RefreshRequests++;
         }
         public PracticeYardAdmissionResult CheckAdmission()
         {
@@ -219,15 +242,16 @@ namespace FleetLab
                 if(next.SelectedFleet==7)
                 {
                     next.SelectedUnit=Ref(f,7,member);
-                    next.RefreshRequests++;
+                    next.Refresh();
                 }
             }
             else
             {
                 I(f,7*492,0);
                 next.SelectedFleet=34;
-                next.RefreshRequests++;
+                next.Refresh();
             }
+            next.MaintainSelection();
             next.MapRequests++;
             next.BlockStatus(34);
             next.Entered=true;
@@ -260,7 +284,8 @@ namespace FleetLab
             if(!other)
             {
                 I(fleets,origin*492+472,0);
-                if(SelectedFleet==origin)RefreshRequests++;
+                // 4297D3 compares the marker unit ID to the selected fleet ID.
+                if(SelectedFleet==W(ships,mark+4))Refresh();
             }
             int active=0;
             for(;active<6;active++)
@@ -273,7 +298,7 @@ namespace FleetLab
                 fleets[yard*492+468]=(byte)active;
                 if(SelectedFleet==yard)SelectedUnit=Ref(fleets,yard,active);
             }
-            RefreshRequests++;
+            Refresh();
             BlockStatus(yard);
             TextRequests++;
         }
@@ -319,14 +344,14 @@ namespace FleetLab
                             W(s,at+196+weapon*2,maximum);
                         }
                         supplied=true;
-                        if(next.SelectedFleet==fleet)next.RefreshRequests++;
+                        if(next.SelectedFleet==fleet)next.Refresh();
                         break;
                     }
                     if(!supplied)
                     {
                         next.Release(target,markerUnit,fleet,member-1);
-                        if(next.SelectedFleet==W(s,at+12))next.RefreshRequests++;
-                        if(next.SelectedFleet==fleet)next.RefreshRequests++;
+                        if(next.SelectedFleet==W(s,at+12))next.Refresh();
+                        if(next.SelectedFleet==fleet)next.Refresh();
                     }
                 }
             }

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.84**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.85**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -139,7 +139,7 @@ The read-only source gate displays **0 (available)** before admission, **1 (unav
 
 These are explicit calls with no world-clock advancement. One worker pass can change one damaged cell and transfer one ammunition type. With no applicable ammunition transfer, the recovered release path forces full HP and restores the source cells, even if intermediate cell recovery was incomplete. This reproduces the admitted source behavior; it is not a physical repair model.
 
-Original comparisons cover **264 supplied histories / 5,808 complete pool observations**, using six real unit templates, fitting type-22/23 markers, three hull states, ammunition/depot variants and an optional escort. Three original display endpoints are adapted to count requests in the owned-image probes; actual original UI rendering is outside that comparison. The study shows those counts separately. General yard discovery, command admission in the running original application, multi-bay support, missions and the full AI remain unfinished. The shared-world kind-2 support guard remains in place.
+Original comparisons cover **264 supplied histories / 5,808 complete pool observations**, using six real unit templates, fitting type-22/23 markers, three hull states, ammunition/depot variants and an optional escort. The copied profile starts with source fleet 7 selected and no selected unit. The native probes retain the original selected-unit maintenance called by two display endpoints, while counting requests and omitting remaining UI/camera rendering. With no escort, admission selects target unit 0 in yard 34; with an escort, source fleet 7 stays selected and switches to unit 1, then back to unit 0 on return. The details show this context and request counts. Selected-fleet fallback outside this prepared profile remains guarded. Earlier v0.83/v0.84 probes counted those endpoints without that selection continuation; the current comparison supersedes their selection scope. General yard discovery, command admission in the running original application, multi-bay support, missions and the full AI remain unfinished. The shared-world kind-2 support guard remains in place.
 
 ## Other recovered studies
 
@@ -171,7 +171,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.84 source, focused checks pass **354 model groups**. A fresh public checkout passes **284**, with **70 explicit skips** for optional private evidence. Form checks pass **129**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.85 source, focused checks pass **354 model groups**. A fresh public checkout passes **284**, with **70 explicit skips** for optional private evidence. Form checks pass **129**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
