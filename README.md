@@ -1,8 +1,8 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.80**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.81**.
 
-The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The latest study combines aircraft flight, home selection, AA requests, projectiles and effects on a supplied clock. It includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback for watching those steps.
+The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps and inventory lookup. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
 Original assets and executables are **not included**. This is an incremental reconstruction, with explicit limits on the original behavior established so far.
 
@@ -107,6 +107,18 @@ Invoke-Item $output
 
 Choose a new output directory each time; existing exports are preserved. The folder contains unit/fleet CSVs, four occupancy grids, complete normalized data pools, a hash manifest and a scope note. This uses supplied fresh pools, fleet slots 30–33, origin 400,370, owner 0 and flag 1. It does not change the running battle or saved settings. Original constructor comparisons cover 708 admitted cases; incomplete capacity, malformed resources and invalid destinations reject without changing caller pools.
 
+## Installation recovery study
+
+Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
+
+The default unit is slot 0, source type 20, length 5:
+
+1. **Supply mixed cells / HP 0 → Up to 16 recovered cell steps** applies 11 calls, changing cells 10 times. All of that unit's cells reach state 2 while HP remains 1.
+2. **Reset → Supply one state 8 / HP length−1 → One recovered cell step** changes 8→7 and HP 4→5. A second step returns without changing state 7 because the source leaf stops when HP equals length.
+3. **Find type in aligned four-fleet block**, with type 19, finds unit slot 2. Type 0 finds no matching referenced unit in this copy. Lookup is read-only.
+
+One recovered step changes only the first eligible cell: 5→2, 6→5, 7→6 or 8→7; only the last transition increments the signed HP field. This does not reconstruct the complete repair system or restore equipment records. Damage, location and explicit calls are diagnostic inputs. The active support caller remains guarded; constructor output alone does not establish a valid running installation.
+
 ## Other recovered studies
 
 **Recovered maps** also provides:
@@ -137,7 +149,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.80 source, focused checks pass **329 model groups**. A fresh public checkout passes **259**, with **70 explicit skips** for optional private evidence. Form checks pass **121**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.81 source, focused checks pass **336 model groups**. A fresh public checkout passes **266**, with **70 explicit skips** for optional private evidence. Form checks pass **123**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

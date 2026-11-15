@@ -22,6 +22,7 @@ namespace FleetLab {
         readonly Button prepareTimedStudy=new Button();
         readonly Button aircraftStudy=new Button();
         readonly Button aircraftClockStudy=new Button();
+        readonly Button installationStudy=new Button();
         readonly Label timedStudyHint=new Label();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
@@ -98,7 +99,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.80 — recovered airfield constructor";
+            Text="Battleship Fleet Lab 0.81 — installation recovery study";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -315,6 +316,8 @@ namespace FleetLab {
             aircraftClockStudy.Text="Shared flight / AA…";aircraftClockStudy.AutoSize=true;aircraftClockStudy.Name="openAircraftClockStudy";
             aircraftClockStudy.AccessibleDescription="Open fixed first-Practice diagnostic presets with shared aircraft and AA steps and optional bounded playback.";mapHeader.Controls.Add(aircraftClockStudy);
             aircraftClockStudy.Click+=delegate {try {using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(IOException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}SuppressHeldControls();};
+            installationStudy.Text="Installation study…";installationStudy.AutoSize=true;installationStudy.Name="openInstallationStudy";installationStudy.AccessibleDescription="Inspect a copied original four-fleet installation and step the recovered recovery and inventory-lookup leaves.";mapHeader.Controls.Add(installationStudy);
+            installationStudy.Click+=delegate {try {using(var study=new PracticeInstallationStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Installation study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Installation study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Installation study");}SuppressHeldControls();};
             timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
             mapHeader.Controls.Add(timedStudyHint);
             map.Dock=DockStyle.Fill;
@@ -1724,6 +1727,21 @@ namespace FleetLab {
                     typeof(Form).GetMethod("OnActivated",flags).Invoke(study,new object[]{EventArgs.Empty});PumpVisuals(80);require(Object.ReferenceEquals(held,study.StudyState),"Focus restore resumed playback");
                     play.PerformClick();((Button)study.Controls.Find("clockLoad",true)[0]).PerformClick();held=study.StudyState;PumpVisuals(100);require(held.Combat.MovementFrames==0&&Object.ReferenceEquals(held,study.StudyState),"Reset left a queued timer update");
                     play.PerformClick();study.Close();study.Dispose();PumpVisuals(100);require(study.IsDisposed,"Closing active playback did not dispose study");
+                }
+            });
+            check("Installation form applies supplied damage, bounded recovery and read-only lookup",delegate {
+                using(var study=new PracticeInstallationStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);
+                    ((Button)study.Controls.Find("installationMixed",true)[0]).PerformClick();((Button)study.Controls.Find("installationMany",true)[0]).PerformClick();require(study.StudyState.RecoveryCalls==11&&study.StudyState.ChangedCells==10&&BitConverter.ToInt16(study.StudyState.CopyShipPool(),16)==1,"Original362 mixed-step form outcome");
+                    var state=study.StudyState;((Button)study.Controls.Find("installationFind",true)[0]).PerformClick();require(Object.ReferenceEquals(state,study.StudyState)&&((Label)study.Controls.Find("installationLookup",true)[0]).Text.Contains("unit slot 2"),"Lookup changed state or failed type19 inventory lookup");
+                    ((Button)study.Controls.Find("installationReset",true)[0]).PerformClick();require(study.StudyState.RecoveryCalls==0&&study.StudyState.ChangedCells==0&&((Label)study.Controls.Find("installationLookup",true)[0]).Text.Length==0,"Installation form reset retained history");study.Close();
+                }
+            });
+            check("Installation form preserves source HP boundary and suppresses held step confirmations",delegate {
+                using(var study=new PracticeInstallationStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);
+                    ((Button)study.Controls.Find("installationBoundary",true)[0]).PerformClick();var one=(Button)study.Controls.Find("installationOne",true)[0];one.PerformClick();one.PerformClick();require(study.StudyState.ChangedCells==1&&study.StudyState.RecoveryCalls==2&&!study.StudyState.LastRecovery.Changed&&BitConverter.ToInt32(study.StudyState.CopyFleetPool(),32*492+64+61*4)==7,"Original362 full-HP remaining-cell boundary");
+                    ((Button)study.Controls.Find("installationReset",true)[0]).PerformClick();((Button)study.Controls.Find("installationMixed",true)[0]).PerformClick();study.ActiveControl=one;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var down=typeof(PracticeInstallationStudy).GetMethod("OnKeyDown",flags);var up=typeof(Form).GetMethod("OnKeyUp",flags);down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.RecoveryCalls==1,"Held installation step repeated");up.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});down.Invoke(study,new object[]{new KeyEventArgs(Keys.Space)});require(study.StudyState.RecoveryCalls==2,"Released installation step did not advance");study.Close();
                 }
             });
             results.Add("UI checks passed="+(results.Count-failed-skipped)+" failed="+failed+(skipped>0?" skipped="+skipped:""));
