@@ -23,6 +23,7 @@ namespace FleetLab {
         readonly Button aircraftStudy=new Button();
         readonly Button aircraftClockStudy=new Button();
         readonly Button installationStudy=new Button();
+        readonly Button mapInstallationStudy=new Button();
         readonly Label timedStudyHint=new Label();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
@@ -99,7 +100,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.86 — recovered radial installation export";
+            Text="Battleship Fleet Lab 0.87 — recovered map installation construction";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -318,6 +319,8 @@ namespace FleetLab {
             aircraftClockStudy.Click+=delegate {try {using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(IOException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}SuppressHeldControls();};
             installationStudy.Text="Installation study…";installationStudy.AutoSize=true;installationStudy.Name="openInstallationStudy";installationStudy.AccessibleDescription="Inspect a copied original four-fleet installation and step the recovered recovery and inventory-lookup leaves.";mapHeader.Controls.Add(installationStudy);
             installationStudy.Click+=delegate {try {using(var study=new PracticeInstallationStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Installation study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Installation study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Installation study");}SuppressHeldControls();};
+            mapInstallationStudy.Text="Map installations…";mapInstallationStudy.AutoSize=true;mapInstallationStudy.Name="openMapInstallationStudy";mapInstallationStudy.AccessibleDescription="Read-only ordinary SCN base construction, copied placements, rosters and grids; no support or missions.";mapHeader.Controls.Add(mapInstallationStudy);
+            mapInstallationStudy.Click+=delegate {try {using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Map installations");}catch(IOException e){MessageBox.Show(this,e.Message,"Map installations");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Map installations");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Map installations");}SuppressHeldControls();};
             timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
             mapHeader.Controls.Add(timedStudyHint);
             map.Dock=DockStyle.Fill;
@@ -953,6 +956,42 @@ namespace FleetLab {
                 catch(Exception e) { failed++; results.Add("FAIL "+name+": "+e.Message); }
             };
             Action<bool,string> require=delegate(bool ok,string message) { if(!ok)throw new Exception(message); };
+            check("Map installation view exposes copied source placement, fleet and unit grids",delegate {
+                var previous=State;var previousScene=map.Scene;
+                using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
+                    require(study.StudyState.SourceName.Equals("BSSB202.SCN",StringComparison.OrdinalIgnoreCase)&&study.StudyState.Installations.Count==1&&study.SelectedFleet==0&&study.SelectedUnit==0,"Default copied map base");
+                    ((ComboBox)study.Controls.Find("mapInstallationFleet",true)[0]).SelectedIndex=2;
+                    require(study.SelectedFleet==2&&((ListBox)study.Controls.Find("mapInstallationMembers",true)[0]).Items.Count==4&&study.SelectedUnit==4,"Marker roster selection");
+                    ((TabControl)study.Controls.Find("mapInstallationViews",true)[0]).SelectedIndex=1;
+                    require(((TextBox)study.Controls.Find("mapInstallationDetails",true)[0]).Text.Contains("Unit 4 / type 22")&&((TextBox)study.Controls.Find("mapInstallationDetails",true)[0]).ReadOnly,"Read-only source details");
+                    study.Size=study.MinimumSize;Application.DoEvents();require(study.Controls.Find("mapInstallationGrid",true)[0].Width>400,"Minimum grid layout");study.Close();
+                }
+                require(Object.ReferenceEquals(State,previous)&&Object.ReferenceEquals(map.Scene,previousScene),"Map study changed parent state");
+            });
+            check("Map source selection remains pending and failed loads preserve the applied copy",delegate {
+                using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
+                    var previous=study.StudyState;var source=(ComboBox)study.Controls.Find("mapInstallationSource",true)[0];
+                    for(int n=0;n<source.Items.Count;n++)if(source.Items[n].ToString().Equals("BSSB418.SCN",StringComparison.OrdinalIgnoreCase))source.SelectedIndex=n;
+                    require(Object.ReferenceEquals(previous,study.StudyState),"Pending source auto-applied");
+                    ((Button)study.Controls.Find("mapInstallationLoad",true)[0]).PerformClick();
+                    require(Object.ReferenceEquals(previous,study.StudyState)&&((Label)study.Controls.Find("mapInstallationFeedback",true)[0]).Text.Contains("Load rejected"),"Failed source replaced current copy");
+                }
+            });
+            check("Map installation view handles empty and multiple-base sources",delegate {
+                using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
+                    study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
+                    var source=(ComboBox)study.Controls.Find("mapInstallationSource",true)[0];var load=(Button)study.Controls.Find("mapInstallationLoad",true)[0];
+                    foreach(string file in new[]{"BSSB201.SCN","BSSB205.SCN"}) {
+                        for(int n=0;n<source.Items.Count;n++)if(source.Items[n].ToString().Equals(file,StringComparison.OrdinalIgnoreCase))source.SelectedIndex=n;
+                        load.PerformClick();
+                        require(study.StudyState.Installations.Count==(file=="BSSB201.SCN"?0:14),"Empty/multiple base count");
+                        if(file=="BSSB201.SCN")require(study.SelectedFleet==-1&&study.SelectedUnit==-1&&!study.Controls.Find("mapInstallationFleet",true)[0].Enabled,"Empty source stale selection");
+                        else {((ListBox)study.Controls.Find("mapInstallationBases",true)[0]).SelectedIndex=13;require(study.SelectedFleet==52&&study.SelectedUnit==130,"Last installation roster");}
+                    }
+                }
+            });
             check("Local save/load menu eligibility tracks stable Classic turns and file availability",delegate {
                 tabs.SelectedIndex=0;rules.SelectedIndex=0;changingOpponent=true;opponent.SelectedIndex=0;changingOpponent=false;preferences.MovieTurns=true;NewGame();
                 require(!saveBattle.Enabled&&!loadBattle.Enabled,"Unsaved deployment checkpoint menu");auto.PerformClick();start.PerformClick();require(saveBattle.Enabled,"Ready Classic save menu");

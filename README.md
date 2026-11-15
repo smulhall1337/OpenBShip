@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.86**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.87**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,492 assets, extracts 41 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 41 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.81 or earlier to import all 41 runtime resources. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.86 or earlier to import the SCN map library and all 41 runtime resources. Build only compiles source.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -93,7 +93,7 @@ The airfield's creation and placement are synthetic. Home selection, relinking, 
 
 ## Original compound airfield constructor
 
-The data-only constructor reproduces the original four-fleet, ten-unit installation from the pinned executable, including allocation, templates, ammunition and grid records. It is separate from the shared study's copied home and the prepared paired yard below. Original map placement and mission integration remain separate.
+The data-only constructor reproduces the original four-fleet, ten-unit installation from the pinned executable, including allocation, templates, ammunition and grid records. It is separate from the shared study's copied home and the prepared paired yard below. The ordinary SCN base scan is exposed separately below; mission integration remains unfinished.
 
 After running Setup for the new installation-template resource, export a standalone diagnostic copy:
 
@@ -120,6 +120,28 @@ Invoke-Item $output
 This example chooses origin **390,370**, using two random draws with resulting state **505908858**, then constructs the four fleets. The 11-file export adds **Origin-Inputs.txt**, and its manifest covers the other ten files. Existing directories are preserved. The seed and empty reservation pools are supplied inputs; this does not reproduce a mission's earlier random history or install the result into gameplay.
 
 The planner retains the source's stored angle constant, sector margins, radius range, integer truncation, 10-unit snapping and inclusive reservation boxes. Its maintained API also accepts complete primary and secondary reservation pools. A bounded retry failure preserves caller data and publishes no partial result. Original comparisons cover 10,752 seeded/reservation cases, 217,600 angle/radius/precision combinations and 210 complete origin-plus-constructor cases. Numerical combinations are not counts of playable scenarios. Terrain lookup, natural map startup and active support remain separate.
+
+## Map installation construction
+
+Open **Recovered maps → Map installations…**. The default **BSSB202.SCN** builds one compound installation: fleets 0–3, ten units, owner 1, origin **600,590**. Four tagged map cells produce one installation because the source checks existing fleet origins before creating another.
+
+Select an installation and one of its four fleets, then open **Fleet grid** and choose a referenced unit slot. The gold outline follows that unit. World placement uses X across and Y down; fleet-grid rows use local X and columns use local Y. Both views are schematic modern presentation of recovered data.
+
+Choose another SCN and press **Load map base pass**. A source selection stays pending until Load. **BSSB201.SCN** has no base tags and produces an empty result; **BSSB205.SCN** produces 14 installations, 56 fleets and 140 units. **BSSB418.SCN** is currently rejected with an invalid group count, preserving the applied copy. The unresolved file is retained without an assumption that it is corrupt.
+
+This is the **ordinary base-construction stage only**. Scenario-specific constructors, other terrain entities, grouped fleets, postload stocks/aircraft, active support, AI and missions are excluded. Raw marker rosters remain unsuitable for the general support worker. The independent window preserves the active battle, parent map preview and settings.
+
+Export the same data to a new directory:
+
+```powershell
+$exe = Join-Path $PWD 'build\current\BattleshipLab.exe'
+$output = Join-Path $PWD 'build\map-installations-export'
+$run = Start-Process -FilePath $exe -ArgumentList @('--export-map-installations', ('"{0}"' -f $output), 'BSSB202.SCN') -Wait -PassThru
+$run.ExitCode
+Invoke-Item $output
+```
+
+Use one SCN filename from `Assets\Graphics`. The default export contains 12 files: complete unit/fleet pools, installation/unit/fleet CSVs, four grids, source inputs, a scope note and a manifest covering the other 11 files. Existing files/directories are preserved. The maintained pass matches complete pools and owner counters from 120 original-code map scans: 494 compound installations across 1,976 tagged cells. These are data cases, not completed missions. No random draws occur in this stage.
 
 ## Installation recovery study
 
@@ -185,7 +207,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.86 source, focused checks pass **358 model groups**. A fresh public checkout passes **288**, with **70 explicit skips** for optional private evidence. Form checks pass **129**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.87 source, focused checks pass **365 model groups**. A fresh public checkout passes **294**, with **71 explicit skips** for optional private evidence. Form checks pass **132**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

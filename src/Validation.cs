@@ -257,6 +257,7 @@ namespace FleetLab {
                 if(!hasPrivateEvidence){skipped++;output.Add("SKIP "+name+": optional private Evidence directory unavailable.");}
                 else check(name,action);
             };
+            PracticeMapInstallationChecks.Run(check,checkEvidence,assets);
             check("Original frame clock preserves pre-wait sample, prior delta and observed zero reset",delegate {
                 // Values from source probes234/236 and the two observed zero
                 // exits in actual234. Expected values are recorded boundaries.
