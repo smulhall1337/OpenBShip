@@ -1,0 +1,460 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Collections.Generic;
+using System.Windows.Forms;
+namespace FleetLab
+{
+    public sealed class PracticeAircraftClockStudy : Form
+    {
+        readonly PracticeAircraftClockScenario scenarios;
+        PracticeAircraftWorldStudyState state;
+        readonly ComboBox kind=new ComboBox(),weapon=new ComboBox(),preset=new ComboBox(),seed=new ComboBox();
+        readonly Button load=new Button(),queue=new Button(),clear=new Button(),one=new Button(),many=new Button(),longRun=new Button(),pause=new Button();
+        readonly Label summary=new Label(),feedback=new Label(),loaded=new Label();
+        readonly TextBox details=new TextBox();
+        readonly ClockCanvas canvas;
+        readonly List<string> history=new List<string>();
+        readonly HashSet<Keys> held=new HashSet<Keys>();
+        int loadedWeapon=1,loadedKind=6;
+        PracticeAircraftClockPreset loadedPreset;
+        uint loadedSeed;
+        bool pending;
+        internal PracticeAircraftWorldStudyState StudyState
+        {
+            get
+            {
+                return state;
+            }
+        }
+        public PracticeAircraftClockStudy(string assets,string programs)
+        {
+            scenarios=new PracticeAircraftClockScenario(assets,programs);
+            Text="Shared aircraft flight and AA clock · copied scenarios";
+            Name="aircraftClockStudy";
+            StartPosition=FormStartPosition.CenterParent;
+            Size=new Size(1120,820);
+            MinimumSize=new Size(900,680);
+            BackColor=Color.FromArgb(12,23,35);
+            ForeColor=Color.WhiteSmoke;
+            Font=new Font("Segoe UI",9);
+            KeyPreview=true;
+            var layout=new TableLayoutPanel
+            {
+                Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,Padding=new Padding(12)
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,330));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,76));
+            Controls.Add(layout);
+            canvas=new ClockCanvas(this)
+            {
+                Dock=DockStyle.Fill,Name="aircraftClockCanvas",AccessibleName="Schematic world flight, AA projectiles and aircraft hull",TabStop=true
+            };
+            layout.Controls.Add(canvas,0,0);
+            var scroll=new Panel
+            {
+                Dock=DockStyle.Fill,AutoScroll=true,Name="aircraftClockScroll"
+            };
+            layout.Controls.Add(scroll,1,0);
+            var side=new FlowLayoutPanel
+            {
+                FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,Padding=new Padding(4)
+            };
+            scroll.Controls.Add(side);
+            Action<Control,int> add=delegate(Control c,int height)
+            {
+                c.Width=292;
+                c.Height=height;
+                c.Margin=new Padding(0,3,0,3);
+                var b=c as Button;
+                if(b!=null)
+                {
+                    b.UseVisualStyleBackColor=false;
+                    b.FlatStyle=FlatStyle.Flat;
+                    b.FlatAppearance.BorderColor=Color.SteelBlue;
+                    Action tint=delegate
+                    {
+                        b.BackColor=b.Enabled?Color.FromArgb(28,55,76):Color.LightGray;
+                        b.ForeColor=b.Enabled?Color.WhiteSmoke:Color.Black;
+                    };
+                    b.EnabledChanged+=delegate
+                    {
+                        tint();
+                    };
+                    tint();
+                }
+                side.Controls.Add(c);
+            };
+            add(new Label
+            {
+                Text="Diagnostic copy of the first Practice map. Presets supply attachment, battery, visibility, routes and resources. Updates use recovered rules; no real-time flight, AI, audio or missions."
+            },90);
+            Action<ComboBox,string,object[]> choice=delegate(ComboBox c,string text,object[] items)
+            {
+                add(new Label
+                {
+                    Text=text
+                },22);
+                c.DropDownStyle=ComboBoxStyle.DropDownList;
+                c.Items.AddRange(items);
+                c.SelectedIndex=0;
+                c.AccessibleName=text;
+                add(c,30);
+            };
+            kind.Name="clockKind";
+            choice(kind,"Aircraft",new object[]
+            {
+                "Helicopters · four units","Planes · four units","AWACS · one unit"
+            });
+            weapon.Name="clockWeapon";
+            choice(weapon,"Supplied AA equipment",new object[]
+            {
+                "AA equipment 1 · stock 2","AA equipment 2 · stock 2","AA equipment 3 · last round"
+            });
+            preset.Name="clockPreset";
+            choice(preset,"Prepared scenario",new object[]
+            {
+                "Flight and fire","Moving battery and aircraft","Retire before impact · resource 0","Return before impact · resource 20","Clock wrap · flight and fire"
+            });
+            seed.Name="clockSeed";
+            choice(seed,"Supplied random seed",new object[]
+            {
+                "0","731"
+            });
+            load.Name="clockLoad";
+            load.Text="Load / reset preset";
+            load.AccessibleName=load.Text;
+            add(load,36);
+            loaded.Name="clockLoaded";
+            loaded.AccessibleName="Applied preset";
+            add(loaded,128);
+            queue.Name="clockQueue";
+            queue.Text="Queue one AA order (raw)";
+            queue.AccessibleName=queue.Text;
+            add(queue,36);
+            clear.Name="clockClear";
+            clear.Text="Clear battery queue";
+            clear.AccessibleName=clear.Text;
+            add(clear,34);
+            one.Name="clockOne";
+            one.Text="1 source poll (+40 ms)";
+            one.AccessibleName=one.Text;
+            add(one,36);
+            many.Name="clockMany";
+            many.Text="32 source polls (+1.28 s)";
+            many.AccessibleName=many.Text;
+            add(many,36);
+            longRun.Name="clockLong";
+            longRun.Text="128 source polls (+5.12 s)";
+            longRun.AccessibleName=longRun.Text;
+            add(longRun,36);
+            pause.Name="clockPause";
+            pause.Text="25 paused steps (+1 s)";
+            pause.AccessibleName=pause.Text;
+            add(pause,36);
+            add(new Label
+            {
+                Text="Each source poll runs two four-slot fleet batches, then AA launch, projectiles and effects. Aircraft move only when their scheduler slot is visited. Paused steps hold flight, queues and effects while compensating projectile deadlines."
+            },104);
+            summary.Name="clockSummary";
+            summary.AccessibleName="Shared clock, resources and combat state";
+            add(summary,198);
+            details.Name="clockDetails";
+            details.AccessibleName="Copied aircraft records, orders and history";
+            details.Multiline=true;
+            details.ReadOnly=true;
+            details.ScrollBars=ScrollBars.Vertical;
+            details.BackColor=BackColor;
+            details.ForeColor=ForeColor;
+            add(details,270);
+            var close=new Button
+            {
+                Text="Close",Name="clockClose",DialogResult=DialogResult.Cancel
+            };
+            add(close,36);
+            CancelButton=close;
+            feedback.Name="clockFeedback";
+            feedback.AccessibleName="Shared clock study feedback";
+            feedback.Dock=DockStyle.Fill;
+            feedback.ForeColor=Color.LightSteelBlue;
+            layout.Controls.Add(feedback,0,1);
+            layout.SetColumnSpan(feedback,2);
+            EventHandler changed=delegate
+            {
+                pending=true;
+                if(state!=null)
+                {
+                    loaded.Text="Selection changed. Load / reset preset to apply it.\r\nThe running copy still uses the applied preset below.";
+                }
+            };
+            kind.SelectedIndexChanged+=changed;
+            weapon.SelectedIndexChanged+=changed;
+            preset.SelectedIndexChanged+=changed;
+            seed.SelectedIndexChanged+=changed;
+            load.Click+=delegate
+            {
+                LoadPreset();
+            };
+            queue.Click+=delegate
+            {
+                Act(delegate(PracticeAircraftWorldStudyState before)
+                {
+                    var s=before.Combat.Objects.CopyShipPool();return before.Queue(14,13,loadedWeapon,BitConverter.ToInt16(s,19*268+8),BitConverter.ToInt16(s,19*268+10));
+                },"One raw order queued. It is checked on a due source poll.");
+            };
+            clear.Click+=delegate
+            {
+                Act(delegate(PracticeAircraftWorldStudyState before)
+                {
+                    return before.Clear(14);
+                },"Copied battery queue cleared. Shots already in flight continue.");
+            };
+            one.Click+=delegate
+            {
+                Advance(1,false);
+            };
+            many.Click+=delegate
+            {
+                Advance(32,false);
+            };
+            longRun.Click+=delegate
+            {
+                Advance(128,false);
+            };
+            pause.Click+=delegate
+            {
+                Advance(25,true);
+            };
+            KeyUp+=delegate(object sender,KeyEventArgs e)
+            {
+                held.Remove(e.KeyCode);
+            };
+            Deactivate+=delegate
+            {
+                held.Clear();
+            };
+            LoadPreset();
+        }
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if(e.KeyCode!=Keys.Enter&&e.KeyCode!=Keys.Space&&e.KeyCode!=Keys.Escape)return;
+            e.Handled=true;
+            e.SuppressKeyPress=true;
+            if(!held.Add(e.KeyCode))return;
+            if(e.KeyCode==Keys.Escape)
+            {
+                Close();
+                return;
+            }
+            var button=ActiveControl as Button;
+            if(button!=null&&button.Enabled)button.PerformClick();
+        }
+        void LoadPreset()
+        {
+            try
+            {
+                int nextKind=6+kind.SelectedIndex,nextWeapon=weapon.SelectedIndex+1;
+                var nextPreset=(PracticeAircraftClockPreset)preset.SelectedIndex;
+                uint nextSeed=seed.SelectedIndex==0?0u:731u;
+                var next=scenarios.Create(nextKind,nextWeapon,nextPreset,nextSeed);
+                state=next;
+                loadedKind=nextKind;
+                loadedWeapon=nextWeapon;
+                loadedPreset=nextPreset;
+                loadedSeed=nextSeed;
+                pending=false;
+                history.Clear();
+                history.Add("Loaded copied preset; no order queued.");
+                RefreshState();
+                feedback.Text="Preset loaded. Queue one AA order, then use 1 source poll to launch it. Load / reset restores a fresh copy.";
+            }
+            catch(Exception e)
+            {
+                if(!Expected(e))throw;
+                feedback.Text=e.Message;
+            }
+        }
+        static bool Expected(Exception e)
+        {
+            return e is ArgumentException||e is InvalidDataException||e is InvalidOperationException||e is NotSupportedException;
+        }
+        void Act(Func<PracticeAircraftWorldStudyState,PracticeAircraftWorldStudyState> action,string message)
+        {
+            try
+            {
+                var next=action(state);
+                state=next;
+                history.Add(message);
+                if(history.Count>40)history.RemoveAt(0);
+                RefreshState();
+                feedback.Text=message;
+            }
+            catch(Exception e)
+            {
+                if(!Expected(e))throw;
+                feedback.Text="Step rejected; current copy preserved. "+e.Message;
+            }
+        }
+        void Advance(int count,bool paused)
+        {
+            Act(delegate(PracticeAircraftWorldStudyState before)
+            {
+                var next=before;for(int n=0;n<count;n++)next=next.AdvanceFrame(paused);return next;
+            },paused?"25 paused steps applied. Flight, resources, queues and effects held.":count+" source poll(s) applied. "+(count*40)+" ms supplied to the shared clock.");
+        }
+        static int W(byte[] b,int p)
+        {
+            return BitConverter.ToInt16(b,p);
+        }
+        static int I(byte[] b,int p)
+        {
+            return BitConverter.ToInt32(b,p);
+        }
+        static string PresetName(PracticeAircraftClockPreset value) {return value==PracticeAircraftClockPreset.MovingBattery?"Moving battery and aircraft":value==PracticeAircraftClockPreset.EmptyResource?"Retire before impact":value==PracticeAircraftClockPreset.ReturnBeforeImpact?"Return before impact":value==PracticeAircraftClockPreset.ClockWrap?"Clock wrap":"Flight and fire";}
+        void RefreshState()
+        {
+            if(state==null||IsDisposed||Disposing)return;
+            var c=state.Combat;
+            var s=c.Objects.CopyShipPool();
+            var f=c.Objects.CopyFleetPool();
+            var t=c.Objects.CopyTimedPool();
+            int at=13*492,k=I(f,at),active=0,live=0,resource=0;
+            for(int n=0;n<80;n++)if(I(t,n*268)!=0)active++;
+            var text=new StringBuilder();
+            text.AppendLine("Applied: "+(loadedKind==6?"helicopters":loadedKind==7?"planes":"AWACS")+" / AA "+loadedWeapon+" / "+PresetName(loadedPreset)+" / RNG seed "+loadedSeed);
+            text.AppendLine("Fixed map seed 143514006; attachment parent 7 / link 0.");
+            text.AppendLine("Battery unit14, fleet "+W(s,14*268+12)+"; selected surface7.");
+            for(int n=0;n<6;n++)
+            {
+                uint r=BitConverter.ToUInt32(f,at+16+n*4);
+                if(r==0)continue;
+                int u=(int)(r-0x4fc340);
+                if(I(s,u)==0)continue;
+                live++;
+                resource=W(s,u+96);
+                text.AppendLine("Unit "+u/268+" · HP "+W(s,u+16)+" · resource96 "+resource+" · local "+W(s,u+8)+", "+W(s,u+10));
+            }
+            var q=state.Orders.CopySecondaryOrders();
+            text.AppendLine("Battery queue head "+W(q,14*52+8)+", "+W(q,14*52+28)+" · deadline "+BitConverter.ToUInt32(q,14*52+4));
+            text.AppendLine("Selected surface waypoint index "+state.SelectedWaypoint+" (supplied initial4).");
+            for(int n=0;n<80;n++)if(I(t,n*268)!=0)text.AppendLine("Shot "+n+" at "+W(t,n*268+8)+", "+W(t,n*268+10)+" · deadline "+BitConverter.ToUInt32(t,n*268+24));
+            text.AppendLine();
+            text.AppendLine("Recent actions:");
+            foreach(var line in history)text.AppendLine(line);
+            details.Text=text.ToString();
+            summary.Text="Clock "+c.ClockMilliseconds+" ms · normal "+c.MovementFrames+" / paused "+c.PausedFrames+"\r\nNext batch "+state.Schedule.BatchStart+" · wraps "+state.Schedule.CompletedCycles+"\r\nAircraft "+(k==0?"retired":k>=6&&k<=8?"stored / docked":"active")+" · kind "+k+" · live units "+live+"\r\nWorld "+W(f,at+12)+", "+W(f,at+14)+" · resource96 "+resource+"\r\nAircraft visits "+state.AircraftVisits+" · surface visits "+state.SurfaceVisits+"\r\nAA stock "+W(s,14*268+196+loadedWeapon*2)+" · queued batteries "+state.Orders.QueuedSources+"\r\nShots "+active+" · effects "+c.ActiveEffects+"\r\nCreated "+state.Orders.CreatedObjects+" · expired "+c.ExpiredObjects+" · rejected "+state.Orders.RejectedOrders+"\r\nImpact "+(c.LastImpactOutcome.HasValue?c.LastImpactOutcome.ToString():"none")+" · destroyed "+c.DestroyedUnits+"\r\nRNG "+c.RandomState+" · movie counter "+c.MovieCounter;
+            if(!pending)loaded.Text="Applied preset: "+PresetName(loadedPreset)+"\r\nMode2 · initial resource "+(loadedPreset==PracticeAircraftClockPreset.EmptyResource?0:loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact?20:2000)+" · nearby visible battery.\r\n"+(loadedPreset==PracticeAircraftClockPreset.ReturnBeforeImpact?(loadedKind==8?"AWACS has no airfield here; it will exhaust its resources and retire.":"Aircraft start at their carrier and dock before the shot arrives."):loadedPreset==PracticeAircraftClockPreset.EmptyResource?"Aircraft retire on their first scheduler visit.":"Aircraft route: 40 units east, 30 units south. Battery is one unit west at load.");
+            queue.Enabled=k>=3&&k<=5&&W(s,14*268+196+loadedWeapon*2)>0&&state.Orders.QueuedSources==0;
+            clear.Enabled=state.Orders.QueuedSources>0;
+            canvas.Invalidate();
+        }
+        sealed class ClockCanvas:Control
+        {
+            readonly PracticeAircraftClockStudy owner;
+            readonly PointF start=new PointF(350,390);
+            internal ClockCanvas(PracticeAircraftClockStudy owner)
+            {
+                this.owner=owner;
+                DoubleBuffered=true;
+                ResizeRedraw=true;
+            }
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+                if(owner.state==null||Width<100||Height<150)return;
+                e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;
+                var s=owner.state.Combat.Objects.CopyShipPool();
+                var f=owner.state.Combat.Objects.CopyFleetPool();
+                var t=owner.state.Combat.Objects.CopyTimedPool();
+                var world=new RectangleF(30,42,Math.Max(1,Width-60),Math.Max(100,Height*.56f-54));
+                e.Graphics.DrawString("World coordinates · 10-unit grid / schematic",owner.Font,Brushes.LightSteelBlue,10,8);
+                int air=13*492,battery=W(s,14*268+12)*492;
+                float minX=start.X-24,maxX=start.X+70,minY=start.Y-24,maxY=start.Y+65;
+                Action<float,float> include=delegate(float x,float y)
+                {
+                    minX=Math.Min(minX,x-8);
+                    maxX=Math.Max(maxX,x+8);
+                    minY=Math.Min(minY,y-8);
+                    maxY=Math.Max(maxY,y+8);
+                };
+                include(W(f,air+12),W(f,air+14));
+                include(W(f,battery+12),W(f,battery+14));
+                for(int n=0;n<80;n++)if(I(t,n*268)!=0)include(W(t,n*268+8),W(t,n*268+10));
+                Func<float,float,PointF> plot=delegate(float x,float y)
+                {
+                    return new PointF(world.X+(x-minX)*world.Width/(maxX-minX),world.Y+(y-minY)*world.Height/(maxY-minY));
+                };
+                using(var grid=new Pen(Color.FromArgb(35,63,80)))for(int n=(int)minX/10*10;n<=maxX;n+=10)
+                {
+                    var a=plot(n,minY);
+                    var b=plot(n,maxY);
+                    e.Graphics.DrawLine(grid,a,b);
+                }
+                using(var grid=new Pen(Color.FromArgb(35,63,80)))for(int n=(int)minY/10*10;n<=maxY;n+=10)
+                {
+                    var a=plot(minX,n);
+                    var b=plot(maxX,n);
+                    e.Graphics.DrawLine(grid,a,b);
+                }
+                e.Graphics.DrawRectangle(Pens.SteelBlue,world.X,world.Y,world.Width,world.Height);
+                PointF ship=plot(W(f,battery+12),W(f,battery+14)),aircraft=plot(W(f,air+12),W(f,air+14)),home=plot(W(f,7*492+12),W(f,7*492+14));
+                e.Graphics.FillRectangle(Brushes.LightSkyBlue,ship.X-5,ship.Y-5,10,10);
+                e.Graphics.DrawString("Battery "+W(f,battery+12)+", "+W(f,battery+14),owner.Font,Brushes.LightSkyBlue,world.X+8,world.Bottom-38);
+                e.Graphics.DrawEllipse(Pens.LightSteelBlue,home.X-7,home.Y-7,14,14);
+                e.Graphics.DrawString("Home "+W(f,7*492+12)+", "+W(f,7*492+14),owner.Font,Brushes.LightSteelBlue,world.X+8,world.Bottom-21);
+                PointF prior=aircraft;
+                for(int n=0;n<5;n++)
+                {
+                    int x=W(f,air+40+n*2);
+                    if(x==-1)break;
+                    var point=plot(x,W(f,air+50+n*2));
+                    e.Graphics.DrawLine(Pens.Goldenrod,prior,point);
+                    e.Graphics.DrawEllipse(Pens.Goldenrod,point.X-3,point.Y-3,6,6);
+                    prior=point;
+                }
+                if(I(f,air)==0)
+                {
+                    e.Graphics.DrawLine(Pens.Gray,aircraft.X-6,aircraft.Y-6,aircraft.X+6,aircraft.Y+6);
+                    e.Graphics.DrawLine(Pens.Gray,aircraft.X-6,aircraft.Y+6,aircraft.X+6,aircraft.Y-6);
+                }
+                else e.Graphics.FillEllipse(I(f,air)>=6?Brushes.SlateGray:Brushes.Gold,aircraft.X-5,aircraft.Y-5,10,10);
+                e.Graphics.DrawString("Aircraft "+W(f,air+12)+", "+W(f,air+14),owner.Font,Brushes.Gold,aircraft.X+8,aircraft.Y-21);
+                for(int n=0;n<80;n++)if(I(t,n*268)!=0)
+                {
+                    var p=plot(W(t,n*268+8),W(t,n*268+10));
+                    e.Graphics.DrawLine(Pens.SlateGray,ship,p);
+                    e.Graphics.FillEllipse(Brushes.HotPink,p.X-4,p.Y-4,8,8);
+                }
+                e.Graphics.DrawString("Blue: battery · gold: aircraft / route · pink: AA shot",owner.Font,Brushes.LightSteelBlue,world.X,world.Bottom+6);
+                float top=world.Bottom+44,size=Math.Max(20,Math.Min(Width-70,Height-top-34));
+                var hull=new RectangleF((Width-size)/2,top,size,size);
+                float cell=size/10;
+                e.Graphics.DrawString("Aircraft hull · original cell data",owner.Font,Brushes.LightSteelBlue,10,top-22);
+                for(int x=0;x<10;x++)for(int y=0;y<10;y++)
+                {
+                    int code=I(f,air+64+(x*10+y)*4);
+                    using(var brush=new SolidBrush(code==8?Color.FromArgb(87,45,45):code==2?Color.FromArgb(93,161,197):code>=4&&code<=7?Color.FromArgb(161,120,61):Color.FromArgb(23,49,67)))e.Graphics.FillRectangle(brush,hull.X+x*cell,hull.Y+y*cell,cell,cell);
+                }
+                for(int n=0;n<=10;n++)
+                {
+                    e.Graphics.DrawLine(Pens.SlateGray,hull.X+n*cell,hull.Y,hull.X+n*cell,hull.Bottom);
+                    e.Graphics.DrawLine(Pens.SlateGray,hull.X,hull.Y+n*cell,hull.Right,hull.Y+n*cell);
+                }
+                for(int n=0;n<6;n++)
+                {
+                    uint r=BitConverter.ToUInt32(f,air+16+n*4);
+                    if(r==0)continue;
+                    int u=(int)(r-0x4fc340);
+                    if(I(s,u)==0)continue;
+                    e.Graphics.DrawString((u/268).ToString(),owner.Font,Brushes.Black,hull.X+W(s,u+8)*cell+2,hull.Y+W(s,u+10)*cell+2);
+                }
+                e.Graphics.DrawString("Blue: intact · amber: equipment damage · red: lost row",owner.Font,Brushes.LightSteelBlue,10,Height-25);
+            }
+        }
+    }
+}

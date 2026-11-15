@@ -21,6 +21,7 @@ namespace FleetLab {
         readonly Button timedStudy=new Button();
         readonly Button prepareTimedStudy=new Button();
         readonly Button aircraftStudy=new Button();
+        readonly Button aircraftClockStudy=new Button();
         readonly Label timedStudyHint=new Label();
         readonly NumericUpDown deploymentSeed=new NumericUpDown();
         readonly Timer opponentTimer=new Timer();
@@ -97,7 +98,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.75 — copied AWACS airfield return";
+            Text="Battleship Fleet Lab 0.76 — shared aircraft flight and AA clock";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -311,6 +312,9 @@ namespace FleetLab {
             aircraftStudy.Text="Aircraft study…";aircraftStudy.AutoSize=true;aircraftStudy.Name="openAircraftStudy";
             aircraftStudy.AccessibleDescription="Create, activate and dock one supplied aircraft group in an isolated first Practice copy using the entered seed.";
             mapHeader.Controls.Add(aircraftStudy);
+            aircraftClockStudy.Text="Shared flight / AA…";aircraftClockStudy.AutoSize=true;aircraftClockStudy.Name="openAircraftClockStudy";
+            aircraftClockStudy.AccessibleDescription="Open fixed first-Practice diagnostic presets with a shared manually stepped aircraft and AA clock.";mapHeader.Controls.Add(aircraftClockStudy);
+            aircraftClockStudy.Click+=delegate {try {using(var study=new PracticeAircraftClockStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(IOException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Shared flight / AA study");}SuppressHeldControls();};
             timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
             mapHeader.Controls.Add(timedStudyHint);
             map.Dock=DockStyle.Fill;
