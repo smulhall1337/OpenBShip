@@ -25,6 +25,11 @@ namespace FleetLab
     public sealed class PracticeMixedFleetBatchResult
     {
         readonly byte[] ships,fleets,scores,effects,primary,auxiliary;
+        public int SelectedFleet
+        {
+            get;
+            private set;
+        }
         public PracticeFleetScheduler NextSchedule
         {
             get;
@@ -60,8 +65,9 @@ namespace FleetLab
             get;
             private set;
         }
-        internal PracticeMixedFleetBatchResult(byte[] s,byte[] f,byte[] score,byte[] effect,byte[] p,byte[] aux,PracticeFleetScheduler next,int point,int movie,uint random,int invalidations,List<PracticeFleetBodyUpdate> surface,List<PracticeMixedAircraftUpdate> aircraft)
+        internal PracticeMixedFleetBatchResult(byte[] s,byte[] f,byte[] score,byte[] effect,byte[] p,byte[] aux,PracticeFleetScheduler next,int point,int movie,uint random,int invalidations,List<PracticeFleetBodyUpdate> surface,List<PracticeMixedAircraftUpdate> aircraft,int selectedFleet=249)
         {
+            SelectedFleet=selectedFleet;
             ships=s;
             fleets=f;
             scores=score;
@@ -103,19 +109,33 @@ namespace FleetLab
     }
     // Pinned RIP B9A8...6A569: one ordered four-slot 427670 batch. Compose
     // the admitted surface and aircraft bodies without a second resource pass.
-    // Offscreen owner-2, selected-other249, network/playercount0, scenario1;
+    // Offscreen owner-2, network/playercount0, scenario1. The legacy entry
+    // retains selected-other249; a separate opt-in admits selected kind1 surfaces.
     // inactive secondary objects and the existing body guards remain required.
     // These supplied batches do not establish application timing, AI or missions.
     public static class PracticeMixedFleetBatch
     {
         public static PracticeMixedFleetBatchResult AdvanceOffscreen(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,byte[] primaryOrders,byte[] auxiliaryData,byte[] terrainPool,byte[] secondaryPool,PracticeFleetScheduler schedule,int selectedWaypoint,int movieCounter,uint randomState)
         {
+            return AdvanceCore(tables,visuals,units,modes,shipPool,fleetPool,scoreRegion,effectPool,primaryOrders,auxiliaryData,terrainPool,secondaryPool,schedule,249,selectedWaypoint,movieCounter,randomState,false);
+        }
+        // Separate opt-in for a selected surface fleet. Selecting the aircraft
+        // itself still needs the original docking/UI transfer continuation.
+        public static PracticeMixedFleetBatchResult AdvanceWithSelectedSurface(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,byte[] primaryOrders,byte[] auxiliaryData,byte[] terrainPool,byte[] secondaryPool,PracticeFleetScheduler schedule,int selectedFleet,int selectedWaypoint,int movieCounter,uint randomState)
+        {
+            return AdvanceCore(tables,visuals,units,modes,shipPool,fleetPool,scoreRegion,effectPool,primaryOrders,auxiliaryData,terrainPool,secondaryPool,schedule,selectedFleet,selectedWaypoint,movieCounter,randomState,true);
+        }
+        static PracticeMixedFleetBatchResult AdvanceCore(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] shipPool,byte[] fleetPool,byte[] scoreRegion,byte[] effectPool,byte[] primaryOrders,byte[] auxiliaryData,byte[] terrainPool,byte[] secondaryPool,PracticeFleetScheduler schedule,int selectedFleet,int selectedWaypoint,int movieCounter,uint randomState,bool surfaceSelection)
+        {
             if(tables==null||units==null||modes==null||schedule==null)throw new ArgumentNullException("mixed fleet batch tables/schedule");
             if(shipPool==null||shipPool.Length!=402000||fleetPool==null||fleetPool.Length!=123000||scoreRegion==null||scoreRegion.Length!=176||effectPool==null||effectPool.Length!=800||primaryOrders==null||primaryOrders.Length!=78000)throw new InvalidDataException("Mixed batches require complete ship, fleet, score, effect and primary pools.");
+            if(selectedFleet<0||selectedFleet>=250)throw new ArgumentOutOfRangeException("selectedFleet");
+            int selection=selectedFleet*492;
+            if(surfaceSelection&&(BitConverter.ToInt32(fleetPool,selection)!=1||BitConverter.ToInt32(fleetPool,selection+472)!=0||BitConverter.ToInt32(fleetPool,selection+476)!=0||(fleetPool[selection+485]!=2&&fleetPool[selection+485]!=3)))throw new NotSupportedException("The selected-surface opt-in requires an admitted kind1/state0/task0/flag2or3 surface fleet; selected aircraft remain unsupported.");
             if(secondaryPool==null||secondaryPool.Length!=PracticeFleetBatchState.SecondaryBytes)throw new InvalidDataException("Mixed batches require the complete secondary pool.");
             for(int slot=0;slot<125;slot++)if(BitConverter.ToInt32(secondaryPool,slot*492)!=0)throw new NotSupportedException("Active secondary objects remain outside this mixed batch; caller pools preserved.");
             if(BitConverter.ToInt16(scoreRegion,172)!=-2||movieCounter<short.MinValue||movieCounter>short.MaxValue)throw new NotSupportedException("Mixed batches require the recorded offscreen owner context and signed16 movie counter.");
-            new PracticeMovementState(fleetPool,terrainPool,auxiliaryData,249,selectedWaypoint);
+            new PracticeMovementState(fleetPool,terrainPool,auxiliaryData,selectedFleet,selectedWaypoint);
             new PracticeVisualPool(effectPool,visuals);
             var s=(byte[])shipPool.Clone();
             var f=(byte[])fleetPool.Clone();
@@ -133,7 +153,7 @@ namespace FleetLab
                 int at=slot*492,kind=BitConverter.ToInt32(f,at);
                 if(kind==1)
                 {
-                    var moved=new PracticeMovementState(f,terrainPool,aux,249,point).Step(slot);
+                    var moved=new PracticeMovementState(f,terrainPool,aux,selectedFleet,point).Step(slot);
                     f=moved.State.CopyFleetPool();
                     aux=moved.State.CopyAuxiliary();
                     point=moved.State.SelectedWaypoint;
@@ -141,7 +161,7 @@ namespace FleetLab
                 }
                 else if(kind>=3&&kind<=5)
                 {
-                    var flight=PracticeAircraftReturnBatch.AdvanceIncludingWaypoints(tables,visuals,units,modes,s,f,score,effect,p,aux,schedule,slot,point,movie,random,true,true,true);
+                    var flight=PracticeAircraftReturnBatch.AdvanceIncludingWaypoints(tables,visuals,units,modes,s,f,score,effect,p,aux,schedule,slot,point,movie,random,true,true,true,selectedFleet);
                     s=flight.Batch.CopyShipPool();
                     f=flight.Batch.CopyFleetPool();
                     score=flight.Batch.CopyScoreRegion();
@@ -160,7 +180,7 @@ namespace FleetLab
                 }
                 else throw new NotSupportedException("Fleet "+slot+" is outside the admitted mixed batch bodies; caller pools preserved.");
             }
-            return new PracticeMixedFleetBatchResult(s,f,score,effect,p,aux,plan.Next,point,movie,random,invalidations,surface,aircraft);
+            return new PracticeMixedFleetBatchResult(s,f,score,effect,p,aux,plan.Next,point,movie,random,invalidations,surface,aircraft,selectedFleet);
         }
     }
 }

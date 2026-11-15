@@ -125,7 +125,7 @@ namespace FleetLab
             var prefix=PracticeAircraftResourceBatch.ApplyBeforeWaypoint(tables,visuals,shipPool,fleetPool,scoreRegion,effectPool,schedule,movieCounter,randomState,actor);
             return CompleteAfterResources(prefix,auxiliaryData,actor,selectedWaypoint,before);
         }
-        internal static PracticeAircraftWaypointBatchResult CompleteAfterResources(PracticeAircraftResourceBatchResult prefix,byte[] auxiliaryData,int actor,int selectedWaypoint,Point before)
+        internal static PracticeAircraftWaypointBatchResult CompleteAfterResources(PracticeAircraftResourceBatchResult prefix,byte[] auxiliaryData,int actor,int selectedWaypoint,Point before,int selectedFleet=249)
         {
             var f=prefix.CopyFleetPool();
             var aux=(byte[])auxiliaryData.Clone();
@@ -143,8 +143,8 @@ namespace FleetLab
             bool arrived=px==tx&&py==ty,consumed=false;
             if(arrived&&I(aux,0x50+actor*312)!=1)
             {
-                I(aux,0x50+249*312,0);
-                aux[0x3c+249*312]=0;
+                I(aux,0x50+selectedFleet*312,0);
+                aux[0x3c+selectedFleet*312]=0;
                 for(int n=0;n<4;n++)
                 {
                     W(f,at+40+n*2,W(f,at+42+n*2));

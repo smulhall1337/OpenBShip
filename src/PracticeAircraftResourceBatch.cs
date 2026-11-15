@@ -141,7 +141,7 @@ namespace FleetLab
             internal int Point,Invalidations,Docked,NoHome;
             internal bool AllowNoHome,SearchLandingCandidates;
             internal PracticeAircraftHomeSearchResult SearchResult;
-            internal int TravelActor=-1;
+            internal int TravelActor=-1,SelectedFleet=249;
         }
         // Separate opt-in: low-resource helicopters/planes already at their
         // associated home origin. No return travel or carrier search is implied.
@@ -177,13 +177,13 @@ namespace FleetLab
         {
             return ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,null,actor);
         }
-        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false,bool searchLandingCandidates=false,bool singleActor=false)
+        internal static PracticeAircraftHomeBatchResult ApplyBeforeReturn(PracticeAircraftDestructionTable tables,byte[] visuals,PracticeUnitCatalog units,PracticeAircraftTables modes,byte[] ships,byte[] fleets,byte[] scores,byte[] effects,byte[] primary,PracticeFleetScheduler schedule,int movie,uint random,int actor,int point,bool allowEmptyAwacs=false,bool searchLandingCandidates=false,bool singleActor=false,int selectedFleet=249)
         {
             if(units==null||modes==null)throw new ArgumentNullException("aircraft return tables");
             if(primary==null||primary.Length!=78000)throw new InvalidDataException("Returning aircraft require complete primary orders.");
             var profile=new HomeDock
             {
-                Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor,AllowNoHome=allowEmptyAwacs,SearchLandingCandidates=searchLandingCandidates
+                Units=units,Tables=modes,Primary=(byte[])primary.Clone(),Point=point,TravelActor=actor,AllowNoHome=allowEmptyAwacs,SearchLandingCandidates=searchLandingCandidates,SelectedFleet=selectedFleet
             };
             var batch=ApplyCore(tables,visuals,ships,fleets,scores,effects,schedule,movie,random,profile,actor,singleActor);
             return new PracticeAircraftHomeBatchResult(batch,profile.Primary,profile.Point,profile.Invalidations,0,profile.NoHome,profile.SearchResult);
@@ -304,7 +304,7 @@ namespace FleetLab
                     docking.Invalidations++;
                     W(fleets,at+40,W(fleets,home*492+12));
                     W(fleets,at+50,W(fleets,home*492+14));
-                    var landed=PracticeAircraftTransitions.ApplyOffscreen(docking.Tables,docking.Units,ships,fleets,docking.Primary,slot,0,249,docking.Point,-2);
+                    var landed=PracticeAircraftTransitions.ApplyOffscreen(docking.Tables,docking.Units,ships,fleets,docking.Primary,slot,0,docking.SelectedFleet,docking.Point,-2);
                     ships=landed.CopyShipPool();
                     fleets=landed.CopyFleetPool();
                     docking.Primary=landed.CopyPrimaryOrders();
