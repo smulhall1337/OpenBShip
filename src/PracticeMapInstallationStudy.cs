@@ -14,7 +14,7 @@ namespace FleetLab
         readonly PracticeAirfieldFactory factory;
         readonly ComboBox maps=new ComboBox(),fleet=new ComboBox();
         readonly ListBox bases=new ListBox(),members=new ListBox();
-        readonly Button load=new Button();
+        readonly Button load=new Button(),startup=new Button();
         readonly Label status=new Label(),feedback=new Label(),zonesSummary=new Label();
         readonly TextBox details=new TextBox();
         readonly TabControl views=new TabControl();
@@ -82,6 +82,16 @@ namespace FleetLab
             var lateStudy=new Button{Text="Late setup (copy)…",Name="mapLateConfigurationStudy"};
             add(lateStudy,34);
             lateStudy.Click+=delegate{if(state!=null)using(var form=new PracticeLateConfigurationStudy(this.programs,state))form.ShowDialog(this);};
+            startup.Text="BSSB202 startup (copy)…";startup.Name="mapStartupStudy";startup.AccessibleDescription="Requires the applied BSSB202 map. Opens independent staged primary-pool startup, not a full mission.";add(startup,34);
+            startup.Click+=delegate
+            {
+                if(state==null||!startup.Enabled)return;
+                try{using(var form=new PracticeMapStartupStudy(this.programs,File.ReadAllBytes(Path.Combine(this.assets,"Graphics",state.SourceName))))form.ShowDialog(this);}
+                catch(InvalidDataException e){feedback.Text="Startup rejected; parent copy preserved. "+e.Message;}
+                catch(IOException e){feedback.Text="Startup rejected; parent copy preserved. "+e.Message;}
+                catch(NotSupportedException e){feedback.Text="Startup rejected; parent copy preserved. "+e.Message;}
+                catch(UnauthorizedAccessException e){feedback.Text="Startup rejected; parent copy preserved. "+e.Message;}
+            };
             status.Name="mapInstallationStatus";
             status.AccessibleName="Applied map and construction counts";
             add(status,94);
@@ -154,6 +164,7 @@ namespace FleetLab
                 var nextZones=PracticeSpawnZones.ForMapBaseStudy(nextScene,next.CopyFleetPool());
                 changing=true;
                 state=next;
+                startup.Enabled=state.SourceHash==PracticeMapStartup.SupportedSourceHash;
                 scene=nextScene;
                 zones=nextZones;
                 ships=state.CopyShipPool();
@@ -165,6 +176,7 @@ namespace FleetLab
                 changing=false;
                 status.Text="Applied: "+state.SourceName+"\r\n"+state.CandidateCells+" tagged cells / "+state.DuplicateCells+" duplicates\r\n"+state.Installations.Count+" installations / "+state.NextFleetSlot+" fleets / "+state.UnitCount+" units\r\nNo random draws or running simulation.";
                 feedback.Text=state.Installations.Count==0?"No base tags in this map. Empty construction is expected; grouped fleets are outside this pass.":"Copied base pass loaded. Select an installation and fleet; use Fleet grid to inspect its roster.";
+                if(!startup.Enabled)feedback.Text=(state.Installations.Count==0?"No base tags in this map. ":"Copied base pass loaded. ")+"BSSB202 startup requires applying BSSB202.SCN; Late setup remains available.";
                 var counts=zones.CopyOwnerCounts();
                 var ownerText=new StringBuilder();
                 for(int n=0;n<zones.PlayerCount;n++)ownerText.Append((n==0?"":" / ")+n+":"+counts[n]);

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.89**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.90**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -161,6 +161,27 @@ The separate owner input applies only when **Select owned fleet (copy)** is clic
 
 The maintained late pass also recovers carrier aircraft creation and per-owner kind-11 numbering. Original comparisons include complete carrier setup and repeated setup pools; a repeated raw call creates more stored aircraft groups. The once-per-copy UI guard is deliberate. This base-only viewer contains no grouped carriers, inventory startup, scenario callback, button layout, active yard work or missions. The general shared-world support guard remains. Its marker preparation matches complete pool outputs from 120 original-code map cases; these are data comparisons, not completed battles.
 
+### BSSB202 startup stages
+
+Apply **BSSB202.SCN** in Map installations, then click **BSSB202 startup (copy)…**. The button is available for that applied map; choosing a pending filename does not change its eligibility. This independent study builds primary unit/fleet data in maintained source, without executing the original game.
+
+With supplied seed **731**, the stage selector shows:
+
+| Stage | Nonempty fleets | Nonzero unit records | Random draws from seed |
+| --- | ---: | ---: | ---: |
+| Bases and map objects | 14 | 20 | 20 |
+| Grouped fleets and stock | 23 | 42 | 432 |
+| Practice fleet placement | 23 | 42 | 484 |
+| Late roster and carrier data | 29 | 63 | 484 |
+
+Choose **Map placement** or **Fleet grid**, then inspect a fleet and one of its six roster fields. Fleet 16 contains units 30 and 31. Stored aircraft groups share their parent's world origin; choose them through the fleet list. Gold identifies the selected fleet or nonempty unit. The snapshots retain the original coordinate conventions.
+
+Changing the seed stays pending until **Load entered seed**. **Reset applied seed** rebuilds the applied seed, preserving any different pending value in the control. Reopening starts at 731. These snapshots do not advance a world clock or aircraft flight.
+
+The Practice formation rule is separate from Classic placement: it retains the source's spacing, longest-first order, 100-attempt reset and random draw order. The maintained copy bounds retries and rejects invalid extents transactionally. Original comparisons cover 400 finite placement cases and five supplied BSSB202 seeds across four complete primary-pool stages. Numerical cases are not completed missions.
+
+This startup subset excludes secondary terrain/auxiliary pools, SCN writeback, fleet-preset globals, scenario/display callbacks, AI and original application timing. The source's scenario-2 preset load leaves the compared primary pools and random state unchanged; its other effects are not reconstructed here. Other maps remain outside this startup API. The earlier base and spawn-zone studies keep their separate scope.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -225,7 +246,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.89 source, focused checks pass **381 model groups**. A fresh public checkout passes **306**, with **75 explicit skips** for optional private evidence. Form checks pass **138**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.90 source, focused checks pass **390 model groups**. A fresh public checkout passes **313**, with **77 explicit skips** for optional private evidence. Form checks pass **143**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
