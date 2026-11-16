@@ -15,8 +15,9 @@ namespace FleetLab {
     }
 
     // Supported Bs.exe B9A8...6A569:42B6A9 root IDs,402EE7..40303E scan.
-    // The first Practice map has only the admitted1/2/4/7 cell kinds. The
-    // separate kind5 pool and other maps require their own reconstruction.
+    // First Practice admits only1/2/4/7 cells. The separate pinned BSSB202
+    // terrain pass scans kind2 cells while leaving other constructors separate.
+    // The kind5 pool and unrestricted other maps are not reconstructed here.
     public sealed class PracticeTerrainPool {
         public const int Capacity = 500, RecordBytes = 492;
         readonly byte[] records = new byte[Capacity * RecordBytes];
@@ -36,7 +37,20 @@ namespace FleetLab {
             return new PracticeTerrainPool(Scenario.Load(source, "BSSB201.SCN"));
         }
 
-        internal PracticeTerrainPool(Scenario scene) {
+        public static PracticeTerrainPool Bssb202(byte[] source) {
+            if (source == null || source.Length != 8890)
+                throw new InvalidDataException("Unsupported BSSB202 terrain length.");
+            source = (byte[])source.Clone();
+            string hash;
+            using (var sha = SHA256.Create())
+                hash = BitConverter.ToString(sha.ComputeHash(source)).Replace("-", "");
+            if (hash != PracticeMapStartup.SupportedSourceHash)
+                throw new InvalidDataException("Unsupported BSSB202 terrain identity.");
+            return new PracticeTerrainPool(Scenario.Load(source, "BSSB202.SCN"), 53, false);
+        }
+
+        internal PracticeTerrainPool(Scenario scene) : this(scene, 54, true) { }
+        PracticeTerrainPool(Scenario scene, int expectedCount, bool firstPractice) {
             if (scene == null || scene.Cells == null || scene.Cells.Length != 4096)
                 throw new InvalidDataException("Missing first Practice terrain.");
             for (int i = 0; i < Capacity; i++)
@@ -44,8 +58,8 @@ namespace FleetLab {
             var active = new List<PracticeTerrainCell>();
             for (int x = 0; x < 64; x++) for (int y = 0; y < 64; y++) {
                 Cell cell = scene.At(x, y);
-                if (cell == null || (cell.Kind != 1 && cell.Kind != 2 && cell.Kind != 4 && cell.Kind != 7))
-                    throw new InvalidDataException("Unsupported first Practice terrain cell.");
+                if (cell == null || (firstPractice && cell.Kind != 1 && cell.Kind != 2 && cell.Kind != 4 && cell.Kind != 7))
+                    throw new InvalidDataException("Unsupported admitted Practice terrain cell.");
                 if (cell.Kind != 2) continue;
                 if (active.Count == Capacity) throw new InvalidDataException("Terrain pool capacity exceeded.");
                 int slot = active.Count, at = slot * RecordBytes;
@@ -58,7 +72,7 @@ namespace FleetLab {
                 // not inferred from its overlap with the fleet owner field.
                 active.Add(new PracticeTerrainCell(slot, value, stored, new Point(x * 10, y * 10)));
             }
-            if (active.Count != 54) throw new InvalidDataException("Unsupported first Practice terrain count.");
+            if (active.Count != expectedCount) throw new InvalidDataException("Unsupported admitted Practice terrain count.");
             cells = active.AsReadOnly();
         }
 

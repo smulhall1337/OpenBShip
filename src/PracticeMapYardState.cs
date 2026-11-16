@@ -89,6 +89,19 @@ namespace FleetLab
         public byte[] CopyFleetPool(){return (byte[])fleets.Clone();}
         public PracticeYardAdmissionResult CheckAdmission(){return PracticeYardAdmission.Check(ships,fleets,TargetUnit,LocalOwner);}
 
+        // The approach wrapper owns its movement state. It supplies the actual
+        // collision byte; this continuation does not inject a yard selection.
+        internal PracticeMapYardState WithApproach(PracticeMovementState movement)
+        {
+            if(movement==null||movement.SelectedFleet!=OriginFleet||Entered)throw new ArgumentException("An unentered copied target and its selected movement fleet are required.");
+            var next=new PracticeMapYardState(catalog,(byte[])ships.Clone(),movement.CopyFleetPool())
+            {TargetUnit=TargetUnit,Profile=Profile,OriginFleet=OriginFleet,SelectedFleet=OriginFleet,SelectedUnit=TargetUnit};
+            var gate=next.CheckAdmission();
+            if(!gate.Available||gate.MarkerMember<1)throw new NotSupportedException("Movement has not produced an admitted paired yard: "+gate.Reason);
+            next.YardFleet=gate.MarkerFleet;next.MarkerUnit=gate.MarkerUnit;
+            return next;
+        }
+
         void MaintainSelection()
         {
             if(SelectedFleet<0||SelectedFleet>=250||I(fleets,SelectedFleet*492)==0)throw new NotSupportedException("Map yard requires a live selected source fleet; inactive fallback is separate.");

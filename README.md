@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.91**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.92**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -180,7 +180,7 @@ Changing the seed stays pending until **Load entered seed**. **Reset applied see
 
 The Practice formation rule is separate from Classic placement: it retains the source's spacing, longest-first order, 100-attempt reset and random draw order. The maintained copy bounds retries and rejects invalid extents transactionally. Original comparisons cover 400 finite placement cases and five supplied BSSB202 seeds across four complete primary-pool stages. Numerical cases are not completed missions.
 
-This startup subset excludes secondary terrain/auxiliary pools, SCN writeback, fleet-preset globals, scenario/display callbacks, AI and original application timing. The source's scenario-2 preset load leaves the compared primary pools and random state unchanged; its other effects are not reconstructed here. Other maps remain outside this startup API. The earlier base and spawn-zone studies keep their separate scope.
+The startup also retains a separate **53-record terrain pool**, with the other 447 slots inactive. Its complete 246,000 bytes match 20 original stage observations across the five recorded seeds. Other secondary/auxiliary pools, SCN writeback, fleet-preset globals, scenario/display callbacks, AI and original application timing remain excluded. The source's scenario-2 preset load leaves the compared primary pools and random state unchanged; its other effects are not reconstructed here. Other maps remain outside this startup API. The earlier base and spawn-zone studies keep their separate scope.
 
 ### Copied map yard continuation
 
@@ -198,6 +198,21 @@ With empty ammunition, unit **31** returns after **4** passes with **162** trans
 The source worker repairs at most one cell and transfers at most one weapon type per pass. A pass without an ammunition transfer returns the target and sets HP to its length; it does not wait for every copied grid cell to reach state 2. The study preserves this observed behavior. Gold marks the target and orange the yard marker; grids use local X as rows and local Y as columns. Details show saved return fields and counted display requests.
 
 Original comparisons cover **nine supplied histories / 198 complete primary-pool and selection observations**, including 20 worker calls per case and stable calls after return. These are data comparisons, not completed missions. Only the three listed targets at seed 731 are admitted. Parent startup snapshots, the active battle and settings stay independent; general world support, multi-bay work, discovery/proximity, original display callbacks, AI and natural timing remain separate.
+
+### Nearby movement into yard admission
+
+In the same startup window at **seed 731 / stage 4**, choose **Nearby yard approach…**. This is a deliberately composed test of recovered movement, collision and admission. It supplies world position **622,600**, waypoint **610,600**, the selected hull/ammo profile and empty movement auxiliary data. The other fleets stay fixed; all 53 reconstructed BSSB202 terrain records are included.
+
+With default unit **30**:
+
+1. The collision field starts at **−1** and admission is unavailable. No admitted yard is supplied to the published approach state.
+2. **One recovered movement visit** moves fleet 16 to **620,600**. Its box touches the installation; the source's strict overlap test still leaves admission unavailable.
+3. Another visit proposes an overlap with base fleet **3**. Movement stays at 620,600, the outcome is **BlockedByFleet**, the collision field becomes **3**, and yard admission becomes available.
+4. **Open admitted yard copy…** opens the existing yard study with target/profile fixed to the approach. Click **Enter copied yard (once)**, then apply worker passes as above. Closing this child preserves the approach. Reset restores its received position and stocks.
+
+**Up to 20 visits / stop when admitted** reaches the same contact as manual visits. Unit 31 also needs two visits; faster fleet 18 carrying unit 34 contacts on its first visit. These are source movement visits, with no established wall-clock duration. Load applies pending target/profile choices; Reset restores the applied approach.
+
+The individual terrain, movement, admission and worker rules have original comparisons. The composed cases additionally retain the nine recorded yard outcomes outside the deliberately changed world pose, waypoint and heading fields. **The full combined original approach has not been replayed.** This does not recover travel from the original spawn, general discovery/command UI, AI, multiple moving fleets or world timing. The earlier explicit-yard test remains available separately.
 
 ## Installation recovery study
 
@@ -263,7 +278,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.91 source, focused checks pass **396 model groups**. A fresh public checkout passes **318**, with **78 explicit skips** for optional private evidence. Form checks pass **149**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.92 source, focused checks pass **403 model groups**. A fresh public checkout passes **324**, with **79 explicit skips** for optional private evidence. Form checks pass **155**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -281,6 +296,8 @@ Recent private comparisons include 432 request-phase histories with 57,528 compl
 A software comparison PNG can be exported with `--render-software-preview` and an output path. Other named comparison exports are listed in `src/Program.cs`.
 
 Use `--render-map-yard-study` with a new output directory to export seven copied-yard form previews at default and minimum sizes. This uses the normal game executable, preserves existing output, and saves no settings. The previews establish layout and copied transitions, not physical display/input acceptance.
+
+`--render-yard-approach-study` similarly exports the nearby approach, contact and received yard copy at default and minimum sizes.
 
 ## Repository layout
 

@@ -12,7 +12,7 @@ namespace FleetLab
         readonly string programs;
         readonly byte[] source;
         readonly NumericUpDown seed=new NumericUpDown();
-        readonly Button load=new Button(),reset=new Button(),yard=new Button();
+        readonly Button load=new Button(),reset=new Button(),yard=new Button(),approach=new Button();
         readonly ComboBox stages=new ComboBox(),fleet=new ComboBox();
         readonly ListBox members=new ListBox();
         readonly Label summary=new Label(),feedback=new Label();
@@ -60,6 +60,8 @@ namespace FleetLab
             feedback.Name="mapStartupFeedback";add(feedback,76);
             add(new Label{Text="Recovered data stage"},22);stages.Name="mapStartupStage";stages.DropDownStyle=ComboBoxStyle.DropDownList;add(stages,30);
             yard.Name="mapStartupYard";yard.Text="Copied map yard… (seed 731, stage 4)";yard.Enabled=false;add(yard,36);
+            approach.Name="mapStartupApproach";approach.Text="Nearby yard approach… (seed 731)";approach.Enabled=false;add(approach,36);
+            approach.Click+=delegate{if(state!=null&&state.Seed==731&&stages.SelectedIndex==3)using(var study=new PracticeYardApproachStudy(programs,state,SelectedUnit))study.ShowDialog(this);};
             add(new Label{Text="Nonempty primary fleet records"},22);fleet.Name="mapStartupFleet";fleet.DropDownStyle=ComboBoxStyle.DropDownList;add(fleet,30);
             members.Name="mapStartupMembers";members.AccessibleName="Six roster fields, with unit slot and type";add(members,110);
             details.Name="mapStartupDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,235);
@@ -102,10 +104,11 @@ namespace FleetLab
         {
             if(AppliedStage==null||IsDisposed||Disposing)return;
             yard.Enabled=state.Seed==731&&stages.SelectedIndex==3;
+            approach.Enabled=yard.Enabled;
             ships=AppliedStage.CopyShipPool();fleets=AppliedStage.CopyFleetPool();changing=true;fleet.Items.Clear();int selected=-1;
             for(int n=0;n<250;n++)if(BitConverter.ToInt32(fleets,n*492)!=0){if(n==preferred)selected=fleet.Items.Count;fleet.Items.Add(new FleetChoice(n,BitConverter.ToInt32(fleets,n*492),BitConverter.ToInt16(fleets,n*492+6)));}
             fleet.SelectedIndex=selected>=0?selected:fleet.Items.Count>0?0:-1;changing=false;
-            summary.Text="Applied seed: "+state.Seed+" · stage "+(stages.SelectedIndex+1)+" / 4\r\n"+AppliedStage.NonemptyFleets+" fleets / "+AppliedStage.NonemptyUnits+" nonzero units\r\nNext inactive fleet: "+AppliedStage.NextInactiveFleet+" (derived)\r\nRNG: "+AppliedStage.RandomState+"\r\nRandom draws from seed: "+AppliedStage.RandomCalls;
+            summary.Text="Applied seed: "+state.Seed+" · stage "+(stages.SelectedIndex+1)+" / 4\r\n"+AppliedStage.NonemptyFleets+" fleets / "+AppliedStage.NonemptyUnits+" nonzero units\r\nNext inactive fleet: "+AppliedStage.NextInactiveFleet+" (derived)\r\nRNG: "+AppliedStage.RandomState+"\r\nRandom draws from seed: "+AppliedStage.RandomCalls+"\r\nTerrain: "+state.TerrainCount+" records / 500 slots";
             RefreshMembers();
         }
         void RefreshMembers()
@@ -124,7 +127,7 @@ namespace FleetLab
                 int at=SelectedFleet*492;text.AppendLine("Fleet "+SelectedFleet+" / kind "+BitConverter.ToInt32(fleets,at)+" / owner "+BitConverter.ToInt16(fleets,at+6));text.AppendLine("World "+BitConverter.ToInt16(fleets,at+12)+", "+BitConverter.ToInt16(fleets,at+14)+" / flag "+fleets[at+484]);
                 if(SelectedUnit>=0){int u=SelectedUnit*268;text.AppendLine("Unit "+SelectedUnit+" / type "+BitConverter.ToInt32(ships,u)+" / parent "+BitConverter.ToInt16(ships,u+12));text.AppendLine("Local "+BitConverter.ToInt16(ships,u+8)+", "+BitConverter.ToInt16(ships,u+10)+" / length "+BitConverter.ToInt16(ships,u+14)+" / HP "+BitConverter.ToInt16(ships,u+16));}
             }
-            text.AppendLine("Primary pools only. Terrain/auxiliary pools, SCN writeback and preset globals are excluded.");text.AppendLine("Stored aircraft have data/attachments; flight and source UI/AI/mission callbacks do not run.");details.Text=text.ToString();world.Invalidate();grid.Invalidate();
+            text.AppendLine("Primary setup snapshots plus the separate 53-record terrain scan. Other auxiliary pools, SCN writeback and preset globals are excluded.");text.AppendLine("Stored aircraft have data/attachments; flight and source UI/AI/mission callbacks do not run.");details.Text=text.ToString();world.Invalidate();grid.Invalidate();
         }
         sealed class FleetChoice
         {

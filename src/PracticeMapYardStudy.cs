@@ -11,6 +11,7 @@ namespace FleetLab
     {
         readonly string programs;
         readonly PracticeMapStartup startup;
+        readonly PracticeMapYardState supplied;
         readonly ComboBox target=new ComboBox(),profile=new ComboBox();
         readonly Button enter=new Button(),one=new Button(),until=new Button(),load=new Button(),reset=new Button();
         readonly Label summary=new Label(),feedback=new Label();
@@ -21,9 +22,10 @@ namespace FleetLab
         byte[] ships,fleets;
         internal PracticeMapYardState StudyState { get { return state; } }
         [DllImport("user32.dll")]static extern short GetAsyncKeyState(int key);
-        public PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget)
+        public PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget) : this(programs,startup,preferredTarget,null) { }
+        internal PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget,PracticeMapYardState supplied)
         {
-            this.programs=programs;this.startup=startup;
+            this.programs=programs;this.startup=startup;this.supplied=supplied;
             Name="mapYardStudy";Text="BSSB202 map yard · diagnostic copy";StartPosition=FormStartPosition.CenterParent;
             Size=new Size(1160,820);MinimumSize=new Size(960,700);Font=new Font("Segoe UI",9);
             BackColor=Color.FromArgb(12,23,35);ForeColor=Color.WhiteSmoke;KeyPreview=true;
@@ -40,13 +42,13 @@ namespace FleetLab
                 if(button!=null){button.UseVisualStyleBackColor=false;button.FlatStyle=FlatStyle.Flat;button.EnabledChanged+=delegate{if(button.IsDisposed||button.Disposing)return;button.BackColor=button.Enabled?Color.FromArgb(28,55,76):Color.LightGray;button.ForeColor=button.Enabled?ForeColor:Color.Black;};}
                 side.Controls.Add(control);
             };
-            add(new Label{Text="Independent copy of recovered BSSB202 startup, seed 731. Yard selection 3 is supplied explicitly; hull/ammo changes are test inputs. No travel, discovery, world clock, AI or original display runs."},94);
+            add(new Label{Text=supplied==null?"Independent copy of recovered BSSB202 startup, seed 731. Yard selection 3 is supplied explicitly; hull/ammo changes are test inputs. No travel, discovery, world clock, AI or original display runs.":"Independent copy received from the nearby approach study. Movement supplied its collision/yard byte. Target/profile are fixed for this copy. Nearby placement and hull/ammo are test inputs; no world clock or AI runs."},94);
             add(new Label{Text="Target unit (pending until Load)"},22);
             target.Name="mapYardTarget";target.DropDownStyle=ComboBoxStyle.DropDownList;
             target.Items.AddRange(new object[]{"30 · type 1 · length 5","31 · type 3 · length 3","34 · type 4 · length 2"});target.SelectedIndex=Array.IndexOf(new[]{30,31,34},preferredTarget);if(target.SelectedIndex<0)target.SelectedIndex=0;add(target,30);
             add(new Label{Text="Copied hull / ammunition profile"},22);
             profile.Name="mapYardProfile";profile.DropDownStyle=ComboBoxStyle.DropDownList;
-            profile.Items.AddRange(new object[]{"Intact · original ammunition","One state 8 · HP length−1 · empty ammo","Mixed states · HP 0 · empty ammo"});profile.SelectedIndex=1;add(profile,30);
+            profile.Items.AddRange(new object[]{"Intact · original ammunition","One state 8 · HP length−1 · empty ammo","Mixed states · HP 0 · empty ammo"});profile.SelectedIndex=supplied==null?1:supplied.Profile;add(profile,30);
             load.Name="mapYardLoad";load.Text="Load selected test copy";add(load,34);
             reset.Name="mapYardReset";reset.Text="Reset applied test copy";add(reset,34);
             summary.Name="mapYardSummary";add(summary,142);
@@ -56,6 +58,7 @@ namespace FleetLab
             until.Name="mapYardUntil";until.Text="Up to 20 passes / stop on return";add(until,34);
             details.Name="mapYardDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,260);
             var close=new Button{Name="mapYardClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
+            if(supplied!=null){target.Enabled=profile.Enabled=load.Enabled=false;load.Text="Target/profile fixed by approach copy";}
             target.SelectedIndexChanged+=delegate{Pending();};profile.SelectedIndexChanged+=delegate{Pending();};
             load.Click+=delegate{LoadCopy(new[]{30,31,34}[target.SelectedIndex],profile.SelectedIndex);};
             reset.Click+=delegate{if(initial!=null){state=initial;Feedback("Applied copy reset; pending selectors are unchanged.");Sync();}};
@@ -77,7 +80,7 @@ namespace FleetLab
         void Feedback(string text){feedback.ForeColor=ForeColor;feedback.Text=text;}
         void LoadCopy(int unit,int variant)
         {
-            try{var next=PracticeMapYardState.Create(programs,startup,unit,variant);state=initial=next;Feedback("Supplied command: source selected-yard byte = 3. Local owner = 1. Enter transfers the target into the first fitting recovered bay.");Sync();}
+            try{var next=supplied??PracticeMapYardState.Create(programs,startup,unit,variant);state=initial=next;Feedback(supplied==null?"Supplied command: source selected-yard byte = 3. Local owner = 1. Enter transfers the target into the first fitting recovered bay.":"Approach collision selected the yard. Enter now applies the recovered transfer command to a fresh copy; closing leaves the approach unchanged.");Sync();}
             catch(InvalidDataException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(ArgumentException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}catch(UnauthorizedAccessException e){Reject(e.Message);}
         }
         void Change(Func<PracticeMapYardState> action,string message)

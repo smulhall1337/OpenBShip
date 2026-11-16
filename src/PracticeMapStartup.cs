@@ -29,17 +29,20 @@ namespace FleetLab
     }
     // Ordinary selector2 primary-pool subset only. Fixed supplied BSSB202 map;
     // root/base/object/group/airfield/stock/formation/late data stages recovered.
-    // Secondary terrain, SCN in-place mutation, FLT preset globals, callback/UI,
+    // Terrain kind2 scan retained separately. SCN in-place mutation, other
+    // secondary pools, FLT preset globals, callback/UI,
     // AI, mission logic and natural application timing are intentionally absent.
     public sealed class PracticeMapStartup
     {
         public const string SupportedSourceHash="1355582241BD807AE2943F5A67D32BB23EA58A77A388BE8928AEA41F5E892F4F";
-        readonly byte[] source;
+        readonly byte[] source,terrain;
         readonly ReadOnlyCollection<PracticeMapStartupStage> stages;
         public uint Seed { get; private set; }
         public ReadOnlyCollection<PracticeMapStartupStage> Stages { get { return stages; } }
         public byte[] CopySource(){return (byte[])source.Clone();}
-        PracticeMapStartup(byte[] input,uint seed,List<PracticeMapStartupStage> states){source=input;Seed=seed;stages=states.AsReadOnly();}
+        public byte[] CopyTerrainPool(){return (byte[])terrain.Clone();}
+        public int TerrainCount { get { return 53; } }
+        PracticeMapStartup(byte[] input,uint seed,List<PracticeMapStartupStage> states,byte[] terrain){source=input;Seed=seed;stages=states.AsReadOnly();this.terrain=terrain;}
         public static PracticeMapStartup CreateBssb202(string programs,byte[] input,uint seed)
         {
             if(input==null||input.Length!=8890||Hash(input)!=SupportedSourceHash)throw new InvalidDataException("Ordinary map startup currently admits the supplied8890-byte BSSB202.SCN identity only.");
@@ -81,7 +84,7 @@ namespace FleetLab
                 Capture("3 · Practice fleet placement");
                 var late=PracticeLateConfiguration.ApplyOffscreen(catalog,ships,fleets,-2);ships=late.CopyShipPool();fleets=late.CopyFleetPool();
                 Capture("4 · Late roster and carrier data");
-                return new PracticeMapStartup(source,seed,states);
+                return new PracticeMapStartup(source,seed,states,PracticeTerrainPool.Bssb202(source).CopyRecords());
             }
             void Capture(string name){states.Add(new PracticeMapStartupStage(name,ships,fleets,counters,random.State,calls));}
             void Merge(PracticeFleetSnapshot part)
