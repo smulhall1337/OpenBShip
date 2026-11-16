@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.92**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.93**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -214,6 +214,16 @@ With default unit **30**:
 
 The individual terrain, movement, admission and worker rules have original comparisons. The composed cases additionally retain the nine recorded yard outcomes outside the deliberately changed world pose, waypoint and heading fields. **The full combined original approach has not been replayed.** This does not recover travel from the original spawn, general discovery/command UI, AI, multiple moving fleets or world timing. The earlier explicit-yard test remains available separately.
 
+### Yard support phase copy
+
+In either copied map yard, first click **Enter copied yard (once)**, then **Clock-gated yard copy…**. Open it before the target returns. This child receives the entered state and advances it separately; closing it leaves its manual parent unchanged.
+
+The supplied initial counter is **12**. **One source poll** increments it to **13** and calls the recovered worker once. Each **64 source polls** action reaches the next worker phase: counters **77**, **141**, **205**, then **269**. For default unit 30 with empty ammunition, that fifth worker call returns the ship after **257 unpaused polls**, with the same 138-ammunition transfer as five manual worker calls.
+
+**Pause source polls** holds both the phase counter and yard data, including when the counter is already at phase 13. Total/paused poll counts still show the requested observations. **Load counter / reset received copy** applies an entered counter and restores the received yard; **Reset applied test copy** retains the applied counter and leaves a different pending value untouched. The counter wraps at 32 bits. After return, further source phases leave the returned pools and display-request counts unchanged.
+
+The source increments the counter only when unpaused, then gates support at `counter & 63 == 13`. This view composes that recovered gate with the recovered worker. The nine prior yard endpoints remain matched after twenty gated worker calls each; these are not new whole-original world replays. Other world systems, AA requests, AI, the application clock and automatic playback remain absent. No wall-clock duration is established by these manual polls.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -278,7 +288,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.92 source, focused checks pass **403 model groups**. A fresh public checkout passes **324**, with **79 explicit skips** for optional private evidence. Form checks pass **155**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.93 source, focused checks pass **408 model groups**. A fresh public checkout passes **329**, with **79 explicit skips** for optional private evidence. Form checks pass **160**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -298,6 +308,8 @@ A software comparison PNG can be exported with `--render-software-preview` and a
 Use `--render-map-yard-study` with a new output directory to export seven copied-yard form previews at default and minimum sizes. This uses the normal game executable, preserves existing output, and saves no settings. The previews establish layout and copied transitions, not physical display/input acceptance.
 
 `--render-yard-approach-study` similarly exports the nearby approach, contact and received yard copy at default and minimum sizes.
+
+`--render-yard-phase-study` exports the entered-yard phase, pause, return and scrolling controls through the same application.
 
 ## Repository layout
 

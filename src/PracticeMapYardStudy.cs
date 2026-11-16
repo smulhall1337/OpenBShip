@@ -12,21 +12,29 @@ namespace FleetLab
         readonly string programs;
         readonly PracticeMapStartup startup;
         readonly PracticeMapYardState supplied;
+        readonly bool phaseMode;
         readonly ComboBox target=new ComboBox(),profile=new ComboBox();
         readonly Button enter=new Button(),one=new Button(),until=new Button(),load=new Button(),reset=new Button();
+        readonly Button phaseStudy=new Button(),phaseLoad=new Button(),phaseOne=new Button(),phase64=new Button();
+        readonly NumericUpDown phase=new NumericUpDown();
+        readonly CheckBox paused=new CheckBox();
         readonly Label summary=new Label(),feedback=new Label();
         readonly TextBox details=new TextBox();
         readonly YardCanvas canvas;
         readonly HashSet<Keys> held=new HashSet<Keys>();
         PracticeMapYardState state,initial;
+        PracticeYardPhaseClock clock;
         byte[] ships,fleets;
         internal PracticeMapYardState StudyState { get { return state; } }
+        internal PracticeYardPhaseClock StudyClock { get { return clock; } }
         [DllImport("user32.dll")]static extern short GetAsyncKeyState(int key);
         public PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget) : this(programs,startup,preferredTarget,null) { }
-        internal PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget,PracticeMapYardState supplied)
+        internal PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget,PracticeMapYardState supplied) : this(programs,startup,preferredTarget,supplied,false) { }
+        internal PracticeMapYardStudy(string programs,PracticeMapStartup startup,int preferredTarget,PracticeMapYardState supplied,bool phaseMode)
         {
-            this.programs=programs;this.startup=startup;this.supplied=supplied;
-            Name="mapYardStudy";Text="BSSB202 map yard · diagnostic copy";StartPosition=FormStartPosition.CenterParent;
+            if(phaseMode&&(supplied==null||!supplied.Entered))throw new InvalidOperationException("An entered yard is required for the copied phase-clock view.");
+            this.programs=programs;this.startup=startup;this.supplied=supplied;this.phaseMode=phaseMode;
+            Name=phaseMode?"mapYardClockStudy":"mapYardStudy";Text=phaseMode?"Yard support phase · copied worker":"BSSB202 map yard · diagnostic copy";StartPosition=FormStartPosition.CenterParent;
             Size=new Size(1160,820);MinimumSize=new Size(960,700);Font=new Font("Segoe UI",9);
             BackColor=Color.FromArgb(12,23,35);ForeColor=Color.WhiteSmoke;KeyPreview=true;
             var layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Padding=new Padding(8)};
@@ -42,8 +50,8 @@ namespace FleetLab
                 if(button!=null){button.UseVisualStyleBackColor=false;button.FlatStyle=FlatStyle.Flat;button.EnabledChanged+=delegate{if(button.IsDisposed||button.Disposing)return;button.BackColor=button.Enabled?Color.FromArgb(28,55,76):Color.LightGray;button.ForeColor=button.Enabled?ForeColor:Color.Black;};}
                 side.Controls.Add(control);
             };
-            add(new Label{Text=supplied==null?"Independent copy of recovered BSSB202 startup, seed 731. Yard selection 3 is supplied explicitly; hull/ammo changes are test inputs. No travel, discovery, world clock, AI or original display runs.":"Independent copy received from the nearby approach study. Movement supplied its collision/yard byte. Target/profile are fixed for this copy. Nearby placement and hull/ammo are test inputs; no world clock or AI runs."},94);
-            add(new Label{Text="Target unit (pending until Load)"},22);
+            add(new Label{Text=phaseMode?"Independent entered-yard copy. The recovered support gate increments the counter when unpaused, then calls the worker at phase 13 of 64. Counter and manual polls are supplied. No other world systems, AI or wall-clock playback runs.":supplied==null?"Independent copy of recovered BSSB202 startup, seed 731. Yard selection 3 is supplied explicitly; hull/ammo changes are test inputs. No travel, discovery, world clock, AI or original display runs.":"Independent copy received from the nearby approach study. Movement supplied its collision/yard byte. Target/profile are fixed for this copy. Nearby placement and hull/ammo are test inputs; no world clock or AI runs."},phaseMode?84:94);
+            add(new Label{Text=supplied==null?"Target unit (pending until Load)":"Received target unit (fixed)"},22);
             target.Name="mapYardTarget";target.DropDownStyle=ComboBoxStyle.DropDownList;
             target.Items.AddRange(new object[]{"30 · type 1 · length 5","31 · type 3 · length 3","34 · type 4 · length 2"});target.SelectedIndex=Array.IndexOf(new[]{30,31,34},preferredTarget);if(target.SelectedIndex<0)target.SelectedIndex=0;add(target,30);
             add(new Label{Text="Copied hull / ammunition profile"},22);
@@ -51,20 +59,42 @@ namespace FleetLab
             profile.Items.AddRange(new object[]{"Intact · original ammunition","One state 8 · HP length−1 · empty ammo","Mixed states · HP 0 · empty ammo"});profile.SelectedIndex=supplied==null?1:supplied.Profile;add(profile,30);
             load.Name="mapYardLoad";load.Text="Load selected test copy";add(load,34);
             reset.Name="mapYardReset";reset.Text="Reset applied test copy";add(reset,34);
-            summary.Name="mapYardSummary";add(summary,142);
-            feedback.Name="mapYardFeedback";add(feedback,92);
-            enter.Name="mapYardEnter";enter.Text="Enter copied yard (once)";add(enter,34);
-            one.Name="mapYardOne";one.Text="One recovered worker pass";add(one,34);
-            until.Name="mapYardUntil";until.Text="Up to 20 passes / stop on return";add(until,34);
+            summary.Name="mapYardSummary";add(summary,phaseMode?148:142);
+            feedback.Name="mapYardFeedback";add(feedback,phaseMode?72:92);
+            enter.Name="mapYardEnter";enter.Text="Enter copied yard (once)";if(!phaseMode)add(enter,34);
+            one.Name="mapYardOne";one.Text="One recovered worker pass";
+            until.Name="mapYardUntil";until.Text="Up to 20 passes / stop on return";
+            if(phaseMode)
+            {
+                add(new Label{Text="Initial counter (pending until Load counter)"},22);
+                phase.Name="mapYardPhaseCounter";phase.Minimum=0;phase.Maximum=uint.MaxValue;phase.Value=12;add(phase,30);
+                phaseLoad.Name="mapYardPhaseLoad";phaseLoad.Text="Load counter / reset received copy";add(phaseLoad,34);
+                paused.Name="mapYardPhasePaused";paused.Text="Pause source polls (hold phase and worker)";add(paused,28);
+                phaseOne.Name="mapYardPhaseOne";phaseOne.Text="One source poll";add(phaseOne,34);
+                phase64.Name="mapYardPhase64";phase64.Text="64 source polls";add(phase64,34);
+            }
+            else
+            {
+                add(one,34);add(until,34);
+                phaseStudy.Name="mapYardPhaseStudy";phaseStudy.Text="Clock-gated yard copy… (after entry)";add(phaseStudy,36);
+            }
             details.Name="mapYardDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,260);
             var close=new Button{Name="mapYardClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
-            if(supplied!=null){target.Enabled=profile.Enabled=load.Enabled=false;load.Text="Target/profile fixed by approach copy";}
+            if(supplied!=null){target.Enabled=profile.Enabled=load.Enabled=false;load.Text=phaseMode?"Target/profile fixed by received copy":"Target/profile fixed by approach copy";}
             target.SelectedIndexChanged+=delegate{Pending();};profile.SelectedIndexChanged+=delegate{Pending();};
             load.Click+=delegate{LoadCopy(new[]{30,31,34}[target.SelectedIndex],profile.SelectedIndex);};
-            reset.Click+=delegate{if(initial!=null){state=initial;Feedback("Applied copy reset; pending selectors are unchanged.");Sync();}};
+            reset.Click+=delegate{ResetCopy(false);};
             enter.Click+=delegate{Change(delegate{return state.Enter();},"Copied target admitted. Apply worker passes manually.");};
             one.Click+=delegate{Change(delegate{return state.WorkerStep();},"One source worker pass applied.");};
             until.Click+=delegate{Change(delegate{var next=state;for(int n=0;n<20&&!next.Returned;n++)next=next.WorkerStep();return next;},"Bounded worker batch finished.");};
+            phaseStudy.Click+=delegate
+            {
+                if(state==null||!state.Entered||state.Returned)return;
+                using(var child=new PracticeMapYardStudy(programs,startup,state.TargetUnit,state,true))child.ShowDialog(this);
+                Feedback("Clock-gated copy closed. This manual yard copy is unchanged.");Sync();
+            };
+            phaseLoad.Click+=delegate{ResetCopy(true);};phaseOne.Click+=delegate{AdvancePhase(1);};phase64.Click+=delegate{AdvancePhase(64);};
+            phase.ValueChanged+=delegate{if(clock!=null)Feedback("Entered counter is pending. Load counter resets the received copy; Reset keeps applied counter "+clock.InitialCounter+".");};
             KeyUp+=delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};Deactivate+=delegate{held.Clear();};
             Activated+=delegate{foreach(var key in new[]{Keys.Enter,Keys.Space,Keys.Escape})if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);};
             LoadCopy(new[]{30,31,34}[target.SelectedIndex],profile.SelectedIndex);
@@ -77,10 +107,10 @@ namespace FleetLab
             if(e.KeyCode==Keys.Escape)Close();else if(button.Enabled)button.PerformClick();
         }
         void Pending(){if(state!=null)Feedback("Selection is pending. Load applies it; Reset restores the applied copy.");}
-        void Feedback(string text){feedback.ForeColor=ForeColor;feedback.Text=text;}
+        void Feedback(string text){if(IsDisposed||Disposing)return;feedback.ForeColor=ForeColor;feedback.Text=text;}
         void LoadCopy(int unit,int variant)
         {
-            try{var next=supplied??PracticeMapYardState.Create(programs,startup,unit,variant);state=initial=next;Feedback(supplied==null?"Supplied command: source selected-yard byte = 3. Local owner = 1. Enter transfers the target into the first fitting recovered bay.":"Approach collision selected the yard. Enter now applies the recovered transfer command to a fresh copy; closing leaves the approach unchanged.");Sync();}
+            try{var next=supplied??PracticeMapYardState.Create(programs,startup,unit,variant);state=initial=next;if(phaseMode)clock=new PracticeYardPhaseClock(next,(uint)phase.Value);Feedback(phaseMode?"Counter 12 is supplied by default: the next unpaused poll reaches phase 13 and applies one worker pass. Other phases hold the yard.":supplied==null?"Supplied command: source selected-yard byte = 3. Local owner = 1. Enter transfers the target into the first fitting recovered bay.":"Approach collision selected the yard. Enter now applies the recovered transfer command to a fresh copy; closing leaves the approach unchanged.");Sync();}
             catch(InvalidDataException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(ArgumentException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}catch(UnauthorizedAccessException e){Reject(e.Message);}
         }
         void Change(Func<PracticeMapYardState> action,string message)
@@ -89,20 +119,37 @@ namespace FleetLab
             catch(InvalidDataException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(InvalidOperationException e){Reject(e.Message);}
         }
         void Reject(string reason){feedback.ForeColor=Color.Orange;feedback.Text="Rejected; existing copy preserved. "+reason;Sync();}
+        void ResetCopy(bool applyEnteredCounter)
+        {
+            if(initial==null)return;
+            if(phaseMode){uint counter=applyEnteredCounter?(uint)phase.Value:clock.InitialCounter;clock=new PracticeYardPhaseClock(initial,counter);state=clock.Yard;}
+            else state=initial;
+            Feedback("Applied copy reset; pending selectors/counter and pause choice are unchanged.");Sync();
+        }
+        void AdvancePhase(int count)
+        {
+            if(clock==null)return;
+            try{var next=clock.AdvanceMany(count,paused.Checked);clock=next;state=next.Yard;Feedback(paused.Checked?"Paused polls recorded; phase and worker held.":state.Returned?"Target has returned. Further phase polls retain the returned yard data.":"Source polls applied; the worker runs only when the incremented counter reaches phase 13.");Sync();}
+            catch(InvalidDataException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(InvalidOperationException e){Reject(e.Message);}
+        }
         void Sync()
         {
             if(IsDisposed||Disposing)return;
-            reset.Enabled=state!=null;enter.Enabled=state!=null&&!state.Entered;one.Enabled=until.Enabled=state!=null&&state.Entered&&!state.Returned;
+            reset.Enabled=state!=null;enter.Enabled=state!=null&&!state.Entered&&!phaseMode;one.Enabled=until.Enabled=phaseStudy.Enabled=!phaseMode&&state!=null&&state.Entered&&!state.Returned;
+            phaseOne.Enabled=phase64.Enabled=phaseLoad.Enabled=phaseMode&&clock!=null;
             if(state==null){summary.Text="No admitted map yard copy loaded.";return;}
             ships=state.CopyShipPool();fleets=state.CopyFleetPool();int parent=BitConverter.ToInt16(ships,state.TargetUnit*268+12);
             summary.Text="Applied unit "+state.TargetUnit+" · profile "+state.Profile+" · seed 731\r\n"+(state.Returned?"Returned":state.Entered?"In copied yard":"Ready for admission")+" · worker passes "+state.WorkerCalls+"\r\nSource "+state.OriginFleet+" → bay fleet "+state.YardFleet+" · parent now "+parent+"\r\nHP "+state.TargetHP+" / "+state.TargetLength+" · ammo "+state.TargetAmmo+" (Δ "+(state.TargetAmmo-initial.TargetAmmo)+")\r\nDepot unit "+state.DepotUnit+" · ammo "+state.DepotAmmo+" (Δ "+(state.DepotAmmo-initial.DepotAmmo)+")";
+            if(clock!=null)summary.Text+="\r\nCounter: "+clock.PhaseCounter+" · phase "+(clock.PhaseCounter&63)+" / 64\r\nPolls: "+clock.Polls+" · paused "+clock.PausedPolls+"\r\nClock worker passes: "+clock.WorkerPasses;
             var text=new StringBuilder();text.AppendLine("Source selection: fleet "+state.SelectedFleet+" / unit "+state.SelectedUnit);
             text.AppendLine("Display requests (counted): text "+state.TextRequests+", map "+state.MapRequests+", refresh "+state.RefreshRequests);
             text.AppendLine("Grid: rows = local X; columns = local Y. Gold = target; orange = bay marker. 2 occupied, 3 base background, 5..8 supplied damage states.");
             text.AppendLine("Marker "+state.MarkerUnit+" / saved return fields:");int mk=state.MarkerUnit*268;
             text.AppendLine("fleet "+BitConverter.ToInt16(ships,mk+196)+", member "+BitConverter.ToInt16(ships,mk+198)+", X "+BitConverter.ToInt16(ships,mk+200)+", Y "+BitConverter.ToInt16(ships,mk+202));
             text.AppendLine("The original worker supplies one weapon type per pass. A pass without ammunition transfer returns the unit and sets its HP to length. This does not prove every damaged cell was repaired first.");
-            text.AppendLine("Parent startup snapshots, active battle and settings remain independent. No original code executes in this study; the general world support guard remains.");details.Text=text.ToString();canvas.Invalidate();
+            text.AppendLine("Parent startup snapshots, active battle and settings remain independent. No original code executes in this study; the general world support guard remains.");
+            if(clock!=null)text.AppendLine("Support phase gate and yard worker are a deliberate composition. Polls are manual; other world systems, AA requests, application clock and AI do not run. Paused polls hold both counter and worker. Full combined original world execution has not been replayed.");
+            details.Text=text.ToString();canvas.Invalidate();
         }
         sealed class YardCanvas : Control
         {
