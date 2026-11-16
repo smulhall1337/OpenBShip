@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.93**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.94**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -224,6 +224,24 @@ The supplied initial counter is **12**. **One source poll** increments it to **1
 
 The source increments the counter only when unpaused, then gates support at `counter & 63 == 13`. This view composes that recovered gate with the recovered worker. The nine prior yard endpoints remain matched after twenty gated worker calls each; these are not new whole-original world replays. Other world systems, AA requests, AI, the application clock and automatic playback remain absent. No wall-clock duration is established by these manual polls.
 
+### Fleet service task
+
+In the startup window at **seed 731 / stage 4**, open **Fleet service task…**. This separate copy runs the recovered task-11/12 handler, ship-selection command, queue push/pop and shared-depot worker. Contact and tagged task records are supplied; there is no movement or full AI/world clock.
+
+The default **Unit 30 · one state 8 / empty ammo** case starts with task 11:
+
+1. **Visit initial recovered task** changes the task to 12 and admits unit 30 into bay fleet 3. The command chooses the ship; changing the view selector does not change source selection.
+2. **One worker + task update** applies one worker pass, followed by one task visit.
+3. **Up to 20 updates / stop on task 0** reaches queue kind 0 after five worker updates in this case. The ship returns with 138 ammunition. Kind 0 ends this supplied task slice; it does not establish mission completion.
+
+Choose another case/task and **Load selected service copy** to apply it. Changes stay pending until Load; **Reset applied service copy** preserves pending choices. Gold follows the viewed original unit, and the lower bay selector switches between fleets 2 and 3. Native selection and queue records are shown separately in the details.
+
+**Fleet 16 · worse damage first** demonstrates the recovered choice rule: unit 30 has HP 0 and more grid damage, but the first visit admits unit 31 because it is the **last roster member with a positive grid-damage sum**. The next worker/task update admits unit 30 as well, temporarily leaving source fleet 16 inactive while both ships occupy bays. Returns recreate the source fleet as needed.
+
+**Fleet 16 · two empty-ammo ships** admits both in one command. In the supplied worker-only continuation, shared stock can return unit 30 with **130**, rather than 138, ammunition. This study then revisits the task with contact deliberately held at 3, so it can repeatedly readmit a ship that still lacks stock. That is an observation of this controlled driver, not a diagnosis of natural original gameplay. All service cases stop at twenty worker/task updates; reset to repeat them.
+
+The maintained API admits 19 supplied cases with initial task 11 or 12. It matches **38 selective-handler histories / 836 complete pool, task and selection observations**, including tagged queue payloads, opaque tail preservation, rejected contact, multiple admissions, source recreation and stock contention. The earlier command-only probe covers 18 overlapping cases. These counts are not completed battles. Other task kinds, the full AI controller, movement/clock orchestration, AA and original display work remain excluded. The general shared-world support guard is unchanged.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -288,7 +306,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.93 source, focused checks pass **408 model groups**. A fresh public checkout passes **329**, with **79 explicit skips** for optional private evidence. Form checks pass **160**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.94 source, focused checks pass **415 model groups**. A fresh public checkout passes **335**, with **80 explicit skips** for optional private evidence. Form checks pass **164**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -310,6 +328,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-yard-approach-study` similarly exports the nearby approach, contact and received yard copy at default and minimum sizes.
 
 `--render-yard-phase-study` exports the entered-yard phase, pause, return and scrolling controls through the same application.
+
+`--render-fleet-service-study` exports the selective service task, queue completion and two-bay cases.
 
 ## Repository layout
 
