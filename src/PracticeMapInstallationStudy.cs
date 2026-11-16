@@ -10,7 +10,7 @@ namespace FleetLab
     // Read-only modern presentation of the ordinary map base-construction pass.
     public sealed class PracticeMapInstallationStudy : Form
     {
-        readonly string assets;
+        readonly string assets,programs;
         readonly PracticeAirfieldFactory factory;
         readonly ComboBox maps=new ComboBox(),fleet=new ComboBox();
         readonly ListBox bases=new ListBox(),members=new ListBox();
@@ -32,7 +32,7 @@ namespace FleetLab
         [DllImport("user32.dll")]static extern short GetAsyncKeyState(int key);
         public PracticeMapInstallationStudy(string assets,string programs)
         {
-            this.assets=assets;
+            this.assets=assets;this.programs=programs;
             if(!File.Exists(Path.Combine(assets,"Graphics","BSSB202.SCN")))throw new InvalidDataException("Run Setup.ps1 again to import the SCN map library for this study.");
             factory=PracticeAirfieldFactory.Load(programs);
             Text="Map installations · construction and spawn-zone studies";
@@ -79,6 +79,9 @@ namespace FleetLab
             load.Text="Load map base pass";
             load.Name="mapInstallationLoad";
             add(load,34);
+            var lateStudy=new Button{Text="Late setup (copy)…",Name="mapLateConfigurationStudy"};
+            add(lateStudy,34);
+            lateStudy.Click+=delegate{if(state!=null)using(var form=new PracticeLateConfigurationStudy(this.programs,state))form.ShowDialog(this);};
             status.Name="mapInstallationStatus";
             status.AccessibleName="Applied map and construction counts";
             add(status,94);

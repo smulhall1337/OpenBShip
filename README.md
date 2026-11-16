@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.88**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.89**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -151,6 +151,16 @@ For the default **BSSB202.SCN**, the readout shows **4 base fleet reservations +
 
 The rule excludes world edges 0 and 630 and reserves inclusive ±10 squares around every nonzero primary/secondary record, regardless of owner. It preserves the source's stored **57.2957725** angle constant and integer truncation. Replacing it with `180 / π` changes sector-boundary ownership. The routine uses no random draws. Its maintained implementation matches 48 complete original grids covering six reservation profiles, player counts 1–4 and two x87 precision settings; opaque blocked owner bytes and input data remain preserved. These are numerical/data cases, not missions. The mask is currently available through this study and its source API.
 
+### Late configuration copy
+
+In **Map installations…**, click **Late setup (copy)…**. This opens an independent copy of the applied map's base pass, even if another source is pending in the parent selector. It leaves the battle, parent map and spawn zones unchanged.
+
+For **BSSB202.SCN**, choose fleet **2** to inspect the raw type-22 pairs. Click **Prepare late roster (once)**: unit slots **4, 6 and 8** become type `0` (empty), while odd markers, payloads, references and grids remain. The summary shows **3 markers cleared**, **0 carrier groups** and **next inactive fleet 4**. The button disables until **Reset this copy to base pass**. BSSB205 clears 42 markers; BSSB201 has none.
+
+The separate owner input applies only when **Select owned fleet (copy)** is clicked. Owner **1** selects fleet 0/unit 0 in BSSB202; owner **0** falls back to inactive fleet 4/null unit. An absent owner preserves the prior selection. This retains the original preference for an owned kind-1 fleet, then the first owned record, including inactive records. Viewing a fleet and applying source selection are separate actions.
+
+The maintained late pass also recovers carrier aircraft creation and per-owner kind-11 numbering. Original comparisons include complete carrier setup and repeated setup pools; a repeated raw call creates more stored aircraft groups. The once-per-copy UI guard is deliberate. This base-only viewer contains no grouped carriers, inventory startup, scenario callback, button layout, active yard work or missions. The general shared-world support guard remains. Its marker preparation matches complete pool outputs from 120 original-code map cases; these are data comparisons, not completed battles.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -215,7 +225,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.88 source, focused checks pass **371 model groups**. A fresh public checkout passes **299**, with **72 explicit skips** for optional private evidence. Form checks pass **134**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.89 source, focused checks pass **381 model groups**. A fresh public checkout passes **306**, with **75 explicit skips** for optional private evidence. Form checks pass **138**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
