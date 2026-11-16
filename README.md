@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.90**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.91**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -182,6 +182,23 @@ The Practice formation rule is separate from Classic placement: it retains the s
 
 This startup subset excludes secondary terrain/auxiliary pools, SCN writeback, fleet-preset globals, scenario/display callbacks, AI and original application timing. The source's scenario-2 preset load leaves the compared primary pools and random state unchanged; its other effects are not reconstructed here. Other maps remain outside this startup API. The earlier base and spawn-zone studies keep their separate scope.
 
+### Copied map yard continuation
+
+In **BSSB202 startup (copy)…**, keep applied seed **731** and select stage **4**, then click **Copied map yard…**. The button is beside the stage selector. This opens another independent copy; other applied seeds and earlier stages keep the button disabled.
+
+The default test uses unit **30**, the existing length-5 ship in fleet 16. It supplies one grid cell in state 8, HP 4 and empty ammunition. The recovered installation, paired markers and depot come from the reconstructed startup data. Yard selection **3** is an explicit test command; yard discovery and travel do not run.
+
+1. Click **Enter copied yard (once)**. The target moves into bay fleet 3; its escort, unit 31, becomes selected in source fleet 16.
+2. Click **One recovered worker pass**. HP reaches 5 and one weapon type receives ammunition. The unit is still in the bay.
+3. Click **Up to 20 passes / stop on return**. It returns after **5 total worker passes**, with **138 ammunition** transferred from depot unit 2. The gold outline returns to its original source-grid position.
+4. Change target/profile and click **Load selected test copy** to try another case. Changes stay pending until Load. **Reset applied test copy** restores the applied case while preserving pending selectors.
+
+With empty ammunition, unit **31** returns after **4** passes with **162** transferred; unit **34** returns after **3** with **70** transferred. Both use the first fitting bay in fleet 2. Intact profiles with original ammunition return on the first pass. The mixed-grid profile is a supplied diagnostic state, not damage produced by an attack.
+
+The source worker repairs at most one cell and transfers at most one weapon type per pass. A pass without an ammunition transfer returns the target and sets HP to its length; it does not wait for every copied grid cell to reach state 2. The study preserves this observed behavior. Gold marks the target and orange the yard marker; grids use local X as rows and local Y as columns. Details show saved return fields and counted display requests.
+
+Original comparisons cover **nine supplied histories / 198 complete primary-pool and selection observations**, including 20 worker calls per case and stable calls after return. These are data comparisons, not completed missions. Only the three listed targets at seed 731 are admitted. Parent startup snapshots, the active battle and settings stay independent; general world support, multi-bay work, discovery/proximity, original display callbacks, AI and natural timing remain separate.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -246,7 +263,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.90 source, focused checks pass **390 model groups**. A fresh public checkout passes **313**, with **77 explicit skips** for optional private evidence. Form checks pass **143**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.91 source, focused checks pass **396 model groups**. A fresh public checkout passes **318**, with **78 explicit skips** for optional private evidence. Form checks pass **149**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -262,6 +279,8 @@ Use `--ui-check` with a different report path for real form/button checks. Those
 Recent private comparisons include 432 request-phase histories with 57,528 complete ten-pool observations, 126 broader airfield histories with 48,960 observations, and shorter manual/AA return fixtures. UI checks cover manual and generated requests, pause, reset, counter wrap, return, docking, resource expiry, pending settings and clean owner shutdown. Numeric sweeps and recorded observations are not counts of distinct gameplay scenarios.
 
 A software comparison PNG can be exported with `--render-software-preview` and an output path. Other named comparison exports are listed in `src/Program.cs`.
+
+Use `--render-map-yard-study` with a new output directory to export seven copied-yard form previews at default and minimum sizes. This uses the normal game executable, preserves existing output, and saves no settings. The previews establish layout and copied transitions, not physical display/input acceptance.
 
 ## Repository layout
 

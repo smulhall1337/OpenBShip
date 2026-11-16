@@ -12,7 +12,7 @@ namespace FleetLab
         readonly string programs;
         readonly byte[] source;
         readonly NumericUpDown seed=new NumericUpDown();
-        readonly Button load=new Button(),reset=new Button();
+        readonly Button load=new Button(),reset=new Button(),yard=new Button();
         readonly ComboBox stages=new ComboBox(),fleet=new ComboBox();
         readonly ListBox members=new ListBox();
         readonly Label summary=new Label(),feedback=new Label();
@@ -59,9 +59,15 @@ namespace FleetLab
             summary.Name="mapStartupSummary";add(summary,110);
             feedback.Name="mapStartupFeedback";add(feedback,76);
             add(new Label{Text="Recovered data stage"},22);stages.Name="mapStartupStage";stages.DropDownStyle=ComboBoxStyle.DropDownList;add(stages,30);
+            yard.Name="mapStartupYard";yard.Text="Copied map yard… (seed 731, stage 4)";yard.Enabled=false;add(yard,36);
             add(new Label{Text="Nonempty primary fleet records"},22);fleet.Name="mapStartupFleet";fleet.DropDownStyle=ComboBoxStyle.DropDownList;add(fleet,30);
             members.Name="mapStartupMembers";members.AccessibleName="Six roster fields, with unit slot and type";add(members,110);
             details.Name="mapStartupDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,235);
+            yard.Click+=delegate
+            {
+                if(state==null||state.Seed!=731||stages.SelectedIndex!=3)return;
+                using(var study=new PracticeMapYardStudy(programs,state,SelectedUnit))study.ShowDialog(this);
+            };
             var close=new Button{Name="mapStartupClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
             load.Click+=delegate{ApplySeed((uint)seed.Value);};reset.Click+=delegate{if(state!=null)ApplySeed(state.Seed);};
             seed.ValueChanged+=delegate{if(state!=null&&!changing)feedback.Text="Seed selection is pending. Load applies it; Reset keeps the applied seed "+state.Seed+".";};
@@ -95,6 +101,7 @@ namespace FleetLab
         void ShowStage(int preferred)
         {
             if(AppliedStage==null||IsDisposed||Disposing)return;
+            yard.Enabled=state.Seed==731&&stages.SelectedIndex==3;
             ships=AppliedStage.CopyShipPool();fleets=AppliedStage.CopyFleetPool();changing=true;fleet.Items.Clear();int selected=-1;
             for(int n=0;n<250;n++)if(BitConverter.ToInt32(fleets,n*492)!=0){if(n==preferred)selected=fleet.Items.Count;fleet.Items.Add(new FleetChoice(n,BitConverter.ToInt32(fleets,n*492),BitConverter.ToInt16(fleets,n*492+6)));}
             fleet.SelectedIndex=selected>=0?selected:fleet.Items.Count>0?0:-1;changing=false;
