@@ -56,6 +56,55 @@ namespace FleetLab
                     down.Invoke(form,new object[]{new KeyEventArgs(Keys.Enter)});down.Invoke(form,new object[]{new KeyEventArgs(Keys.Enter)});Need(form.StudyState.WorkerPasses==1,"Held service update repeated");up.Invoke(form,new object[]{new KeyEventArgs(Keys.Enter)});down.Invoke(form,new object[]{new KeyEventArgs(Keys.Enter)});Need(form.StudyState.WorkerPasses==2,"Released service update");form.Close();
                 }
             });
+            check("Initialized service dispatcher completes and gold follows the returned unit",delegate
+            {
+                using(var form=new PracticeFleetServiceStudy(programs,startup(731),PracticeFleetServiceMode.InitializedDispatcher))
+                {
+                    Show(form,owner);Need(form.StudyState.Mode==PracticeFleetServiceMode.InitializedDispatcher&&form.StudyState.RouteUiRequests==1,"Initialized form mode");
+                    Find<Button>(form,"fleetServiceVisit").PerformClick();Need(GoldInHalf(form,false)>20&&GoldInHalf(form,true)==0,"Admitted ship gold not in bay");
+                    Find<Button>(form,"fleetServiceOne").PerformClick();Find<Button>(form,"fleetServiceMany").PerformClick();Need(form.StudyState.QueueEmpty&&form.StudyState.WorkerPasses==5&&form.StudyState.RouteUiRequests==7,"Initialized dispatch completion");
+                    Need(GoldInHalf(form,true)>20&&GoldInHalf(form,false)==0&&Find<TextBox>(form,"fleetServiceDetails").Text.Contains("Gold: viewed unit 30 · current parent 16"),"Returned gold or parent readout stale");form.Close();
+                }
+            });
+            check("Initialized service mode and case stay pending through applied reset",delegate
+            {
+                using(var form=new PracticeFleetServiceStudy(programs,startup(731),PracticeFleetServiceMode.InitializedDispatcher))
+                {
+                    Show(form,owner);var applied=form.StudyState;Find<Button>(form,"fleetServiceVisit").PerformClick();Find<ComboBox>(form,"fleetServiceMode").SelectedIndex=0;Find<ComboBox>(form,"fleetServiceKind").SelectedIndex=1;
+                    Find<Button>(form,"fleetServiceReset").PerformClick();Need(Object.ReferenceEquals(form.StudyState,applied)&&form.StudyState.Mode==PracticeFleetServiceMode.InitializedDispatcher&&Find<ComboBox>(form,"fleetServiceMode").SelectedIndex==0,"Reset consumed pending mode");
+                    Find<Button>(form,"fleetServiceLoad").PerformClick();Find<Button>(form,"fleetServiceVisit").PerformClick();Need(form.StudyState.Mode==PracticeFleetServiceMode.TaggedSelective&&form.StudyState.TaskKind==12,"Legacy baseline changed");
+                    Find<ComboBox>(form,"fleetServiceMode").SelectedIndex=2;Find<Button>(form,"fleetServiceLoad").PerformClick();Find<Button>(form,"fleetServiceVisit").PerformClick();Need(form.StudyState.QueueEmpty&&form.StudyState.WorkerPasses==0,"Raw12 dispatcher contrast missing");form.Close();
+                }
+            });
+            check("Service viewed unit follows the appropriate bay without changing simulation",delegate
+            {
+                using(var form=new PracticeFleetServiceStudy(programs,startup(731),PracticeFleetServiceMode.InitializedDispatcher))
+                {
+                    Show(form,owner);Find<ComboBox>(form,"fleetServiceCase").SelectedIndex=PracticeFleetService.CaseIds.IndexOf("30-2-firstworse");Find<Button>(form,"fleetServiceLoad").PerformClick();Find<Button>(form,"fleetServiceVisit").PerformClick();Find<Button>(form,"fleetServiceOne").PerformClick();
+                    var state=form.StudyState;var view=Find<ComboBox>(form,"fleetServiceUnit");view.SelectedItem=31;Need(Find<ComboBox>(form,"fleetServiceBay").SelectedIndex==0,"Unit31 bay2 not followed");view.SelectedItem=30;Need(Find<ComboBox>(form,"fleetServiceBay").SelectedIndex==1&&Object.ReferenceEquals(state,form.StudyState)&&GoldInHalf(form,false)>20,"Unit30 bay3 selection affected source");form.Size=form.MinimumSize;Application.DoEvents();Need(Find<Panel>(form,"fleetServiceScroll").AutoScroll&&Find<Control>(form,"fleetServiceCanvas").Width>500,"Initialized minimum layout");form.Close();
+                }
+            });
+            check("Startup initialized service entry opens an independent gated copy",delegate
+            {
+                using(var parent=new PracticeMapStartupStudy(programs,input))
+                {
+                    Show(parent,owner);var baseline=parent.StudyState;var button=Find<Button>(parent,"mapStartupDispatch");Need(button.Enabled,"Initialized entry disabled");Find<ComboBox>(parent,"mapStartupStage").SelectedIndex=0;Need(!button.Enabled,"Early-stage initialized entry admitted");Find<ComboBox>(parent,"mapStartupStage").SelectedIndex=3;
+                    bool saw=false;Exception failure=null;int visits=0;using(var timer=new Timer{Interval=100})
+                    {
+                        timer.Tick+=delegate{if(++visits>30){timer.Stop();failure=new Exception("Initialized modal missing");parent.Close();return;}foreach(Form child in parent.OwnedForms){var study=child as PracticeFleetServiceStudy;if(study==null)continue;timer.Stop();try{Need(study.StudyState.Mode==PracticeFleetServiceMode.InitializedDispatcher,"Wrong child mode");Find<Button>(study,"fleetServiceVisit").PerformClick();saw=true;}catch(Exception e){failure=e;}finally{study.Close();}return;}};timer.Start();button.PerformClick();timer.Stop();
+                    }
+                    if(failure!=null)throw failure;Need(saw&&Object.ReferenceEquals(baseline,parent.StudyState),"Initialized child changed parent");parent.Close();
+                }
+            });
+        }
+        static int GoldInHalf(Form form,bool upper)
+        {
+            var canvas=Find<Control>(form,"fleetServiceCanvas");canvas.Refresh();using(var bitmap=new Bitmap(canvas.Width,canvas.Height))
+            {
+                canvas.DrawToBitmap(bitmap,new Rectangle(Point.Empty,bitmap.Size));int count=0;
+                for(int y=upper?0:bitmap.Height/2;y<(upper?bitmap.Height/2:bitmap.Height);y++)for(int x=0;x<bitmap.Width;x++)if(bitmap.GetPixel(x,y).ToArgb()==Color.Gold.ToArgb())count++;
+                return count;
+            }
         }
         internal static int SavePreviews(string assets,string destination)
         {
@@ -68,6 +117,20 @@ namespace FleetLab
                 form.Size=form.MinimumSize;Find<Panel>(form,"fleetServiceScroll").AutoScrollPosition=Point.Empty;capture("06-Minimum");Find<Panel>(form,"fleetServiceScroll").ScrollControlIntoView(Find<TextBox>(form,"fleetServiceDetails"));capture("07-Minimum-Details");form.Close();
             }
             File.WriteAllText(Path.Combine(destination,"Scope.txt"),"Seven actual-form DrawToBitmap previews of bounded fleet service task11/12. Supplied contact,tagged queue,manual cadence;default and worse-first multi-bay cases. Not full AI/world timing. No settings saved;physical DPI/input/audio separate.\r\n");return 0;
+        }
+        internal static int SaveInitializedPreviews(string assets,string destination)
+        {
+            destination=Path.GetFullPath(destination);if(Directory.Exists(destination)||File.Exists(destination))throw new IOException("Choose a new initialized service preview directory.");string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var map=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);Directory.CreateDirectory(destination);
+            using(var form=new PracticeFleetServiceStudy(programs,map,PracticeFleetServiceMode.InitializedDispatcher))
+            {
+                Show(form,null);Action<string> capture=delegate(string name){form.PerformLayout();Application.DoEvents();using(var image=new Bitmap(form.Width,form.Height)){form.DrawToBitmap(image,new Rectangle(Point.Empty,form.Size));image.Save(Path.Combine(destination,name+".png"),System.Drawing.Imaging.ImageFormat.Png);}};
+                capture("01-Initialized-Ready");Find<Button>(form,"fleetServiceVisit").PerformClick();capture("02-Initialized-Admitted");Find<Button>(form,"fleetServiceMany").PerformClick();capture("03-Initialized-Returned");
+                Find<Panel>(form,"fleetServiceScroll").ScrollControlIntoView(Find<TextBox>(form,"fleetServiceDetails"));capture("04-Returned-Details");
+                Find<ComboBox>(form,"fleetServiceKind").SelectedIndex=1;Find<Button>(form,"fleetServiceLoad").PerformClick();Find<Button>(form,"fleetServiceVisit").PerformClick();capture("05-Raw12-Popped");
+                Find<ComboBox>(form,"fleetServiceKind").SelectedIndex=0;Find<ComboBox>(form,"fleetServiceCase").SelectedIndex=PracticeFleetService.CaseIds.IndexOf("30-2-firstworse");Find<Button>(form,"fleetServiceLoad").PerformClick();Find<Button>(form,"fleetServiceVisit").PerformClick();Find<Button>(form,"fleetServiceOne").PerformClick();capture("06-Initialized-Two-Bays");
+                form.Size=form.MinimumSize;Find<Panel>(form,"fleetServiceScroll").AutoScrollPosition=Point.Empty;capture("07-Minimum");Find<Panel>(form,"fleetServiceScroll").ScrollControlIntoView(Find<TextBox>(form,"fleetServiceDetails"));capture("08-Minimum-Details");form.Close();
+            }
+            File.WriteAllText(Path.Combine(destination,"Scope.txt"),"Eight actual-form previews of source-initialized service contexts and reached dispatcher paths. Supplied contact/active owner1/manual cadence/6D untouched fill/normalized table identity. Other dispatcher branches reject;full AI driver,world timing,movement and original heap absent. Gold follows viewed ship;orange bay markers persist after departure. No settings saved;physical scaling/input/audio separate.\r\n");return 0;
         }
     }
 }

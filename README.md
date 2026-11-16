@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.94**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.95**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -236,11 +236,25 @@ The default **Unit 30 · one state 8 / empty ammo** case starts with task 11:
 
 Choose another case/task and **Load selected service copy** to apply it. Changes stay pending until Load; **Reset applied service copy** preserves pending choices. Gold follows the viewed original unit, and the lower bay selector switches between fleets 2 and 3. Native selection and queue records are shown separately in the details.
 
+Orange dashed outlines identify the bay markers. Their blue cells remain after a ship returns; the gold outline follows the **viewed ship's current parent**. Choosing a viewed unit that is in a bay also selects that lower bay. Inspection never changes the simulation's selected ship.
+
 **Fleet 16 · worse damage first** demonstrates the recovered choice rule: unit 30 has HP 0 and more grid damage, but the first visit admits unit 31 because it is the **last roster member with a positive grid-damage sum**. The next worker/task update admits unit 30 as well, temporarily leaving source fleet 16 inactive while both ships occupy bays. Returns recreate the source fleet as needed.
 
 **Fleet 16 · two empty-ammo ships** admits both in one command. In the supplied worker-only continuation, shared stock can return unit 30 with **130**, rather than 138, ammunition. This study then revisits the task with contact deliberately held at 3, so it can repeatedly readmit a ship that still lacks stock. That is an observation of this controlled driver, not a diagnosis of natural original gameplay. All service cases stop at twenty worker/task updates; reset to repeat them.
 
 The maintained API admits 19 supplied cases with initial task 11 or 12. It matches **38 selective-handler histories / 836 complete pool, task and selection observations**, including tagged queue payloads, opaque tail preservation, rejected contact, multiple admissions, source recreation and stock contention. The earlier command-only probe covers 18 overlapping cases. These counts are not completed battles. Other task kinds, the full AI controller, movement/clock orchestration, AA and original display work remain excluded. The general shared-world support guard is unchanged.
+
+### Initialized service tasks
+
+From the same applied **seed 731 / stage 4**, open **Initialized service tasks…**. This starts an independent copy using the recovered context layout and the reached paths of the original task dispatcher. **Fleet service task…** retains the tagged v0.94 baseline.
+
+The mode selector offers **Tagged selective**, **Initialized selective**, and **Initialized dispatcher**. A mode change stays pending until **Load selected service copy**; Reset restores the applied mode and case. The initialized modes reproduce the original empty queue layout, actor link and initial task push. Untouched fields and the normalized table identity remain diagnostic inputs; this representation does not allocate the original AI heap or reproduce its entire initialization lifecycle.
+
+The dispatcher processes friendly contact before the selective service handler. With the default task 11, unit 30 still returns after five worker updates with 138 ammunition, but route-clearing requests total **7**, compared with **2** in initialized selective mode. Those counts include the explicit initial task push. The queue and details show these intermediate effects.
+
+To see the boundary, load **initial task 12** in initialized dispatcher mode and visit it. Friendly contact pops that lone task before service: the queue reaches 0 without moving the damaged ship. Initialized selective mode admits the ship because it runs the selective handler directly. These are different supplied entry states, not complete natural AI lifecycles.
+
+Both initialized modes match **38 captured histories / 836 complete observations each**, including pool bytes, context bytes, selection, waypoints and display-request counts. The dispatcher uses supplied active AI owner 1 and rejects unsupported target, attachment-order and route-planning paths. The outer AI driver, planning policy, movement, AA, world clock, original heap and source UI remain unfinished. Updates still use the explicit manual worker/task cadence.
 
 ## Installation recovery study
 
@@ -306,7 +320,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.94 source, focused checks pass **415 model groups**. A fresh public checkout passes **335**, with **80 explicit skips** for optional private evidence. Form checks pass **164**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.95 source, focused checks pass **422 model groups**. A fresh public checkout passes **340**, with **82 explicit skips** for optional private evidence. Form checks pass **168**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -330,6 +344,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-yard-phase-study` exports the entered-yard phase, pause, return and scrolling controls through the same application.
 
 `--render-fleet-service-study` exports the selective service task, queue completion and two-bay cases.
+
+`--render-initialized-service-study` exports initialized dispatcher admission, return, lone-task-12 behavior, bay markers and scrolling layouts.
 
 ## Repository layout
 

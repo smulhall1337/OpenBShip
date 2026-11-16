@@ -11,7 +11,7 @@ namespace FleetLab
     // Native task pool:5AEE20,312-byte stride. The old movement auxiliary view
     // starts at5AEF00 (+224):its+50/+3C alias task+130/+11C. This isolated study
     // owns one record and deliberately does not compose movement or full AI.
-    internal sealed class FleetServiceCore
+    internal sealed partial class FleetServiceCore
     {
     byte[] ships,fleets,ammunition;
     int selectedFleet,selectedUnit,textRequests,mapRequests,refreshRequests;
@@ -170,11 +170,12 @@ namespace FleetLab
         internal byte[] CopyFleets(){return (byte[])fleets.Clone();}
         internal byte[] CopyTask(){return (byte[])task.Clone();}
         internal int[] CopyOriginalUnits(){return (int[])originalUnits.Clone();}
-        internal static FleetServiceCore Create(string programs,PracticeMapStartup startup,string id,int initialKind)
+        internal static FleetServiceCore Create(string programs,PracticeMapStartup startup,string id,int initialKind,PracticeFleetServiceMode mode)
         {
             if(startup==null)throw new ArgumentNullException("startup");
             if(startup.Seed!=731)throw new NotSupportedException("Fleet service currently admits the supplied BSSB202 seed731 startup only.");
             if(!PracticeFleetService.CaseIds.Contains(id)||(initialKind!=11&&initialKind!=12))throw new ArgumentException("Choose an admitted service case and initial task11 or12.");
+            if(mode<PracticeFleetServiceMode.TaggedSelective||mode>PracticeFleetServiceMode.InitializedDispatcher)throw new ArgumentOutOfRangeException("mode");
             string[] parts=id.Split('-');int target=int.Parse(parts[0]),profile=int.Parse(parts[1]);string variant=parts[2];
             var state=new FleetServiceCore{ships=startup.Stages[3].CopyShipPool(),fleets=startup.Stages[3].CopyFleetPool(),caseId=id,initialTaskKind=initialKind};
             state.ammunition=File.ReadAllBytes(Path.Combine(programs,"UnitAmmunition.seqbin"));
@@ -191,6 +192,8 @@ namespace FleetLab
             for(int record=0;record<10;record++)for(int field=1;field<5;field++)I(state.task,record*20+field*4,1000+record*10+field);
             I(state.task,0,initialKind);I(state.task,0xc8,0x11223344);I(state.task,0xcc,0x4b47a0+source*492);
             for(int n=0xd0;n<312;n++)state.task[n]=(byte)(n*7+3);
+            state.mode=mode;
+            if(mode!=PracticeFleetServiceMode.TaggedSelective){state.task=PracticeFleetServiceContext.CreateDiagnostic(source);state.PushTask(initialKind);}
             return state;
         }
         void PrepareTarget(int target,int profile)
@@ -211,19 +214,19 @@ namespace FleetLab
                 ships=(byte[])ships.Clone(),fleets=(byte[])fleets.Clone(),task=(byte[])task.Clone(),ammunition=ammunition,
                 selectedFleet=selectedFleet,selectedUnit=selectedUnit,selectedWaypoint=selectedWaypoint,
                 textRequests=textRequests,mapRequests=mapRequests,refreshRequests=refreshRequests,routeUiRequests=routeUiRequests,
-                caseId=caseId,initialTaskKind=initialTaskKind,taskVisits=taskVisits,workerPasses=workerPasses,originalUnits=(int[])originalUnits.Clone()
+                caseId=caseId,initialTaskKind=initialTaskKind,taskVisits=taskVisits,workerPasses=workerPasses,originalUnits=(int[])originalUnits.Clone(),mode=mode
             };
         }
         internal FleetServiceCore VisitInitialTask()
         {
             if(taskVisits!=0)throw new InvalidOperationException("The initial task was already visited; use worker + task updates or reset.");
-            var next=Copy();next.TaskVisit();next.taskVisits++;return next;
+            var next=Copy();next.VisitAppliedHandler();next.taskVisits++;return next;
         }
         internal FleetServiceCore Step()
         {
             if(taskVisits==0)throw new InvalidOperationException("Visit the initial task before stepping its worker.");
             if(workerPasses>=20)throw new InvalidOperationException("This copied service history is bounded to twenty worker/task updates; reset to continue.");
-            var next=Copy();next.Worker();next.workerPasses++;next.TaskVisit();next.taskVisits++;return next;
+            var next=Copy();next.Worker();next.workerPasses++;next.VisitAppliedHandler();next.taskVisits++;return next;
         }
     }
     // Immutable public study profile. Only the recorded map/cases, tagged task
@@ -240,6 +243,7 @@ namespace FleetLab
         public static ReadOnlyCollection<string> CaseIds { get { return ids; } }
         public string CaseId { get { return core.CaseId; } }
         public int InitialTaskKind { get { return core.InitialTaskKind; } }
+        public PracticeFleetServiceMode Mode { get { return core.Mode; } }
         public int TaskKind { get { return core.TaskKind; } }
         public bool QueueEmpty { get { return TaskKind==0; } }
         public int SourceFleet { get { return core.SourceFleet; } }
@@ -256,7 +260,9 @@ namespace FleetLab
         public int RouteUiRequests { get { return core.RouteUiRequests; } }
         PracticeFleetService(FleetServiceCore core){this.core=core;}
         public static PracticeFleetService Create(string programs,PracticeMapStartup startup,string caseId,int initialTaskKind)
-        {return new PracticeFleetService(FleetServiceCore.Create(programs,startup,caseId,initialTaskKind));}
+        {return Create(programs,startup,caseId,initialTaskKind,PracticeFleetServiceMode.TaggedSelective);}
+        public static PracticeFleetService Create(string programs,PracticeMapStartup startup,string caseId,int initialTaskKind,PracticeFleetServiceMode mode)
+        {return new PracticeFleetService(FleetServiceCore.Create(programs,startup,caseId,initialTaskKind,mode));}
         public byte[] CopyShipPool(){return core.CopyShips();}
         public byte[] CopyFleetPool(){return core.CopyFleets();}
         public byte[] CopyTaskRecord(){return core.CopyTask();}
