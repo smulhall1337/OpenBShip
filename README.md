@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.96**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.97**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 41 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 43 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.86 or earlier to import the SCN map library and all 41 runtime resources. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.96 or earlier to import all 43 runtime resources, including the two new raw AI table spans. Build only compiles source.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -273,6 +273,20 @@ The clock increments its unpaused unsigned counter first, dispatches when `count
 
 The maintained clock matches **48 original-fragment histories / 18,480 complete observations**, including paused phase holds, counter wrap, complete ship/fleet/task records, selection and request counts. The source experiment copies the original pause, increment and gate instructions and invokes the admitted dispatcher and worker. This remains a bounded phase subset: the outer AI driver, recurring policy, member orders, movement, AA, original heap, source display and natural wall-clock pacing are excluded. These are observation counts, not completed battles.
 
+### Fleet candidate scan
+
+From the **seed 731 / stage 4** startup copy, open **Fleet candidate scan…**. This is a separate inspection of the raw list built by the recovered lookup. It does not fire, move fleets or run the full AI policy. Its role within that policy remains unresolved.
+
+The default surface case finds dispatch equipment but returns an empty list because the original eligibility bytes are zero. Set **Supply eligibility byte 1 on live fleets**, then **Load and scan selected copy**. The returned ids are **26, 25, 24, 23, 15, 14**, in source order. Gold marks the actor; cyan marks returned fleets; a white ring follows the viewed id. Selecting a result only changes inspection. Test positions can coincide; use the list to distinguish them.
+
+Choose **Clear admitted equipment slots** and Load. The surface case pushes task **11**, clears five waypoints, and makes one counted route UI request. The stored aircraft case (kind 6) leaves the task unchanged without equipment. Reset rebuilds the applied result from the same inputs; selector changes remain pending until Load.
+
+The scratch array starts at **-1**, then records roster positions for metadata bytes `F2`/`F3`. The next loop tests raw `!= 0`, which admits unmapped `-1` and excludes mapped position zero. Its range branch accepts **raw range <= Chebyshev distance**. Entry zero remains unmapped with raw range zero, so the supplied cases do not act as an inside-range firing test. These details are preserved as observed; they are not replaced with a guessed weapon rule.
+
+The maintained factory matches **880 controlled original cases**, including full ship/fleet pools, normalized selected context, scratch/list bytes and selection/request results. Cases vary actor kind, parent category, equipment, eligibility, coordinates, active owner and scenario-8 ownership. The new 82-byte range span records the complete source read, extending beyond the previously extracted 35-entry firing table into adjacent data; it is deliberately named a **raw** span. No additional weapon meanings are inferred.
+
+Positive matches for the category-1/3 target-kind filters, maximum list capacity, natural visibility production, the full member-order dispatcher and recurring policy remain outside these captured cases. The general running-world guards remain in place. The original code is not executed by this study or its ordinary checks.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -337,7 +351,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.96 source, focused checks pass **429 model groups**. A fresh public checkout passes **346**, with **83 explicit skips** for optional private evidence. Form checks pass **173**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.97 source, focused checks pass **435 model groups**. A fresh public checkout passes **351**, with **84 explicit skips** for optional private evidence. Form checks pass **177**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -365,6 +379,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-initialized-service-study` exports initialized dispatcher admission, return, lone-task-12 behavior, bay markers and scrolling layouts.
 
 `--render-service-phase-study` exports phase-gated admission, separate return and queue-completion points, pause and wrap at default and minimum sizes.
+
+`--render-fleet-candidates` exports original/supplied eligibility, the missing-equipment task effect and base alignment, including minimum-size controls and details.
 
 ## Repository layout
 
