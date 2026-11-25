@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.98**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.99**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -314,6 +314,20 @@ The factory matches **768 controlled original histories / 2,928 complete observa
 
 Actual firing-state execution, attack queues, ammunition consumption, all other actors, natural caller stack values, recurring policy and complete world/AI timing remain unfinished. The general running-world guards remain in place.
 
+### Fleet member request visit
+
+Open **Member request visit…** from the same **seed 731 / stage 4** startup. This separate study builds the verified preparation prefix and permits **one** further whole member visit that stores firing requests. The preparation window above keeps its original stop-before-firing boundary.
+
+With the defaults, the prefix has both members in state 2 at raw clock **14,845**, with empty request rows. Press **Queue one member visit**. Unit 30 queues ten cells against fleet 15; unit 31 queues ten against fleet 14. Cyan and orange crosses mark those requests on the copied target grids; a white ring follows the selected list slot. These crosses are **not launched shots or hits**. Ammunition, target data and the raw clock remain unchanged. Reset restores the applied prefix and queue fixture; selector changes remain pending until Load.
+
+The three supplied raw visibility bytes select different recovered cell algorithms: byte 1 filters partial information, follows neighbors and searches random empty cells; byte 2 uses roster midpoint information; byte 3 scans occupied cells and then a fallback pass. Priority passes use source column order; the final full-grid fallback uses row order. Duplicate requests and retained queue fields are preserved. F2 can fill multiple slots; F3 stops after one enqueue attempt. F3-only equipment under task 0 is a negative control; task 8 admits it and the default visit then stores one request per unit.
+
+The original member loop tests a **separate global weapon field** after storing requests. The study supplies 0, 14 or 19 explicitly. In the default F2 case, global 0 leaves both member states at 0 afterward; global 14 leaves them at 1, with identical request rows. This field is not silently replaced by each unit's chosen weapon. Caller comparison, raw visibility, fixed RNG seed 731 and prefilled queue rows are also explicit controlled inputs. The 9/10-slot fixtures preserve diagnostic Y tags outside the 0–9 grid; those entries remain in the list and are not plotted as cells.
+
+The canonical continuation matches **648 whole original cases**, including complete ship/fleet/context/request pools, produced scratch/list bytes, RNG and selection/request context. Of these, 540 reach the request-producing state and 108 are F3/task-0 negative cases. The cell selector additionally matches **1,260 original helper cases**, including empty, nearly full, full, kind-change and target-change rows. These are controlled contexts, not completed battles.
+
+Only request storage is joined here. Original order consumption, firing admission, ammunition use, projectiles, impact, damage, compound targets, the recurring AI policy and natural hidden-input production remain outside this continuation. Existing projectile/impact studies are separate; they have not been composed with this member loop into a complete Practice battle.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -378,7 +392,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.98 source, focused checks pass **441 model groups**. A fresh public checkout passes **356**, with **85 explicit skips** for optional private evidence. Form checks pass **181**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.99 source, focused checks pass **449 model groups**. A fresh public checkout passes **362**, with **87 explicit skips** for optional private evidence. Form checks pass **185**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -410,6 +424,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-fleet-candidates` exports original/supplied eligibility, the missing-equipment task effect and base alignment, including minimum-size controls and details.
 
 `--render-member-preparation` exports equipment choice, deadline checks, the guarded firing boundary and supplied comparison-word cases at default and minimum sizes.
+
+`--render-member-requests` exports prepared and queued request rows, alternate selectors and F3 behavior, including minimum-size controls and lists.
 
 ## Repository layout
 

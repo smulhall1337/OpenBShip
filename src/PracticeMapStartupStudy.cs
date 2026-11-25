@@ -12,7 +12,7 @@ namespace FleetLab
         readonly string programs;
         readonly byte[] source;
         readonly NumericUpDown seed=new NumericUpDown();
-        readonly Button load=new Button(),reset=new Button(),yard=new Button(),approach=new Button(),service=new Button(),dispatch=new Button(),servicePhase=new Button(),candidates=new Button(),memberPreparation=new Button();
+        readonly Button load=new Button(),reset=new Button(),yard=new Button(),approach=new Button(),service=new Button(),dispatch=new Button(),servicePhase=new Button(),candidates=new Button(),memberPreparation=new Button(),memberRequests=new Button();
         readonly ComboBox stages=new ComboBox(),fleet=new ComboBox();
         readonly ListBox members=new ListBox();
         readonly Label summary=new Label(),feedback=new Label();
@@ -72,6 +72,8 @@ namespace FleetLab
             candidates.Click+=delegate{if(state!=null&&state.Seed==731&&stages.SelectedIndex==3)using(var study=new PracticeFleetCandidateStudy(programs,state))study.ShowDialog(this);};
             memberPreparation.Name="mapStartupMemberPreparation";memberPreparation.Text="Member preparation… (seed 731)";memberPreparation.Enabled=false;add(memberPreparation,36);
             memberPreparation.Click+=delegate{if(state!=null&&state.Seed==731&&stages.SelectedIndex==3)using(var study=new PracticeFleetMemberPreparationStudy(programs,state))study.ShowDialog(this);};
+            memberRequests.Name="mapStartupMemberRequests";memberRequests.Text="Member request visit… (seed 731)";memberRequests.Enabled=false;add(memberRequests,36);
+            memberRequests.Click+=delegate{if(state!=null&&state.Seed==731&&stages.SelectedIndex==3)using(var study=new PracticeFleetMemberRequestStudy(programs,state))study.ShowDialog(this);};
             add(new Label{Text="Nonempty primary fleet records"},22);fleet.Name="mapStartupFleet";fleet.DropDownStyle=ComboBoxStyle.DropDownList;add(fleet,30);
             members.Name="mapStartupMembers";members.AccessibleName="Six roster fields, with unit slot and type";add(members,110);
             details.Name="mapStartupDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,235);
@@ -120,6 +122,7 @@ namespace FleetLab
             servicePhase.Enabled=yard.Enabled;
             candidates.Enabled=yard.Enabled;
             memberPreparation.Enabled=yard.Enabled;
+            memberRequests.Enabled=yard.Enabled;
             ships=AppliedStage.CopyShipPool();fleets=AppliedStage.CopyFleetPool();changing=true;fleet.Items.Clear();int selected=-1;
             for(int n=0;n<250;n++)if(BitConverter.ToInt32(fleets,n*492)!=0){if(n==preferred)selected=fleet.Items.Count;fleet.Items.Add(new FleetChoice(n,BitConverter.ToInt32(fleets,n*492),BitConverter.ToInt16(fleets,n*492+6)));}
             fleet.SelectedIndex=selected>=0?selected:fleet.Items.Count>0?0:-1;changing=false;

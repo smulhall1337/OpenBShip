@@ -74,7 +74,18 @@ namespace FleetLab
             var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();next.Clock=NextClock;
             if(Visits==1)next.firstDeadline=unchecked(next.Clock+1);next.Visit();next.Visits++;return next;
         }
-        void Visit()
+        internal PracticeFleetMemberPreparation CopyForRequests(int visibility)
+        {
+            if(Visits!=3||EquipmentProfile<3||EquipmentProfile>5||EligibilityProfile!=2||PlayerOverride||(Difficulty!=0&&Difficulty!=2)||visibility<1||visibility>3)throw new NotSupportedException("Choose a captured request continuation prefix.");
+            var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();next.fleets[14*492+467]=next.fleets[15*492+467]=(byte)visibility;return next;
+        }
+        internal PracticeFleetMemberPreparation ApplyRequestVisit(FleetMemberRequestSink sink,int globalWeapon)
+        {
+            if(sink==null||Visits!=3||(globalWeapon!=0&&globalWeapon!=14&&globalWeapon!=19))throw new InvalidOperationException("Choose one captured member request visit.");
+            var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();next.Visit(sink,globalWeapon);next.Visits++;return next;
+        }
+        void Visit(){Visit(null,0);}
+        void Visit(FleetMemberRequestSink requests,int globalWeapon)
         {
             scan=PracticeFleetCandidates.Evaluate(ships,fleets,task,metadata,ranges,16,1,1);ships=scan.CopyShipPool();fleets=scan.CopyFleetPool();task=scan.CopyTaskRecord();RouteUiRequests+=scan.RouteUiRequests;if(scan.RouteUiRequests>0)SelectedWaypoint=scan.SelectedWaypoint;
             if(scan.Candidates.Count==0){Array.Clear(task,212,24);return;}
@@ -84,6 +95,10 @@ namespace FleetLab
                 uint reference=BitConverter.ToUInt32(fleets,16*492+16+member*4);if(reference==0)continue;long delta=(long)reference-0x4fc340;if(delta<0||delta>=402000||delta%268!=0)throw new InvalidDataException("Member preparation normalized roster.");int unit=(int)(delta/268),state=I(task,212+member*4);
                 if(state==0){comparison=cursor;cursor=Choose(unit,cursor,member);}
                 else if(state==1){if(PlayerOverride)I(task,236+member*4,2);if(I(task,236+member*4)<=Clock)I(task,212+member*4,2);}
+                else if(state==2&&requests!=null)
+                {
+                    requests.Apply(ships,fleets,unit,I(task,260+member*4));I(task,212+member*4,W(ships,unit*268+196+globalWeapon*2)!=0&&scan.Candidates.Count>0?1:0);
+                }
                 else throw new NotSupportedException("Only member states0 and1 may execute in this study.");
                 if(comparison!=cursor&&Difficulty<2)break;if(cursor>=scan.Candidates.Count)break;
             }
