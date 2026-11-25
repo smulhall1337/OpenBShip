@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.97**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.98**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 43 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 44 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.96 or earlier to import all 43 runtime resources, including the two new raw AI table spans. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.97 or earlier to import all 44 runtime resources, including the AI preparation delay table. Build only compiles source.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -287,6 +287,33 @@ The maintained factory matches **880 controlled original cases**, including full
 
 Positive matches for the category-1/3 target-kind filters, maximum list capacity, natural visibility production, the full member-order dispatcher and recurring policy remain outside these captured cases. The general running-world guards remain in place. The original code is not executed by this study or its ordinary checks.
 
+### Fleet member preparation
+
+From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
+
+Keep the defaults: F2 id 14 on both units, fleets 14 and 15 eligible, task 0, difficulty 2, player override 0 and comparison word 0. Press the numbered visit button three times:
+
+1. At raw clock **12,345**, units 30 and 31 choose equipment 14 and targets **15** and **14**. Both enter waiting state 1, due at **14,845**.
+2. At **14,844**, both remain waiting.
+3. At **14,845**, both reach state 2. The button disables at this boundary. Reset repeats the applied prefix; pending selectors stay pending until Load.
+
+The source initialization scales the two supplied preparation parameters by `2^difficulty`. These are raw clock values, with no wall-clock unit claimed:
+
+| Difficulty | F2 delay | F3 delay | First visit with two eligible targets |
+| --- | ---: | ---: | --- |
+| 0 | 10,000 | 40,000 | Prepares the first member |
+| 1 | 5,000 | 20,000 | Prepares the first member |
+| 2 | 2,500 | 10,000 | Can prepare both members |
+| 3 | 1,250 | 5,000 | Can prepare both members |
+
+Equipment choice uses signed source combat scores and nonzero ammunition. The F3-only preset does not prepare under task 0; supplied task 8 admits it. Player-record override 1 replaces a waiting due field with 2, allowing the next visit to reach the guarded boundary earlier.
+
+The waiting-state path also reads a caller stack comparison word before the state-0 path writes that local. Its natural caller value is unresolved. The study supplies **0 or 1** explicitly. To inspect the difference, choose difficulty 0 and only fleet 14 eligible: after two visits, word 0 allows the second member to prepare, while word 1 leaves it unprepared. This is a documented diagnostic dependency, not a chosen replacement AI policy.
+
+The factory matches **768 controlled original histories / 2,928 complete observations** through this boundary, including complete pools, context, produced scratch/list data, selection and request fields. An independent maintained port also matches all-context hashes; a second controlled original capture is byte-identical. Initial scratch is unproduced and is not presented as recovered output. Unassigned target words remain opaque diagnostic data; weapon fields retain their previous value until a choice writes them.
+
+Actual firing-state execution, attack queues, ammunition consumption, all other actors, natural caller stack values, recurring policy and complete world/AI timing remain unfinished. The general running-world guards remain in place.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -351,7 +378,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.97 source, focused checks pass **435 model groups**. A fresh public checkout passes **351**, with **84 explicit skips** for optional private evidence. Form checks pass **177**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.98 source, focused checks pass **441 model groups**. A fresh public checkout passes **356**, with **85 explicit skips** for optional private evidence. Form checks pass **181**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -381,6 +408,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-service-phase-study` exports phase-gated admission, separate return and queue-completion points, pause and wrap at default and minimum sizes.
 
 `--render-fleet-candidates` exports original/supplied eligibility, the missing-equipment task effect and base alignment, including minimum-size controls and details.
+
+`--render-member-preparation` exports equipment choice, deadline checks, the guarded firing boundary and supplied comparison-word cases at default and minimum sizes.
 
 ## Repository layout
 
