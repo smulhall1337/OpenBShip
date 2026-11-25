@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.95**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.96**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -256,6 +256,23 @@ To see the boundary, load **initial task 12** in initialized dispatcher mode and
 
 Both initialized modes match **38 captured histories / 836 complete observations each**, including pool bytes, context bytes, selection, waypoints and display-request counts. The dispatcher uses supplied active AI owner 1 and rejects unsupported target, attachment-order and route-planning paths. The outer AI driver, planning policy, movement, AA, world clock, original heap and source UI remain unfinished. Updates still use the explicit manual worker/task cadence.
 
+### Service phase clock
+
+From the same **seed 731 / stage 4** startup copy, open **Service phase clock…**. This independent study separates the dispatcher and depot worker using the recovered source phase gates. The existing manual service windows remain available.
+
+Start with the default case, task 11 and counter **0**:
+
+1. **13 source polls** reaches counter 13. The first worker call has no admitted target; unit 30 stays at the source.
+2. **Advance to next scheduled phase** reaches counter 32. The dispatcher admits unit 30 into bay 3.
+3. Continue through scheduled phases. At counter **333**, the sixth worker call returns unit 30 with 138 ammunition; task kind remains 12. One of those six calls occurred before admission.
+4. The next scheduled phase reaches **352**, where the dispatcher closes the queue to kind 0. Further polls continue: at counter **384**, the readout shows 12 task visits, 6 worker calls and 12 route requests.
+
+**Pause source polls** holds the phase counter and service data. Requested and paused poll counts still advance within the **384-poll observation window**. The next-phase shortcut disables while paused. Reset restores the applied initial state and preserves the pending selectors and current Pause choice. Load applies a pending case, task or initial counter. The three cases and four initial counters are the captured inputs, including the unsigned wrap case 4,294,967,294.
+
+The clock increments its unpaused unsigned counter first, dispatches when `counter & 31 == 0`, and runs support when `counter & 63 == 13`. It does not call the older combined worker/task operation. Read-only clock snapshots prevent mixing manual service actions into an ongoing clock history. Gold and orange use the same grid renderer as the manual service studies.
+
+The maintained clock matches **48 original-fragment histories / 18,480 complete observations**, including paused phase holds, counter wrap, complete ship/fleet/task records, selection and request counts. The source experiment copies the original pause, increment and gate instructions and invokes the admitted dispatcher and worker. This remains a bounded phase subset: the outer AI driver, recurring policy, member orders, movement, AA, original heap, source display and natural wall-clock pacing are excluded. These are observation counts, not completed battles.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -320,7 +337,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.95 source, focused checks pass **422 model groups**. A fresh public checkout passes **340**, with **82 explicit skips** for optional private evidence. Form checks pass **168**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.96 source, focused checks pass **429 model groups**. A fresh public checkout passes **346**, with **83 explicit skips** for optional private evidence. Form checks pass **173**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -346,6 +363,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-fleet-service-study` exports the selective service task, queue completion and two-bay cases.
 
 `--render-initialized-service-study` exports initialized dispatcher admission, return, lone-task-12 behavior, bay markers and scrolling layouts.
+
+`--render-service-phase-study` exports phase-gated admission, separate return and queue-completion points, pause and wrap at default and minimum sizes.
 
 ## Repository layout
 
