@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.119**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.120**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.119 source, focused checks pass **558 model groups**. A fresh public checkout passes **452**, with **106 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.120 source, focused checks pass **562 model groups**. A fresh public checkout passes **455**, with **107 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -568,3 +568,5 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 
 
 `PracticeAiDriverGate.EvaluateOfflineFlag23` composes the real driver boundary around that explicit-caller prephase. Its immutable context requires Practice scenario 1, zero scenario events, raw owner-pass control 0, a phase counter, a caller word and an incoming frame word. It also rejects active unowned fleets, which would enter unsupported owner dispatchers. The prephase runs before the low-five-bit gate. Aligned phases execute the verified empty scheduler, direct-return neutral planner and owner −1 visibility; source active owner is restored, and this entry does not increment phase or world time. The result retains the immutable prephase and final fleet snapshot separately, including diagnostic caller scratch. Public checks compare 216 original before/after states and private evidence compares all 1,728 captured driver contexts. Captured phase values are 1, 31, 32 and 0xFFFFFFE0; the exact source bitmask defines the gate. Nonempty events, other owner passes, task dispatch, natural caller initialization and a complete running Practice world remain unsupported. There is no new window; the current visible comparison is the Carrier patrol whole-pass study.
+
+`PracticeQueuedGoal.ApplyGoalFour` separately recovers the driver's queued-coordinate output after an admitted visit. The bounded API requires an owner-1 surface fleet, goal 4 and no first waypoint. An exact DWORD X of −1 resets the task to goal 1; every other X and Y truncates to a signed 16-bit first waypoint without clamping. Thus X 65535 writes waypoint −1 while keeping goal 4. Ten independently captured numeric cases and ten admitted branches within 40 original driver frames verify this distinction and preservation of the remaining shared backing. The API does not admit owners, run the task dispatcher, move fleets or invoke a pathfinder; it adds no window.
