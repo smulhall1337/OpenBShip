@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.121**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.122**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.121 source, focused checks pass **566 model groups**. A fresh public checkout passes **458**, with **108 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.122 source, focused checks pass **571 model groups**. A fresh public checkout passes **462**, with **109 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -572,3 +572,5 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 `PracticeQueuedGoal.ApplyGoalFour` separately recovers the driver's queued-coordinate output after an admitted visit. The bounded API requires an owner-1 surface fleet, goal 4 and no first waypoint. An exact DWORD X of −1 resets the task to goal 1; every other X and Y truncates to a signed 16-bit first waypoint without clamping. Thus X 65535 writes waypoint −1 while keeping goal 4. Ten independently captured numeric cases and ten admitted branches within 40 original driver frames verify this distinction and preservation of the remaining shared backing. The API does not admit owners, run the task dispatcher, move fleets or invoke a pathfinder; it adds no window.
 
 `PracticeServiceDestination.Evaluate` recovers the separate service-destination leaf for the compared active-owner-1 context and actor kinds. Surface kinds 1/9 choose the nearest eligible kind-2 yard with marker 22/23 using Chebyshev distance; ties retain the earlier fleet. The filter uses active owner, independently of the supplied actor owner. No yard preserves cached DWORD coordinates. Kind 2/11 leaves state unchanged; the other compared kinds set state 1. The result owns its snapshots, preserves the shared tail, and reports a diagnostic yard ID; the original leaf retains coordinates rather than that ID. Public numeric checks and 280 private complete-state captures verify the bounded behavior, including late-invalid-pointer rejection. It does not admit ships, change task goals, find routes, move fleets or run a world clock, and adds no window. Existing full-driver and dispatcher guards remain in place.
+
+`PracticeServiceWaypoint.Evaluate` joins that leaf to the selected task-11 waypoint caller. In source order, no first waypoint, active navigation or fleet mode 2 returns before reading the task selector, target reference or yard markers. An enabled call clears a nonnegative target reference only when the referenced fleet is inactive, chooses destination data, sets goal 2, and replaces the point immediately before the first queue gap. It neither appends nor clamps coordinates. The immutable result retains the destination stage separately from the final queue write. Checks compare 131 original complete input/output goldens and all 792 private captured states, including guarded unread fields, target cleanup and gapped queues. Full owner dispatch, route construction, movement and world timing remain separate; the existing dispatcher guards are unchanged. This source API adds no window.
