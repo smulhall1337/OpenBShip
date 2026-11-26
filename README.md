@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.109**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.110**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.109 source, focused checks pass **505 model groups**. A fresh public checkout passes **409**, with **96 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.110 source, focused checks pass **510 model groups**. A fresh public checkout passes **413**, with **97 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -528,4 +528,7 @@ Original media, binaries, user settings, historical builds and research artifact
 From the completed weapon-22 pre-impact boundary, **Water impacts and effects** continues the two verified water targets. Choose the first-clock visit, Load, then step, visit transitions or finish. Exact-deadline timing ends at clock36571; the boundary+40 diagnostic initially blocks both shots and ends at36610. Both histories retain ammunition7/7, empty requests and RNG4052711439. Blue rings are schematic. This bounded continuation does not run ship damage, movies, further firing or the full Practice world. Six original-code histories and216 complete observations support it.
 
 `--render-produced-misses` exports the boundary entry, water effects, completion, blocking diagnostic and minimum-size controls/details.
+
+
+The source API `PracticeAiSharedBacking` preserves the overlapping AI task and movement views: 78,000 task bytes and 78,336 movement bytes beginning 224 bytes later share a 78,560-byte region. Conflicting views are rejected and opaque tail bytes are retained. `PracticeNavigationGate` reproduces only the verified early returns, active-goal completion and active waiting branches of RIP routine 41F920. Sixty original-code cases support the restricted subset. Route construction, retargeting, waypoint-pop callbacks and the full pre-phase dispatcher remain unsupported. This source-only checkpoint adds no new study window; the water-impact checks above remain the latest hands-on test.
 
