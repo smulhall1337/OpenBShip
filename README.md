@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.117**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.118**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.117 source, focused checks pass **546 model groups**. A fresh public checkout passes **442**, with **104 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.118 source, focused checks pass **552 model groups**. A fresh public checkout passes **447**, with **105 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -561,4 +561,7 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 `PracticePrephasePatrol.EvaluateNoTargets` preserves complete ship/fleet/order pools and shared task/movement/candidate backing through this restricted joined pass. It includes later visits to aircraft activated earlier in that pass and rejects unsupported later navigation without publishing earlier changes. Public checks compare 144 original-code before/after states; private evidence compares all 1,152 captured whole-pass contexts. These are supplied collision-255/no-target contexts, not full battle scenarios. The idle-only and navigation-only APIs retain their earlier policy guards.
 
 
-`PracticeFlag23Patrol.EvaluateNoTargets` recovers the separate flag-2/3 numeric helper with a **mandatory supplied counter word**. The original routine reads an uninitialized stack local; this API does not assume a natural value. It returns complete owned pools, counted UI requests, selection, and residual counter/roster values. Original comparisons cover 168 public before/after golden states and 864 private explicit-local contexts, including signed overflow/remainder, the first-supported-group exit, kind-6/3 filtering, radius-20 waypoints and state-1 early return. This is a source API checkpoint; it adds no new study window. The normal whole-pass API continues rejecting flags 2/3 until the caller-stack behavior is separately established. Use the existing Carrier patrol whole-pass study for the current observable comparison.
+`PracticeFlag23Patrol.EvaluateNoTargets` recovers the separate flag-2/3 numeric helper with a **mandatory supplied counter word**. The original routine reads an uninitialized stack local; this API does not assume a natural value. It returns complete owned pools, counted UI requests, selection, and residual counter/roster values. Original comparisons cover 168 public before/after golden states and 864 private explicit-local contexts, including signed overflow/remainder, the first-supported-group exit, kind-6/3 filtering, radius-20 waypoints and state-1 early return. This is a source API checkpoint; it adds no new study window. The normal whole-pass API continues rejecting flags 2/3; the separate explicit-caller variant below retains that dependency. Use the existing Carrier patrol whole-pass study for the current observable comparison.
+
+
+`PracticePrephaseFlag23.EvaluateNoTargets` adds a separately bounded whole-dispatcher API with a mandatory initial caller word and a returned final word. It admits one flag-2/3 surface parent, flag-1 aircraft rosters containing only types 8–10 in states 0/1, empty visibility, collision 255 and the activity-zero navigation return (idle returns clear activity first). Original comparisons cover 216 public complete before/after golden states and all 2,592 private whole-call contexts. They verify how the shared stack slot acts as the flag-2/3 counter, ends at flag-1 roster index 6 after aircraft callbacks, and receives saved EBX −1 from idle returns. The maintained code represents this as explicit data, without emulating a CPU stack. Other policy mixtures, active navigation, natural outer-caller initialization and a full running Practice world remain unsupported. This adds no new window or automatic flag-2/3 behavior to the existing study.
