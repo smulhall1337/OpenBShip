@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.110**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.111**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.110 source, focused checks pass **510 model groups**. A fresh public checkout passes **413**, with **97 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.111 source, focused checks pass **514 model groups**. A fresh public checkout passes **416**, with **98 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -531,4 +531,7 @@ From the completed weapon-22 pre-impact boundary, **Water impacts and effects** 
 
 
 The source API `PracticeAiSharedBacking` preserves the overlapping AI task and movement views: 78,000 task bytes and 78,336 movement bytes beginning 224 bytes later share a 78,560-byte region. Conflicting views are rejected and opaque tail bytes are retained. `PracticeNavigationGate` reproduces only the verified early returns, active-goal completion and active waiting branches of RIP routine 41F920. Sixty original-code cases support the restricted subset. Route construction, retargeting, waypoint-pop callbacks and the full pre-phase dispatcher remain unsupported. This source-only checkpoint adds no new study window; the water-impact checks above remain the latest hands-on test.
+
+
+`PracticePrephaseNavigation` composes a complete 250-record pass only when all pre-phase policy and idle callbacks are inactive. It visits inactive fleet records too, shares task/movement backing and rejects unsupported later navigation without publishing earlier changes. Thirty-six original whole-41FCC0 contexts support the subset: two actual map visibility pools, six activity profiles and three supplied phase-counter values. This does not execute the outer owner/phase controller or recover active policy/pathfinding. No new study button is added.
 
