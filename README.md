@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.104**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.105**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -301,6 +301,10 @@ After completing either **Copied stage 4 · normal producer** or **Copied stage 
 
 The join matches **30 complete original observations** across two actors, three equipment profiles and five visibility/history fixtures. The public child admits only the four original-equipment copied-map combinations described above. Pending passes, other owners and controlled local/sensor fixtures keep the button disabled. Candidate membership does not establish numeric shot admission or an AI attack decision: the source raw range test and equipment-scratch sentinel behavior remain distinct from the firing rules. No orders or ammunition change in this child.
 
+For owner 1, scroll the candidate child's right panel to **Prepare owner-1 members… (no firing)**. This opens an independent preparation copy using the produced flags, original equipment and ammunition. Equipment and eligibility selectors are locked for this path; task, difficulty, player-record override and the unresolved caller comparison word remain explicit supplied inputs. The earlier preparation entry below retains its existing supplied equipment and visibility presets.
+
+With the joined defaults, press the next-visit button three times: at clock **12,345**, both members prepare against fleet 15 with due **14,845**; at **14,844**, they remain waiting; at **14,845**, both reach state 2 and updates stop before firing. Reset restores the applied copy, keeping pending selectors. The continuation matches **64 original histories / 224 complete observations**, including **160 post-visit candidate scratch/list states**. No firing requests, shot admission or ammunition consumption runs. This joins visibility to preparation under the displayed supplied context, without establishing the natural caller word, full owner loop or recurring AI policy. The owner-0 preparation entry stays disabled.
+
 ### Fleet member preparation
 
 From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
@@ -441,7 +445,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.104 source, focused checks pass **480 model groups**. A fresh public checkout passes **389**, with **91 explicit skips** for optional private evidence. Form checks pass **204**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.105 source, focused checks pass **485 model groups**. A fresh public checkout passes **393**, with **92 explicit skips** for optional private evidence. Form checks pass **207**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -485,6 +489,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-owner-visibility` exports copied-map visibility, local no-selection behavior, supplied sensor/range fixtures and minimum-size controls/details.
 
 `--render-visible-candidates` exports the joined child entry, natural owner results, retained-history candidates and minimum-size controls/details.
+
+`--render-visible-preparation` exports the candidate continuation entry, original-equipment preparation, before/at-deadline states and minimum-size controls/details. Firing remains guarded.
 
 ## Repository layout
 

@@ -38,6 +38,7 @@ namespace FleetLab {
                 if(args.Length==2&&args[0]=="--render-member-launch")return PracticeFleetRequestLaunchFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-owner-visibility")return PracticeOwnerVisibilityFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-visible-candidates")return PracticeVisibleCandidateFormChecks.SavePreviews(assets,args[1]);
+                if(args.Length==2&&args[0]=="--render-visible-preparation")return PracticeVisiblePreparationFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-member-flight")return PracticeFleetRequestFlightFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-member-misses")return PracticeFleetRequestMissFormChecks.SavePreviews(assets,args[1]);
                 using(var form=new MainForm(assets)) {

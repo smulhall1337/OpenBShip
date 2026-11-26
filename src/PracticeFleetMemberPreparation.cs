@@ -21,6 +21,8 @@ namespace FleetLab
         public int ComparisonWord {get;private set;}
         public int Visits {get;private set;}
         public int Clock {get;private set;}
+        public bool UsesProducedVisibility {get;private set;}
+        public int VisibilityPreset {get;private set;}
         public int SelectedWaypoint {get;private set;}
         public int RouteUiRequests {get;private set;}
         public int TaskKind {get{return I(task,0);}}
@@ -67,6 +69,16 @@ namespace FleetLab
             }
             for(int slot=0;slot<250;slot++)if(I(c.fleets,slot*492)!=0)c.fleets[slot*492+467]=(byte)(eligibility==3||eligibility==1&&slot==14||eligibility==2&&(slot==14||slot==15)?1:0);
             return c;
+        }
+        public static PracticeFleetMemberPreparation CreateFromVisibility(string programs,PracticeMapStartup startup,PracticeVisibleCandidates joined,int initialTask,int difficulty,bool playerOverride,int comparisonWord)
+        {
+            if(joined==null)throw new ArgumentNullException("joined");
+            if(joined.Visibility.Owner!=1||joined.Scan.Actor!=16)throw new NotSupportedException("The visibility-to-preparation continuation admits owner1 / surface actor16 only.");
+            // Revalidate the captured real-map boundary, retaining the earlier
+            // supplied-input factory and its request-continuation guards.
+            var verified=PracticeVisibleCandidates.Create(programs,startup,joined.Visibility);
+            var c=Create(programs,startup,0,0,initialTask,difficulty,playerOverride,comparisonWord);
+            c.ships=verified.Scan.CopyShipPool();c.fleets=verified.Scan.CopyFleetPool();c.EligibilityProfile=-1;c.UsesProducedVisibility=true;c.VisibilityPreset=joined.Visibility.Preset;return c;
         }
         public PracticeFleetMemberPreparation Advance()
         {
