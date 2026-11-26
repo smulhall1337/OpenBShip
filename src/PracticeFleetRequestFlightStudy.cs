@@ -86,9 +86,9 @@ namespace FleetLab
 
     internal static class PracticeMemberFlightDiagram
     {
-        internal static void Draw(Graphics g,Font font,Rectangle bounds,byte[] fleets,IList<PracticeMemberProjectile> initial,IList<PracticeMemberProjectile> current,int selected,bool flight)
+        internal static Func<float,float,PointF> Draw(Graphics g,Font font,Rectangle bounds,byte[] fleets,IList<PracticeMemberProjectile> initial,IList<PracticeMemberProjectile> current,int selected,bool flight,string heading=null,string footer=null)
         {
-            int width=bounds.Width,height=bounds.Height;if(width<200||height<250)return;g.SmoothingMode=SmoothingMode.AntiAlias;
+            int width=bounds.Width,height=bounds.Height;if(width<200||height<250)return null;g.SmoothingMode=SmoothingMode.AntiAlias;
             float minX=float.MaxValue,maxX=float.MinValue,minY=float.MaxValue,maxY=float.MinValue;
             Action<float,float> include=delegate(float x,float y){minX=Math.Min(minX,x);maxX=Math.Max(maxX,x);minY=Math.Min(minY,y);maxY=Math.Max(maxY,y);};
             foreach(int id in new[]{14,15,16})include(BitConverter.ToInt16(fleets,id*492+12),BitConverter.ToInt16(fleets,id*492+14));
@@ -96,7 +96,7 @@ namespace FleetLab
             minX-=20;maxX+=20;minY-=20;maxY+=20;float scale=Math.Min((width-100)/(maxX-minX),(height-190)/(maxY-minY));
             Func<float,float,PointF> point=delegate(float x,float y){return new PointF(50+(x-minX)*scale,90+(y-minY)*scale);};
             g.DrawString("Copied world origins · X across / Y down",font,Brushes.WhiteSmoke,new PointF(14,14));
-            g.DrawString(flight?"Numeric pre-impact flight · faint dots mark launch positions.":"One local launch pass; records remain at their stored start positions.",font,Brushes.LightSteelBlue,new RectangleF(14,38,width-28,42));
+            g.DrawString(heading??(flight?"Numeric pre-impact flight · faint dots mark launch positions.":"One local launch pass; records remain at their stored start positions."),font,Brushes.LightSteelBlue,new RectangleF(14,38,width-28,42));
             if(flight)foreach(var item in initial){var p=point(item.X,item.Y);using(var brush=new SolidBrush(Color.FromArgb(85,item.SourceUnit==30?Color.Cyan:Color.Orange)))g.FillEllipse(brush,p.X-4,p.Y-4,8,8);}
             foreach(var item in current)
             {
@@ -112,7 +112,8 @@ namespace FleetLab
                 float shift=id==14?24:id==15?-42:12;
                 g.DrawString("Fleet "+id+" · "+BitConverter.ToInt16(fleets,id*492+12)+","+BitConverter.ToInt16(fleets,id*492+14),font,id==16?Brushes.Gold:id==15?Brushes.Cyan:Brushes.Orange,new PointF(Math.Max(4,Math.Min(width-170,p.X-40)),p.Y+shift));
             }
-            g.DrawString(flight?"Stops before the first impact; no damage or further firing.\r\nDashed lines show stored destinations; clock advances only by controls.":"Dashed lines show stored destinations, not moving shots.\r\nAllocation and ammo only; no impact, damage, movie or sound.",font,Brushes.LightSteelBlue,new RectangleF(14,height-64,width-28,60));
+            g.DrawString(footer??(flight?"Stops before the first impact; no damage or further firing.\r\nDashed lines show stored destinations; clock advances only by controls.":"Dashed lines show stored destinations, not moving shots.\r\nAllocation and ammo only; no impact, damage, movie or sound."),font,Brushes.LightSteelBlue,new RectangleF(14,height-64,width-28,60));
+            return point;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace FleetLab
     {
         readonly string programs;readonly PracticeMapStartup startup;
         readonly ComboBox family=new ComboBox(),capacity=new ComboBox();
-        readonly Button load=new Button(),reset=new Button(),execute=new Button(),flight=new Button();
+        readonly Button load=new Button(),reset=new Button(),execute=new Button(),flight=new Button(),misses=new Button();
         readonly Label summary=new Label(),feedback=new Label();readonly ListBox projectiles=new ListBox();
         readonly TextBox details=new TextBox();readonly LaunchCanvas canvas;readonly HashSet<Keys> held=new HashSet<Keys>();
         PracticeFleetRequestLaunch initial,state;byte[] fleets;
@@ -46,6 +46,8 @@ namespace FleetLab
             execute.Name="requestLaunchExecute";execute.Text="Consume requests / one local launch pass";add(execute,42);
             flight.Name="requestLaunchFlight";flight.Text="Open pre-impact flight… (empty pool only)";add(flight,36);
             flight.Click+=delegate{if(state!=null&&state.Executed&&state.Capacity==0&&state.CreatedObjects==2)using(var study=new PracticeFleetRequestFlightStudy(state))study.ShowDialog(this);};
+            misses.Name="requestLaunchMisses";misses.Text="F2 miss / effect history… (from launch)";add(misses,36);
+            misses.Click+=delegate{if(state!=null&&state.Executed&&state.Capacity==0&&state.Family==0&&state.CreatedObjects==2)using(var study=new PracticeFleetRequestMissStudy(programs,state))study.ShowDialog(this);};
             summary.Name="requestLaunchSummary";add(summary,166);feedback.Name="requestLaunchFeedback";add(feedback,86);
             add(new Label{Text="Newly allocated projectile records"},22);
             projectiles.Name="requestLaunchObjects";projectiles.HorizontalScrollbar=true;add(projectiles,112);
@@ -79,6 +81,7 @@ namespace FleetLab
         void Sync()
         {
             if(IsDisposed||Disposing)return;execute.Enabled=state!=null&&!state.Executed;reset.Enabled=state!=null;flight.Enabled=state!=null&&state.Executed&&state.Capacity==0&&state.CreatedObjects==2;
+            misses.Enabled=flight.Enabled&&state.Family==0;
             if(state==null){summary.Text="No admitted copied launch context loaded.";return;}
             fleets=state.CopyFleetPool();summary.Text="Applied: "+(state.Family==0?"F2 / exact range":"F3 / copied positions")+"\r\nRaw clock "+state.Clock+" · pass "+(state.Executed?"complete":"pending")+
                 "\r\nUnit 30: requests "+state.RequestCount(0)+" · ammo "+state.Ammunition(0)+"\r\nUnit 31: requests "+state.RequestCount(1)+" · ammo "+state.Ammunition(1)+

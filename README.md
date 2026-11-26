@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.101**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.102**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -348,6 +348,21 @@ After completing an **empty-pool** local launch above, click **Open pre-impact f
 
 Reset restores the copied launch without changing the parent, active battle or settings. Ammunition, requests, ships and RNG hold throughout this future-only study. Its complete 40-unit histories match **205 original observations**; the underlying motion API separately matches eight captured histories with 8,841 observations across four supplied prior deltas. These are controlled numerical histories, not complete battles or proof of natural wall-clock pacing, impacts, damage or media playback.
 
+### F2 water misses and effect lifetime
+
+After an **empty-pool F2** local launch, open **F2 miss / effect history… (from launch)**. This starts another independent copy at the launch clock. It advances the two generated projectiles through their water impacts and recovered effect counters, while holding the remaining nine firing requests per source. The F3 and capacity-fixture cases keep this entry disabled.
+
+Keep **Uniform +40 updates** and press **Next transition**:
+
+1. Clock **16,365**: one projectile remains and the first water effect appears.
+2. Clock **17,245**: both projectiles have retired and two effects are active.
+3. Clock **17,645**: the first effect retires.
+4. Clock **18,525**: the copied projectile/effect history is complete.
+
+The blue rings are modern schematic geometry; their underlying type, position and lifetime counters use recovered data. Select an effect to inspect those fields. Reset restores the applied timing copy; a different pending timing selection takes effect only on Load. The three diagnostic modes replace the first clock visit with an exact or late deadline, then use +40 updates. They preserve the source callback-before-return behavior and retired coordinate bytes.
+
+All four histories match **241 complete original observations**, including ship, fleet, timed, request, effect and score pools, RNG, movie counter and fixed counter/timestamp context. The movie-choice RNG advances even though no movie plays. Both target cells are water, so this does not reach hit, defense, damage or destruction. Ammunition stays at 6 / 6 after launch. Further firing, F3 impacts, moving fleets, recurring AI and complete battles remain separate.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -412,7 +427,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.101 source, focused checks pass **462 model groups**. A fresh public checkout passes **374**, with **88 explicit skips** for optional private evidence. Form checks pass **193**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.102 source, focused checks pass **469 model groups**. A fresh public checkout passes **380**, with **89 explicit skips** for optional private evidence. Form checks pass **197**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -450,6 +465,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-member-launch` exports copied request consumption and numeric allocation for empty, nearly full and full projectile pools, including minimum-size controls and details. It does not animate flight or impacts.
 
 `--render-member-flight` exports F2/F3 launch positions, 32 supplied updates, the last pre-impact clock and minimum-size details. Impact remains guarded.
+
+`--render-member-misses` exports the copied F2 water impacts, schematic effects, completion and diagnostic deadline timing, including minimum-size controls and details.
 
 ## Repository layout
 
