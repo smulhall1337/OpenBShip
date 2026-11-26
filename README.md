@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.116**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.117**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.116 source, focused checks pass **540 model groups**. A fresh public checkout passes **437**, with **103 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.117 source, focused checks pass **546 model groups**. A fresh public checkout passes **442**, with **104 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -559,3 +559,6 @@ Choose a different pending fixture or fleet 17, then **Load selected patrol copy
 The carrier window also offers **Whole pass** scope with zero, one or two supplied idle returns. Choose a scope and press **Load**, then **Apply**. Default fleet 15 with both idle returns yields 250 record visits, five policy callbacks, four activations, two idle returns and six counted UI refresh requests. The view selector includes idle fleet 16 (queued destination 610,590) and inactive record 249 (550,290). Their origins remain fixed. Idle returns clear task activity before navigation; the pass does not advance the outer owner/phase controller or the world clock.
 
 `PracticePrephasePatrol.EvaluateNoTargets` preserves complete ship/fleet/order pools and shared task/movement/candidate backing through this restricted joined pass. It includes later visits to aircraft activated earlier in that pass and rejects unsupported later navigation without publishing earlier changes. Public checks compare 144 original-code before/after states; private evidence compares all 1,152 captured whole-pass contexts. These are supplied collision-255/no-target contexts, not full battle scenarios. The idle-only and navigation-only APIs retain their earlier policy guards.
+
+
+`PracticeFlag23Patrol.EvaluateNoTargets` recovers the separate flag-2/3 numeric helper with a **mandatory supplied counter word**. The original routine reads an uninitialized stack local; this API does not assume a natural value. It returns complete owned pools, counted UI requests, selection, and residual counter/roster values. Original comparisons cover 168 public before/after golden states and 864 private explicit-local contexts, including signed overflow/remainder, the first-supported-group exit, kind-6/3 filtering, radius-20 waypoints and state-1 early return. This is a source API checkpoint; it adds no new study window. The normal whole-pass API continues rejecting flags 2/3 until the caller-stack behavior is separately established. Use the existing Carrier patrol whole-pass study for the current observable comparison.
