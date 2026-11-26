@@ -100,7 +100,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.112 — idle-return source checkpoint";
+            Text="Battleship Fleet Lab 0.113 — copied idle returns study";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -321,6 +321,9 @@ namespace FleetLab {
             installationStudy.Click+=delegate {try {using(var study=new PracticeInstallationStudy(Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Installation study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Installation study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Installation study");}SuppressHeldControls();};
             mapInstallationStudy.Text="Map installations…";mapInstallationStudy.AutoSize=true;mapInstallationStudy.Name="openMapInstallationStudy";mapInstallationStudy.AccessibleDescription="Read-only ordinary SCN base construction, copied placements, rosters and grids; no support or missions.";mapHeader.Controls.Add(mapInstallationStudy);
             mapInstallationStudy.Click+=delegate {try {using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs")))study.ShowDialog(this);}catch(InvalidDataException e){MessageBox.Show(this,e.Message,"Map installations");}catch(IOException e){MessageBox.Show(this,e.Message,"Map installations");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Map installations");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Map installations");}SuppressHeldControls();};
+            var idleReturnStudyButton=new Button{Text="Idle returns (study)…",Name="openIdleReturnStudy",AutoSize=true};
+            idleReturnStudyButton.AccessibleDescription="Open the fixed copied BSSB202 seed731 return-queue study; no current battle or map selection is changed.";mapHeader.Controls.Add(idleReturnStudyButton);
+            idleReturnStudyButton.Click+=delegate {try {string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var startup=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);using(var study=new PracticeIdleReturnStudy(programs,startup))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Idle returns study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Idle returns study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Idle returns study");}SuppressHeldControls();};
             timedStudyHint.AutoSize=true;timedStudyHint.Padding=new Padding(0,5,0,0);
             mapHeader.Controls.Add(timedStudyHint);
             map.Dock=DockStyle.Fill;
@@ -976,6 +979,7 @@ namespace FleetLab {
             PracticeProducedLaunchFormChecks.Run(check,assets,this);
             PracticeProducedFlightFormChecks.Run(check,assets,this);
             PracticeProducedMissFormChecks.Run(check,assets,this);
+            PracticeIdleReturnFormChecks.Run(check,assets,this);
             check("Map spawn-zone tab exposes recovered sectors and supplied reservation counts",delegate {
                 using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
                     study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
@@ -1908,6 +1912,7 @@ namespace FleetLab {
         }
     }
 }
+
 
 
 

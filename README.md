@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.112**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.113**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.112 source, focused checks pass **525 model groups**. A fresh public checkout passes **424**, with **101 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.113 source, focused checks pass **528 model groups**. A fresh public checkout passes **427**, with **101 explicit skips** for optional private evidence. Form checks pass **224**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -530,11 +530,18 @@ From the completed weapon-22 pre-impact boundary, **Water impacts and effects** 
 `--render-produced-misses` exports the boundary entry, water effects, completion, blocking diagnostic and minimum-size controls/details.
 
 
-The source API `PracticeAiSharedBacking` preserves the overlapping AI task and movement views: 78,000 task bytes and 78,336 movement bytes beginning 224 bytes later share a 78,560-byte region. Conflicting views are rejected and opaque tail bytes are retained. `PracticeNavigationGate` reproduces only the verified early returns, active-goal completion and active waiting branches of RIP routine 41F920. Sixty original-code cases support the restricted subset. Route construction, retargeting, waypoint-pop callbacks and the full pre-phase dispatcher remain unsupported. This source-only checkpoint adds no new study window; the water-impact checks above remain the latest hands-on test.
+The source API `PracticeAiSharedBacking` preserves the overlapping AI task and movement views: 78,000 task bytes and 78,336 movement bytes beginning 224 bytes later share a 78,560-byte region. Conflicting views are rejected and opaque tail bytes are retained. `PracticeNavigationGate` reproduces only the verified early returns, active-goal completion and active waiting branches of RIP routine 41F920. Sixty original-code cases support the restricted subset. Route construction, retargeting, waypoint-pop callbacks and the full pre-phase dispatcher remain unsupported. The shared backing and navigation gates are source APIs; the idle-return study below provides a separate observable example.
 
 
-`PracticePrephaseNavigation` composes a complete 250-record pass only when all pre-phase policy and idle callbacks are inactive. It visits inactive fleet records too, shares task/movement backing and rejects unsupported later navigation without publishing earlier changes. Thirty-six original whole-41FCC0 contexts support the subset: two actual map visibility pools, six activity profiles and three supplied phase-counter values. This does not execute the outer owner/phase controller or recover active policy/pathfinding. No new study button is added.
+`PracticePrephaseNavigation` composes a complete 250-record pass only when all pre-phase policy and idle callbacks are inactive. It visits inactive fleet records too, shares task/movement backing and rejects unsupported later navigation without publishing earlier changes. Thirty-six original whole-41FCC0 contexts support the subset: two actual map visibility pools, six activity profiles and three supplied phase-counter values. This does not execute the outer owner/phase controller or recover active policy/pathfinding. For an observable numeric example, use Idle returns (study).
 
 
-`PracticeIdleReturn` and `PracticePrephaseIdle` add the verified numeric idle-return rules to canonical source. Results preserve the fleet pool and shared task/movement backing and report requested route UI refreshes as data. The joined pass supports zero and multiple idle callbacks, visits all 250 records and preserves selected-waypoint state when there are no idle returns. Recorded original-code comparisons cover 48 leaf, 48 single-idle caller and 24 multiple-idle contexts; these are data cases, not complete battles. Active policy, pathfinding, networking and execution of the original renderer remain unsupported. The existing navigation-only API still rejects idle callbacks. No new study window is added in this source checkpoint.
+`PracticeIdleReturn` and `PracticePrephaseIdle` add the verified numeric idle-return rules to canonical source. Results preserve the fleet pool and shared task/movement backing and report requested route UI refreshes as data. The joined pass supports zero and multiple idle callbacks, visits all 250 records and preserves selected-waypoint state when there are no idle returns. Recorded original-code comparisons cover 48 leaf, 48 single-idle caller and 24 multiple-idle contexts; these are data cases, not complete battles. Active policy, pathfinding, networking and execution of the original renderer remain unsupported. The existing navigation-only API still rejects idle callbacks. The numeric APIs remain independent of the study window below.
+
+
+## Copied idle-return study
+
+Open **Recovered maps → Idle returns (study)…** directly. The fixed BSSB202 seed731 copy starts with fleet16 supplied in return state5. **Apply one idle + navigation pass** updates its first queued destination, caches its origin and reports one requested UI refresh. Fleet origins stay fixed; the cyan line shows queue intent, not travel. **Reset** restores the applied fixture. Selectors stay pending until **Load**.
+
+The no-return fixture preserves selected waypoint4. Mixed returns produce two requests; the all250 diagnostic produces250, including inactive records. These supplied states are numeric comparison fixtures, not naturally valid full-world gameplay. Record selection is view-only. Original rendering, policy, pathfinding, clock pacing, movies and audio do not run in this window. Closing preserves the active battle and settings. `--render-idle-returns` exports seven actual-form controls/queue/details previews.
 

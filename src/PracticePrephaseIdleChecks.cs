@@ -6,6 +6,8 @@ namespace FleetLab
 {
     internal static class PracticePrephaseIdleChecks
     {
+        internal static System.Collections.Generic.IEnumerable<string> OriginalRows
+        { get { foreach (string row in Original) yield return row; } }
         // Independent whole-caller original664 pool hashes; supplied fixtures.
         static readonly string[] Original = { 
             "0,0,0,-1,-1,0,7E9AE19E305EA03AA4E39E7CD82FE43A7D28D0523C850B203ADB5554D2BEA588,7E9AE19E305EA03AA4E39E7CD82FE43A7D28D0523C850B203ADB5554D2BEA588,2690D8E814AB23CB8FBBDEFED9AAE4D141336017724D90C71C78D1A85C4B6C84,2690D8E814AB23CB8FBBDEFED9AAE4D141336017724D90C71C78D1A85C4B6C84",
