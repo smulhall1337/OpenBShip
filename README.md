@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.106**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.107**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -311,6 +311,12 @@ Press **Queue one member visit**. Default task 0 / global 0 stores ten requests 
 
 The continuation matches **48 complete original cases**, including exact preparation endpoints, request pools and random state. A full request row can still consume random draws while retaining every queue byte. Requests do not establish actual shot admission, consume ammunition or allocate projectiles. The earlier supplied-equipment request window keeps its existing behavior; it has not been substituted for this joined path.
 
+After the joined request visit with **global 0 and empty starting rows**, open **Inspect natural-distance consumer…**. This separate copy keeps the original map positions, equipment and observers. It supplies only the selected timer and projectile-capacity fixtures. The default retains diagnostic request timer tags: applying one pass clamps them to clock + 15,000 and holds the requests. These tags do not establish the original game's initial timers.
+
+Select **Supply timer 0 (due) → Load → Apply one consumer pass**. With task 0, both F2 rows are rejected and cleared: distance 150 exceeds weapon 18's range 60 and weapon 17's range 20. Ammunition stays 30 / 150 and no record is allocated. With task 8, weapon 22 has range 375 and is admitted at the same positions: an empty pool allocates slots 0 / 1, clears the two requests and changes ammunition 8 / 8 to 7 / 7. One free slot allocates only slot 79 and uses ammunition from unit 30; a full pool still consumes the requests but uses no ammunition.
+
+Timer equality holds requests; **one before clock** is due. Successful consumption writes the recovered next rate timer. Pending timer/capacity selections require Load; Reset restores the applied copy. The separate eligibility readout ignores the timer gate. This continuation matches **60 complete original cases**, including admission, all ship/fleet/request/projectile bytes, timers, ammunition and last-target identity. It runs no projectile motion, impact, damage, original media or full AI policy. Initial timer production and natural world pacing remain unresolved.
+
 ### Fleet member preparation
 
 From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
@@ -451,7 +457,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.106 source, focused checks pass **490 model groups**. A fresh public checkout passes **397**, with **93 explicit skips** for optional private evidence. Form checks pass **210**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.107 source, focused checks pass **495 model groups**. A fresh public checkout passes **401**, with **94 explicit skips** for optional private evidence. Form checks pass **213**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -499,6 +505,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-visible-preparation` exports the candidate continuation entry, original-equipment preparation, before/at-deadline states and minimum-size controls/details. Firing remains guarded.
 
 `--render-visible-requests` exports the joined request entry, original F2/F3 request cells, global-field/full-queue diagnostics and minimum-size controls/details. No shot is executed.
+
+`--render-produced-launch` exports the natural-distance consumer entry, held timers, F2 range denial, F3 allocation/capacity cases and minimum-size controls/details.
 
 ## Repository layout
 

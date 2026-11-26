@@ -33,6 +33,7 @@ namespace FleetLab
         public bool Executed {get;private set;}
         public bool UsesProducedVisibility {get{return prepared.UsesProducedVisibility;}}
         public int VisibilityPreset {get{return prepared.VisibilityPreset;}}
+        public bool CanInspectConsumer {get{return UsesProducedVisibility&&Executed&&QueueProfile==0&&GlobalWeapon==0&&VisibilityPreset>=0&&VisibilityPreset<=1&&Difficulty==2&&ComparisonWord==0&&(InitialTask==0||InitialTask==8)&&QueuedCells.Count==(InitialTask==0?20:2);}}
         public uint RandomState {get;private set;}
         public int Clock {get{return state.Clock;}}
         public int TaskKind {get{return state.TaskKind;}}
