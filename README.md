@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.107**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.108**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -317,6 +317,10 @@ Select **Supply timer 0 (due) → Load → Apply one consumer pass**. With task 
 
 Timer equality holds requests; **one before clock** is due. Successful consumption writes the recovered next rate timer. Pending timer/capacity selections require Load; Reset restores the applied copy. The separate eligibility readout ignores the timer gate. This continuation matches **60 complete original cases**, including admission, all ship/fleet/request/projectile bytes, timers, ammunition and last-target identity. It runs no projectile motion, impact, damage, original media or full AI policy. Initial timer production and natural world pacing remain unresolved.
 
+After the **task 8 / supplied timer 0 / empty pool** allocation, open **Pre-impact flight…**. This separate weapon-22 view keeps the actual map and launch records, ammunition, request rows and random state. **Up to 32 updates** reaches clock **23,625**, positions **240,423 / 241,423**. **Advance to first deadline − 1** stops at **35,210**, positions **385,304 / 385,301**. The second record has the earlier deadline, 35,211; all update controls then disable and Reset restores the launch.
+
+Motion matches **eight original histories / 28,070 complete state observations**, including different supplied prior deltas. The UI's +40 composition matches all **646 observations** in its two captured histories. Its final shorter clock jump preserves prior delta 40 explicitly. These are numeric state comparisons, not thousands of gameplay scenarios. The view never enters impact, runs no further consumer or world updates, and does not establish natural frame pacing. Other timer/capacity fixtures keep this continuation disabled.
+
 ### Fleet member preparation
 
 From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
@@ -457,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.107 source, focused checks pass **495 model groups**. A fresh public checkout passes **401**, with **94 explicit skips** for optional private evidence. Form checks pass **213**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.108 source, focused checks pass **500 model groups**. A fresh public checkout passes **405**, with **95 explicit skips** for optional private evidence. Form checks pass **216**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -507,6 +511,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-visible-requests` exports the joined request entry, original F2/F3 request cells, global-field/full-queue diagnostics and minimum-size controls/details. No shot is executed.
 
 `--render-produced-launch` exports the natural-distance consumer entry, held timers, F2 range denial, F3 allocation/capacity cases and minimum-size controls/details.
+
+`--render-produced-flight` exports the weapon-22 continuation entry, launch positions, 32 updates, pre-impact boundary, reset and minimum-size controls/details.
 
 ## Repository layout
 

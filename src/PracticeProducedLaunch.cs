@@ -14,6 +14,7 @@ namespace FleetLab
         public uint Clock {get{return (uint)Requests.Clock;}}public uint RandomState {get{return Requests.RandomState;}}
         public int ClampedTimers {get;private set;}public int RejectedRows {get;private set;}public int ConsumedRequests {get;private set;}public int AttemptedObjects {get;private set;}
         public int CreatedObjects {get{return created.Length;}}public int LastTargetFleet {get{return objects.LastTargetFleet;}}
+        public bool CanInspectFlight {get{return Executed&&Capacity==0&&CreatedObjects==2&&Requests.InitialTask==8&&TimerMode==1;}}
         public byte[] CopyShipPool(){return objects.CopyShipPool();}public byte[] CopyFleetPool(){return objects.CopyFleetPool();}public byte[] CopyTimedPool(){return objects.CopyTimedPool();}public byte[] CopyOrderPool(){return (byte[])orders.Clone();}public int[] CopyCreatedSlots(){return (int[])created.Clone();}
         static void Member(int member){if(member<0||member>1)throw new ArgumentOutOfRangeException("member");}
         public int Weapon(int member){Member(member);return Requests.WeaponField(member);}
