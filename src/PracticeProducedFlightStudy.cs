@@ -10,7 +10,7 @@ namespace FleetLab
 {
     public sealed class PracticeProducedFlightStudy:Form
     {
-        readonly Button step=new Button(),batch=new Button(),boundary=new Button(),reset=new Button();
+        readonly Button step=new Button(),batch=new Button(),boundary=new Button(),reset=new Button(),misses=new Button();
         readonly Label summary=new Label(),feedback=new Label();readonly ListBox projectiles=new ListBox();readonly TextBox details=new TextBox();
         readonly FlightCanvas canvas;readonly HashSet<Keys> held=new HashSet<Keys>();
         PracticeProducedFlight state,initial;
@@ -39,6 +39,8 @@ namespace FleetLab
             add(new Label{Text="Live numeric projectile records"},22);projectiles.Name="producedFlightObjects";projectiles.HorizontalScrollbar=true;add(projectiles,94);projectiles.SelectedIndexChanged+=delegate{RefreshDetails();};
             details.Name="producedFlightDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,270);
             var close=new Button{Name="producedFlightClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
+            misses.Name="producedFlightMisses";misses.Text="Water impacts and effects... (at boundary)";add(misses,38);side.Controls.SetChildIndex(misses,side.Controls.IndexOf(projectiles)-1);
+            misses.Click+=delegate{if(state==null||!state.AtBoundary)return;using(var child=new PracticeProducedMissStudy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Programs"),state))child.ShowDialog(this);};
             step.Click+=delegate{Advance(0);};batch.Click+=delegate{Advance(1);};boundary.Click+=delegate{Advance(2);};
             reset.Click+=delegate{if(initial!=null){state=initial;Feedback("Copied launch positions restored; parent launch and active battle are unchanged.");Sync();}};
             KeyUp+=delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};Deactivate+=delegate{foreach(Keys k in new[]{Keys.Enter,Keys.Space})if((GetAsyncKeyState((int)k)&0x8000)!=0)held.Add(k);};
@@ -62,7 +64,7 @@ namespace FleetLab
         }
         void Sync()
         {
-            if(IsDisposed||Disposing)return;step.Enabled=batch.Enabled=state!=null&&state.CanStep;boundary.Enabled=state!=null&&!state.AtBoundary;reset.Enabled=state!=null;
+            if(IsDisposed||Disposing)return;step.Enabled=batch.Enabled=state!=null&&state.CanStep;boundary.Enabled=state!=null&&!state.AtBoundary;reset.Enabled=state!=null;misses.Enabled=state!=null&&state.AtBoundary;
             if(state==null){summary.Text="No admitted empty-pool launch loaded.";return;}
             var items=state.Projectiles;summary.Text="Applied: "+"F3 id 22"+" · two copied projectiles\r\nRaw clock "+state.Clock+" · first deadline "+state.FirstDeadline+"\r\nRemaining "+state.Remaining+" · updates "+state.Updates+
                 "\r\nInterpolations "+state.InterpolatedRecords+" · stopped slot "+state.LastStoppedAtRecord+"\r\nUnit 30: "+items[0].X+","+items[0].Y+"\r\nUnit 31: "+items[1].X+","+items[1].Y+"\r\nAmmo and request rows hold at their launch values.";

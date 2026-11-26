@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.108**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.109**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.108 source, focused checks pass **500 model groups**. A fresh public checkout passes **405**, with **95 explicit skips** for optional private evidence. Form checks pass **216**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.109 source, focused checks pass **505 model groups**. A fresh public checkout passes **409**, with **96 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -524,3 +524,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 - `outputs/`: ignored local guides, reports and checked recovery archives.
 
 Original media, binaries, user settings, historical builds and research artifacts are excluded from Git. If present, `outputs/Current-Status.txt` and the latest `work/checkpoint-*-handoff.txt` provide private continuity; a fresh checkout builds without them. Local maintenance keeps the current runtime and one previous comparison build, preserving user data and checked recovery paths when retiring temporary copies.
+
+From the completed weapon-22 pre-impact boundary, **Water impacts and effects** continues the two verified water targets. Choose the first-clock visit, Load, then step, visit transitions or finish. Exact-deadline timing ends at clock36571; the boundary+40 diagnostic initially blocks both shots and ends at36610. Both histories retain ammunition7/7, empty requests and RNG4052711439. Blue rings are schematic. This bounded continuation does not run ship damage, movies, further firing or the full Practice world. Six original-code histories and216 complete observations support it.
+
+`--render-produced-misses` exports the boundary entry, water effects, completion, blocking diagnostic and minimum-size controls/details.
+

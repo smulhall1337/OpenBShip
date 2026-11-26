@@ -279,6 +279,7 @@ namespace FleetLab {
             PracticeVisibleRequestChecks.Run(check,checkEvidence,assets);
             PracticeProducedLaunchChecks.Run(check,checkEvidence,assets);
             PracticeProducedFlightChecks.Run(check,checkEvidence,assets);
+            PracticeProducedMissChecks.Run(check,checkEvidence,assets);
             check("Original frame clock preserves pre-wait sample, prior delta and observed zero reset",delegate {
                 // Values from source probes234/236 and the two observed zero
                 // exits in actual234. Expected values are recorded boundaries.
@@ -2873,3 +2874,4 @@ namespace FleetLab {
         }
     }
 }
+
