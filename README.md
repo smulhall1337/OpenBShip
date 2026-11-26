@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.111**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.112**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.111 source, focused checks pass **514 model groups**. A fresh public checkout passes **416**, with **98 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.112 source, focused checks pass **525 model groups**. A fresh public checkout passes **424**, with **101 explicit skips** for optional private evidence. Form checks pass **220**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -534,4 +534,7 @@ The source API `PracticeAiSharedBacking` preserves the overlapping AI task and m
 
 
 `PracticePrephaseNavigation` composes a complete 250-record pass only when all pre-phase policy and idle callbacks are inactive. It visits inactive fleet records too, shares task/movement backing and rejects unsupported later navigation without publishing earlier changes. Thirty-six original whole-41FCC0 contexts support the subset: two actual map visibility pools, six activity profiles and three supplied phase-counter values. This does not execute the outer owner/phase controller or recover active policy/pathfinding. No new study button is added.
+
+
+`PracticeIdleReturn` and `PracticePrephaseIdle` add the verified numeric idle-return rules to canonical source. Results preserve the fleet pool and shared task/movement backing and report requested route UI refreshes as data. The joined pass supports zero and multiple idle callbacks, visits all 250 records and preserves selected-waypoint state when there are no idle returns. Recorded original-code comparisons cover 48 leaf, 48 single-idle caller and 24 multiple-idle contexts; these are data cases, not complete battles. Active policy, pathfinding, networking and execution of the original renderer remain unsupported. The existing navigation-only API still rejects idle callbacks. No new study window is added in this source checkpoint.
 
