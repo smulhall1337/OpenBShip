@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.113**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.114**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.113 source, focused checks pass **528 model groups**. A fresh public checkout passes **427**, with **101 explicit skips** for optional private evidence. Form checks pass **224**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.114 source, focused checks pass **534 model groups**. A fresh public checkout passes **432**, with **102 explicit skips** for optional private evidence. Form checks pass **224**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -545,3 +545,5 @@ Open **Recovered maps → Idle returns (study)…** directly. The fixed BSSB202 
 
 The no-return fixture preserves selected waypoint4. Mixed returns produce two requests; the all250 diagnostic produces250, including inactive records. These supplied states are numeric comparison fixtures, not naturally valid full-world gameplay. Record selection is view-only. Original rendering, policy, pathfinding, clock pacing, movies and audio do not run in this window. Closing preserves the active battle and settings. `--render-idle-returns` exports seven actual-form controls/queue/details previews.
 
+
+`PracticeAttachmentPatrol.EvaluateNoTargets` adds the recovered flag-1 carrier attachment policy as an immutable numeric API. It handles stored-aircraft activation at the signed 5,000 timer threshold, descending attachment visits, mode-4 equipment, empty-target member-state resets, patrol waypoint selection, signed WORD clamping and the state-1 early return. `PracticeAttachmentPatrolStudyBasis` constructs supplied copied fixtures from the verified BSSB202 seed-731 baseline. Forty-eight original-code before/after full-state golden cases run in a public checkout; optional private evidence compares all 384 captured contexts. Route UI requests are returned as data. This API does not advance an AI world, move aircraft, execute the original renderer, or admit visible-target combat; it is not yet connected to the idle-return pass or a new window. The current observable comparison remains Idle returns (study).
