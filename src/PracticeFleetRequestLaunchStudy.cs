@@ -12,7 +12,7 @@ namespace FleetLab
     {
         readonly string programs;readonly PracticeMapStartup startup;
         readonly ComboBox family=new ComboBox(),capacity=new ComboBox();
-        readonly Button load=new Button(),reset=new Button(),execute=new Button();
+        readonly Button load=new Button(),reset=new Button(),execute=new Button(),flight=new Button();
         readonly Label summary=new Label(),feedback=new Label();readonly ListBox projectiles=new ListBox();
         readonly TextBox details=new TextBox();readonly LaunchCanvas canvas;readonly HashSet<Keys> held=new HashSet<Keys>();
         PracticeFleetRequestLaunch initial,state;byte[] fleets;
@@ -44,6 +44,8 @@ namespace FleetLab
             load.Name="requestLaunchLoad";load.Text="Load generated requests + copied fixtures";add(load,36);
             reset.Name="requestLaunchReset";reset.Text="Reset applied copy before launch";add(reset,34);
             execute.Name="requestLaunchExecute";execute.Text="Consume requests / one local launch pass";add(execute,42);
+            flight.Name="requestLaunchFlight";flight.Text="Open pre-impact flight… (empty pool only)";add(flight,36);
+            flight.Click+=delegate{if(state!=null&&state.Executed&&state.Capacity==0&&state.CreatedObjects==2)using(var study=new PracticeFleetRequestFlightStudy(state))study.ShowDialog(this);};
             summary.Name="requestLaunchSummary";add(summary,166);feedback.Name="requestLaunchFeedback";add(feedback,86);
             add(new Label{Text="Newly allocated projectile records"},22);
             projectiles.Name="requestLaunchObjects";projectiles.HorizontalScrollbar=true;add(projectiles,112);
@@ -76,7 +78,7 @@ namespace FleetLab
         }
         void Sync()
         {
-            if(IsDisposed||Disposing)return;execute.Enabled=state!=null&&!state.Executed;reset.Enabled=state!=null;
+            if(IsDisposed||Disposing)return;execute.Enabled=state!=null&&!state.Executed;reset.Enabled=state!=null;flight.Enabled=state!=null&&state.Executed&&state.Capacity==0&&state.CreatedObjects==2;
             if(state==null){summary.Text="No admitted copied launch context loaded.";return;}
             fleets=state.CopyFleetPool();summary.Text="Applied: "+(state.Family==0?"F2 / exact range":"F3 / copied positions")+"\r\nRaw clock "+state.Clock+" · pass "+(state.Executed?"complete":"pending")+
                 "\r\nUnit 30: requests "+state.RequestCount(0)+" · ammo "+state.Ammunition(0)+"\r\nUnit 31: requests "+state.RequestCount(1)+" · ammo "+state.Ammunition(1)+
@@ -99,31 +101,7 @@ namespace FleetLab
             internal LaunchCanvas(PracticeFleetRequestLaunchStudy owner){this.owner=owner;DoubleBuffered=true;ResizeRedraw=true;}
             protected override void OnPaint(PaintEventArgs e)
             {
-                base.OnPaint(e);if(owner.state==null||Width<200||Height<250)return;var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
-                float minX=float.MaxValue,maxX=float.MinValue,minY=float.MaxValue,maxY=float.MinValue;
-                foreach(int id in new[]{14,15,16}){float x=BitConverter.ToInt16(owner.fleets,id*492+12),y=BitConverter.ToInt16(owner.fleets,id*492+14);minX=Math.Min(minX,x);maxX=Math.Max(maxX,x);minY=Math.Min(minY,y);maxY=Math.Max(maxY,y);}
-                minX-=20;maxX+=20;minY-=20;maxY+=20;float scale=Math.Min((Width-100)/(maxX-minX),(Height-190)/(maxY-minY));
-                Func<float,float,PointF> point=delegate(float x,float y){return new PointF(50+(x-minX)*scale,90+(y-minY)*scale);};
-                Func<int,PointF> origin=delegate(int id){return point(BitConverter.ToInt16(owner.fleets,id*492+12),BitConverter.ToInt16(owner.fleets,id*492+14));};
-                g.DrawString("Copied world origins · X across / Y down",owner.Font,Brushes.WhiteSmoke,new PointF(14,14));
-                g.DrawString("One local launch pass; records remain at their stored start positions.",owner.Font,Brushes.LightSteelBlue,new RectangleF(14,38,Width-28,42));
-                foreach(var item in owner.state.Projectiles)
-                {
-                    var from=point(item.X,item.Y);int target=item.TargetFleet*492;
-                    var to=point(BitConverter.ToInt16(owner.fleets,target+12)+item.OffsetX,BitConverter.ToInt16(owner.fleets,target+14)+item.OffsetY);
-                    using(var pen=new Pen(item.SourceUnit==30?Color.Cyan:Color.Orange,2)){pen.DashStyle=DashStyle.Dash;g.DrawLine(pen,from,to);}
-                    g.FillEllipse(item.SourceUnit==30?Brushes.Cyan:Brushes.Orange,from.X-4,from.Y-4,8,8);
-                    var selected=owner.projectiles.SelectedItem as PracticeMemberProjectile;if(selected!=null&&selected.Slot==item.Slot)using(var pen=new Pen(Color.White,2))g.DrawEllipse(pen,from.X-8,from.Y-8,16,16);
-                }
-                foreach(int id in new[]{16,15,14})
-                {
-                    PointF p=origin(id);Brush brush=id==16?Brushes.Gold:id==15?Brushes.Cyan:Brushes.Orange;
-                    using(var pen=new Pen(id==16?Color.Gold:id==15?Color.Cyan:Color.Orange,2))g.DrawRectangle(pen,p.X-10,p.Y-10,20,20);
-                    // Separate labels when exact-range fixtures coincide.
-                    float shift=id==14?24:id==15?-42:12;
-                    g.DrawString("Fleet "+id+" · "+BitConverter.ToInt16(owner.fleets,id*492+12)+","+BitConverter.ToInt16(owner.fleets,id*492+14),owner.Font,brush,new PointF(Math.Max(4,Math.Min(Width-170,p.X-40)),p.Y+shift));
-                }
-                g.DrawString("Dashed lines show stored destinations, not moving shots.\r\nAllocation and ammo only; no impact, damage, movie or sound.",owner.Font,Brushes.LightSteelBlue,new RectangleF(14,Height-64,Width-28,60));
+                base.OnPaint(e);if(owner.state==null)return;var selected=owner.projectiles.SelectedItem as PracticeMemberProjectile;PracticeMemberFlightDiagram.Draw(e.Graphics,owner.Font,ClientRectangle,owner.fleets,owner.state.Projectiles,owner.state.Projectiles,selected==null?-1:selected.Slot,false);
             }
         }
     }

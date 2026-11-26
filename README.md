@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.100**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.101**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -338,6 +338,16 @@ Choose **One free projectile slot** and Load, then run the pass: source 30 recei
 
 Reset restores the applied copy before consumption, keeping different pending selectors. Only one pass runs per copy. All six before/after contexts match complete original ship, fleet, request and timed-object snapshots plus last-target data. This establishes numeric allocation and ammunition behavior in those contexts, with UI/media callbacks excluded. Projectile motion, impacts, damage, actual movies/audio and complete AI/world pacing remain separate.
 
+### Copied pre-impact flight
+
+After completing an **empty-pool** local launch above, click **Open pre-impact flight…**. This opens an independent copy of those two projectiles. Nearly full and full capacity fixtures keep the button disabled because their occupied test records are unsuitable for motion.
+
+**1 numeric update (+40)** supplies one clock step and prior delta 40. **Up to 32 updates** stops when another full step would reach impact. The original integer rounding can leave a coordinate unchanged on a visit. Cyan and orange points show current positions, faint dots mark launch positions, and a white ring follows the viewed record. Dashed lines show the remaining destination vectors. Fleets stay fixed.
+
+**Advance to first deadline − 1** applies normal steps and then an explicit shorter clock jump, retaining prior delta 40. F2 stops at **16,344**, with positions **245,423** and **250,428**. F3 stops at **28,944**, with positions **307,382** and **325,381**. A quotient-zero record stops the entire original pass, leaving later records unchanged. The controls never enter the first impact; F3 weapon 19's impact branch remains unsupported.
+
+Reset restores the copied launch without changing the parent, active battle or settings. Ammunition, requests, ships and RNG hold throughout this future-only study. Its complete 40-unit histories match **205 original observations**; the underlying motion API separately matches eight captured histories with 8,841 observations across four supplied prior deltas. These are controlled numerical histories, not complete battles or proof of natural wall-clock pacing, impacts, damage or media playback.
+
 ## Installation recovery study
 
 Open **Recovered maps → Installation study…** to inspect a fresh copy built by the original compound-constructor rules. The four grids keep the source convention: local X selects a row and local Y selects a column. Select a fleet and unit slot; the gold outline identifies its occupied cells.
@@ -402,7 +412,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.100 source, focused checks pass **455 model groups**. A fresh public checkout passes **368**, with **87 explicit skips** for optional private evidence. Form checks pass **189**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.101 source, focused checks pass **462 model groups**. A fresh public checkout passes **374**, with **88 explicit skips** for optional private evidence. Form checks pass **193**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -438,6 +448,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-member-requests` exports prepared and queued request rows, alternate selectors and F3 behavior, including minimum-size controls and lists.
 
 `--render-member-launch` exports copied request consumption and numeric allocation for empty, nearly full and full projectile pools, including minimum-size controls and details. It does not animate flight or impacts.
+
+`--render-member-flight` exports F2/F3 launch positions, 32 supplied updates, the last pre-impact clock and minimum-size details. Impact remains guarded.
 
 ## Repository layout
 
