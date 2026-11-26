@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.102**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.103**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -285,7 +285,17 @@ The scratch array starts at **-1**, then records roster positions for metadata b
 
 The maintained factory matches **880 controlled original cases**, including full ship/fleet pools, normalized selected context, scratch/list bytes and selection/request results. Cases vary actor kind, parent category, equipment, eligibility, coordinates, active owner and scenario-8 ownership. The new 82-byte range span records the complete source read, extending beyond the previously extracted 35-entry firing table into adjacent data; it is deliberately named a **raw** span. No additional weapon meanings are inferred.
 
-Positive matches for the category-1/3 target-kind filters, maximum list capacity, natural visibility production, the full member-order dispatcher and recurring policy remain outside these captured cases. The general running-world guards remain in place. The original code is not executed by this study or its ordinary checks.
+Positive matches for the category-1/3 target-kind filters, maximum list capacity, the full member-order dispatcher and recurring policy remain outside these captured cases. The owner-visibility producer is now recovered in a separate study below; it has not been joined to this candidate scan. The general running-world guards remain in place. The original code is not executed by this study or its ordinary checks.
+
+### Owner visibility and packed history
+
+From **BSSB202 startup → seed 731 / stage 4**, open **Owner visibility…**. The default prepares a separate copy for owner 1. Press **Apply one owner visibility pass**: fleet 14 stays at level 0 and fleet 15 receives level 1. Select a fleet to inspect its current level, observer far-contact byte and packed history before and after the pass. Reset restores the applied input; changed selectors remain pending until Load.
+
+The copied-map presets retain the recovered positions and sensor radii. Controlled sensor and local-range presets instead supply positions, radii and history bytes explicitly. Marker colors show raw levels; coincident records share a marker and remain individually selectable in the list. This schematic view does not reproduce original fog graphics.
+
+Normal passes clear current levels and far-contact flags. Near, middle and far radii are independent inclusive Chebyshev tests. Kinds 2, 10 and 25 also recover their owner's two history bits. The original upgrade comparison uses the shifted history byte before masking other owners' fields; this unusual behavior is preserved. In local mode 2, selecting no weapon returns before any clear, leaving prepared flags unchanged. With a selected weapon, original range and combat-table filters apply from the supplied selected-fleet origin. Observer kind 12 has a verified empty target-table row in this executable.
+
+The pure producer matches **9,638 original before/after cases**; copied preset construction matches the **9,610 cases** represented by the window. These are numerical fixture cases, not completed battles. No firing, movement, whole owner loop or recurring AI runs. Existing candidate and member studies keep their supplied visibility inputs.
 
 ### Fleet member preparation
 
@@ -427,7 +437,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.102 source, focused checks pass **469 model groups**. A fresh public checkout passes **380**, with **89 explicit skips** for optional private evidence. Form checks pass **197**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.103 source, focused checks pass **475 model groups**. A fresh public checkout passes **385**, with **90 explicit skips** for optional private evidence. Form checks pass **201**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -467,6 +477,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-member-flight` exports F2/F3 launch positions, 32 supplied updates, the last pre-impact clock and minimum-size details. Impact remains guarded.
 
 `--render-member-misses` exports the copied F2 water impacts, schematic effects, completion and diagnostic deadline timing, including minimum-size controls and details.
+
+`--render-owner-visibility` exports copied-map visibility, local no-selection behavior, supplied sensor/range fixtures and minimum-size controls/details.
 
 ## Repository layout
 
