@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using FleetLab;
 internal sealed class FleetMemberCellRequests
 {
-    byte[] ships,fleets,orders;int weapon,randomCalls,sourceUnit=30,targetFleet=14;uint random;
+    byte[] ships,fleets,orders;int weapon,randomCalls,sourceUnit=30,targetFleet=14;uint random;bool originalEquipment;
     static int I(byte[] b,int at){return BitConverter.ToInt32(b,at);}static int W(byte[] b,int at){return BitConverter.ToInt16(b,at);}static void I(byte[] b,int at,int v){BitConverter.GetBytes(v).CopyTo(b,at);}static void W(byte[] b,int at,int v){BitConverter.GetBytes((short)v).CopyTo(b,at);}
     static void Need(bool ok,string text){if(!ok)throw new InvalidDataException(text);}
     int Random10(){if(++randomCalls>100000)throw new InvalidDataException("Cell selector unsupported random-search budget");random=unchecked(random*214013u+2531011u);return (int)((random>>16)&32767)%10;}
@@ -14,7 +14,7 @@ internal sealed class FleetMemberCellRequests
     int Fire(int x,int y)
     {
         if(W(ships,sourceUnit*268+196+weapon*2)==0)return 1;
-        var result=PracticeFireQueue.Enqueue(ships,fleets,orders,sourceUnit,weapon,targetFleet,x,y);orders=result.CopyOrderPool();return weapon==19?1:result.ReturnCode;
+        var result=PracticeFireQueue.Enqueue(ships,fleets,orders,sourceUnit,weapon,targetFleet,x,y);orders=result.CopyOrderPool();return weapon==19||originalEquipment&&weapon==22?1:result.ReturnCode;
     }
     bool Neighbors(int[] grid,int x,int y,bool includeThree)
     {
@@ -64,10 +64,14 @@ internal sealed class FleetMemberCellRequests
     }
     void Run(int visibility){Need(I(fleets,targetFleet*492)==1,"Cell selector compound target branch is not admitted");if(visibility==1)PartialScan(false);else if(visibility==2)PartialScan(true);else if(visibility==3)FullScan();else throw new InvalidDataException("Cell selector visibility");}
     internal static byte[] Apply(byte[] ships,byte[] fleets,byte[] orders,int source,int target,uint seed,out uint randomAfter)
+    {return Apply(ships,fleets,orders,source,target,seed,out randomAfter,false);}
+    internal static byte[] Apply(byte[] ships,byte[] fleets,byte[] orders,int source,int target,uint seed,out uint randomAfter,bool originalEquipment)
     {
         Need((source==30||source==31)&&(target==14||target==15),"Cell selector admitted cell source/target");
-        var state=new FleetMemberCellRequests{ships=ships,fleets=fleets,orders=orders,sourceUnit=source,targetFleet=target,weapon=I(ships,source*268+84),random=seed};
-        Need(state.weapon==14||state.weapon==19,"Cell selector selected weapon fixture");state.Run(fleets[target*492+467]);randomAfter=state.random;return state.orders;
+        var state=new FleetMemberCellRequests{ships=ships,fleets=fleets,orders=orders,sourceUnit=source,targetFleet=target,weapon=I(ships,source*268+84),random=seed,originalEquipment=originalEquipment};
+        // Original601 separately admits the actual17/18 F2 and22 F3 fields.
+        // The earlier supplied14/19 fixtures keep their existing boundary.
+        Need(originalEquipment?(state.weapon==17||state.weapon==18||state.weapon==22):(state.weapon==14||state.weapon==19),"Cell selector selected weapon fixture");state.Run(fleets[target*492+467]);randomAfter=state.random;return state.orders;
     }
 }
 

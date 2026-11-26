@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.105**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.106**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -305,6 +305,12 @@ For owner 1, scroll the candidate child's right panel to **Prepare owner-1 membe
 
 With the joined defaults, press the next-visit button three times: at clock **12,345**, both members prepare against fleet 15 with due **14,845**; at **14,844**, they remain waiting; at **14,845**, both reach state 2 and updates stop before firing. Reset restores the applied copy, keeping pending selectors. The continuation matches **64 original histories / 224 complete observations**, including **160 post-visit candidate scratch/list states**. No firing requests, shot admission or ammunition consumption runs. This joins visibility to preparation under the displayed supplied context, without establishing the natural caller word, full owner loop or recurring AI policy. The owner-0 preparation entry stays disabled.
 
+After completing that joined preparation with **difficulty 2, override 0 and caller word 0**, open **Copy to one request visit… (joined only)**. Task 0 or 8 and either admitted visibility preset are supported. This child holds the completed preparation and produced flags; its global weapon field and empty/nine/full tagged queue fixtures remain explicit inputs. The timer tags are comparison data, not recovered natural timer initialization.
+
+Press **Queue one member visit**. Default task 0 / global 0 stores ten requests per source against fleet 15, using original selected weapons **18 and 17**. Both members then return to state 0. Global field 17 instead leaves states 0 / 1; field 18 gives 1 / 0; field 22 gives 1 / 1, with the same request cells. Task 8 prepares original weapon **22** for both and stores one request per source in empty rows. Select a list slot to follow its white ring; both sources use the single displayed target grid. Reset preserves pending global/queue selectors until Load.
+
+The continuation matches **48 complete original cases**, including exact preparation endpoints, request pools and random state. A full request row can still consume random draws while retaining every queue byte. Requests do not establish actual shot admission, consume ammunition or allocate projectiles. The earlier supplied-equipment request window keeps its existing behavior; it has not been substituted for this joined path.
+
 ### Fleet member preparation
 
 From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
@@ -445,7 +451,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.105 source, focused checks pass **485 model groups**. A fresh public checkout passes **393**, with **92 explicit skips** for optional private evidence. Form checks pass **207**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.106 source, focused checks pass **490 model groups**. A fresh public checkout passes **397**, with **93 explicit skips** for optional private evidence. Form checks pass **210**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -491,6 +497,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-visible-candidates` exports the joined child entry, natural owner results, retained-history candidates and minimum-size controls/details.
 
 `--render-visible-preparation` exports the candidate continuation entry, original-equipment preparation, before/at-deadline states and minimum-size controls/details. Firing remains guarded.
+
+`--render-visible-requests` exports the joined request entry, original F2/F3 request cells, global-field/full-queue diagnostics and minimum-size controls/details. No shot is executed.
 
 ## Repository layout
 

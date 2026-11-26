@@ -91,9 +91,16 @@ namespace FleetLab
             if(Visits!=3||EquipmentProfile<3||EquipmentProfile>5||EligibilityProfile!=2||PlayerOverride||(Difficulty!=0&&Difficulty!=2)||visibility<1||visibility>3)throw new NotSupportedException("Choose a captured request continuation prefix.");
             var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();next.fleets[14*492+467]=next.fleets[15*492+467]=(byte)visibility;return next;
         }
+        internal PracticeFleetMemberPreparation CopyForProducedRequests()
+        {
+            if(!CanCopyProducedRequests)throw new NotSupportedException("Choose a completed produced-visibility owner1 preparation: difficulty2,override0,comparison0,task0/8,original equipment;both members must reach state2.");
+            var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();return next;
+        }
+        public bool CanCopyProducedRequests {get{return UsesProducedVisibility&&VisibilityPreset>=0&&VisibilityPreset<=1&&EquipmentProfile==0&&EligibilityProfile==-1&&Visits==3&&Difficulty==2&&!PlayerOverride&&ComparisonWord==0&&(InitialTask==0||InitialTask==8)&&MemberState(0)==2&&MemberState(1)==2&&MemberTarget(0)==15&&MemberTarget(1)==15&&fleets[15*492+467]==1&&WeaponField(0)==(InitialTask==0?18:22)&&WeaponField(1)==(InitialTask==0?17:22);}}
         internal PracticeFleetMemberPreparation ApplyRequestVisit(FleetMemberRequestSink sink,int globalWeapon)
         {
-            if(sink==null||Visits!=3||(globalWeapon!=0&&globalWeapon!=14&&globalWeapon!=19))throw new InvalidOperationException("Choose one captured member request visit.");
+            bool admitted=UsesProducedVisibility?(globalWeapon==0||globalWeapon==17||globalWeapon==18||globalWeapon==22):(globalWeapon==0||globalWeapon==14||globalWeapon==19);
+            if(sink==null||Visits!=3||!admitted)throw new InvalidOperationException("Choose one captured member request visit.");
             var next=(PracticeFleetMemberPreparation)MemberwiseClone();next.ships=(byte[])ships.Clone();next.fleets=(byte[])fleets.Clone();next.task=(byte[])task.Clone();next.Visit(sink,globalWeapon);next.Visits++;return next;
         }
         void Visit(){Visit(null,0);}
