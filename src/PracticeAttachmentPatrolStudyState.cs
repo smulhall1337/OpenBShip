@@ -82,6 +82,7 @@ namespace FleetLab
         readonly byte[] ships, fleets, orders, candidates;
         readonly PracticeAiSharedBacking backing;
         readonly PracticeAttachmentPatrolResult result;
+        readonly PracticePrephasePatrolResult wholeResult;
         readonly int[] children;
         public int ParentFleet { get; private set; }
         public bool InitiallyActive { get; private set; }
@@ -92,31 +93,57 @@ namespace FleetLab
         public int Coordinates { get; private set; }
         public bool ExtraCarrier { get; private set; }
         public bool StateOne { get; private set; }
-        public bool Executed { get { return result != null; } }
-        public int RouteUiRequests { get { return result == null ? 0 : result.RouteUiRequests; } }
-        public int SelectedWaypoint { get { return result == null ? 4 : result.SelectedWaypoint; } }
-        public int StoppedAtStateOne { get { return result == null ? -1 : result.StoppedAtStateOne; } }
+        public bool WholePass { get; private set; }
+        public int IdleProfile { get; private set; }
+        public bool Executed { get { return result != null || wholeResult != null; } }
+        public int RouteUiRequests { get { return wholeResult != null ? wholeResult.RouteUiRequests : result == null ? 0 : result.RouteUiRequests; } }
+        public int SelectedWaypoint { get { return wholeResult != null ? wholeResult.SelectedWaypoint : result == null ? 4 : result.SelectedWaypoint; } }
+        public int StoppedAtStateOne { get { return wholeResult != null ? wholeResult.StateOneStops.Count == 0 ? -1 : wholeResult.StateOneStops[0] : result == null ? -1 : result.StoppedAtStateOne; } }
+        public int Visits { get { return wholeResult == null ? 0 : wholeResult.Visits; } }
+        public int PolicyVisits { get { return wholeResult == null ? 0 : wholeResult.PolicyVisits; } }
+        public int IdleReturns { get { return wholeResult == null ? 0 : wholeResult.IdleReturns; } }
+        public int CompletedGoals { get { return wholeResult == null ? 0 : wholeResult.CompletedGoals; } }
+        public int ActiveWaiting { get { return wholeResult == null ? 0 : wholeResult.ActiveWaiting; } }
         public ReadOnlyCollection<int> Children { get { return Array.AsReadOnly((int[])children.Clone()); } }
-        public ReadOnlyCollection<int> VisitedAircraft { get { return result == null ? Array.AsReadOnly(new int[0]) : result.VisitedAircraft; } }
-        public ReadOnlyCollection<int> ActivatedAircraft { get { return result == null ? Array.AsReadOnly(new int[0]) : result.ActivatedAircraft; } }
-        public PracticeAiSharedBacking Backing { get { return result == null ? backing : result.Backing; } }
-        public byte[] CopyShipPool() { return result == null ? (byte[])ships.Clone() : result.CopyShipPool(); }
-        public byte[] CopyFleetPool() { return result == null ? (byte[])fleets.Clone() : result.CopyFleetPool(); }
-        public byte[] CopyPrimaryOrders() { return result == null ? (byte[])orders.Clone() : result.CopyPrimaryOrders(); }
-        public byte[] CopyCandidateRegion() { return result == null ? (byte[])candidates.Clone() : result.CopyCandidateRegion(); }
+        public ReadOnlyCollection<int> VisitedAircraft { get { return wholeResult != null ? wholeResult.VisitedAircraft : result == null ? Array.AsReadOnly(new int[0]) : result.VisitedAircraft; } }
+        public ReadOnlyCollection<int> ActivatedAircraft { get { return wholeResult != null ? wholeResult.ActivatedAircraft : result == null ? Array.AsReadOnly(new int[0]) : result.ActivatedAircraft; } }
+        public PracticeAiSharedBacking Backing { get { return wholeResult != null ? wholeResult.Backing : result == null ? backing : result.Backing; } }
+        public byte[] CopyShipPool() { return wholeResult != null ? wholeResult.CopyShipPool() : result == null ? (byte[])ships.Clone() : result.CopyShipPool(); }
+        public byte[] CopyFleetPool() { return wholeResult != null ? wholeResult.CopyFleetPool() : result == null ? (byte[])fleets.Clone() : result.CopyFleetPool(); }
+        public byte[] CopyPrimaryOrders() { return wholeResult != null ? wholeResult.CopyPrimaryOrders() : result == null ? (byte[])orders.Clone() : result.CopyPrimaryOrders(); }
+        public byte[] CopyCandidateRegion() { return wholeResult != null ? wholeResult.CopyCandidateRegion() : result == null ? (byte[])candidates.Clone() : result.CopyCandidateRegion(); }
         internal PracticeAttachmentPatrolStudyState(PracticeAttachmentPatrolTables t, byte[] s, byte[] f, byte[] o,
             PracticeAiSharedBacking b, byte[] c, int parent, bool active, int timer, int delta, int phase,
-            bool waypoint, int coordinates, bool extra, bool one, int[] children, PracticeAttachmentPatrolResult result)
+            bool waypoint, int coordinates, bool extra, bool one, int[] children, PracticeAttachmentPatrolResult result,
+            bool wholePass = false, int idleProfile = 0, PracticePrephasePatrolResult wholeResult = null)
         {
             tables = t; ships = (byte[])s.Clone(); fleets = (byte[])f.Clone(); orders = (byte[])o.Clone(); backing = b; candidates = (byte[])c.Clone();
             ParentFleet = parent; InitiallyActive = active; Timer = timer; RawDelta = delta; InitialPhase = phase;
             ExistingWaypoint = waypoint; Coordinates = coordinates; ExtraCarrier = extra; StateOne = one; this.children = (int[])children.Clone(); this.result = result;
+            WholePass = wholePass; IdleProfile = idleProfile; this.wholeResult = wholeResult;
         }
-        PracticeAttachmentPatrolStudyState With(PracticeAttachmentPatrolResult next)
-        { return new PracticeAttachmentPatrolStudyState(tables, ships, fleets, orders, backing, candidates, ParentFleet, InitiallyActive, Timer, RawDelta, InitialPhase, ExistingWaypoint, Coordinates, ExtraCarrier, StateOne, children, next); }
+        PracticeAttachmentPatrolStudyState With(PracticeAttachmentPatrolResult next, PracticePrephasePatrolResult whole = null)
+        { return new PracticeAttachmentPatrolStudyState(tables, ships, fleets, orders, backing, candidates, ParentFleet, InitiallyActive, Timer, RawDelta, InitialPhase, ExistingWaypoint, Coordinates, ExtraCarrier, StateOne, children, next, WholePass, IdleProfile, whole); }
+        public PracticeAttachmentPatrolStudyState ForWholePass(int idleProfile)
+        {
+            if (Executed || WholePass) throw new InvalidOperationException("Choose whole-pass scope on a fresh leaf fixture before execution.");
+            if (idleProfile < 0 || idleProfile > 2) throw new ArgumentOutOfRangeException("idleProfile");
+            var f = (byte[])fleets.Clone(); var r = backing.CopyRegion();
+            for (int g = 0; g < 250; g++) f[g * 492 + 482] = 255;
+            for (int n = 0; n < idleProfile; n++)
+            {
+                int idle = n == 0 ? 16 : 249, at = idle * 492, ta = idle * 312;
+                PracticeAttachmentPatrolStudyBasis.I(f, at + 472, n == 0 ? 5 : 6); PracticeAttachmentPatrolStudyBasis.W(f, at + 488, 0);
+                for (int q = 0; q < 5; q++) { PracticeAttachmentPatrolStudyBasis.W(f, at + 40 + q * 2, q == 0 ? -1 : 100 + q * 10); PracticeAttachmentPatrolStudyBasis.W(f, at + 50 + q * 2, 200 + q * 10); }
+                PracticeAttachmentPatrolStudyBasis.I(r, ta + 28, 550); PracticeAttachmentPatrolStudyBasis.I(r, ta + 32, 290); PracticeAttachmentPatrolStudyBasis.I(r, ta + 304, 2);
+            }
+            return new PracticeAttachmentPatrolStudyState(tables, ships, f, orders, new PracticeAiSharedBacking(r), candidates,
+                ParentFleet, InitiallyActive, Timer, RawDelta, InitialPhase, ExistingWaypoint, Coordinates, ExtraCarrier, StateOne, children, null, true, idleProfile);
+        }
         public PracticeAttachmentPatrolStudyState Execute()
         {
             if (Executed) throw new InvalidOperationException("The copied policy visit is complete. Reset to repeat.");
+            if (WholePass) return With(null, PracticePrephasePatrol.EvaluateNoTargets(tables, ships, fleets, orders, backing, candidates, RawDelta, 0, 4));
             return With(PracticeAttachmentPatrol.EvaluateNoTargets(tables, ships, fleets, orders, backing, candidates, ParentFleet, RawDelta, 4));
         }
         public PracticeAttachmentPatrolStudyState Reset() { return With(null); }

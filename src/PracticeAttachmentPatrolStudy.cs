@@ -17,7 +17,8 @@ namespace FleetLab
             "Stored: signed timer overflow (diagnostic)", "Active: WORD overflow (diagnostic)"
         };
         readonly PracticeAttachmentPatrolStudyBasis basis;
-        readonly ComboBox profile = new ComboBox(), parent = new ComboBox(), child = new ComboBox();
+        readonly ComboBox profile = new ComboBox(), parent = new ComboBox(), scope = new ComboBox(), child = new ComboBox();
+        readonly List<int> viewRecords = new List<int>();
         readonly Button load = new Button(), reset = new Button(), apply = new Button();
         readonly Label summary = new Label(), feedback = new Label();
         readonly ListBox groups = new ListBox(), queue = new ListBox();
@@ -26,6 +27,7 @@ namespace FleetLab
         readonly HashSet<Keys> held = new HashSet<Keys>();
         PracticeAttachmentPatrolStudyState state; bool changing; int appliedProfile;
         internal PracticeAttachmentPatrolStudyState StudyState { get { return state; } }
+        int ViewedRecord { get { return child.SelectedIndex < 0 || child.SelectedIndex >= viewRecords.Count ? -1 : viewRecords[child.SelectedIndex]; } }
         [DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
         public PracticeAttachmentPatrolStudy(string programs, PracticeMapStartup startup)
         {
@@ -45,22 +47,23 @@ namespace FleetLab
                 if (button != null) { button.UseVisualStyleBackColor = false; button.FlatStyle = FlatStyle.Flat; button.EnabledChanged += delegate { if (button.IsDisposed || button.Disposing) return; button.BackColor = button.Enabled ? Color.FromArgb(28, 55, 76) : Color.LightGray; button.ForeColor = button.Enabled ? ForeColor : Color.Black; }; }
                 side.Controls.Add(c);
             };
-            add(new Label { Text = "One carrier-policy visit on a fixed copied map. It may activate aircraft and queue patrol targets. Origins stay fixed; no clock, movement or battle runs. Targets are explicitly hidden in this fixture. UI refreshes are counted data." }, 94);
-            add(new Label { Text = "Pending fixture / carrier (apply with Load)" }, 20);
+            add(new Label { Text = "Choose one carrier visit or a whole 250-record pass on a fixed copied map. Aircraft activation and queued targets are numeric results; origins stay fixed. Targets are hidden in this fixture. UI refreshes are counted data; no running world clock." }, 94);
+            add(new Label { Text = "Pending fixture / carrier / scope (apply with Load)" }, 20);
             profile.Name = "patrolProfile"; profile.DropDownStyle = ComboBoxStyle.DropDownList; profile.DropDownWidth = 470; profile.Items.AddRange(Profiles); profile.SelectedIndex = 0; add(profile, 30);
             parent.Name = "patrolParent"; parent.DropDownStyle = ComboBoxStyle.DropDownList; parent.Items.AddRange(new object[] { "Fleet 15 · unit 27 · four attached groups", "Fleet 17 · unit 32 · two attached groups" }); parent.SelectedIndex = 0; add(parent, 30);
+            scope.Name = "patrolScope"; scope.DropDownStyle = ComboBoxStyle.DropDownList; scope.DropDownWidth = 470; scope.Items.AddRange(new object[] { "One carrier visit (leaf comparison)", "Whole pass · no idle returns", "Whole pass · fleet 16 idle return", "Whole pass · fleet 16 + record 249 returns" }); scope.SelectedIndex = 0; add(scope, 30);
             load.Name = "patrolLoad"; load.Text = "Load selected patrol copy"; add(load, 34);
             reset.Name = "patrolReset"; reset.Text = "Reset applied copy before visit"; add(reset, 34);
             apply.Name = "patrolApply"; apply.Text = "Apply one carrier policy visit"; add(apply, 40);
             summary.Name = "patrolSummary"; add(summary, 148); feedback.Name = "patrolFeedback"; add(feedback, 64);
             add(new Label { Text = "Attached groups: kind / timer / phase / target" }, 20);
             groups.Name = "patrolGroups"; groups.HorizontalScrollbar = true; add(groups, 90);
-            add(new Label { Text = "View attached group (selection only)" }, 20);
+            add(new Label { Text = "View group / supplied idle record (selection only)" }, 20);
             child.Name = "patrolChild"; child.DropDownStyle = ComboBoxStyle.DropDownList; add(child, 30);
             queue.Name = "patrolQueue"; queue.HorizontalScrollbar = true; add(queue, 100);
             details.Name = "patrolDetails"; details.Multiline = true; details.ReadOnly = true; details.ScrollBars = ScrollBars.Vertical; details.BackColor = BackColor; details.ForeColor = ForeColor; add(details, 310);
             var close = new Button { Name = "patrolClose", Text = "Close" }; add(close, 34); close.Click += delegate { Close(); };
-            profile.SelectedIndexChanged += delegate { Pending(); }; parent.SelectedIndexChanged += delegate { Pending(); };
+            profile.SelectedIndexChanged += delegate { Pending(); }; parent.SelectedIndexChanged += delegate { Pending(); }; scope.SelectedIndexChanged += delegate { Pending(); };
             child.SelectedIndexChanged += delegate { if (!changing) RefreshChild(); };
             load.Click += delegate { LoadCopy(); };
             reset.Click += delegate { if (state != null) { state = state.Reset(); Feedback("Applied copy restored. Pending selections remain pending."); Sync(false); } };
@@ -96,6 +99,7 @@ namespace FleetLab
             var next = basis.CreateFixture(parent.SelectedIndex == 0 ? 15 : 17, active, p == 6 ? int.MaxValue : active ? 1234 : 4999,
                 p == 1 ? 0 : active ? 40 : 1, p == 3 || p == 5 ? 2 : p == 4 ? 4 : p == 7 ? 3 : 0,
                 p == 3 || p == 4, p == 7 ? 2 : 0, false, p == 5);
+            if (scope.SelectedIndex > 0) next = next.ForWholePass(scope.SelectedIndex - 1);
             state = next; appliedProfile = p; Feedback("Copied carrier and supplied policy inputs loaded. Apply one visit to compare."); Sync(true);
         }
         void Sync(bool choose)
@@ -103,28 +107,40 @@ namespace FleetLab
             if (IsDisposed || Disposing) return; apply.Enabled = reset.Enabled = child.Enabled = state != null;
             if (state == null) { summary.Text = "No admitted patrol copy."; load.Enabled = false; return; }
             apply.Enabled = !state.Executed;
+            apply.Text = state.WholePass ? "Apply whole 250-record pass" : "Apply one carrier policy visit";
             summary.Text = "Applied: " + Profiles[appliedProfile] + "\r\nParent fleet " + state.ParentFleet + " · visit " + (state.Executed ? "complete" : "prepared") +
+                "\r\nScope " + (state.WholePass ? "whole pass · " + state.Visits + " records · " + state.PolicyVisits + " policies" : "one carrier helper") + " · idle " + state.IdleReturns +
                 "\r\nActivated " + state.ActivatedAircraft.Count + " · member visits " + state.VisitedAircraft.Count +
                 "\r\nUI requests " + state.RouteUiRequests + " · selection 4 -> " + state.SelectedWaypoint +
                 "\r\nEarly stop at state 1: " + (state.StoppedAtStateOne < 0 ? "none" : "group " + state.StoppedAtStateOne) + "\r\nSupplied delta " + state.RawDelta + "; world clock unchanged.";
             var f = state.CopyFleetPool(); groups.Items.Clear();
             foreach (int id in state.Children) { var task = state.Backing.CopyTaskRecord(id); groups.Items.Add(id + ": kind " + BitConverter.ToInt32(f, id * 492) + " / t " + BitConverter.ToInt32(task, 252) + " / p " + BitConverter.ToInt32(task, 200) + " / " + BitConverter.ToInt16(f, id * 492 + 40) + "," + BitConverter.ToInt16(f, id * 492 + 50)); }
             changing = true;
-            if (choose || child.Items.Count != state.Children.Count) { child.Items.Clear(); foreach (int id in state.Children) child.Items.Add("Attached group " + id); child.SelectedIndex = child.Items.Count - 1; }
+            int expected = state.Children.Count + (state.WholePass ? state.IdleProfile : 0);
+            if (choose || child.Items.Count != expected)
+            {
+                child.Items.Clear(); viewRecords.Clear();
+                foreach (int id in state.Children) { child.Items.Add("Attached group " + id); viewRecords.Add(id); }
+                if (state.WholePass && state.IdleProfile > 0) { child.Items.Add("Supplied idle fleet 16"); viewRecords.Add(16); }
+                if (state.WholePass && state.IdleProfile > 1) { child.Items.Add("Supplied inactive record 249"); viewRecords.Add(249); }
+                child.SelectedIndex = child.Items.Count - 1;
+            }
             changing = false; RefreshChild();
         }
         void RefreshChild()
         {
             if (state == null || IsDisposed || Disposing || child.SelectedIndex < 0) return;
-            int id = state.Children[child.SelectedIndex], at = id * 492; var initial = state.Reset(); var before = initial.CopyFleetPool(); var after = state.CopyFleetPool(); var bt = initial.Backing.CopyTaskRecord(id); var t = state.Backing.CopyTaskRecord(id);
+            int id = ViewedRecord, at = id * 492; var initial = state.Reset(); var before = initial.CopyFleetPool(); var after = state.CopyFleetPool(); var bt = initial.Backing.CopyTaskRecord(id); var t = state.Backing.CopyTaskRecord(id);
             queue.Items.Clear(); for (int n = 0; n < 5; n++) queue.Items.Add(n + ": X " + BitConverter.ToInt16(before, at + 40 + n * 2) + " -> " + BitConverter.ToInt16(after, at + 40 + n * 2) + " · Y " + BitConverter.ToInt16(before, at + 50 + n * 2) + " -> " + BitConverter.ToInt16(after, at + 50 + n * 2));
-            details.Text = "Viewed group " + id + " · kind " + BitConverter.ToInt32(before, at) + " -> " + BitConverter.ToInt32(after, at) +
+            details.Text = (id == 16 || id == 249 ? "Viewed idle record " : "Viewed group ") + id + " · kind " + BitConverter.ToInt32(before, at) + " -> " + BitConverter.ToInt32(after, at) +
                 "\r\nOrigin " + BitConverter.ToInt16(after, at + 12) + "," + BitConverter.ToInt16(after, at + 14) + " (unchanged)" +
                 "\r\nTimer " + BitConverter.ToInt32(bt, 252) + " -> " + BitConverter.ToInt32(t, 252) + "\r\nPhase " + BitConverter.ToInt32(bt, 200) + " -> " + BitConverter.ToInt32(t, 200) +
                 "\r\nFirst member state " + BitConverter.ToInt32(bt, 212) + " -> " + BitConverter.ToInt32(t, 212) +
-                "\r\n\r\nGold ring = carrier origin. Purple ring = viewed aircraft origin. Cyan cross/line = queued target after the visit, not travel. Source coordinates increase right/down. All markers are schematic." +
+                "\r\nNavigation activity " + BitConverter.ToInt32(bt, 304) + " -> " + BitConverter.ToInt32(t, 304) +
+                "\r\n\r\nGold ring = carrier origin. Purple ring = viewed record origin. Cyan cross/line = queued target after the visit, not travel. Source coordinates increase right/down. All markers are schematic." +
                 "\r\n\r\nStored groups activate at signed timer >= 5,000. Attachments visit from slot 3 down to 0. Empty-target callbacks clear six member states. State 1 clears timer/phase and stops later attachment visits. Valid phases keep a queued first target; invalid phases replace it." +
-                "\r\n\r\nThe copied BSSB202 seed731 basis is original-derived. Visibility flags, timers, phases and diagnostic coordinates are supplied fixtures. No moving aircraft, visible-target combat, source renderer, flag2/3 policy, pathfinding or complete Practice world runs. Closing preserves the active battle and settings.";
+                "\r\n\r\nWhole-pass scope visits all 250 records in source order: policy, then idle return, then navigation. Newly activated flagged aircraft are visited later in that pass. Supplied idle records clear activity before navigation; they do not move. The world clock stays fixed." +
+                "\r\n\r\nThe copied BSSB202 seed731 basis is original-derived. Visibility, collision flags, timers, phases, returns and diagnostic coordinates are supplied fixtures. No moving aircraft, visible-target combat, source renderer, flag2/3 policy, pathfinding or complete Practice world runs. Closing preserves the active battle and settings.";
             canvas.Invalidate();
         }
         sealed class PatrolCanvas : Control
@@ -142,7 +158,7 @@ namespace FleetLab
                 int pa = s.ParentFleet * 492, px = BitConverter.ToInt16(f, pa + 12), py = BitConverter.ToInt16(f, pa + 14); bool parentInside = px >= 0 && px <= 640 && py >= 0 && py <= 640;
                 if (parentInside) { var p = point(px, py); using (var pen = new Pen(Color.Gold, 2)) e.Graphics.DrawEllipse(pen, p.X - 9, p.Y - 9, 18, 18); e.Graphics.DrawString("Carrier " + s.ParentFleet, owner.Font, Brushes.Gold, p.X + 12, p.Y - 20); }
                 else e.Graphics.DrawString("Diagnostic carrier outside world: " + px + "," + py, owner.Font, Brushes.Orange, 16, 43);
-                int selected = owner.child.SelectedIndex < 0 ? -1 : s.Children[owner.child.SelectedIndex];
+                int selected = owner.ViewedRecord;
                 foreach (int id in s.Children)
                 {
                     int at = id * 492, x = BitConverter.ToInt16(f, at + 12), y = BitConverter.ToInt16(f, at + 14), tx = BitConverter.ToInt16(f, at + 40), ty = BitConverter.ToInt16(f, at + 50);
@@ -155,6 +171,17 @@ namespace FleetLab
                         string label = id + ": " + tx + "," + ty;
                         float width = e.Graphics.MeasureString(label, owner.Font).Width;
                         e.Graphics.DrawString(label, owner.Font, Brushes.Cyan, Math.Max(2, target.X - width - 8), target.Y + 8);
+                    }
+                }
+                if (selected == 16 || selected == 249)
+                {
+                    int at = selected * 492, x = BitConverter.ToInt16(f, at + 12), y = BitConverter.ToInt16(f, at + 14), tx = BitConverter.ToInt16(f, at + 40), ty = BitConverter.ToInt16(f, at + 50); var origin = point(x, y);
+                    using (var pen = new Pen(Color.MediumPurple, 3)) e.Graphics.DrawEllipse(pen, origin.X - 7, origin.Y - 7, 14, 14);
+                    e.Graphics.DrawString("Idle " + selected, owner.Font, Brushes.MediumPurple, origin.X + 9, origin.Y + 9);
+                    if (s.Executed && tx >= 0 && tx <= 640 && ty >= 0 && ty <= 640)
+                    {
+                        var goal = point(tx, ty); using (var pen = new Pen(Color.Cyan, 2)) { e.Graphics.DrawLine(pen, origin, goal); e.Graphics.DrawLine(pen, goal.X - 5, goal.Y, goal.X + 5, goal.Y); e.Graphics.DrawLine(pen, goal.X, goal.Y - 5, goal.X, goal.Y + 5); }
+                        e.Graphics.DrawString("Queued " + tx + "," + ty, owner.Font, Brushes.Cyan, Math.Max(2, goal.X - 100), goal.Y + 9);
                     }
                 }
                 e.Graphics.DrawString("One numeric visit changes activation and queues; origins stay fixed.\r\nUse the group selector and scrollable details to inspect each result.", owner.Font, Brushes.LightSteelBlue, 16, Math.Max(70, ClientSize.Height - 58));

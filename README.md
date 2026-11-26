@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.115**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.116**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.115 source, focused checks pass **534 model groups**. A fresh public checkout passes **432**, with **102 explicit skips** for optional private evidence. Form checks pass **228**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.116 source, focused checks pass **540 model groups**. A fresh public checkout passes **437**, with **103 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -554,3 +554,8 @@ The no-return fixture preserves selected waypoint4. Mixed returns produce two re
 Open **Recovered maps → Carrier patrol (study)…** directly. The window uses its own fixed copied BSSB202 seed-731 state, with no map selection required. The default fleet 15 has four actual attached aircraft groups. **Apply one carrier policy visit** crosses the supplied timer from 4,999 to 5,000, activates four groups, reports four member visits and four UI refresh requests, and clears selected waypoint 4 to −1. Gold marks the carrier, purple marks the viewed aircraft origin, and cyan shows queued patrol intent. Aircraft origins stay fixed.
 
 Choose a different pending fixture or fleet 17, then **Load selected patrol copy**. The timer-hold fixture performs no activation; active fixtures show preserved or replaced targets, the state-1 early return, and diagnostic integer overflow. **Reset** restores the applied copy without applying pending selectors. Apply disables after one visit. The group selector and scrollable queue/details expose each attached group; Escape closes the window. The current Classic battle and settings are preserved. These supplied no-target cases do not run a moving-aircraft world or visible-target combat.
+
+
+The carrier window also offers **Whole pass** scope with zero, one or two supplied idle returns. Choose a scope and press **Load**, then **Apply**. Default fleet 15 with both idle returns yields 250 record visits, five policy callbacks, four activations, two idle returns and six counted UI refresh requests. The view selector includes idle fleet 16 (queued destination 610,590) and inactive record 249 (550,290). Their origins remain fixed. Idle returns clear task activity before navigation; the pass does not advance the outer owner/phase controller or the world clock.
+
+`PracticePrephasePatrol.EvaluateNoTargets` preserves complete ship/fleet/order pools and shared task/movement/candidate backing through this restricted joined pass. It includes later visits to aircraft activated earlier in that pass and rejects unsupported later navigation without publishing earlier changes. Public checks compare 144 original-code before/after states; private evidence compares all 1,152 captured whole-pass contexts. These are supplied collision-255/no-target contexts, not full battle scenarios. The idle-only and navigation-only APIs retain their earlier policy guards.

@@ -45,6 +45,27 @@ namespace FleetLab
                 }
                 using (var bad = new PracticeAttachmentPatrolStudy(programs, PracticeMapStartup.CreateBssb202(programs, source, 732))) { Show(bad, owner); Need(bad.StudyState == null && !Find<Button>(bad, "patrolApply").Enabled && !Find<Button>(bad, "patrolLoad").Enabled && Find<Label>(bad, "patrolFeedback").Text.Contains("seed731"), "Unsupported seed admitted"); bad.Close(); }
             });
+            check("Carrier whole-pass form displays shared policy idle and navigation results and resets applied scope", delegate
+            {
+                using (var f = new PracticeAttachmentPatrolStudy(programs, startup))
+                {
+                    Show(f, owner); Find<ComboBox>(f, "patrolScope").SelectedIndex = 3; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick();
+                    Need(f.StudyState.WholePass && f.StudyState.Visits == 250 && f.StudyState.PolicyVisits == 5 && f.StudyState.IdleReturns == 2 && f.StudyState.RouteUiRequests == 6 && f.StudyState.SelectedWaypoint == -1 && Find<ComboBox>(f, "patrolChild").Items.Count == 6 && Find<TextBox>(f, "patrolDetails").Text.Contains("Viewed idle record 249") && Find<ListBox>(f, "patrolQueue").Items[0].ToString().Contains("550"), "Whole joined display");
+                    Find<ComboBox>(f, "patrolChild").SelectedIndex = 4; Need(Find<TextBox>(f, "patrolDetails").Text.Contains("Viewed idle record 16") && Find<ListBox>(f, "patrolQueue").Items[0].ToString().Contains("610"), "Idle fleet queue selection");
+                    Find<ComboBox>(f, "patrolScope").SelectedIndex = 0; Find<Button>(f, "patrolReset").PerformClick(); Need(f.StudyState.WholePass && f.StudyState.IdleProfile == 2 && !f.StudyState.Executed && Find<ComboBox>(f, "patrolScope").SelectedIndex == 0, "Applied scope changed on reset");
+                    Find<Button>(f, "patrolLoad").PerformClick(); Need(!f.StudyState.WholePass && Find<ComboBox>(f, "patrolChild").Items.Count == 4, "Pending leaf scope not applied"); f.Close();
+                }
+            });
+            check("Carrier whole-pass form preserves zero-output selection and handles idle before later carrier policy", delegate
+            {
+                using (var f = new PracticeAttachmentPatrolStudy(programs, startup))
+                {
+                    Show(f, owner); Find<ComboBox>(f, "patrolProfile").SelectedIndex = 1; Find<ComboBox>(f, "patrolParent").SelectedIndex = 1; Find<ComboBox>(f, "patrolScope").SelectedIndex = 1; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick();
+                    Need(f.StudyState.Visits == 250 && f.StudyState.PolicyVisits == 1 && f.StudyState.RouteUiRequests == 0 && f.StudyState.SelectedWaypoint == 4, "Zero-output whole pass");
+                    Find<ComboBox>(f, "patrolScope").SelectedIndex = 2; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick(); Need(f.StudyState.IdleReturns == 1 && f.StudyState.RouteUiRequests == 1 && f.StudyState.SelectedWaypoint == -1, "Earlier idle selection state");
+                    Find<ComboBox>(f, "patrolProfile").SelectedIndex = 5; Find<ComboBox>(f, "patrolScope").SelectedIndex = 3; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick(); Need(f.StudyState.PolicyVisits == 3 && f.StudyState.VisitedAircraft.Count == 1 && f.StudyState.StoppedAtStateOne == 28 && f.StudyState.IdleReturns == 2, "Whole pass after early carrier-helper return"); f.Close();
+                }
+            });
             check("Recovered maps opens carrier patrol directly and preserves the active battle", delegate
             {
                 var main = owner as MainForm; Need(main != null, "Main owner"); var tabs = (TabControl)typeof(MainForm).GetField("tabs", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(main); int old = tabs.SelectedIndex, maps = -1;
@@ -67,9 +88,11 @@ namespace FleetLab
                 capture("01-Prepared"); Find<Button>(f, "patrolApply").PerformClick(); capture("02-Activated"); Find<Panel>(f, "patrolScroll").ScrollControlIntoView(Find<TextBox>(f, "patrolDetails")); capture("03-Details");
                 Find<ComboBox>(f, "patrolProfile").SelectedIndex = 1; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick(); Find<Panel>(f, "patrolScroll").AutoScrollPosition = Point.Empty; capture("04-Hold");
                 Find<ComboBox>(f, "patrolProfile").SelectedIndex = 5; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick(); capture("05-Early-Return");
-                f.Size = f.MinimumSize; Find<Panel>(f, "patrolScroll").AutoScrollPosition = Point.Empty; capture("06-Minimum-Controls"); Find<Panel>(f, "patrolScroll").ScrollControlIntoView(Find<TextBox>(f, "patrolDetails")); capture("07-Minimum-Details"); f.Close();
+                f.Size = f.MinimumSize; Find<Panel>(f, "patrolScroll").AutoScrollPosition = Point.Empty; capture("06-Minimum-Controls"); Find<Panel>(f, "patrolScroll").ScrollControlIntoView(Find<TextBox>(f, "patrolDetails")); capture("07-Minimum-Details");
+                f.Size = new Size(1180, 860); Find<ComboBox>(f, "patrolProfile").SelectedIndex = 0; Find<ComboBox>(f, "patrolScope").SelectedIndex = 3; Find<Button>(f, "patrolLoad").PerformClick(); Find<Button>(f, "patrolApply").PerformClick(); Find<Panel>(f, "patrolScroll").AutoScrollPosition = Point.Empty; capture("08-Whole-Idle249"); Find<ComboBox>(f, "patrolChild").SelectedIndex = 4; capture("09-Whole-Idle16");
+                f.Size = f.MinimumSize; Find<Panel>(f, "patrolScroll").ScrollControlIntoView(Find<TextBox>(f, "patrolDetails")); capture("10-Whole-Minimum-Details"); f.Close();
             }
-            File.WriteAllText(Path.Combine(destination, "Scope.txt"), "Seven actual-form copied carrier-patrol previews. One numeric visit changes activation/queues; origins stay fixed. UI requests counted,not source renderer. Supplied visibility/timer/phase fixtures;no movement/clock/visible-target combat/fullworld or physical acceptance.\r\n"); return 0;
+            File.WriteAllText(Path.Combine(destination, "Scope.txt"), "Ten actual-form copied carrier-patrol previews,including whole250-record policy/idle/navigation scope. Numeric visits change activation/queues;origins stayfixed. UI requests counted,not source renderer. Supplied visibility/collision/timer/phase/idle fixtures;no movement/clock/visible-target combat/fullworld or physical acceptance.\r\n"); return 0;
         }
     }
 }
