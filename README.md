@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.99**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.100**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -326,7 +326,17 @@ The original member loop tests a **separate global weapon field** after storing 
 
 The canonical continuation matches **648 whole original cases**, including complete ship/fleet/context/request pools, produced scratch/list bytes, RNG and selection/request context. Of these, 540 reach the request-producing state and 108 are F3/task-0 negative cases. The cell selector additionally matches **1,260 original helper cases**, including empty, nearly full, full, kind-change and target-change rows. These are controlled contexts, not completed battles.
 
-Only request storage is joined here. Original order consumption, firing admission, ammunition use, projectiles, impact, damage, compound targets, the recurring AI policy and natural hidden-input production remain outside this continuation. Existing projectile/impact studies are separate; they have not been composed with this member loop into a complete Practice battle.
+This window joins only request storage. The separate local-launch study below continues two copied request presets through allocation. Impact, damage, compound targets, recurring AI policy and natural hidden-input production remain outside this member continuation. Existing projectile/impact studies have not been composed with it into a complete Practice battle.
+
+### Generated requests to local launch
+
+From the **seed 731 / stage 4** startup, open **Requests → local launch…**. The default loads generated F2 requests with explicit copied fixtures: both target origins at exact source range **20**, observer fleet 249 with owner 1 and radii 255, zero order timers and an empty projectile pool. These overrides make the two sources admitted; they do not establish natural AI visibility or timer setup.
+
+Press **Consume requests / one local launch pass**. Units 30 and 31 each lose one queued request and one round: requests become **9 / 9**, ammunition **6 / 6**, and two numeric projectile records appear in the list. Selecting a record shows its stored start, target offsets and deadline. The schematic's dashed lines show stored destinations; the records do not move in this window.
+
+Choose **One free projectile slot** and Load, then run the pass: source 30 receives slot **79**, source 31 allocates nothing, and ammunition becomes **6 / 7**. Both requests are still consumed. With **Full projectile pool**, neither allocates or uses ammunition, but both requests are consumed. The occupied kind-99 records are capacity fixtures and are never stepped. The F3 preset preserves the copied map positions and starts with one request per unit; successful allocation leaves both request rows empty.
+
+Reset restores the applied copy before consumption, keeping different pending selectors. Only one pass runs per copy. All six before/after contexts match complete original ship, fleet, request and timed-object snapshots plus last-target data. This establishes numeric allocation and ammunition behavior in those contexts, with UI/media callbacks excluded. Projectile motion, impacts, damage, actual movies/audio and complete AI/world pacing remain separate.
 
 ## Installation recovery study
 
@@ -392,7 +402,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.99 source, focused checks pass **449 model groups**. A fresh public checkout passes **362**, with **87 explicit skips** for optional private evidence. Form checks pass **185**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.100 source, focused checks pass **455 model groups**. A fresh public checkout passes **368**, with **87 explicit skips** for optional private evidence. Form checks pass **189**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -426,6 +436,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-member-preparation` exports equipment choice, deadline checks, the guarded firing boundary and supplied comparison-word cases at default and minimum sizes.
 
 `--render-member-requests` exports prepared and queued request rows, alternate selectors and F3 behavior, including minimum-size controls and lists.
+
+`--render-member-launch` exports copied request consumption and numeric allocation for empty, nearly full and full projectile pools, including minimum-size controls and details. It does not animate flight or impacts.
 
 ## Repository layout
 
