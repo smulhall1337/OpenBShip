@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.103**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.104**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -297,6 +297,10 @@ Normal passes clear current levels and far-contact flags. Near, middle and far r
 
 The pure producer matches **9,638 original before/after cases**; copied preset construction matches the **9,610 cases** represented by the window. These are numerical fixture cases, not completed battles. No firing, movement, whole owner loop or recurring AI runs. Existing candidate and member studies keep their supplied visibility inputs.
 
+After completing either **Copied stage 4 · normal producer** or **Copied stage 4 · prefilled history** for owner 0 or 1, click **Scan produced-visibility candidates…**. This read-only child feeds the produced flags unchanged into the recovered raw candidate lookup, retaining the original equipment and map positions. On the natural copied map, owner 1 / actor 16 finds candidate 15; owner 0 / actor 14 finds candidate 9. Owner 0's explicit prefilled-history fixture returns 9, 3, 2, 0 in source scan order. Select an id to inspect its location, distance and produced flags; closing preserves the visibility parent.
+
+The join matches **30 complete original observations** across two actors, three equipment profiles and five visibility/history fixtures. The public child admits only the four original-equipment copied-map combinations described above. Pending passes, other owners and controlled local/sensor fixtures keep the button disabled. Candidate membership does not establish numeric shot admission or an AI attack decision: the source raw range test and equipment-scratch sentinel behavior remain distinct from the firing rules. No orders or ammunition change in this child.
+
 ### Fleet member preparation
 
 From the same **seed 731 / stage 4** startup, open **Member preparation…**. This separate copied prefix follows equipment choice, target assignment and waiting states for fleet 16. It stops before executing member state 2, which would enter the firing path. No shot or ammunition use occurs here.
@@ -437,7 +441,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.103 source, focused checks pass **475 model groups**. A fresh public checkout passes **385**, with **90 explicit skips** for optional private evidence. Form checks pass **201**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.104 source, focused checks pass **480 model groups**. A fresh public checkout passes **389**, with **91 explicit skips** for optional private evidence. Form checks pass **204**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -479,6 +483,8 @@ Use `--render-map-yard-study` with a new output directory to export seven copied
 `--render-member-misses` exports the copied F2 water impacts, schematic effects, completion and diagnostic deadline timing, including minimum-size controls and details.
 
 `--render-owner-visibility` exports copied-map visibility, local no-selection behavior, supplied sensor/range fixtures and minimum-size controls/details.
+
+`--render-visible-candidates` exports the joined child entry, natural owner results, retained-history candidates and minimum-size controls/details.
 
 ## Repository layout
 
