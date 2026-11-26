@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.118**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.119**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -461,7 +461,7 @@ AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are ins
 
 ## Validation
 
-For the v0.118 source, focused checks pass **552 model groups**. A fresh public checkout passes **447**, with **105 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.119 source, focused checks pass **558 model groups**. A fresh public checkout passes **452**, with **106 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -565,3 +565,6 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 
 
 `PracticePrephaseFlag23.EvaluateNoTargets` adds a separately bounded whole-dispatcher API with a mandatory initial caller word and a returned final word. It admits one flag-2/3 surface parent, flag-1 aircraft rosters containing only types 8–10 in states 0/1, empty visibility, collision 255 and the activity-zero navigation return (idle returns clear activity first). Original comparisons cover 216 public complete before/after golden states and all 2,592 private whole-call contexts. They verify how the shared stack slot acts as the flag-2/3 counter, ends at flag-1 roster index 6 after aircraft callbacks, and receives saved EBX −1 from idle returns. The maintained code represents this as explicit data, without emulating a CPU stack. Other policy mixtures, active navigation, natural outer-caller initialization and a full running Practice world remain unsupported. This adds no new window or automatic flag-2/3 behavior to the existing study.
+
+
+`PracticeAiDriverGate.EvaluateOfflineFlag23` composes the real driver boundary around that explicit-caller prephase. Its immutable context requires Practice scenario 1, zero scenario events, raw owner-pass control 0, a phase counter, a caller word and an incoming frame word. It also rejects active unowned fleets, which would enter unsupported owner dispatchers. The prephase runs before the low-five-bit gate. Aligned phases execute the verified empty scheduler, direct-return neutral planner and owner −1 visibility; source active owner is restored, and this entry does not increment phase or world time. The result retains the immutable prephase and final fleet snapshot separately, including diagnostic caller scratch. Public checks compare 216 original before/after states and private evidence compares all 1,728 captured driver contexts. Captured phase values are 1, 31, 32 and 0xFFFFFFE0; the exact source bitmask defines the gate. Nonempty events, other owner passes, task dispatch, natural caller initialization and a complete running Practice world remain unsupported. There is no new window; the current visible comparison is the Carrier patrol whole-pass study.
