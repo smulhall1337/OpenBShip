@@ -10,6 +10,12 @@ foreach($process in @(Get-Process -Name BattleshipLab -ErrorAction SilentlyConti
 $sources=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -File -Filter '*.cs' | Sort-Object Name | ForEach-Object {$_.FullName})
 if(!$sources.Count){throw 'No C# source files found in src.'}
 New-Item -ItemType Directory -Path $output -Force | Out-Null
-& $compiler /nologo /target:winexe /platform:x64 /optimize+ /debug:pdbonly /main:FleetLab.Program /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Numerics.dll "/out:$executable" @sources
+# A response file avoids Windows' command-line limit in long checkout paths.
+# It is generated beside the build, never tracked with the source.
+$response=Join-Path $output 'compile.rsp'
+$arguments=@('/nologo','/target:winexe','/platform:x64','/optimize+','/debug:pdbonly','/main:FleetLab.Program','/r:System.Drawing.dll','/r:System.Windows.Forms.dll','/r:System.Numerics.dll',('/out:"'+$executable+'"'))
+$arguments+=@($sources | ForEach-Object {'"'+$_+'"'})
+[IO.File]::WriteAllLines($response,$arguments,(New-Object Text.UTF8Encoding($false)))
+& $compiler ('@'+$response)
 if($LASTEXITCODE -ne 0){throw 'Build failed.'}
 "Built $executable"

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.123**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.124**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.97 or earlier to import all 44 runtime resources, including the AI preparation delay table. Build only compiles source.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.97 or earlier to import all 44 runtime resources, including the AI preparation delay table. Build only compiles source. It generates `build/current/compile.rsp` so long checkout paths do not overflow the Windows compiler command line.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -466,9 +466,13 @@ Open **Recovered maps → Service waypoints (study)…** directly. The fixed BSS
 The default chooses yard 3 and replaces queue point 3 with **50,0**. **Equal distance** chooses the earlier yard 2. **No yard** keeps the supplied cached destination **550,290**. **Queue gap** replaces point 1 and preserves the later unused words. Three skip presets return without selecting a destination; the active-reference and signed-limit presets expose additional compared branches. Origins stay fixed, and one callback runs per reset.
 
 The plot is a modern schematic of copied intent: gold origin, selected yard in green, previous queue in gray and updated queue in cyan. Lines are not computed travel routes. Starting goal 4, cache values, yard positions and gate inputs are diagnostic presets; numeric rules are reconstructed. No movement, clock, ship admission, repair, media playback or complete AI world runs. The field details and five before/after queue rows remain read-only.
+## Recovered goal timing API
+
+`PracticeGoalDelay.Schedule` and `EmitWhenDue` reproduce the compared goal-2/3 timing branches on copied state. Callers supply the raw signed source clock and current delay weight. Addition wraps at 32 bits; deadline equality holds; source fleet kinds 3/4 bypass the emission wait. Cached coordinates convert to signed 16-bit waypoint fields without clamping. Active route-grid work is rejected explicitly. These APIs do not advance a world clock or establish natural AI pacing. The original base delay weight at 0x448680 is 32,000 before difficulty initialization; the separate eight-byte preparation-delay resource starts at 0x448684.
+
 ## Validation
 
-For the v0.123 source, focused checks pass **574 model groups**. A fresh public checkout passes **465**, with **109 explicit skips** for optional private evidence. Form checks pass **235**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.124 source, focused checks pass **579 model groups**. A fresh public checkout passes **469**, with **110 explicit skips** for optional private evidence. Form checks pass **235**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
