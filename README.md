@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.126**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.127**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -482,9 +482,19 @@ The separate **Queue one waypoint · fresh goal4 copy** action supplies the orig
 
 The default queues **110,110** from fixed **100,100** toward **130,120**. **Encircled destination** and **Future cooldown** hold without a point. The **At destination** preset pops one task before grid work; its supplied CD input fill remains visible. That completes one queue record, not a mission. The callback matches 396 complete original states; an additional 216 controlled original neighbor fixtures check all eight directions, ties, edge bounds, unsigned thresholds and blocked diagonal corners. Natural admission of the artificial kind2/11 selector fixtures is not claimed; the public whole callback still rejects those kinds.
 
+## Active navigation study
+
+Open **Recovered maps → Active navigation (study)…** directly. This separate view reuses the cost-grid renderer and supplies one controlled original prephase input. Only fleet 16 has active navigation; other tasks and policy/idle callbacks are dormant. Gold positions stay fixed and no clock runs between actions.
+
+The default **Replan** mode calls the grid function twice and the waypoint callback once, then clears the supplied collision byte. Open water emits **110,110** from fixed **100,100**. **Wait** holds without a grid call. **Arrive** supplies an intermediate point exactly at the fleet position and invokes one waypoint callback; no fleet movement is simulated to create that input.
+
+For **Encircled destination**, Replan ends with a dark FE grid: its first search fails, and the second grid call clears before holding on the new future deadline. Arrive performs only one grid call and retains the blocked field. **At destination** clears the navigation flag before route work while leaving task goal 4 intact. This differs from the separate waypoint-only task-pop action.
+
+One Apply is admitted per fresh copy. Reset restores the applied preset; pending mode changes affect the next Apply. The whole prephase matches 108 original full-state observations. Starting navigation, other collision-fleet references, network callbacks, policy/idle activity, recurring movement and the full owner controller remain outside this bounded API. Existing navigation and full-driver guards remain in place.
+
 ## Validation
 
-For the v0.126 source, focused checks pass **593 model groups**. A fresh public checkout passes **481**, with **112 explicit skips** for optional private evidence. Form checks pass **241**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.127 source, focused checks pass **598 model groups**. A fresh public checkout passes **485**, with **113 explicit skips** for optional private evidence. Form checks pass **244**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

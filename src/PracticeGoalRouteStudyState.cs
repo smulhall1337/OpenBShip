@@ -41,7 +41,7 @@ namespace FleetLab
             if(profile==8){int tx=xy[2]/10,ty=xy[3]/10,n=30;foreach(var d in new[]{new[]{-1,0},new[]{1,0},new[]{0,-1},new[]{0,1}}){int x=tx+d[0],y=ty+d[1];if(x>=0&&x<64&&y>=0&&y<64)Fleet(f,n++,11,0,x*10,y*10);}}
             if(profile==9)Fleet(secondary,0,1,0,100,100);if(retry==4)Fleet(secondary,0,1,0,xy[0],xy[1]);
             var r=(byte[])region.Clone();int at=16*312;Array.Copy(r,at,r,at+20,180);Array.Clear(r,at,20);I(r,at,11);I(r,at+200,2);I(r,at+304,1);I(r,at+296,xy[2]);I(r,at+300,xy[3]);I(r,at+4,deadline);r[at+284]=flag;near.CopyTo(r,at+285);
-            return new PracticeGoalRouteStudyState(f,secondary,new PracticeAiSharedBacking(r),PracticeAiRouteGrid.Diagnostic(16,0xcd),policy,clock,preset,null,0,null);
+            return new PracticeGoalRouteStudyState(f,secondary,new PracticeAiSharedBacking(r),PracticeAiRouteGrid.Diagnostic(16,0xcd),policy,clock,preset,null,0,null,point,profile);
         }
     }
     public sealed class PracticeGoalRouteStudyState
@@ -51,18 +51,24 @@ namespace FleetLab
         public PracticeGoalRouteResult Result {get;private set;}
         public PracticeGoalWaypointResult WaypointResult {get;private set;}
         public PracticeAiSharedBacking WaypointInput {get;private set;}
-        public PracticeAiSharedBacking Backing {get{return WaypointResult!=null?WaypointResult.Backing:Result==null?initialBacking:Result.Backing;}}
-        public PracticeAiRouteGrid Grid {get{return WaypointResult!=null?WaypointResult.Grid:Result==null?initialGrid:Result.Grid;}}
-        public bool HasGridOutput {get{return WaypointResult!=null?WaypointResult.Route!=null:Result!=null;}}
+        public PracticeActiveNavigationResult NavigationResult {get;private set;}
+        public PracticeActiveNavigationInput NavigationInput {get;private set;}
+        public int NavigationMode {get;private set;}
+        internal int ComparisonPoint {get;private set;}internal int ComparisonProfile {get;private set;}
+        public PracticeAiSharedBacking Backing {get{return NavigationResult!=null?NavigationResult.Backing:WaypointResult!=null?WaypointResult.Backing:Result==null?initialBacking:Result.Backing;}}
+        public PracticeAiRouteGrid Grid {get{return NavigationResult!=null?NavigationResult.Grid:WaypointResult!=null?WaypointResult.Grid:Result==null?initialGrid:Result.Grid;}}
+        public bool HasGridOutput {get{return NavigationResult!=null?NavigationResult.GridFunctionVisits>0:WaypointResult!=null?WaypointResult.Route!=null:Result!=null;}}
+        public bool CanApplyNavigation {get{return Visits==0&&(ComparisonProfile==0||ComparisonProfile==3||ComparisonProfile==8)&&(BitConverter.ToInt32(fleets,16*492)==1||BitConverter.ToInt32(fleets,16*492)==9);}}
         public bool CanRetry {get{return WaypointResult==null&&Visits==1&&Result!=null&&Result.Outcome==PracticeGoalRouteOutcome.RouteUnavailable;}}
         public int OriginX {get{return BitConverter.ToInt16(fleets,16*492+12);}}public int OriginY {get{return BitConverter.ToInt16(fleets,16*492+14);}}
         public int TargetX {get{return BitConverter.ToInt32(Backing.CopyTaskRecord(16),296);}}public int TargetY {get{return BitConverter.ToInt32(Backing.CopyTaskRecord(16),300);}}
-        internal PracticeGoalRouteStudyState(byte[] f,byte[] secondary,PracticeAiSharedBacking backing,PracticeAiRouteGrid grid,int policy,int clock,int preset,PracticeGoalRouteResult result,int visits,PracticeGoalRouteStudyState original)
+        internal PracticeGoalRouteStudyState(byte[] f,byte[] secondary,PracticeAiSharedBacking backing,PracticeAiRouteGrid grid,int policy,int clock,int preset,PracticeGoalRouteResult result,int visits,PracticeGoalRouteStudyState original,int point=-1,int profile=-1)
         {
             fleets=(byte[])f.Clone();currentSecondary=(byte[])secondary.Clone();initialSecondary=original==null?(byte[])secondary.Clone():original.initialSecondary;initialBacking=original==null?backing:original.initialBacking;initialGrid=original==null?grid:original.initialGrid;initialClock=original==null?clock:original.initialClock;
             OwnerPolicy=policy;SourceClock=clock;Preset=preset;Result=result;Visits=visits;
+            ComparisonPoint=original==null?point:original.ComparisonPoint;ComparisonProfile=original==null?profile:original.ComparisonProfile;NavigationMode=-1;
         }
-        public byte[] CopyFleetPool(){return WaypointResult==null?(byte[])fleets.Clone():WaypointResult.CopyFleetPool();}public byte[] CopySecondaryFleetPool(){return (byte[])currentSecondary.Clone();}
+        public byte[] CopyFleetPool(){return NavigationResult!=null?NavigationResult.CopyFleetPool():WaypointResult==null?(byte[])fleets.Clone():WaypointResult.CopyFleetPool();}public byte[] CopySecondaryFleetPool(){return (byte[])currentSecondary.Clone();}
         public PracticeGoalRouteStudyState Build()
         {
             if(Visits!=0)throw new InvalidOperationException("One copied route visit is complete;reset or use the explicit failed-search retry.");
@@ -86,6 +92,23 @@ namespace FleetLab
             var next=new PracticeGoalRouteStudyState(fleets,currentSecondary,initialBacking,initialGrid,OwnerPolicy,SourceClock,Preset,null,1,this);
             next.WaypointInput=input;next.WaypointResult=waypoint;return next;
         }
-        public PracticeGoalRouteStudyState Reset(){return new PracticeGoalRouteStudyState(fleets,initialSecondary,initialBacking,initialGrid,OwnerPolicy,initialClock,Preset,null,0,null);}
+        internal PracticeActiveNavigationInput CreateNavigationInput(int mode)
+        {
+            if(!CanApplyNavigation||mode<0||mode>2)throw new NotSupportedException("Choose one supported fresh navigation fixture and wait/replan/arrival mode.");
+            var f=(byte[])fleets.Clone();
+            for(int slot=0;slot<250;slot++){int at=slot*492;BitConverter.GetBytes(0).CopyTo(f,at+472);f[at+486]=0;f[at+482]=255;BitConverter.GetBytes((short)-1).CopyTo(f,at+40);}
+            if(mode==2){BitConverter.GetBytes((short)OriginX).CopyTo(f,16*492+40);BitConverter.GetBytes((short)OriginY).CopyTo(f,16*492+50);}
+            f[16*492+482]=(byte)(mode==1?254:255);
+            var task=initialBacking.CopyTaskRecord(16);BitConverter.GetBytes(4).CopyTo(task,200);BitConverter.GetBytes(TargetX).CopyTo(task,8);BitConverter.GetBytes(TargetY).CopyTo(task,12);
+            return new PracticeActiveNavigationInput(f,currentSecondary,initialBacking.WithTaskRecord(16,task),initialGrid);
+        }
+        public PracticeGoalRouteStudyState PollNavigation(int mode)
+        {
+            var input=CreateNavigationInput(mode);
+            var result=PracticeActiveNavigation.EvaluateOffline(input.Grid,input.CopyFleetPool(),input.CopySecondaryFleetPool(),input.Backing,SourceClock,32000,OwnerPolicy);
+            var next=new PracticeGoalRouteStudyState(fleets,currentSecondary,initialBacking,initialGrid,OwnerPolicy,SourceClock,Preset,null,1,this);
+            next.NavigationInput=input;next.NavigationResult=result;next.WaypointResult=result.Waypoint;next.NavigationMode=mode;return next;
+        }
+        public PracticeGoalRouteStudyState Reset(){return new PracticeGoalRouteStudyState(fleets,initialSecondary,initialBacking,initialGrid,OwnerPolicy,initialClock,Preset,null,0,null,ComparisonPoint,ComparisonProfile);}
     }
 }

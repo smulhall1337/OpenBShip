@@ -59,6 +59,16 @@ namespace FleetLab
         static void Word(byte[] b, int at, int value) { BitConverter.GetBytes(unchecked((short)value)).CopyTo(b, at); }
         public static PracticeGoalWaypointResult Evaluate(PracticeAiRouteGrid grid, byte[] fleets,
             byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
+        { return EvaluateCore(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, false); }
+
+        // Original829 compares the41F920 caller with an existing point exactly
+        // at the fleet's world position. Keep the public fresh-input guard.
+        internal static PracticeGoalWaypointResult EvaluateForNavigation(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
+        { return EvaluateCore(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, true); }
+
+        static PracticeGoalWaypointResult EvaluateCore(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, bool navigationArrival)
         {
             if (grid == null || backing == null) throw new ArgumentNullException("grid");
             if (fleets == null || fleets.Length != 123000 || secondaryFleets == null || secondaryFleets.Length != 246000)
@@ -69,8 +79,12 @@ namespace FleetLab
             int kind = BitConverter.ToInt32(fleets, at);
             if ((kind != 1 && kind != 9 && kind != 3 && kind != 4 && kind != 5) ||
                 BitConverter.ToInt16(fleets, at + 6) != 1 || BitConverter.ToInt32(task, 0) != 11 ||
-                BitConverter.ToInt32(task, 200) != 4 || BitConverter.ToInt16(fleets, at + 40) != -1)
+                BitConverter.ToInt32(task, 200) != 4 || (!navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1))
                 throw new NotSupportedException("Waypoint callback admits compared owner1 task11/goal4 and fleet kinds1/3/4/5/9 with no first waypoint.");
+            if (navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1 &&
+                (BitConverter.ToInt16(fleets, at + 40) != BitConverter.ToInt16(fleets, at + 12) ||
+                 BitConverter.ToInt16(fleets, at + 50) != BitConverter.ToInt16(fleets, at + 14)))
+                throw new NotSupportedException("Only an empty or exactly reached first point is compared by the navigation caller.");
             var after = (byte[])fleets.Clone(); int x = BitConverter.ToInt16(fleets, at + 12), y = BitConverter.ToInt16(fleets, at + 14);
             int cachedX = BitConverter.ToInt32(task, 8), cachedY = BitConverter.ToInt32(task, 12);
             // This exact WORD-to-DWORD equality precedes kind selection and
@@ -87,7 +101,7 @@ namespace FleetLab
                 Word(after, at + 40, cachedX); Word(after, at + 50, cachedY);
                 return new PracticeGoalWaypointResult(after, backing, grid, PracticeGoalWaypointOutcome.CachedWaypoint, null, null);
             }
-            var route = PracticeGoalRoute.BuildForWaypoint(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy);
+            var route = PracticeGoalRoute.BuildForWaypoint(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, navigationArrival);
             task = route.Backing.CopyTaskRecord(slot);
             if (task[284] != 0 && BitConverter.ToInt32(task, 4) > sourceClock)
                 return new PracticeGoalWaypointResult(after, route.Backing, route.Grid, PracticeGoalWaypointOutcome.RetryHeld, route, null);

@@ -75,16 +75,17 @@ namespace FleetLab
 
         public static PracticeGoalRouteResult Build(PracticeAiRouteGrid previous, byte[] fleets,
             byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
-        { return BuildCore(previous, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, 2); }
+        { return BuildCore(previous, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, 2, false); }
 
         // The original goal4 callback calls the same grid function with goal4
         // still in the record. Failed/held visits preserve that input goal.
         internal static PracticeGoalRouteResult BuildForWaypoint(PracticeAiRouteGrid previous, byte[] fleets,
-            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
-        { return BuildCore(previous, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, 4); }
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy,
+            bool navigationArrival)
+        { return BuildCore(previous, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, 4, navigationArrival); }
 
         static PracticeGoalRouteResult BuildCore(PracticeAiRouteGrid previous, byte[] fleets,
-            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, int expectedGoal)
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, int expectedGoal, bool navigationArrival)
         {
             if (previous == null || backing == null) throw new ArgumentNullException("previous");
             if (fleets == null || fleets.Length != 123000 || secondaryFleets == null || secondaryFleets.Length != 246000)
@@ -98,7 +99,7 @@ namespace FleetLab
             if ((kind != 1 && kind != 9) || BitConverter.ToInt16(fleets, actor + 6) != 1 ||
                 (ownerPolicy != 0 && ownerPolicy != 2) || BitConverter.ToInt32(task, 0) != 11 ||
                 BitConverter.ToInt32(task, 200) != expectedGoal || BitConverter.ToInt32(task, 304) != 1 ||
-                BitConverter.ToInt16(fleets, actor + 40) != -1 || task[284] > 1)
+                (!navigationArrival && BitConverter.ToInt16(fleets, actor + 40) != -1) || task[284] > 1)
                 throw new NotSupportedException("Route building requires the compared task11 goal, owner1, kind1/9 navigation context.");
             var grid = new byte[4096]; for (int n = 0; n < grid.Length; n++) grid[n] = 254;
             // Clearing precedes the signed cooldown test. Unreached coordinates
