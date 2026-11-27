@@ -67,8 +67,17 @@ namespace FleetLab
             byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
         { return EvaluateCore(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, true); }
 
+        // Original839 compares reached points after a queued navigation start.
+        internal static PracticeGoalWaypointResult EvaluateAfterQueuedNavigation(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
+        {
+            if(grid==null||backing==null)throw new ArgumentNullException("grid");
+            int goal=BitConverter.ToInt32(backing.CopyTaskRecord(grid.TaskSlot),200);
+            if(goal!=2&&goal!=4)throw new NotSupportedException("Only captured queued-navigation goals2/4 are admitted.");
+            return EvaluateCore(grid,fleets,secondaryFleets,backing,sourceClock,delayWeight,ownerPolicy,true,goal);
+        }
         static PracticeGoalWaypointResult EvaluateCore(PracticeAiRouteGrid grid, byte[] fleets,
-            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, bool navigationArrival)
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, bool navigationArrival, int expectedGoal = 4)
         {
             if (grid == null || backing == null) throw new ArgumentNullException("grid");
             if (fleets == null || fleets.Length != 123000 || secondaryFleets == null || secondaryFleets.Length != 246000)
@@ -79,7 +88,7 @@ namespace FleetLab
             int kind = BitConverter.ToInt32(fleets, at);
             if ((kind != 1 && kind != 9 && kind != 3 && kind != 4 && kind != 5) ||
                 BitConverter.ToInt16(fleets, at + 6) != 1 || BitConverter.ToInt32(task, 0) != 11 ||
-                BitConverter.ToInt32(task, 200) != 4 || (!navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1))
+                BitConverter.ToInt32(task, 200) != expectedGoal || (!navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1))
                 throw new NotSupportedException("Waypoint callback admits compared owner1 task11/goal4 and fleet kinds1/3/4/5/9 with no first waypoint.");
             if (navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1 &&
                 (BitConverter.ToInt16(fleets, at + 40) != BitConverter.ToInt16(fleets, at + 12) ||
@@ -101,7 +110,9 @@ namespace FleetLab
                 Word(after, at + 40, cachedX); Word(after, at + 50, cachedY);
                 return new PracticeGoalWaypointResult(after, backing, grid, PracticeGoalWaypointOutcome.CachedWaypoint, null, null);
             }
-            var route = PracticeGoalRoute.BuildForWaypoint(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, navigationArrival);
+            var route = expectedGoal == 2
+                ? PracticeGoalRoute.BuildForQueuedNavigation(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy)
+                : PracticeGoalRoute.BuildForWaypoint(grid, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, navigationArrival);
             task = route.Backing.CopyTaskRecord(slot);
             if (task[284] != 0 && BitConverter.ToInt32(task, 4) > sourceClock)
                 return new PracticeGoalWaypointResult(after, route.Backing, route.Grid, PracticeGoalWaypointOutcome.RetryHeld, route, null);

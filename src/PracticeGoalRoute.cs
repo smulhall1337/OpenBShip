@@ -84,6 +84,16 @@ namespace FleetLab
             bool navigationArrival)
         { return BuildCore(previous, fleets, secondaryFleets, backing, sourceClock, delayWeight, ownerPolicy, 4, navigationArrival); }
 
+        // Original839 queued-start/follow-up uses goal2/4.
+        // Keep public Build and fresh waypoint admission unchanged.
+        internal static PracticeGoalRouteResult BuildForQueuedNavigation(PracticeAiRouteGrid previous, byte[] fleets,
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
+        {
+            if(previous==null||backing==null)throw new ArgumentNullException("previous");
+            int goal=BitConverter.ToInt32(backing.CopyTaskRecord(previous.TaskSlot),200);
+            if(goal!=2&&goal!=4)throw new NotSupportedException("Only captured queued-navigation goals2/4 are admitted.");
+            return BuildCore(previous,fleets,secondaryFleets,backing,sourceClock,delayWeight,ownerPolicy,goal,true);
+        }
         static PracticeGoalRouteResult BuildCore(PracticeAiRouteGrid previous, byte[] fleets,
             byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, int expectedGoal, bool navigationArrival)
         {

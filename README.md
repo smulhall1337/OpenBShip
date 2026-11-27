@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.127**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.128**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -492,9 +492,17 @@ For **Encircled destination**, Replan ends with a dark FE grid: its first search
 
 One Apply is admitted per fresh copy. Reset restores the applied preset; pending mode changes affect the next Apply. The whole prephase matches 108 original full-state observations. Starting navigation, other collision-fleet references, network callbacks, policy/idle activity, recurring movement and the full owner controller remain outside this bounded API. Existing navigation and full-driver guards remain in place.
 
+## Queued navigation source API
+
+`PracticeQueuedNavigation.EvaluateOffline` reconstructs a queued navigation start and its compared follow-up on immutable copies, with explicit selected-fleet and waypoint context. It shifts the copied queue, stores the original first point as the navigation target, builds costs and inserts the fleet's rounded current point. A failed search can retain goal 2 into the next callback; a nonreached point waits without moving the fleet.
+
+The bounded offline profile uses fleet 16, owner 1, kind 1 or 9, task 11 and dormant policy/idle callbacks. It matches 216 original two-visit histories: 432 complete observations, with public recorded-output digests and an additional optional private snapshot comparison. The controlled five-slot queue loses its last pair during insertion, and a selected raw counter can become 5; natural UI admission of those states is unverified.
+
+This version adds the source API and checks. The existing Active navigation window keeps its earlier inputs; there is no queued-start button yet. Movement, natural timing, collision-fleet branches, network callbacks and complete owner dispatch remain separate. Existing fresh-waypoint and controller admission limits are retained.
+
 ## Validation
 
-For the v0.127 source, focused checks pass **598 model groups**. A fresh public checkout passes **485**, with **113 explicit skips** for optional private evidence. Form checks pass **244**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.128 source, focused checks pass **602 model groups**. A fresh public checkout passes **488**, with **114 explicit skips** for optional private evidence. Form checks pass **244**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
