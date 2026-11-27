@@ -1,0 +1,71 @@
+using System;using System.IO;using System.Drawing;using System.Windows.Forms;using System.Collections.Generic;using System.Runtime.InteropServices;
+namespace FleetLab
+{
+    public sealed class PracticeGoalRouteStudy : Form
+    {
+        readonly ComboBox profile=new ComboBox();readonly Button load=new Button(),build=new Button(),reset=new Button(),retry=new Button(),changed=new Button();
+        readonly Label summary=new Label(),feedback=new Label(),cell=new Label();readonly TextBox details=new TextBox();readonly HashSet<Keys> held=new HashSet<Keys>();readonly GridCanvas canvas;
+        PracticeGoalRouteStudyBasis basis;PracticeGoalRouteStudyState state;int selectedX=13,selectedY=12;
+        internal PracticeGoalRouteStudyState StudyState {get{return state;}}
+        [DllImport("user32.dll")]static extern short GetAsyncKeyState(int key);
+        public PracticeGoalRouteStudy(string programs,PracticeMapStartup startup)
+        {
+            Name="goalRouteStudy";Text="Route costs · copied original rules";StartPosition=FormStartPosition.CenterParent;Size=new Size(1180,850);MinimumSize=new Size(980,740);Font=new Font("Segoe UI",9);BackColor=Color.FromArgb(12,23,35);ForeColor=Color.WhiteSmoke;KeyPreview=true;
+            var layout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Padding=new Padding(8)};layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,385));Controls.Add(layout);
+            canvas=new GridCanvas(this){Name="goalRouteCanvas",Dock=DockStyle.Fill};layout.Controls.Add(canvas,0,0);var scroll=new Panel{Name="goalRouteScroll",Dock=DockStyle.Fill,AutoScroll=true};layout.Controls.Add(scroll,1,0);
+            var side=new FlowLayoutPanel{AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(4)};scroll.Controls.Add(side);
+            Action<Control,int> add=delegate(Control control,int height){control.Width=350;control.Height=height;control.Margin=new Padding(0,3,0,3);if(control is ComboBox||control is Button){control.BackColor=Color.FromArgb(28,55,76);control.ForeColor=ForeColor;}var button=control as Button;if(button!=null){button.UseVisualStyleBackColor=false;button.FlatStyle=FlatStyle.Flat;button.EnabledChanged+=delegate{if(button.IsDisposed||button.Disposing)return;button.BackColor=button.Enabled?Color.FromArgb(28,55,76):Color.LightGray;button.ForeColor=button.Enabled?ForeColor:Color.Black;};}side.Controls.Add(control);};
+            add(new Label{Text="Build one recovered route cost field on a separate copy. Gold fleet and green destination stay fixed. Blockers and clock are supplied study inputs. This window does not travel along the route or run a world clock."},82);
+            add(new Label{Text="Pending preset (apply with Load)"},20);profile.Name="goalRouteProfile";profile.DropDownStyle=ComboBoxStyle.DropDownList;profile.DropDownWidth=500;foreach(string name in PracticeGoalRouteStudyBasis.Presets)profile.Items.Add(name);profile.SelectedIndex=0;add(profile,30);
+            load.Name="goalRouteLoad";load.Text="Load selected route copy";add(load,34);reset.Name="goalRouteReset";reset.Text="Reset applied copy";add(reset,34);build.Name="goalRouteBuild";build.Text="Build one copied cost field";add(build,40);
+            retry.Name="goalRouteRetry";retry.Text="Retry at deadline · same blockers";add(retry,36);changed.Name="goalRouteChanged";changed.Text="Retry at deadline · add nearby blocker";add(changed,36);
+            summary.Name="goalRouteSummary";add(summary,142);feedback.Name="goalRouteFeedback";add(feedback,70);cell.Name="goalRouteCell";add(cell,60);
+            details.Name="goalRouteDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,300);
+            var close=new Button{Name="goalRouteClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
+            profile.SelectedIndexChanged+=delegate{if(state!=null)Feedback("Selection pending. Load applies it; Reset retains the applied preset.");};load.Click+=delegate{LoadCopy();};reset.Click+=delegate{if(state==null)return;state=state.Reset();Feedback("Applied copy restored before its first route visit.");Sync();};
+            build.Click+=delegate{Apply(0);};retry.Click+=delegate{Apply(1);};changed.Click+=delegate{Apply(2);};
+            KeyUp+=delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};Deactivate+=delegate{if(IsDisposed||Disposing)return;foreach(Keys key in new[]{Keys.Enter,Keys.Space,Keys.Escape})if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);};Activated+=delegate{if(IsDisposed||Disposing)return;foreach(Keys key in new[]{Keys.Enter,Keys.Space,Keys.Escape}){if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);else held.Remove(key);}};
+            try{basis=PracticeGoalRouteStudyBasis.Create(programs,startup);LoadCopy();}catch(ArgumentException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}catch(UnauthorizedAccessException e){Reject(e.Message);}
+        }
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if(IsDisposed||Disposing){e.Handled=e.SuppressKeyPress=true;return;}if(e.KeyCode==Keys.Escape||e.KeyCode==Keys.Enter||e.KeyCode==Keys.Space){var button=ActiveControl as Button;if(e.KeyCode==Keys.Escape||button!=null){e.Handled=e.SuppressKeyPress=true;if(held.Add(e.KeyCode)){if(e.KeyCode==Keys.Escape)Close();else if(button.Enabled)button.PerformClick();}return;}}base.OnKeyDown(e);
+        }
+        void Feedback(string text){if(IsDisposed||Disposing)return;feedback.ForeColor=Color.LightSteelBlue;feedback.Text=text;}
+        void Reject(string text){if(IsDisposed||Disposing)return;feedback.ForeColor=Color.Orange;feedback.Text="Rejected; copy preserved. "+text;Sync();}
+        void LoadCopy(){if(basis==null){Reject("No supported copied route basis.");return;}state=basis.CreateFixture(profile.SelectedIndex);Feedback("Copy prepared. Build populates the grid; click a cell to inspect its byte.");Sync();}
+        void Apply(int action)
+        {
+            if(state==null)return;try{state=action==0?state.Build():state.RetryAtDeadline(action==2);Feedback(state.Result.Outcome==PracticeGoalRouteOutcome.RouteFound?"Source search reached the fleet cell. Cost bytes are partially filled; no fleet moved.":state.Result.Outcome==PracticeGoalRouteOutcome.CooldownHeld?"Future cooldown held after clearing the grid. Obstacles have not been rebuilt.":state.Result.Outcome==PracticeGoalRouteOutcome.NeighborhoodHeld?"The nine nearby bytes matched the saved cache. The source held without another search.":"Search did not reach the fleet. The source stored a retry deadline and nine nearby bytes.");Sync();}catch(ArgumentException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}catch(InvalidOperationException e){Reject(e.Message);}
+        }
+        internal void SelectCell(int x,int y){if(x<0||x>=64||y<0||y>=64)return;selectedX=x;selectedY=y;Sync();}
+        void Sync()
+        {
+            if(IsDisposed||Disposing)return;load.Enabled=basis!=null;build.Enabled=state!=null&&state.Visits==0;reset.Enabled=state!=null;retry.Enabled=changed.Enabled=state!=null&&state.CanRetry;
+            if(state==null){summary.Text="No admitted copied route state.";canvas.Invalidate();return;}
+            var task=state.Backing.CopyTaskRecord(16);int deadline=BitConverter.ToInt32(task,4);var bytes=state.Grid.CopyCells();int blocked=0,unvisited=0,costs=0,max=0;foreach(byte value in bytes){if(value==255)blocked++;else if(value==254)unvisited++;else if(value>=1&&value<=127){costs++;max=Math.Max(max,value);}}
+            summary.Text="Applied: "+PracticeGoalRouteStudyBasis.Presets[state.Preset]+"\r\nOutcome: "+(state.Result==null?"prepared":state.Result.Outcome.ToString())+" · visits "+state.Visits+"\r\nFleet fixed: "+state.OriginX+","+state.OriginY+"\r\nDestination: "+state.TargetX+","+state.TargetY+"\r\nSource clock "+state.SourceClock+"; deadline "+deadline+"\r\nGoal "+BitConverter.ToInt32(task,200)+"; retry byte "+task[284]+"\r\nCosts "+costs+" (max "+max+"); blocked "+blocked+"; FE "+unvisited;
+            byte selected=state.Grid.Cell(selectedX,selectedY);cell.Text="Selected cell X="+selectedX+", Y="+selectedY+" · world "+(selectedX*10)+","+(selectedY*10)+"\r\nByte "+selected+" (0x"+selected.ToString("X2")+"): "+(state.Visits==0?"supplied input fill":selected==255?"blocked":selected==254?"unvisited / cleared":selected>=1&&selected<=127?"source cost":"opaque value");
+            details.Text="Copied route costs; world X right, Y down. Cell[x,y] is stored at x*64+y; one cell spans 10 source coordinate units. Cyan/blue are source costs 1..127; red is FF blocked; dark is FE unvisited. Color and markers are modern inspection aids. Click a cell for its exact numeric value.\r\n\r\nSource order: clear all4096 bytes; test future cooldown; rebuild blockers; optionally compare the saved3x3 neighborhood; scan costs in the original order. Destination starts at1. Success stops early and can leave many FE cells. This is a cost field, not a displayed travel path.\r\n\r\nThe encircled-destination preset offers one explicit retry. Both retry buttons assign the prior deadline as the clock. Same blockers can hold when the nine cached bytes match; adding a secondary blocker at the fleet changes the comparison and causes another failed search. No time runs between clicks. Reset restores the applied copy.\r\n\r\nA future cooldown returns AFTER clearing, before obstacles are rebuilt. The destination-yard quartet uses the recovered source loop order, including the following skipped slot. Nearby friendly and flagged-enemy fixtures deliberately supply rounded blockers.\r\n\r\nRead-only raw fields: owner policy "+state.OwnerPolicy+"; weight32000; goal200="+BitConverter.ToInt32(task,200)+"; nav304="+BitConverter.ToInt32(task,304)+"; retry284="+task[284]+".\r\nSaved neighborhood285..293: "+BitConverter.ToString(task,285,9)+"\r\nNormalized diagnostic table identity: 0x"+state.Grid.NormalizedTableReference.ToString("X8")+" (not a live pointer).\r\n\r\nNo terrain import, goal4 following, waypoint insertion, world movement, battle changes, audio or complete AI runs.";
+            canvas.Invalidate();
+        }
+        sealed class GridCanvas : Control
+        {
+            readonly PracticeGoalRouteStudy owner;RectangleF plot;
+            internal GridCanvas(PracticeGoalRouteStudy owner){this.owner=owner;DoubleBuffered=true;ResizeRedraw=true;}
+            protected override void OnMouseDown(MouseEventArgs e){base.OnMouseDown(e);if(e.Button==MouseButtons.Left&&plot.Contains(e.Location))owner.SelectCell((int)((e.X-plot.Left)*64/plot.Width),(int)((e.Y-plot.Top)*64/plot.Height));}
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);var state=owner.state;if(state==null)return;float side=Math.Max(64,Math.Min(ClientSize.Width-70,ClientSize.Height-180));plot=new RectangleF(42,86,side,side);float step=side/64;
+                e.Graphics.DrawString("Recovered cost field · +X right, +Y down",owner.Font,Brushes.WhiteSmoke,12,12);e.Graphics.DrawString("Gold fleet · green destination · white selected cell",owner.Font,Brushes.LightSteelBlue,12,36);
+                var bytes=state.Grid.CopyCells();using(var brush=new SolidBrush(Color.Black))for(int x=0;x<64;x++)for(int y=0;y<64;y++){int value=bytes[x*64+y];brush.Color=state.Visits==0?Color.FromArgb(43,47,57):value==255?Color.FromArgb(155,66,55):value==254?Color.FromArgb(26,43,58):Color.FromArgb(35,Math.Max(65,185-value),Math.Max(110,210-value/2));e.Graphics.FillRectangle(brush,plot.Left+x*step,plot.Top+y*step,step+0.3f,step+0.3f);}
+                using(var pen=new Pen(Color.FromArgb(68,85,99)))for(int n=0;n<=64;n+=8){float offset=n*step;e.Graphics.DrawLine(pen,plot.Left+offset,plot.Top,plot.Left+offset,plot.Bottom);e.Graphics.DrawLine(pen,plot.Left,plot.Top+offset,plot.Right,plot.Top+offset);if(n<64){e.Graphics.DrawString(n.ToString(),owner.Font,Brushes.LightSteelBlue,plot.Left+offset,plot.Top-23);e.Graphics.DrawString(n.ToString(),owner.Font,Brushes.LightSteelBlue,plot.Left-28,plot.Top+offset);}}
+                using(var pen=new Pen(Color.White,1.5f))e.Graphics.DrawRectangle(pen,plot.Left+owner.selectedX*step,plot.Top+owner.selectedY*step,step,step);
+                float ax=plot.Left+(state.OriginX/10+0.5f)*step,ay=plot.Top+(state.OriginY/10+0.5f)*step,tx=plot.Left+(state.TargetX/10+0.5f)*step,ty=plot.Top+(state.TargetY/10+0.5f)*step;
+                using(var pen=new Pen(Color.LightGreen,2.4f))e.Graphics.DrawRectangle(pen,tx-6,ty-6,12,12);using(var pen=new Pen(Color.Gold,2.4f))e.Graphics.DrawEllipse(pen,ax-4,ay-4,8,8);
+                string legend=state.Visits==0?"Prepared grid uses supplied CD fill. Build to inspect source costs.":"Cyan/blue 1..127 cost · red FF blocked · dark FE unvisited";
+                e.Graphics.DrawString(legend+"\r\nNo fleet movement or running clock. Markers stay fixed.",owner.Font,Brushes.LightSteelBlue,new RectangleF(12,plot.Bottom+20,Math.Max(1,ClientSize.Width-24),68));
+            }
+        }
+    }
+}

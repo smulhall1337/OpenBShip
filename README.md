@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.124**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.125**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -470,9 +470,17 @@ The plot is a modern schematic of copied intent: gold origin, selected yard in g
 
 `PracticeGoalDelay.Schedule` and `EmitWhenDue` reproduce the compared goal-2/3 timing branches on copied state. Callers supply the raw signed source clock and current delay weight. Addition wraps at 32 bits; deadline equality holds; source fleet kinds 3/4 bypass the emission wait. Cached coordinates convert to signed 16-bit waypoint fields without clamping. Active route-grid work is rejected explicitly. These APIs do not advance a world clock or establish natural AI pacing. The original base delay weight at 0x448680 is 32,000 before difficulty initialization; the separate eight-byte preparation-delay resource starts at 0x448684.
 
+## Copied route costs study
+
+Open **Recovered maps → Route costs (study)…** directly. Load a preset and press **Build one copied cost field**. Gold fleet and green destination markers stay fixed. Click a grid cell to read its exact byte: costs 1–127, FF blocked or FE unvisited. The display is a modern inspection diagram of recovered data; it does not show a moving fleet or a completed travel path.
+
+For the **Encircled destination** preset, build once to reach a failed search. **Retry at deadline · same blockers** assigns the prior deadline to the source clock and demonstrates the original neighborhood-cache hold. Reset and build again, then choose **add nearby blocker** to change that cache comparison and run another failed search. No clock runs between clicks. One retry is admitted; Reset restores the applied preset while a pending selection takes effect only on Load.
+
+The **Future cooldown** preset deliberately clears the whole grid before holding, so its blockers do not appear yet. Other presets show a gapped barrier, nearby fleet blockers, opposite corners and the original destination-yard loop order. Colors, selection and labels are modern aids; grid bytes and task transitions match 396 controlled original observations. `PracticeGoalRoute.Build` remains a separate copied-state API. Goal4 following, waypoint insertion, fleet movement, natural application pacing and complete Practice AI remain separate work.
+
 ## Validation
 
-For the v0.124 source, focused checks pass **579 model groups**. A fresh public checkout passes **469**, with **110 explicit skips** for optional private evidence. Form checks pass **235**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.125 source, focused checks pass **586 model groups**. A fresh public checkout passes **475**, with **111 explicit skips** for optional private evidence. Form checks pass **239**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
