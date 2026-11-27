@@ -15,11 +15,14 @@ namespace FleetLab
         public PracticeGoalRouteResult StartRoute { get; private set; }
         public PracticeGoalWaypointResult Waypoint { get; private set; }
         public PracticeGoalRouteResult CollisionRoute { get; private set; }
+        public PracticeGoalWaypointResult SecondWaypoint { get; private set; }
+        public int WaypointFunctionVisits {get{return (Waypoint==null?0:1)+(SecondWaypoint==null?0:1);}}
+        public int GridFunctionVisits {get{return (StartRoute==null?0:1)+(CollisionRoute==null?0:1)+(Waypoint!=null&&Waypoint.Route!=null?1:0)+(SecondWaypoint!=null&&SecondWaypoint.Route!=null?1:0);}}
         public int NavigationVisits { get { return 250; } }
         internal PracticeQueuedNavigationResult(byte[] f, PracticeAiSharedBacking b, PracticeAiRouteGrid g,
             int selectedFleet, int selectedPoint, PracticeQueuedNavigationOutcome outcome,
-            PracticeGoalRouteResult route, PracticeGoalWaypointResult waypoint, PracticeGoalRouteResult collisionRoute = null)
-        { fleets=(byte[])f.Clone(); Backing=b; Grid=g; SelectedFleet=selectedFleet; SelectedWaypoint=selectedPoint; Outcome=outcome; StartRoute=route; Waypoint=waypoint; CollisionRoute=collisionRoute; }
+            PracticeGoalRouteResult route, PracticeGoalWaypointResult waypoint, PracticeGoalRouteResult collisionRoute = null, PracticeGoalWaypointResult secondWaypoint = null)
+        { fleets=(byte[])f.Clone(); Backing=b; Grid=g; SelectedFleet=selectedFleet; SelectedWaypoint=selectedPoint; Outcome=outcome; StartRoute=route; Waypoint=waypoint; CollisionRoute=collisionRoute; SecondWaypoint=secondWaypoint; }
         public byte[] CopyFleetPool() { return (byte[])fleets.Clone(); }
     }
 
@@ -107,16 +110,24 @@ namespace FleetLab
             if(after[actor+482]!=255)
             {
                 int firstX=BitConverter.ToInt16(after,actor+40),firstY=BitConverter.ToInt16(after,actor+50);
-                if(selectedFleet!=249||selectedPoint!=4||kind!=1||firstX==-1||(firstX==x&&firstY==y)||
+                bool currentOrEmpty=firstX==-1||(firstX==x&&firstY==y);
+                if(selectedFleet!=249||selectedPoint!=4||kind!=1||(currentOrEmpty&&(goal!=4||after[actor+482]!=254))||
                     (after[actor+482]==30&&BitConverter.ToInt32(after,30*492)!=11))
-                    throw new NotSupportedException("Collision replan requires the compared kind1/unreached point and selected-other context.");
+                    throw new NotSupportedException("Collision replan requires a compared kind1 waypoint/collision and selected-other context.");
                 var route=PracticeGoalRoute.BuildForQueuedNavigation(grid,after,secondary,backing,sourceClock,delayWeight,ownerPolicy);
                 var waypoint=PracticeGoalWaypoint.EvaluateAfterCollision(route.Grid,after,secondary,route.Backing,sourceClock,delayWeight,ownerPolicy);
-                after=waypoint.CopyFleetPool();after[actor+482]=255;
+                after=waypoint.CopyFleetPool();after[actor+482]=255;var nextBacking=waypoint.Backing;var nextGrid=waypoint.Grid;PracticeGoalWaypointResult second=null;
                 if(BitConverter.ToInt16(after,actor+40)==x&&BitConverter.ToInt16(after,actor+50)==y)
-                    throw new NotSupportedException("A second waypoint callback after collision replan needs a separate original comparison.");
-                return new PracticeQueuedNavigationResult(after,waypoint.Backing,waypoint.Grid,selectedFleet,selectedPoint,
-                    PracticeQueuedNavigationOutcome.Replanned,null,waypoint,route);
+                {
+                    if(goal!=4||fleets[actor+482]!=254||!currentOrEmpty)
+                        throw new NotSupportedException("The counted repeated callback requires the compared goal4/current-or-empty terrainFE input.");
+                    // Original900 counts this ONE extra call,including contexts
+                    // where a future deadline makes its output idempotent.
+                    second=PracticeGoalWaypoint.EvaluateAfterCollision(nextGrid,after,secondary,nextBacking,sourceClock,delayWeight,ownerPolicy);
+                    after=second.CopyFleetPool();nextBacking=second.Backing;nextGrid=second.Grid;
+                }
+                return new PracticeQueuedNavigationResult(after,nextBacking,nextGrid,selectedFleet,selectedPoint,
+                    PracticeQueuedNavigationOutcome.Replanned,null,waypoint,route,second);
             }
             if(BitConverter.ToInt16(after,actor+40)==x&&BitConverter.ToInt16(after,actor+50)==y)
             {

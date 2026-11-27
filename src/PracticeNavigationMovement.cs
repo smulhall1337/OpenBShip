@@ -4,7 +4,7 @@ using System.IO;
 namespace FleetLab
 {
     // RIP B9A8...6A569: whole41FCC0, inactive415DF0, then two427670 batches.
-    // Original864/875/884 compare short,barrier and actual-collision histories.
+    // Original864/875/884/900 compare histories and paired callback/movement inputs.
     // This explicit offline
     // profile has actor16/owner1/kind1, selected-other249/point4, dormant
     // policy/idle callbacks,kind0/1 terrain and inactive secondary pools. The caller

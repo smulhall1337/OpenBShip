@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.130**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.131**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -512,11 +512,13 @@ The first preset holds its clock; others supply +40 ms per poll. **Watch 32 poll
 
 `PracticeNavigationMovementState.AdvanceOfflinePoll` matches 12 original histories: 16,896 recorded stage observations, including complete shared state, terrain and scheduler carryover. These are 12 controlled histories, not 16,896 gameplay scenarios. Initial collision FE, stale cached target, fixed clocks, nonmultiple coordinates and obstacle interventions are diagnostic inputs. This is not a full owner controller, mission, original renderer or calibrated application clock.
 
-The collision entry remains internal to this bounded composition and retains the earlier public caller guards. It admits terrain FE and the compared stationary kind-11 slot-30 collision with an unreached point. Unexamined signed fleet indices, yard bypasses, network callbacks and a possible second waypoint callback are rejected. A separate original experiment inserted obstacles exactly on an arrival and produced no collision; that result is retained as arrival sampling evidence and does not substitute for the actual collision histories.
+Two additional **Repeat callback** presets expose a single supplied poll. Load either one and apply the poll: gold stays at **100,100**, with **2 waypoint calls, 1 repeated call and 3 grid calls**. A future deadline holds the current point after both callbacks. The blocked copy retains deadline 14,345; the future-cooldown copy retains 12,346. These presets supply collision FE at the current point; they do not generate a new movement collision. Reset restores the copy, and stepping disables after the recorded poll.
+
+The collision entry remains internal to this bounded composition and retains the earlier public caller guards. It admits terrain FE and the compared stationary kind-11 slot-30 collision with an unreached point, plus the separately compared goal-4 terrain-FE current/empty inputs. It executes at most one additional waypoint callback after clearing collision FF. Seven paired original contexts verify both navigation and following movement, with explicit callsite counts and tracing-neutral outputs. Some contexts produce identical final states despite different call counts. Unexamined signed fleet indices, yard bypasses, positive-fleet current/empty replan entries, goal-2 current/empty FE replan entries and network callbacks remain rejected. A separate arrival-timed insertion experiment produced no collision and is retained with that narrower scope.
 
 ## Validation
 
-For the v0.130 source, focused checks pass **613 model groups**. A fresh public checkout passes **496**, with **117 explicit skips** for optional private evidence. Form checks pass **250**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.131 source, focused checks pass **617 model groups**. A fresh public checkout passes **499**, with **118 explicit skips** for optional private evidence. Form checks pass **251**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

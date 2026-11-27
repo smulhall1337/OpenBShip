@@ -76,8 +76,9 @@ namespace FleetLab
             if(goal!=2&&goal!=4)throw new NotSupportedException("Only captured queued-navigation goals2/4 are admitted.");
             return EvaluateCore(grid,fleets,secondaryFleets,backing,sourceClock,delayWeight,ownerPolicy,true,goal);
         }
-        // Original884 compares41FBAD with a still-unreached point after a real
-        // terrainFE or stationary kind11/slot30 collision. Other callers retain
+        // Original884 compares41FBAD after a real terrainFE or slot30 collision;
+        // original900 also counts the extra callback for supplied current/FE
+        // inputs and compares following movement. Other callers retain
         // their fresh/reached-point admission guards.
         internal static PracticeGoalWaypointResult EvaluateAfterCollision(PracticeAiRouteGrid grid, byte[] fleets,
             byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)

@@ -29,7 +29,8 @@ namespace FleetLab
         // output comparisons. This prepares data;it computes no expected result.
         internal PracticeNavigationMovementState CreateMovementComparison(int preset)
         {
-            if(preset<0||preset>11)throw new ArgumentOutOfRangeException("preset");
+            if(preset<0||preset>13)throw new ArgumentOutOfRangeException("preset");
+            if(preset>=12)return CreateCollisionEntryComparison(preset-11);
             if(preset>=5)return CreateLongMovementComparison(preset);
             int point=preset==2?5:preset==3?4:0;var xy=Points[point];var near=new byte[9];for(int n=0;n<9;n++)near[n]=0x6d;
             var quiet=CreateComparison(1,point,preset==4?8:0,0,0,12345,12345,0,near,-1).CreateNavigationInput(0);
@@ -66,6 +67,16 @@ namespace FleetLab
             if(kind==1){I(terrain,0,1);W(terrain,12,120);W(terrain,14,100);}
             if(kind==3){int at=30*492;I(f,at,11);W(f,at+6,0);W(f,at+12,120);W(f,at+14,100);I(f,at+476,0);f[at+485]=0;}
             return new PracticeNavigationMovementState(f,state.Backing,state.Grid,terrain,state.CopySecondaryPool(),state.Schedule,state.SelectedWaypoint);
+        }
+        internal PracticeNavigationMovementState CreateCollisionEntryComparison(int profile)
+        {
+            if(profile<0||profile>6)throw new ArgumentOutOfRangeException("profile");var quiet=CreateMovementComparison(1);var f=quiet.CopyFleetPool();var terrain=new byte[246000];int actor=16*492;
+            int x=profile==3?110:100,targetX=profile==3?160:profile==4?100:130,targetY=profile==3||profile==4?100:120;
+            W(f,actor+12,x);W(f,actor+14,100);W(f,actor+40,profile==6?-1:profile==3?120:100);W(f,actor+50,profile==6?310:100);f[actor+482]=(byte)(profile==5?255:254);
+            if(profile==1||profile==6){int next=30;foreach(var d in new[]{new[]{-1,0},new[]{1,0},new[]{0,-1},new[]{0,1}}){int at=next++*492;Fleet(f,at/492,11,0,targetX+d[0]*10,targetY+d[1]*10);I(f,at+476,0);f[at+485]=0;}}
+            if(profile==3){I(terrain,0,1);W(terrain,12,120);W(terrain,14,100);}
+            var task=quiet.Backing.CopyTaskRecord(16);I(task,200,4);I(task,304,1);I(task,8,targetX);I(task,12,targetY);I(task,296,targetX);I(task,300,targetY);I(task,4,profile==2?12346:12345);task[284]=(byte)(profile==2?1:0);
+            return new PracticeNavigationMovementState(f,quiet.Backing.WithTaskRecord(16,task),quiet.Grid,terrain,quiet.CopySecondaryPool(),quiet.Schedule,4);
         }
         // Independent recorded-input builder shared by public captured-output
         // checks and schematic study presets. No expected output is computed.

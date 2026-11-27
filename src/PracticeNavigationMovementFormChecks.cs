@@ -57,7 +57,7 @@ namespace FleetLab
             check("Navigation/movement form shows terrain and fleet collision before the next source replan",delegate{
                 using(var f=new PracticeNavigationMovementStudy(programs,startup()))
                 {
-                    Show(f,owner);Load(f,9);Need(Find<ComboBox>(f,"navigationMoveProfile").Items.Count==12&&Find<Button>(f,"navigationMoveAll").Text.Contains("1024"),"Long presets/window action absent");
+                    Show(f,owner);Load(f,9);Need(Find<ComboBox>(f,"navigationMoveProfile").Items.Count==14&&Find<Button>(f,"navigationMoveAll").Text.Contains("1024"),"Long presets/window action absent");
                     Advance(f,65);Need(f.StudyState.SuppliedWorldEvents==0,"Early supplied world event");Find<Button>(f,"navigationMoveOne").PerformClick();Need(f.StudyState.SuppliedWorldEvents==1&&f.StudyState.ReplanEntries==0,"Insertion skipped collision stage");
                     Find<Button>(f,"navigationMoveCollision").PerformClick();Need(f.StudyState.Polls==95&&f.StudyState.TerrainCollisionVisits==1&&f.StudyState.ReplanEntries==0&&Find<Label>(f,"navigationMoveSummary").Text.Contains("collision FE"),"Terrain collision not observable");
                     Find<Button>(f,"navigationMoveCollision").PerformClick();Need(f.StudyState.Polls==96&&f.StudyState.ReplanEntries==1&&Find<Label>(f,"navigationMoveSummary").Text.Contains("Last navigation: Replanned")&&Find<TextBox>(f,"navigationMoveDetails").Text.Contains("before poll 65"),"Next-prephase replan or supplied-input explanation absent");
@@ -72,6 +72,15 @@ namespace FleetLab
                     Load(f,10);Advance(f,193);Need(f.StudyState.SuppliedWorldEvents==1&&f.StudyState.State.CopyTerrainPool()[0]==1&&Find<Label>(f,"navigationMoveCell").Text.Contains("terrain 1"),"Removal happened early");Find<Button>(f,"navigationMoveOne").PerformClick();Need(f.StudyState.SuppliedWorldEvents==2&&f.StudyState.State.CopyTerrainPool()[0]==0&&Find<Label>(f,"navigationMoveCell").Text.Contains("terrain 0"),"Removal not reflected");
                     Find<Button>(f,"navigationMoveReset").PerformClick();Need(f.StudyState.Preset==10&&f.StudyState.Polls==0&&f.StudyState.ReplanEntries==0&&f.StudyState.SuppliedWorldEvents==0,"Long reset retained event/collision state");Advance(f,64);Find<Button>(f,"navigationMoveWatch").PerformClick();f.StepWatchForCheck();f.StepWatchForCheck();Need(f.StudyState.Polls==66&&f.StudyState.SuppliedWorldEvents==1,"Viewing duplicated or omitted boundary input");
                     Find<ComboBox>(f,"navigationMoveProfile").SelectedIndex=6;Need(!f.Watching&&f.StudyState.Preset==10,"Pending long preset advanced/loaded early");f.Size=f.MinimumSize;Application.DoEvents();var scroll=Find<Panel>(f,"navigationMoveScroll");var close=Find<Button>(f,"navigationMoveClose");scroll.ScrollControlIntoView(close);Application.DoEvents();Need(scroll.RectangleToClient(close.RectangleToScreen(close.ClientRectangle)).Bottom<=scroll.ClientSize.Height+2,"Long details/Close clipped");f.Close();
+                }
+            });
+            check("Navigation/movement single-poll views expose counted repeated callbacks and bounded watch reset",delegate{
+                using(var f=new PracticeNavigationMovementStudy(programs,startup()))
+                {
+                    Show(f,owner);Load(f,12);Need(f.StudyState.WindowPolls==1&&Find<Button>(f,"navigationMoveAll").Text.Contains("single")&&Find<Label>(f,"navigationMoveFeedback").Text.Contains("collision FE is supplied"),"Supplied current-FE scope absent");
+                    Find<Button>(f,"navigationMoveCollision").PerformClick();Need(f.StudyState.Polls==1&&f.StudyState.Position.X==100&&f.StudyState.WaypointFunctionVisits==2&&f.StudyState.RepeatedWaypointVisits==1&&f.StudyState.GridFunctionVisits==3&&f.StudyState.TerrainCollisionVisits==0&&!Find<Button>(f,"navigationMoveOne").Enabled&&Find<Label>(f,"navigationMoveSummary").Text.Contains("Waypoint calls 2; repeated 1; grid calls 3"),"Counted repeated callback not observable");
+                    Find<Button>(f,"navigationMoveReset").PerformClick();Need(f.StudyState.Polls==0&&f.StudyState.RepeatedWaypointVisits==0&&f.StudyState.State.CopyFleetPool()[16*492+482]==254,"Reset lost supplied FE input");
+                    Load(f,13);Find<Button>(f,"navigationMoveWatch").PerformClick();f.StepWatchForCheck();Need(!f.Watching&&f.StudyState.Polls==1&&f.StudyState.RepeatedWaypointVisits==1&&BitConverter.ToInt32(f.StudyState.State.Backing.CopyTaskRecord(16),4)==12346,"Single-poll watch exceeded window or lost held deadline");f.Close();
                 }
             });
             check("Recovered maps opens copied navigation/movement without altering the active battle",delegate{
@@ -99,9 +108,11 @@ namespace FleetLab
                 Load(f,6);Advance(f,256);capture("11-Primary-Gap-256");Find<Button>(f,"navigationMoveAll").PerformClick();capture("12-Primary-Gap-Complete");
                 Load(f,7);Find<Button>(f,"navigationMoveAll").PerformClick();capture("13-Closed-Wall");Load(f,8);Advance(f,256);capture("14-Terrain-Gap-256");
                 Load(f,9);Advance(f,95);capture("15-Terrain-Collision-95");Find<Button>(f,"navigationMoveOne").PerformClick();capture("16-Terrain-Replan-96");Find<Button>(f,"navigationMoveAll").PerformClick();capture("17-Terrain-Complete");
-                Load(f,10);Advance(f,194);capture("18-Terrain-Removed-194");Load(f,11);Advance(f,95);capture("19-Fleet-Collision-95");Find<Button>(f,"navigationMoveOne").PerformClick();f.Size=f.MinimumSize;capture("20-Fleet-Replan-Minimum");f.Close();
+                Load(f,10);Advance(f,194);capture("18-Terrain-Removed-194");Load(f,11);Advance(f,95);capture("19-Fleet-Collision-95");Find<Button>(f,"navigationMoveOne").PerformClick();f.Size=f.MinimumSize;capture("20-Fleet-Replan-Minimum");
+                f.Size=new Size(1180,850);Find<Panel>(f,"navigationMoveScroll").AutoScrollPosition=Point.Empty;Load(f,12);capture("21-Repeated-Blocked-Prepared");Find<Button>(f,"navigationMoveOne").PerformClick();capture("22-Repeated-Blocked-After");
+                Load(f,13);Find<Button>(f,"navigationMoveAll").PerformClick();capture("23-Repeated-Future-After");f.Size=f.MinimumSize;Find<Panel>(f,"navigationMoveScroll").ScrollControlIntoView(Find<TextBox>(f,"navigationMoveDetails"));capture("24-Repeated-Minimum-Details");f.Close();
             }
-            File.WriteAllText(Path.Combine(destination,"Scope.txt"),"Twenty actual-form navigation/movement previews. Original864/875/884profiles,sourcecosts/two-batchscheduler/arrivallocks/collisionreplan/sharedbacking;suppliedclock/phase/testobstacles/selectedother. Goldtrail/continuousmarkers aremoderninspectionaids. No fullownercontroller/naturalpacing/originalrenderer/audio/network/battle/settings changes. PhysicalDPI/input remainpending.\r\n");return 0;
+            File.WriteAllText(Path.Combine(destination,"Scope.txt"),"Twentyfour actual-form navigation/movement previews. Original864/875/884/900profiles,sourcecosts/two-batchscheduler/arrivallocks/collisionreplan/countedrepeat/sharedbacking;suppliedclock/phase/testobstacles/collisioninputs/selectedother. Goldtrail/continuousmarkers aremoderninspectionaids. No fullownercontroller/naturalpacing/originalrenderer/audio/network/battle/settings changes. PhysicalDPI/input remainpending.\r\n");return 0;
         }
     }
 }
