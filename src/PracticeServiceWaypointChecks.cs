@@ -157,15 +157,7 @@ namespace FleetLab
             }
         }
         // INPUTBUILDER779: copied fixture generation,not an output oracle.
-        static byte[] Fleet(byte[] basis,int[] spec)
-    {
-        int kind=spec[0],profile=spec[1],queue=spec[2],gate=spec[3],target=spec[4];var f=(byte[])basis.Clone();int actor=16*492;I(f,actor,kind);W(f,actor+6,1);I(f,actor+472,0x11223344);I(f,actor+476,gate==3?2:0);f[actor+485]=83;W(f,actor+12,profile>=3?0:610);W(f,actor+14,profile>=3?0:590);
-        for(int n=0;n<5;n++){W(f,actor+40+n*2,queue==6?(n%2==0?100+n*10:-1):(n<queue?100+n*10:-1));W(f,actor+50+n*2,200+n*10);}if(gate==1)W(f,actor+40,-1);
-        foreach(int yard in new[]{2,3}){int at=yard*492;Array.Clear(f,at+16,24);W(f,at+6,1);W(f,at+12,yard==2?100:130);W(f,at+14,yard==2?100:80);}
-        Action<int,int> marker=delegate(int yard,int unit){I(f,yard*492,2);I(f,yard*492+16,0x4fc340+unit*268);};if(profile==1)marker(2,5);if(profile==2)marker(3,9);if(profile>=3){marker(2,5);marker(3,9);}
-        if(profile==3){W(f,2*492+12,100);W(f,2*492+14,0);W(f,3*492+12,0);W(f,3*492+14,100);}if(profile==4){W(f,2*492+12,200);W(f,2*492+14,0);W(f,3*492+12,50);W(f,3*492+14,0);}if(profile==5){W(f,2*492+6,0);W(f,2*492+12,10);W(f,2*492+14,0);W(f,3*492+12,100);W(f,3*492+14,0);}if(profile==6)Array.Clear(f,2*492+16,24);if(profile==7)I(f,2*492,1);if(profile==8)I(f,2*492+20,0x4fc340+7*268);if(profile==9){W(f,actor+12,-32768);W(f,actor+14,-32768);W(f,2*492+12,32767);W(f,2*492+14,32767);W(f,3*492+12,32766);W(f,3*492+14,-32768);}
-        if(target==249)I(f,249*492,1);return f;
-    }
+        static byte[] Fleet(byte[] basis,int[] spec){return PracticeServiceWaypointStudyBasis.FixtureFleet(basis,spec);}
         static byte[] Read(BinaryReader r,int n){var b=r.ReadBytes(n);Need(b.Length==n,"775 truncated");return b;}static byte[] Patch(BinaryReader r,byte[] basis){var b=(byte[])basis.Clone();int count=r.ReadInt32(),last=-1;Need(count>=0&&count<=b.Length,"775 delta count");for(int n=0;n<count;n++){int at=r.ReadInt32();Need(at>last&&at<b.Length,"775 delta bound");last=at;b[at]=r.ReadByte();}return b;}
         internal static void Run(Action<string,Action> check,Action<string,Action> evidence,string assets)
         {

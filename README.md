@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.122**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.123**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -459,9 +459,16 @@ Source evidence uses the pinned executable identity above. Native probes execute
 
 AI cinematic upscaling remains stretch goal **SG01**; no upscaled assets are installed.
 
+## Copied service waypoint study
+
+Open **Recovered maps → Service waypoints (study)…** directly. The fixed BSSB202 seed731 copy preserves your active battle and settings. Choose a preset, press **Load selected waypoint copy**, then **Apply one copied service callback**. Reset restores the applied preset; pending selector changes take effect on Load.
+
+The default chooses yard 3 and replaces queue point 3 with **50,0**. **Equal distance** chooses the earlier yard 2. **No yard** keeps the supplied cached destination **550,290**. **Queue gap** replaces point 1 and preserves the later unused words. Three skip presets return without selecting a destination; the active-reference and signed-limit presets expose additional compared branches. Origins stay fixed, and one callback runs per reset.
+
+The plot is a modern schematic of copied intent: gold origin, selected yard in green, previous queue in gray and updated queue in cyan. Lines are not computed travel routes. Starting goal 4, cache values, yard positions and gate inputs are diagnostic presets; numeric rules are reconstructed. No movement, clock, ship admission, repair, media playback or complete AI world runs. The field details and five before/after queue rows remain read-only.
 ## Validation
 
-For the v0.122 source, focused checks pass **571 model groups**. A fresh public checkout passes **462**, with **109 explicit skips** for optional private evidence. Form checks pass **230**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.123 source, focused checks pass **574 model groups**. A fresh public checkout passes **465**, with **109 explicit skips** for optional private evidence. Form checks pass **235**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -476,7 +483,7 @@ Use `--ui-check` with a different report path for real form/button checks. Those
 
 Recent private comparisons include 432 request-phase histories with 57,528 complete ten-pool observations, 126 broader airfield histories with 48,960 observations, and shorter manual/AA return fixtures. UI checks cover manual and generated requests, pause, reset, counter wrap, return, docking, resource expiry, pending settings and clean owner shutdown. Numeric sweeps and recorded observations are not counts of distinct gameplay scenarios.
 
-A software comparison PNG can be exported with `--render-software-preview` and an output path. Other named comparison exports are listed in `src/Program.cs`.
+A software comparison PNG can be exported with `--render-software-preview` and an output path. Other named comparison exports are listed in `src/Program.cs`. Use `--render-service-waypoints` with a fresh directory for eleven copied-study form captures, including default/minimum sizes, scrolling and the signed-coordinate preset.
 
 Use `--render-map-yard-study` with a new output directory to export seven copied-yard form previews at default and minimum sizes. This uses the normal game executable, preserves existing output, and saves no settings. The previews establish layout and copied transitions, not physical display/input acceptance.
 
