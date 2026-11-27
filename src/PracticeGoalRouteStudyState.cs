@@ -29,7 +29,8 @@ namespace FleetLab
         // output comparisons. This prepares data;it computes no expected result.
         internal PracticeNavigationMovementState CreateMovementComparison(int preset)
         {
-            if(preset<0||preset>4)throw new ArgumentOutOfRangeException("preset");
+            if(preset<0||preset>11)throw new ArgumentOutOfRangeException("preset");
+            if(preset>=5)return CreateLongMovementComparison(preset);
             int point=preset==2?5:preset==3?4:0;var xy=Points[point];var near=new byte[9];for(int n=0;n<9;n++)near[n]=0x6d;
             var quiet=CreateComparison(1,point,preset==4?8:0,0,0,12345,12345,0,near,-1).CreateNavigationInput(0);
             var f=quiet.CopyFleetPool();int actor=16*492;I(f,actor+476,0);W(f,actor+60,preset==1?7:3);f[actor+485]=(byte)(preset==1?3:2);f[actor+482]=254;
@@ -37,6 +38,34 @@ namespace FleetLab
             if(preset==4)for(int slot=0;slot<250;slot++)if(BitConverter.ToInt32(f,slot*492)==11){I(f,slot*492+476,0);f[slot*492+485]=0;}
             var task=quiet.Backing.CopyTaskRecord(16);I(task,200,2);I(task,304,0);I(task,296,600);I(task,300,610);
             return new PracticeNavigationMovementState(f,quiet.Backing.WithTaskRecord(16,task),quiet.Grid,new byte[246000],new byte[61500],new PracticeFleetScheduler(16,0),4);
+        }
+        // Recorded inputs only; original875/884 digests independently verify
+        // these inputs and all subsequent states.
+        PracticeNavigationMovementState CreateLongMovementComparison(int preset)
+        {
+            var quiet=CreateMovementComparison(1);var f=quiet.CopyFleetPool();int actor=16*492;
+            for(int n=0;n<5;n++){W(f,actor+40+n*2,n==0?160:-1);W(f,actor+50+n*2,n==0?100:300+n*10);}
+            if(preset==6||preset==7)
+            {
+                int next=30;for(int y=0;y<64;y++)
+                {
+                    if(preset==6&&y==12)continue;int at=next++*492;
+                    Fleet(f,at/492,11,0,130,y*10);I(f,at+476,0);f[at+485]=0;
+                }
+            }
+            var terrain=new byte[246000];
+            if(preset==8){int next=0;for(int y=0;y<64;y++)if(y!=12){int at=next++*492;I(terrain,at,1);W(terrain,at+12,130);W(terrain,at+14,y*10);}}
+            var task=quiet.Backing.CopyTaskRecord(16);I(task,8,160);I(task,12,100);
+            return new PracticeNavigationMovementState(f,quiet.Backing.WithTaskRecord(16,task),quiet.Grid,terrain,quiet.CopySecondaryPool(),quiet.Schedule,4);
+        }
+        internal static int MovementWorldEvent(int preset,int poll)
+        {return poll==65?(preset==9||preset==10?1:preset==11?3:0):poll==193&&preset==10?2:0;}
+        internal static PracticeNavigationMovementState ApplyMovementWorldEvent(PracticeNavigationMovementState state,int preset,int poll)
+        {
+            int kind=MovementWorldEvent(preset,poll);if(kind==0)return state;var f=state.CopyFleetPool();var terrain=kind==3?state.CopyTerrainPool():new byte[246000];
+            if(kind==1){I(terrain,0,1);W(terrain,12,120);W(terrain,14,100);}
+            if(kind==3){int at=30*492;I(f,at,11);W(f,at+6,0);W(f,at+12,120);W(f,at+14,100);I(f,at+476,0);f[at+485]=0;}
+            return new PracticeNavigationMovementState(f,state.Backing,state.Grid,terrain,state.CopySecondaryPool(),state.Schedule,state.SelectedWaypoint);
         }
         // Independent recorded-input builder shared by public captured-output
         // checks and schematic study presets. No expected output is computed.

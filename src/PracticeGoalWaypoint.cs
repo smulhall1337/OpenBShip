@@ -76,8 +76,19 @@ namespace FleetLab
             if(goal!=2&&goal!=4)throw new NotSupportedException("Only captured queued-navigation goals2/4 are admitted.");
             return EvaluateCore(grid,fleets,secondaryFleets,backing,sourceClock,delayWeight,ownerPolicy,true,goal);
         }
+        // Original884 compares41FBAD with a still-unreached point after a real
+        // terrainFE or stationary kind11/slot30 collision. Other callers retain
+        // their fresh/reached-point admission guards.
+        internal static PracticeGoalWaypointResult EvaluateAfterCollision(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy)
+        {
+            if(grid==null||backing==null)throw new ArgumentNullException("grid");
+            int goal=BitConverter.ToInt32(backing.CopyTaskRecord(grid.TaskSlot),200);
+            if(goal!=2&&goal!=4)throw new NotSupportedException("Collision navigation requires the compared goals2/4.");
+            return EvaluateCore(grid,fleets,secondaryFleets,backing,sourceClock,delayWeight,ownerPolicy,true,goal,true);
+        }
         static PracticeGoalWaypointResult EvaluateCore(PracticeAiRouteGrid grid, byte[] fleets,
-            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, bool navigationArrival, int expectedGoal = 4)
+            byte[] secondaryFleets, PracticeAiSharedBacking backing, int sourceClock, int delayWeight, int ownerPolicy, bool navigationArrival, int expectedGoal = 4, bool collisionReplan = false)
         {
             if (grid == null || backing == null) throw new ArgumentNullException("grid");
             if (fleets == null || fleets.Length != 123000 || secondaryFleets == null || secondaryFleets.Length != 246000)
@@ -90,7 +101,7 @@ namespace FleetLab
                 BitConverter.ToInt16(fleets, at + 6) != 1 || BitConverter.ToInt32(task, 0) != 11 ||
                 BitConverter.ToInt32(task, 200) != expectedGoal || (!navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1))
                 throw new NotSupportedException("Waypoint callback admits compared owner1 task11/goal4 and fleet kinds1/3/4/5/9 with no first waypoint.");
-            if (navigationArrival && BitConverter.ToInt16(fleets, at + 40) != -1 &&
+            if (navigationArrival && !collisionReplan && BitConverter.ToInt16(fleets, at + 40) != -1 &&
                 (BitConverter.ToInt16(fleets, at + 40) != BitConverter.ToInt16(fleets, at + 12) ||
                  BitConverter.ToInt16(fleets, at + 50) != BitConverter.ToInt16(fleets, at + 14)))
                 throw new NotSupportedException("Only an empty or exactly reached first point is compared by the navigation caller.");

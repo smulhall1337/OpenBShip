@@ -3,7 +3,7 @@ using System.IO;
 
 namespace FleetLab
 {
-    public enum PracticeQueuedNavigationOutcome { Started, CompletedGoal, Waiting, ReachedWaypoint }
+    public enum PracticeQueuedNavigationOutcome { Started, CompletedGoal, Waiting, ReachedWaypoint, Replanned }
     public sealed class PracticeQueuedNavigationResult
     {
         readonly byte[] fleets;
@@ -14,11 +14,12 @@ namespace FleetLab
         public PracticeQueuedNavigationOutcome Outcome { get; private set; }
         public PracticeGoalRouteResult StartRoute { get; private set; }
         public PracticeGoalWaypointResult Waypoint { get; private set; }
+        public PracticeGoalRouteResult CollisionRoute { get; private set; }
         public int NavigationVisits { get { return 250; } }
         internal PracticeQueuedNavigationResult(byte[] f, PracticeAiSharedBacking b, PracticeAiRouteGrid g,
             int selectedFleet, int selectedPoint, PracticeQueuedNavigationOutcome outcome,
-            PracticeGoalRouteResult route, PracticeGoalWaypointResult waypoint)
-        { fleets=(byte[])f.Clone(); Backing=b; Grid=g; SelectedFleet=selectedFleet; SelectedWaypoint=selectedPoint; Outcome=outcome; StartRoute=route; Waypoint=waypoint; }
+            PracticeGoalRouteResult route, PracticeGoalWaypointResult waypoint, PracticeGoalRouteResult collisionRoute = null)
+        { fleets=(byte[])f.Clone(); Backing=b; Grid=g; SelectedFleet=selectedFleet; SelectedWaypoint=selectedPoint; Outcome=outcome; StartRoute=route; Waypoint=waypoint; CollisionRoute=collisionRoute; }
         public byte[] CopyFleetPool() { return (byte[])fleets.Clone(); }
     }
 
@@ -34,6 +35,18 @@ namespace FleetLab
         public static PracticeQueuedNavigationResult EvaluateOffline(PracticeAiRouteGrid grid, byte[] fleets,
             byte[] secondary, PracticeAiSharedBacking backing, int selectedFleet, int selectedPoint,
             int sourceClock, int delayWeight, int ownerPolicy)
+        { return EvaluateCore(grid,fleets,secondary,backing,selectedFleet,selectedPoint,sourceClock,delayWeight,ownerPolicy,false); }
+
+        // Original884: active/unreached FE or stationary slot30 collision in the
+        // coupled movement profile. Do not broaden the public839 entry point.
+        internal static PracticeQueuedNavigationResult EvaluateForMovement(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] terrain, PracticeAiSharedBacking backing, int selectedFleet, int selectedPoint,
+            int sourceClock, int delayWeight, int ownerPolicy)
+        { return EvaluateCore(grid,fleets,terrain,backing,selectedFleet,selectedPoint,sourceClock,delayWeight,ownerPolicy,true); }
+
+        static PracticeQueuedNavigationResult EvaluateCore(PracticeAiRouteGrid grid, byte[] fleets,
+            byte[] secondary, PracticeAiSharedBacking backing, int selectedFleet, int selectedPoint,
+            int sourceClock, int delayWeight, int ownerPolicy, bool movementCollision)
         {
             if(grid==null||backing==null) throw new ArgumentNullException("grid");
             if(grid.TaskSlot!=16) throw new NotSupportedException("The queued-navigation comparison uses actor16.");
@@ -80,14 +93,30 @@ namespace FleetLab
                 return new PracticeQueuedNavigationResult(after,route.Backing,route.Grid,selectedFleet,nextSelection,
                     PracticeQueuedNavigationOutcome.Started,route,null);
             }
-            if(nav!=1||(goal!=2&&goal!=4)||fleets[actor+482]!=255||
+            if(nav!=1||(goal!=2&&goal!=4)||(!movementCollision&&fleets[actor+482]!=255)||
                 (selectedFleet==249&&selectedPoint!=4)||(selectedFleet==16&&selectedPoint!=5&&selectedPoint!=-1))
                 throw new NotSupportedException("The captured follow-up requires nav1, goal2/4, collisionFF and retained selection.");
+            if(movementCollision&&fleets[actor+482]!=255&&fleets[actor+482]!=254&&fleets[actor+482]!=30)
+                throw new NotSupportedException("Coupled navigation compares terrainFE or stationary slot30 collisions only.");
             if(BitConverter.ToInt32(task,296)==x&&BitConverter.ToInt32(task,300)==y)
             {
                 Put(task,304,0);
                 return new PracticeQueuedNavigationResult(after,backing.WithTaskRecord(16,task),grid,selectedFleet,selectedPoint,
                     PracticeQueuedNavigationOutcome.CompletedGoal,null,null);
+            }
+            if(after[actor+482]!=255)
+            {
+                int firstX=BitConverter.ToInt16(after,actor+40),firstY=BitConverter.ToInt16(after,actor+50);
+                if(selectedFleet!=249||selectedPoint!=4||kind!=1||firstX==-1||(firstX==x&&firstY==y)||
+                    (after[actor+482]==30&&BitConverter.ToInt32(after,30*492)!=11))
+                    throw new NotSupportedException("Collision replan requires the compared kind1/unreached point and selected-other context.");
+                var route=PracticeGoalRoute.BuildForQueuedNavigation(grid,after,secondary,backing,sourceClock,delayWeight,ownerPolicy);
+                var waypoint=PracticeGoalWaypoint.EvaluateAfterCollision(route.Grid,after,secondary,route.Backing,sourceClock,delayWeight,ownerPolicy);
+                after=waypoint.CopyFleetPool();after[actor+482]=255;
+                if(BitConverter.ToInt16(after,actor+40)==x&&BitConverter.ToInt16(after,actor+50)==y)
+                    throw new NotSupportedException("A second waypoint callback after collision replan needs a separate original comparison.");
+                return new PracticeQueuedNavigationResult(after,waypoint.Backing,waypoint.Grid,selectedFleet,selectedPoint,
+                    PracticeQueuedNavigationOutcome.Replanned,null,waypoint,route);
             }
             if(BitConverter.ToInt16(after,actor+40)==x&&BitConverter.ToInt16(after,actor+50)==y)
             {

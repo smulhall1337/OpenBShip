@@ -4,9 +4,10 @@ using System.IO;
 namespace FleetLab
 {
     // RIP B9A8...6A569: whole41FCC0, inactive415DF0, then two427670 batches.
-    // Original864 compares five256-poll histories. This explicit offline
+    // Original864/875/884 compare short,barrier and actual-collision histories.
+    // This explicit offline
     // profile has actor16/owner1/kind1, selected-other249/point4, dormant
-    // policy/idle callbacks and inactive terrain/secondary pools. The caller
+    // policy/idle callbacks,kind0/1 terrain and inactive secondary pools. The caller
     // supplies the clock. Owner dispatch and natural frame pacing are absent.
     public sealed class PracticeNavigationMovementState
     {
@@ -55,7 +56,13 @@ namespace FleetLab
                 }
             }
             for(int slot=0;slot<500;slot++)
-                if(BitConverter.ToInt32(terrainPool,slot*492)!=0)throw new NotSupportedException("This composition requires inactive terrain records.");
+            {
+                int at=slot*492,kind=BitConverter.ToInt32(terrainPool,at);
+                if(kind!=0&&kind!=1)throw new NotSupportedException("Navigation/movement compares inactive or kind1 terrain only.");
+                if(kind==1&&(BitConverter.ToInt16(terrainPool,at+12)<0||BitConverter.ToInt16(terrainPool,at+12)>630||
+                    BitConverter.ToInt16(terrainPool,at+14)<0||BitConverter.ToInt16(terrainPool,at+14)>630))
+                    throw new NotSupportedException("Compared terrain coordinates lie in0..630.");
+            }
             for(int slot=0;slot<125;slot++)
                 if(BitConverter.ToInt32(secondaryPool,slot*492)!=0)throw new NotSupportedException("This composition requires inactive secondary records.");
             fleets=(byte[])f.Clone();terrain=share?terrainPool:(byte[])terrainPool.Clone();secondary=share?secondaryPool:(byte[])secondaryPool.Clone();
@@ -76,7 +83,7 @@ namespace FleetLab
             }
             else
             {
-                navigation=PracticeQueuedNavigation.EvaluateOffline(Grid,fleets,terrain,Backing,249,SelectedWaypoint,sourceClock,32000,0);
+                navigation=PracticeQueuedNavigation.EvaluateForMovement(Grid,fleets,terrain,Backing,249,SelectedWaypoint,sourceClock,32000,0);
                 f=navigation.CopyFleetPool();backing=navigation.Backing;grid=navigation.Grid;
             }
             // Original415DF0 has no effects for the supplied Practice selector1;

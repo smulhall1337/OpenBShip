@@ -300,6 +300,7 @@ namespace FleetLab {
             PracticeActiveNavigationChecks.Run(check,checkEvidence,assets);
             PracticeQueuedNavigationChecks.Run(check,checkEvidence,assets);
             PracticeNavigationMovementChecks.Run(check,checkEvidence,assets);
+            PracticeNavigationCollisionChecks.Run(check,checkEvidence,assets);
             PracticeServiceWaypointStudyStateChecks.Run(check,assets);
             check("Original frame clock preserves pre-wait sample, prior delta and observed zero reset",delegate {
                 // Values from source probes234/236 and the two observed zero

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.129**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.130**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -502,17 +502,21 @@ The existing Active navigation window keeps its earlier inputs. The separate com
 
 ## Navigation and movement study
 
-Open **Recovered maps → Navigation + movement (study)…** directly. This copied profile runs the original navigation prephase followed by two movement batches. Gold moves only when fleet 16's scheduler slot is visited; cyan shows the first queued point, green the cached navigation target, and the gold trail is a modern inspection aid. Other policy/idle work is dormant, with supplied inactive terrain/secondary data and a fixed selected-other context.
+Open **Recovered maps → Navigation + movement (study)…** directly. This copied profile runs the original navigation prephase followed by two movement batches. Gold moves only when fleet 16's scheduler slot is visited; cyan shows the first queued point, green the cached navigation target, and the gold trail is a modern inspection aid. Other policy/idle work is dormant, with supplied test obstacles, inactive secondary data and a fixed selected-other context.
 
-Try **Until pose changes · up to 64 polls**. The default reaches **102,102** after 32 supplied polls, including the initially locked arrival. **1 supplied poll** and **32 supplied polls** expose individual transitions. **Up to 256** ends the recorded viewing window. The speed-7 preset reaches **130,120**, completes navigation and consumes the copied queue; the blocked preset can hold at **100,100** with goal 2 still active. Navigation completion retains goal 4 and does not complete a mission.
+Try **Until pose changes · up to 64 polls**. The default reaches **102,102** after 32 supplied polls, including the initially locked arrival. **1 supplied poll** and **32 supplied polls** expose individual transitions. The five earlier presets retain their 256-poll windows. The speed-7 preset reaches **130,120**, completes navigation and consumes the copied queue; the blocked preset can hold at **100,100** with goal 2 still active. Navigation completion retains goal 4 and does not complete a mission.
+
+Seven long presets use 1,024-poll windows. Gapped primary and terrain walls allow travel to **160,100**; a closed primary wall keeps the fleet at **100,100**. In the three dynamic presets, a supplied obstacle appears before zero-based poll 65. Choose **To next collision / replan · up to 256 polls**: it stops after 95 polls, showing the blocked fleet at **110,100** with an unreached **120,100** waypoint. The source collision is **FE** for terrain or **1E** (fleet slot 30). Use the action again to observe the next prephase replan after 96 polls, with a new **110,90** waypoint. The removal preset clears its terrain before poll 193. These obstacle changes are explicit study inputs; the displayed source cost field reflects its last build.
 
 The first preset holds its clock; others supply +40 ms per poll. **Watch 32 polls (debug)** applies one poll per UI timer tick with no catch-up. Focus loss, pending selection changes, manual actions, reset and closing stop viewing, without automatic resume. Reset restores the applied preset; Load applies a pending selection. Every study action preserves the active battle and settings.
 
-`PracticeNavigationMovementState.AdvanceOfflinePoll` matches five original 256-poll histories: 2,560 recorded stage observations, including complete shared state and scheduler carryover. These are five controlled histories, not 2,560 gameplay scenarios. Initial collision FE, stale cached target, fixed clocks and nonmultiple coordinates are diagnostic inputs. This is not a full owner controller, mission, original renderer or calibrated application clock.
+`PracticeNavigationMovementState.AdvanceOfflinePoll` matches 12 original histories: 16,896 recorded stage observations, including complete shared state, terrain and scheduler carryover. These are 12 controlled histories, not 16,896 gameplay scenarios. Initial collision FE, stale cached target, fixed clocks, nonmultiple coordinates and obstacle interventions are diagnostic inputs. This is not a full owner controller, mission, original renderer or calibrated application clock.
+
+The collision entry remains internal to this bounded composition and retains the earlier public caller guards. It admits terrain FE and the compared stationary kind-11 slot-30 collision with an unreached point. Unexamined signed fleet indices, yard bypasses, network callbacks and a possible second waypoint callback are rejected. A separate original experiment inserted obstacles exactly on an arrival and produced no collision; that result is retained as arrival sampling evidence and does not substitute for the actual collision histories.
 
 ## Validation
 
-For the v0.129 source, focused checks pass **607 model groups**. A fresh public checkout passes **492**, with **115 explicit skips** for optional private evidence. Form checks pass **248**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.130 source, focused checks pass **613 model groups**. A fresh public checkout passes **496**, with **117 explicit skips** for optional private evidence. Form checks pass **250**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

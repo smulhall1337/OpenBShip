@@ -99,7 +99,7 @@ namespace FleetLab
                 Need(Hex(Digest(update.State,12345,1,1))==after&&Hex(Digest(state,12345,1,-1))==before,"Aliased result or input");
                 foreach(int kind in new[]{9,12}){var bad=state.CopyFleetPool();I(bad,16*492,kind);Need(Reject(delegate{Copy(state,bad,state.Backing,state.CopyTerrainPool(),state.CopySecondaryPool(),4);}),"Unverified actor kind "+kind);}
                 var other=state.CopyFleetPool();I(other,20*492,1);Need(Reject(delegate{Copy(state,other,state.Backing,state.CopyTerrainPool(),state.CopySecondaryPool(),4);}),"Unverified second active fleet");
-                var activeTerrain=state.CopyTerrainPool();I(activeTerrain,499*492,1);Need(Reject(delegate{Copy(state,state.CopyFleetPool(),state.Backing,activeTerrain,state.CopySecondaryPool(),4);}),"Unverified terrain composition");
+                var activeTerrain=state.CopyTerrainPool();I(activeTerrain,499*492,2);Need(Reject(delegate{Copy(state,state.CopyFleetPool(),state.Backing,activeTerrain,state.CopySecondaryPool(),4);}),"Unverified terrain composition");
                 var activeSecondary=state.CopySecondaryPool();I(activeSecondary,124*492,1);Need(Reject(delegate{Copy(state,state.CopyFleetPool(),state.Backing,state.CopyTerrainPool(),activeSecondary,4);}),"Unverified secondary composition");
                 Need(Reject(delegate{Copy(state,state.CopyFleetPool(),state.Backing,state.CopyTerrainPool(),state.CopySecondaryPool(),5);}),"Raw counter5 silently clamped");
                 var malformed=state.CopyFleetPool();W(malformed,16*492+42,-2);
