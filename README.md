@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.125**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.126**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -476,11 +476,15 @@ Open **Recovered maps → Route costs (study)…** directly. Load a preset and p
 
 For the **Encircled destination** preset, build once to reach a failed search. **Retry at deadline · same blockers** assigns the prior deadline to the source clock and demonstrates the original neighborhood-cache hold. Reset and build again, then choose **add nearby blocker** to change that cache comparison and run another failed search. No clock runs between clicks. One retry is admitted; Reset restores the applied preset while a pending selection takes effect only on Load.
 
-The **Future cooldown** preset deliberately clears the whole grid before holding, so its blockers do not appear yet. Other presets show a gapped barrier, nearby fleet blockers, opposite corners and the original destination-yard loop order. Colors, selection and labels are modern aids; grid bytes and task transitions match 396 controlled original observations. `PracticeGoalRoute.Build` remains a separate copied-state API. Goal4 following, waypoint insertion, fleet movement, natural application pacing and complete Practice AI remain separate work.
+The **Future cooldown** preset deliberately clears the whole grid before holding, so its blockers do not appear yet. Other presets show a gapped barrier, nearby fleet blockers, opposite corners and the original destination-yard loop order. Colors, selection and labels are modern aids; grid bytes and task transitions match 396 controlled original observations. `PracticeGoalRoute.Build` remains a separate copied-state API. The optional waypoint action below adds one callback. Recurring route following, fleet movement, natural application pacing and complete Practice AI remain separate work.
+
+The separate **Queue one waypoint · fresh goal4 copy** action supplies the original waypoint callback with cached XY equal to the applied destination. Use it immediately after Load or Reset. It rebuilds costs when required and displays the emitted point as cyan intent; the gold fleet remains fixed. This runs a fresh callback input and is available before Build, rather than after a cost result. Reset restores the loaded goal2 cost-search fixture.
+
+The default queues **110,110** from fixed **100,100** toward **130,120**. **Encircled destination** and **Future cooldown** hold without a point. The **At destination** preset pops one task before grid work; its supplied CD input fill remains visible. That completes one queue record, not a mission. The callback matches 396 complete original states; an additional 216 controlled original neighbor fixtures check all eight directions, ties, edge bounds, unsigned thresholds and blocked diagonal corners. Natural admission of the artificial kind2/11 selector fixtures is not claimed; the public whole callback still rejects those kinds.
 
 ## Validation
 
-For the v0.125 source, focused checks pass **586 model groups**. A fresh public checkout passes **475**, with **111 explicit skips** for optional private evidence. Form checks pass **239**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.126 source, focused checks pass **593 model groups**. A fresh public checkout passes **481**, with **112 explicit skips** for optional private evidence. Form checks pass **241**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

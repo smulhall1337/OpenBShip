@@ -4,8 +4,8 @@ namespace FleetLab
     public sealed class PracticeGoalRouteStudyBasis
     {
         readonly byte[] fleets,region;
-        static readonly string[] names={"Open water · one cost search","Corner-to-corner · gapped barrier","Encircled destination · failed search / retry","Future cooldown · grid clears first","Destination yard quartet · source loop order","Nearby friendly · rounded corners and waypoint","Flagged enemy · nearby rounded corners","Opposite corners · source scan bounds"};
-        static readonly int[][] presets={new[]{0,0,0},new[]{2,7,0},new[]{0,8,0},new[]{0,8,1},new[]{1,3,0},new[]{0,4,0},new[]{0,5,0},new[]{3,0,0}};
+        static readonly string[] names={"Open water · one cost search","Corner-to-corner · gapped barrier","Encircled destination · failed search / retry","Future cooldown · grid clears first","Destination yard quartet · source loop order","Nearby friendly · rounded corners and waypoint","Flagged enemy · nearby rounded corners","Opposite corners · source scan bounds","At destination · waypoint callback pops task"};
+        static readonly int[][] presets={new[]{0,0,0},new[]{2,7,0},new[]{0,8,0},new[]{0,8,1},new[]{1,3,0},new[]{0,4,0},new[]{0,5,0},new[]{3,0,0},new[]{4,0,0}};
         internal static readonly int[][] Points={new[]{100,100,130,120},new[]{130,120,100,100},new[]{0,0,630,630},new[]{630,0,0,630},new[]{320,320,320,320},new[]{9,19,29,39}};
         public static ReadOnlyCollection<string> Presets { get { return Array.AsReadOnly(names); } }
         static void I(byte[] b,int at,int value){BitConverter.GetBytes(value).CopyTo(b,at);}static void W(byte[] b,int at,int value){BitConverter.GetBytes(unchecked((short)value)).CopyTo(b,at);}
@@ -49,9 +49,12 @@ namespace FleetLab
         readonly byte[] fleets,initialSecondary,currentSecondary;readonly PracticeAiSharedBacking initialBacking;readonly PracticeAiRouteGrid initialGrid;readonly int initialClock;
         public int Preset {get;private set;}public int SourceClock {get;private set;}public int OwnerPolicy {get;private set;}public int Visits {get;private set;}
         public PracticeGoalRouteResult Result {get;private set;}
-        public PracticeAiSharedBacking Backing {get{return Result==null?initialBacking:Result.Backing;}}
-        public PracticeAiRouteGrid Grid {get{return Result==null?initialGrid:Result.Grid;}}
-        public bool CanRetry {get{return Visits==1&&Result!=null&&Result.Outcome==PracticeGoalRouteOutcome.RouteUnavailable;}}
+        public PracticeGoalWaypointResult WaypointResult {get;private set;}
+        public PracticeAiSharedBacking WaypointInput {get;private set;}
+        public PracticeAiSharedBacking Backing {get{return WaypointResult!=null?WaypointResult.Backing:Result==null?initialBacking:Result.Backing;}}
+        public PracticeAiRouteGrid Grid {get{return WaypointResult!=null?WaypointResult.Grid:Result==null?initialGrid:Result.Grid;}}
+        public bool HasGridOutput {get{return WaypointResult!=null?WaypointResult.Route!=null:Result!=null;}}
+        public bool CanRetry {get{return WaypointResult==null&&Visits==1&&Result!=null&&Result.Outcome==PracticeGoalRouteOutcome.RouteUnavailable;}}
         public int OriginX {get{return BitConverter.ToInt16(fleets,16*492+12);}}public int OriginY {get{return BitConverter.ToInt16(fleets,16*492+14);}}
         public int TargetX {get{return BitConverter.ToInt32(Backing.CopyTaskRecord(16),296);}}public int TargetY {get{return BitConverter.ToInt32(Backing.CopyTaskRecord(16),300);}}
         internal PracticeGoalRouteStudyState(byte[] f,byte[] secondary,PracticeAiSharedBacking backing,PracticeAiRouteGrid grid,int policy,int clock,int preset,PracticeGoalRouteResult result,int visits,PracticeGoalRouteStudyState original)
@@ -59,7 +62,7 @@ namespace FleetLab
             fleets=(byte[])f.Clone();currentSecondary=(byte[])secondary.Clone();initialSecondary=original==null?(byte[])secondary.Clone():original.initialSecondary;initialBacking=original==null?backing:original.initialBacking;initialGrid=original==null?grid:original.initialGrid;initialClock=original==null?clock:original.initialClock;
             OwnerPolicy=policy;SourceClock=clock;Preset=preset;Result=result;Visits=visits;
         }
-        public byte[] CopyFleetPool(){return (byte[])fleets.Clone();}public byte[] CopySecondaryFleetPool(){return (byte[])currentSecondary.Clone();}
+        public byte[] CopyFleetPool(){return WaypointResult==null?(byte[])fleets.Clone():WaypointResult.CopyFleetPool();}public byte[] CopySecondaryFleetPool(){return (byte[])currentSecondary.Clone();}
         public PracticeGoalRouteStudyState Build()
         {
             if(Visits!=0)throw new InvalidOperationException("One copied route visit is complete;reset or use the explicit failed-search retry.");
@@ -73,6 +76,15 @@ namespace FleetLab
             if(addBlocker){BitConverter.GetBytes(1).CopyTo(secondary,0);BitConverter.GetBytes((short)OriginX).CopyTo(secondary,12);BitConverter.GetBytes((short)OriginY).CopyTo(secondary,14);}
             var result=PracticeGoalRoute.Build(Grid,fleets,secondary,Backing,clock,32000,OwnerPolicy);
             return new PracticeGoalRouteStudyState(fleets,secondary,initialBacking,initialGrid,OwnerPolicy,clock,Preset,result,2,this);
+        }
+        public PracticeGoalRouteStudyState QueueWaypoint()
+        {
+            if(Visits!=0)throw new InvalidOperationException("Reset before applying a fresh waypoint callback input.");
+            var task=initialBacking.CopyTaskRecord(16);BitConverter.GetBytes(4).CopyTo(task,200);BitConverter.GetBytes(TargetX).CopyTo(task,8);BitConverter.GetBytes(TargetY).CopyTo(task,12);
+            var input=initialBacking.WithTaskRecord(16,task);
+            var waypoint=PracticeGoalWaypoint.Evaluate(initialGrid,fleets,currentSecondary,input,SourceClock,32000,OwnerPolicy);
+            var next=new PracticeGoalRouteStudyState(fleets,currentSecondary,initialBacking,initialGrid,OwnerPolicy,SourceClock,Preset,null,1,this);
+            next.WaypointInput=input;next.WaypointResult=waypoint;return next;
         }
         public PracticeGoalRouteStudyState Reset(){return new PracticeGoalRouteStudyState(fleets,initialSecondary,initialBacking,initialGrid,OwnerPolicy,initialClock,Preset,null,0,null);}
     }

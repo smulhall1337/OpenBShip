@@ -295,6 +295,8 @@ namespace FleetLab {
             PracticeServiceWaypointChecks.Run(check,checkEvidence,assets);
             PracticeGoalDelayChecks.Run(check,checkEvidence,assets);
             PracticeGoalRouteChecks.Run(check,checkEvidence,assets);
+            PracticeGoalWaypointChecks.Run(check,checkEvidence,assets);
+            PracticeWaypointNeighborChecks.Run(check);
             PracticeServiceWaypointStudyStateChecks.Run(check,assets);
             check("Original frame clock preserves pre-wait sample, prior delta and observed zero reset",delegate {
                 // Values from source probes234/236 and the two observed zero
