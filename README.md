@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.128**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.129**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -498,11 +498,21 @@ One Apply is admitted per fresh copy. Reset restores the applied preset; pending
 
 The bounded offline profile uses fleet 16, owner 1, kind 1 or 9, task 11 and dormant policy/idle callbacks. It matches 216 original two-visit histories: 432 complete observations, with public recorded-output digests and an additional optional private snapshot comparison. The controlled five-slot queue loses its last pair during insertion, and a selected raw counter can become 5; natural UI admission of those states is unverified.
 
-This version adds the source API and checks. The existing Active navigation window keeps its earlier inputs; there is no queued-start button yet. Movement, natural timing, collision-fleet branches, network callbacks and complete owner dispatch remain separate. Existing fresh-waypoint and controller admission limits are retained.
+The existing Active navigation window keeps its earlier inputs. The separate composition below connects the recovered start/follow-up profile to admitted movement. Natural timing, additional collision branches, network callbacks and complete owner dispatch remain separate. Existing fresh-waypoint and controller admission limits are retained.
+
+## Navigation and movement study
+
+Open **Recovered maps → Navigation + movement (study)…** directly. This copied profile runs the original navigation prephase followed by two movement batches. Gold moves only when fleet 16's scheduler slot is visited; cyan shows the first queued point, green the cached navigation target, and the gold trail is a modern inspection aid. Other policy/idle work is dormant, with supplied inactive terrain/secondary data and a fixed selected-other context.
+
+Try **Until pose changes · up to 64 polls**. The default reaches **102,102** after 32 supplied polls, including the initially locked arrival. **1 supplied poll** and **32 supplied polls** expose individual transitions. **Up to 256** ends the recorded viewing window. The speed-7 preset reaches **130,120**, completes navigation and consumes the copied queue; the blocked preset can hold at **100,100** with goal 2 still active. Navigation completion retains goal 4 and does not complete a mission.
+
+The first preset holds its clock; others supply +40 ms per poll. **Watch 32 polls (debug)** applies one poll per UI timer tick with no catch-up. Focus loss, pending selection changes, manual actions, reset and closing stop viewing, without automatic resume. Reset restores the applied preset; Load applies a pending selection. Every study action preserves the active battle and settings.
+
+`PracticeNavigationMovementState.AdvanceOfflinePoll` matches five original 256-poll histories: 2,560 recorded stage observations, including complete shared state and scheduler carryover. These are five controlled histories, not 2,560 gameplay scenarios. Initial collision FE, stale cached target, fixed clocks and nonmultiple coordinates are diagnostic inputs. This is not a full owner controller, mission, original renderer or calibrated application clock.
 
 ## Validation
 
-For the v0.128 source, focused checks pass **602 model groups**. A fresh public checkout passes **488**, with **114 explicit skips** for optional private evidence. Form checks pass **244**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.129 source, focused checks pass **607 model groups**. A fresh public checkout passes **492**, with **115 explicit skips** for optional private evidence. Form checks pass **248**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -518,6 +528,8 @@ Use `--ui-check` with a different report path for real form/button checks. Those
 Recent private comparisons include 432 request-phase histories with 57,528 complete ten-pool observations, 126 broader airfield histories with 48,960 observations, and shorter manual/AA return fixtures. UI checks cover manual and generated requests, pause, reset, counter wrap, return, docking, resource expiry, pending settings and clean owner shutdown. Numeric sweeps and recorded observations are not counts of distinct gameplay scenarios.
 
 A software comparison PNG can be exported with `--render-software-preview` and an output path. Other named comparison exports are listed in `src/Program.cs`. Use `--render-service-waypoints` with a fresh directory for eleven copied-study form captures, including default/minimum sizes, scrolling and the signed-coordinate preset.
+
+Use `--render-navigation-movement` with a fresh directory for ten copied-study previews, including actual position changes, completion, blocked input and minimum-size scrolling.
 
 Use `--render-map-yard-study` with a new output directory to export seven copied-yard form previews at default and minimum sizes. This uses the normal game executable, preserves existing output, and saves no settings. The previews establish layout and copied transitions, not physical display/input acceptance.
 

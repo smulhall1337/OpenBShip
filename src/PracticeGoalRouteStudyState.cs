@@ -25,6 +25,19 @@ namespace FleetLab
             if(preset<0||preset>=presets.Length)throw new ArgumentOutOfRangeException("preset");var spec=presets[preset];var near=new byte[9];for(int n=0;n<9;n++)near[n]=0x6d;
             return CreateComparison(1,spec[0],spec[1],spec[2],spec[1]%2==0?0:2,12345,spec[2]==1?12346:12345,(byte)(spec[2]==0?0:1),near,preset);
         }
+        // Recorded original864 inputs shared by diagnostic viewing and public
+        // output comparisons. This prepares data;it computes no expected result.
+        internal PracticeNavigationMovementState CreateMovementComparison(int preset)
+        {
+            if(preset<0||preset>4)throw new ArgumentOutOfRangeException("preset");
+            int point=preset==2?5:preset==3?4:0;var xy=Points[point];var near=new byte[9];for(int n=0;n<9;n++)near[n]=0x6d;
+            var quiet=CreateComparison(1,point,preset==4?8:0,0,0,12345,12345,0,near,-1).CreateNavigationInput(0);
+            var f=quiet.CopyFleetPool();int actor=16*492;I(f,actor+476,0);W(f,actor+60,preset==1?7:3);f[actor+485]=(byte)(preset==1?3:2);f[actor+482]=254;
+            for(int n=0;n<5;n++){W(f,actor+40+n*2,n==0?xy[2]:-1);W(f,actor+50+n*2,n==0?xy[3]:300+n*10);}
+            if(preset==4)for(int slot=0;slot<250;slot++)if(BitConverter.ToInt32(f,slot*492)==11){I(f,slot*492+476,0);f[slot*492+485]=0;}
+            var task=quiet.Backing.CopyTaskRecord(16);I(task,200,2);I(task,304,0);I(task,296,600);I(task,300,610);
+            return new PracticeNavigationMovementState(f,quiet.Backing.WithTaskRecord(16,task),quiet.Grid,new byte[246000],new byte[61500],new PracticeFleetScheduler(16,0),4);
+        }
         // Independent recorded-input builder shared by public captured-output
         // checks and schematic study presets. No expected output is computed.
         internal PracticeGoalRouteStudyState CreateComparison(int kind,int point,int profile,int retry,int policy,int clock,int deadline,byte flag,byte[] near,int preset)

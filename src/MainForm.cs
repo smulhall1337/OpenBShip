@@ -100,7 +100,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.128 — recovered queued navigation API";
+            Text="Battleship Fleet Lab 0.129 — copied navigation and movement";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -330,6 +330,9 @@ namespace FleetLab {
             var serviceWaypointButton=new Button{Text="Service waypoints (study)…",Name="openServiceWaypointStudy",AutoSize=true};
             var goalRouteButton=new Button{Text="Route costs (study)…",Name="openGoalRouteStudy",AutoSize=true};
             var activeNavigationButton=new Button{Text="Active navigation (study)…",Name="openActiveNavigationStudy",AutoSize=true};
+            var navigationMovementButton=new Button{Text="Navigation + movement (study)…",Name="openNavigationMovementStudy",AutoSize=true};
+            navigationMovementButton.AccessibleDescription="Run copied navigation and the original two-batch movement scheduler on supplied bounded inputs, separate from the current battle.";mapHeader.Controls.Add(navigationMovementButton);
+            navigationMovementButton.Click+=delegate{try{string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var startup=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);using(var study=new PracticeNavigationMovementStudy(programs,startup))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Navigation and movement study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Navigation and movement study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Navigation and movement study");}SuppressHeldControls();};
             activeNavigationButton.AccessibleDescription="Open one copied navigation prephase with supplied waiting, collision replan or intermediate-arrival inputs; no fleet movement or live battle changes.";mapHeader.Controls.Add(activeNavigationButton);
             activeNavigationButton.Click+=delegate{try{string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var startup=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);using(var study=new PracticeGoalRouteStudy(programs,startup,true))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Active navigation study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Active navigation study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Active navigation study");}SuppressHeldControls();};
             goalRouteButton.AccessibleDescription="Inspect copied original route costs and explicit failed-search retries without moving the current battle.";mapHeader.Controls.Add(goalRouteButton);
@@ -996,6 +999,7 @@ namespace FleetLab {
             PracticeServiceWaypointFormChecks.Run(check,assets,this);
             PracticeGoalRouteFormChecks.Run(check,assets,this);
             PracticeGoalRouteFormChecks.RunNavigation(check,assets,this);
+            PracticeNavigationMovementFormChecks.Run(check,assets,this);
             check("Map spawn-zone tab exposes recovered sectors and supplied reservation counts",delegate {
                 using(var study=new PracticeMapInstallationStudy(assets,Path.Combine(Path.GetDirectoryName(assets),"Programs"))) {
                     study.ShowInTaskbar=false;study.StartPosition=FormStartPosition.Manual;study.Location=new Point(-20000,-20000);study.Show(this);Application.DoEvents();
