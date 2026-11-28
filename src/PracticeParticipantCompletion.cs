@@ -30,7 +30,7 @@ namespace FleetLab
         public int Mode { get; private set; }
         public bool CanUseCompletedCounts { get { return FinalCount==ConfiguredCount; } }
         public ReadOnlyCollection<PracticeParticipantNameRequest> NameRequests { get { return names; } }
-        // Requests only. The source403D30 formation routine is NOT executed.
+        // Function-call admissions only. 403D30 is not executed here. Original1176R4 confirms mode5 loads/refreshes; onlymode4 enters its constructor loop.
         public ReadOnlyCollection<int> FormationRequests { get { return formations; } }
         internal PracticeParticipantCompletionResult(byte[] before,byte[] after,int configured,int initial,int final,int mode,List<PracticeParticipantNameRequest> names,List<int> formations)
         {

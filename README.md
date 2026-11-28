@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.145**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.146**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -610,7 +610,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.145, checks cover **703 model groups** and **302 form groups**. A fresh public checkout runs **578 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.146, checks cover **709 model groups** and **306 form groups**. A fresh public checkout runs **584 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -742,4 +742,10 @@ At frame 67, seven due fleets spawn before the zero-interval clock reset. At the
 
 Recovered maps → Generated reinforcements (study)... → Formation presets... loads WORLDDOM.FLT and displays its raw tags, owner bytes and 100 little-endian cell values per record. Filter all 40 records, the 24 tag-9 records or the 16 tag-10 CPU candidates. Selecting a record updates its matrix and raw value counts. The grid orientation is a modern array-index display; it does not establish fleet placement coordinates or assign unit meanings to unresolved flags.
 
-The recovered loader stops at byte 16,081 of the 20,137-byte file and leaves 4,056 trailing bytes uninterpreted. The reader preserves original bytes, that trailer and unwritten table slots. Four complete original loader comparisons cover successful and failed opens with two opaque table patterns; source-derived synthetic cases cover skipped tags and modern bounds. Full CPU formation selection, construction, placement and AI remain absent. Setup now verifies and copies this one additional original asset; original data is still excluded from Git.
+The recovered loader stops at byte 16,081 of the 20,137-byte file and leaves 4,056 trailing bytes uninterpreted. The reader preserves original bytes, that trailer and unwritten table slots. Four complete original loader comparisons cover successful and failed opens with two opaque table patterns; source-derived synthetic cases cover skipped tags and modern bounds. The separate selector study records request selection with an RNG-preserving constructor callback. Actual construction, placement and live AI remain absent. Setup now verifies and copies this one additional original asset; original data is still excluded from Git.
+
+### CPU preset selection trace
+
+From Formation presets..., open CPU selector study.... Source mode 4 enters the recovered request loop; modes 0, 5 and 20 load and refresh without making constructor requests. Choose a supplied roster, raw difficulty and seed, then Generate request trace. Reset retains the applied setup while leaving edits pending. The trace shows zero-based owner, constructor kind 9, selected preset slot and derived RNG draw count.
+
+The source draws modulo all 40 loaded slots and rejects tags other than 10. It permits duplicate templates and visits kind-2 participants in ascending order within the configured count. Raw difficulty plus 2 determines the signed request budget. All 288 original contexts match request order, final RNG and complete preset/participant data, with ten exercised wrong-rule controls. The constructor callback only records requests and preserves RNG: actual placement can consume additional randomness and alter later choices. This does not create units, run live AI or complete original setup. Earlier participant completion's mode-5 formation-request records represent function-call admissions, not evidence of unit creation.
