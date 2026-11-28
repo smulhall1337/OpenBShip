@@ -37,6 +37,24 @@ namespace FleetLab
         {
             var before=new byte[128];for(int n=0;n<before.Length;n++)before[n]=(byte)(0x5b^n);return CreateMappedFixture(tables,programs,map,producerCount,consumerCount,startupSeed,profile,before);
         }
+        internal static PracticeGeneratedReinforcements CreateDriverIdleFixture(PracticeReinforcementTables tables,string programs,byte[] map,uint startupSeed,byte[] before)
+        {
+            var state=CreateMappedFixture(tables,programs,map,2,2,startupSeed,0,before);
+            // Original1132R2: a deliberately supplied idle context, not source
+            // AI initialization. 41F920 always reads the fleet link at +204.
+            for(int fleet=0;fleet<250;fleet++){I(state.runtime,fleet*312+204,0x4b47a0+fleet*492);I(state.runtime,fleet*312+304,0);}
+            state.fleets[249*492+480]=1;Array.Clear(state.terrain,0,state.terrain.Length);return state;
+        }
+        internal PracticeGeneratedReinforcements PrepareDriverFrame(uint clock)
+        {
+            var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>());next.Clock=clock;return next;
+        }
+        internal PracticeGeneratedReinforcements PollSourceDriver(){return Visit(Clock);}
+        internal PracticeGeneratedReinforcements ApplyNeutralDriverVisibility(PracticeOwnerVisibilityRules rules)
+        {
+            if(rules==null)throw new ArgumentNullException("rules");var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>(created));
+            next.InputRandomState=InputRandomState;next.RefreshRequests=RefreshRequests;Array.Copy(rules.Apply(fleets,-1,0,-2,0,249).CopyFleetPool(),next.fleets,fleets.Length);return next;
+        }
         internal static PracticeGeneratedReinforcements CreateMappedFixture(PracticeReinforcementTables tables,string programs,byte[] map,int producerCount,int consumerCount,uint startupSeed,int profile,byte[] before)
         {
             Validate(tables,producerCount,consumerCount,0,before);var basis=PracticeReinforcementMapBasis.Create(programs,map,startupSeed,profile);return new PracticeGeneratedReinforcements(tables,producerCount,consumerCount,startupSeed,0,false,0,before,basis);

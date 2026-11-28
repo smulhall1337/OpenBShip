@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.141**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.142**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -75,6 +75,11 @@ From **Recovered maps → Generated reinforcements (study)…**, choose **Partic
 The source routine uses the configured total at `4E384C` and a current count/working index at `55E820`. Initial values 2/1 can become 2/2 after completion; the latter global is not a permanent human-player or scenario-event count. An already larger current count is retained. **Use counts in reinforcement study** transfers a completed selection; **Load** in the parent applies it. A 3/3 choice is available alongside the retained comparison choices.
 
 All **120 original record/count/name-request/formation-request states** match. `CPU` / `CPU n` are supplied inspection labels, and the opaque initial records are modern comparison inputs. Modes 0/20 skip formation natively. Mode 5 exposes requests to `403D30`; that AI formation routine and the original localized labels are outside this implementation. Export six previews with `--render-participants` and a fresh directory.
+## Phase-gated wave study
+
+Open **Recovered maps → Generated reinforcements (study)… → Phase-gated waves…**. Step one frame, up to 32 frames, or the finite 96-frame trace. The default copied world creates its first fleet at displayed frame 32 and the remaining seven by frame 64. With the negative pause on displayed frames 33–35, phase 32 is held and the remaining burst waits until frame 67. Initial phase 31 or MAX demonstrates an aligned exact-deadline hold and unsigned wrap. Click a trace row to inspect its past map and events while preserving the current simulation state.
+
+Evidence covers **1,728 complete before/after frame comparisons across 18 timelines**, including phase, pause, caller and refresh-contact observations. The actual source phase/pause fragments and whole parent routine were compared. The inspection uses explicit idle runtime links, zero-cell columns/terrain, no active neutral owner or fleet policy, and supplied clock jumps. It does not run live AI, movement, the full clock header or pause-deadline compensation. The inactive fleet-249 contact byte is a diagnostic marker. The 96-frame limit and schematic map are modern aids. Export seven previews with `--render-phase-waves` and a fresh directory.
 ## Scenario position study
 
 Open **Recovered maps → Scenario positions (study)…**. Choose a scenario, group, seed and copied blocker profile, then **Load selected copy**. Gold marks the accepted point; orange marks rejected candidates. The details list the rejecting primary or terrain record and show RNG progression. **Reset applied copy** reproduces the applied inputs while retaining pending control changes. Enter loads once per press; Escape closes. The footer stays visible while the map and details scroll.
@@ -605,7 +610,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.141, checks cover **679 model groups** and **286 form groups**. A fresh public checkout runs **554 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.142, checks cover **685 model groups** and **290 form groups**. A fresh public checkout runs **560 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

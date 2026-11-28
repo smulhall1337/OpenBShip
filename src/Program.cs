@@ -54,6 +54,7 @@ namespace FleetLab {
                 if(args.Length==2&&args[0]=="--render-mixed-moving")return PracticeMixedMovementFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-mixed-clock")return PracticeMixedClockFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-scenario-positions")return PracticeScenarioPositionFormChecks.SavePreviews(assets,args[1]);
+                if(args.Length==2&&args[0]=="--render-phase-waves")return PracticeReinforcementPhaseFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-participants")return PracticeParticipantCompletionFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-mapped-reinforcements")return PracticeGeneratedReinforcementFormChecks.SaveMappedPreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-generated-reinforcements")return PracticeGeneratedReinforcementFormChecks.SavePreviews(assets,args[1]);

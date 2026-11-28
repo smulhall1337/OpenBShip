@@ -310,6 +310,7 @@ namespace FleetLab {
             PracticeGeneratedReinforcementChecks.Run(check,assets);
             PracticeMappedReinforcementChecks.Run(check,assets);
             PracticeParticipantCompletionChecks.Run(check,assets);
+            PracticeReinforcementPhaseChecks.Run(check,assets);
             PracticeNavigationCollisionChecks.Run(check,checkEvidence,assets);
             PracticeNavigationTraceChecks.Run(check,checkEvidence,assets);
             PracticeServiceWaypointStudyStateChecks.Run(check,assets);
