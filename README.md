@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.144**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.145**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 46 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,610 assets, including the 121 supplied SCN maps and WORLDDOM.FLT, extracts 46 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -610,7 +610,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.144, checks cover **697 model groups** and **298 form groups**. A fresh public checkout runs **572 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.145, checks cover **703 model groups** and **302 form groups**. A fresh public checkout runs **578 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -737,3 +737,9 @@ The body sees the newly sampled time and the previous delta. On a zero interval 
 Recovered maps → Generated reinforcements (study)... → Pause-compensated waves... adds the recovered pause tail after the wave driver and before the clock epilogue. It starts with a negative pause word on frames 33–35. Supplied intervals make the body see preceding deltas of 40, 160 and 40 ms, shifting active deadlines by 240 ms. Details show the per-frame shift, cumulative shift, pending deadline and selected opaque timer fields. The two earlier wave modes remain available.
 
 At frame 67, seven due fleets spawn before the zero-interval clock reset. At the 96-frame inspection limit, seven fleets have spawned and one late wave remains pending. This is the expected finite checkpoint, not mission completion. The model preserves inactive minus-one timestamps, payloads, opaque bytes and unsigned wrapping across the complete 80 timed records, 1,500 primary records, four counters and global field. All 1,152 original expanded before/after states and clock observations match, with seventeen exercised wrong-rule controls. These timer fixtures do not execute full object or order simulation; idle links and zero-cell geometry remain supplied. Full wait/render/input, live AI, movement and natural pacing remain absent.
+
+### Formation preset inspector
+
+Recovered maps → Generated reinforcements (study)... → Formation presets... loads WORLDDOM.FLT and displays its raw tags, owner bytes and 100 little-endian cell values per record. Filter all 40 records, the 24 tag-9 records or the 16 tag-10 CPU candidates. Selecting a record updates its matrix and raw value counts. The grid orientation is a modern array-index display; it does not establish fleet placement coordinates or assign unit meanings to unresolved flags.
+
+The recovered loader stops at byte 16,081 of the 20,137-byte file and leaves 4,056 trailing bytes uninterpreted. The reader preserves original bytes, that trailer and unwritten table slots. Four complete original loader comparisons cover successful and failed opens with two opaque table patterns; source-derived synthetic cases cover skipped tags and modern bounds. Full CPU formation selection, construction, placement and AI remain absent. Setup now verifies and copies this one additional original asset; original data is still excluded from Git.
