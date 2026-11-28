@@ -50,6 +50,10 @@ namespace FleetLab
             var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>());next.Clock=clock;return next;
         }
         internal PracticeGeneratedReinforcements PollSourceDriver(){return Visit(Clock);}
+        internal PracticeGeneratedReinforcements CompleteDriverClock(uint clock)
+        {
+            var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>(created));next.Clock=clock;next.InputRandomState=InputRandomState;next.RefreshRequests=RefreshRequests;return next;
+        }
         internal PracticeGeneratedReinforcements ApplyNeutralDriverVisibility(PracticeOwnerVisibilityRules rules)
         {
             if(rules==null)throw new ArgumentNullException("rules");var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>(created));

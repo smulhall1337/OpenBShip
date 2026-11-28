@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.142**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.143**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -610,7 +610,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.142, checks cover **685 model groups** and **290 form groups**. A fresh public checkout runs **560 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.143, checks cover **691 model groups** and **294 form groups**. A fresh public checkout runs **566 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -725,3 +725,9 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 `PracticeServiceDestination.Evaluate` recovers the separate service-destination leaf for the compared active-owner-1 context and actor kinds. Surface kinds 1/9 choose the nearest eligible kind-2 yard with marker 22/23 using Chebyshev distance; ties retain the earlier fleet. The filter uses active owner, independently of the supplied actor owner. No yard preserves cached DWORD coordinates. Kind 2/11 leaves state unchanged; the other compared kinds set state 1. The result owns its snapshots, preserves the shared tail, and reports a diagnostic yard ID; the original leaf retains coordinates rather than that ID. Public numeric checks and 280 private complete-state captures verify the bounded behavior, including late-invalid-pointer rejection. It does not admit ships, change task goals, find routes, move fleets or run a world clock, and adds no window. Existing full-driver and dispatcher guards remain in place.
 
 `PracticeServiceWaypoint.Evaluate` joins that leaf to the selected task-11 waypoint caller. In source order, no first waypoint, active navigation or fleet mode 2 returns before reading the task selector, target reference or yard markers. An enabled call clears a nonnegative target reference only when the referenced fleet is inactive, chooses destination data, sets goal 2, and replaces the point immediately before the first queue gap. It neither appends nor clamps coordinates. The immutable result retains the destination stage separately from the final queue write. Checks compare 131 original complete input/output goldens and all 792 private captured states, including guarded unread fields, target cleanup and gapped queues. Full owner dispatch, route construction, movement and world timing remain separate; the existing dispatcher guards are unchanged. This source API adds no window.
+
+### Clock-header wave comparison
+
+Recovered maps → Generated reinforcements (study)... → Clock-header waves... runs the recovered frame-clock header around the phase driver. The ordinary Phase-gated waves window remains available with its earlier supplied clock trace. This mode supplies 40 ms sample intervals, an overdue jump at frame 65 and a repeated timestamp at frame 67. Initial phase 31 starts overdue so a first-frame refresh can be inspected before visibility clears.
+
+The body sees the newly sampled time and the previous delta. On a zero interval the epilogue resets current time, game time and delta to 1 after the body has run. With initial phase 0 and the negative pause profile, frame 67 creates eight due fleets before that reset. Select a trace row to compare body and completed clocks without rewinding the current simulation. All 1,152 original before/after states and clock observations are compared, with fourteen exercised wrong-rule controls. This retains the explicit idle runtime links and zero-cell geometry; full wait/render/input, pause-deadline compensation, live AI, movement and natural pacing remain absent. The 96-frame cap is a modern inspection guard.

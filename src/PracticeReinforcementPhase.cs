@@ -53,11 +53,19 @@ namespace FleetLab
             initial=source.initial;visibility=source.visibility;World=world;InitialPhase=source.InitialPhase;PhaseCounter=phase;PauseProfile=source.PauseProfile;Frames=source.Frames+1;DriverCalls=source.DriverCalls+(driver?1:0);ConsumerPolls=source.ConsumerPolls+(poll?1:0);FirstDeadline=source.FirstDeadline;LastDeadline=source.LastDeadline;
         }
         public PracticeReinforcementPhaseState ResetCopy(){return new PracticeReinforcementPhaseState(initial,visibility,InitialPhase,PauseProfile);}
+        PracticeReinforcementPhaseState(PracticeReinforcementPhaseState source,PracticeGeneratedReinforcements world)
+        {
+            initial=source.initial;visibility=source.visibility;World=world;InitialPhase=source.InitialPhase;PhaseCounter=source.PhaseCounter;PauseProfile=source.PauseProfile;Frames=source.Frames;DriverCalls=source.DriverCalls;ConsumerPolls=source.ConsumerPolls;FirstDeadline=source.FirstDeadline;LastDeadline=source.LastDeadline;
+        }
+        internal PracticeReinforcementPhaseState CompleteClock(uint clock){return new PracticeReinforcementPhaseState(this,World.CompleteDriverClock(clock));}
         public PracticeReinforcementPhaseUpdate AdvanceFrame()
+        {
+            return AdvanceWithClock((uint)(Frames==0?FirstDeadline:Frames<32?FirstDeadline+1:LastDeadline+1));
+        }
+        internal PracticeReinforcementPhaseUpdate AdvanceWithClock(uint clock)
         {
             if(!CanAdvance)throw new InvalidOperationException("The modern96-frame comparison limit has been reached;reset or load a new copy.");ValidateIdle(World);
             short pause=(short)(PauseProfile==1&&Frames>=30&&Frames<=32?1:PauseProfile==2&&Frames>=32&&Frames<=34?-32768:0);
-            uint clock=(uint)(Frames==0?FirstDeadline:Frames<32?FirstDeadline+1:LastDeadline+1);
             var prepared=World.PrepareDriverFrame(clock);var world=prepared;bool driver=pause==0;uint phase=driver?unchecked(PhaseCounter+1u):PhaseCounter;bool poll=driver&&(phase&31)==0;uint scratch=driver?(poll?IncomingFrameWord:0u):SkippedCallerSentinel;var contacts=new List<byte>();
             // The unconditional arrival/prephase is a fast return ONLY under
             // the verified idle reference/collision/route conditions below.
