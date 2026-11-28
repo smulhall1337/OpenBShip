@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.132**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.133**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -508,13 +508,21 @@ Try **Until pose changes · up to 64 polls**. The default reaches **102,102** af
 
 Seven long presets use 1,024-poll windows. Gapped primary and terrain walls allow travel to **160,100**; a closed primary wall keeps the fleet at **100,100**. In the three dynamic presets, a supplied obstacle appears before zero-based poll 65. Choose **To next collision / replan · up to 256 polls**: it stops after 95 polls, showing the blocked fleet at **110,100** with an unreached **120,100** waypoint. The source collision is **FE** for terrain or **1E** (fleet slot 30). Use the action again to observe the next prephase replan after 96 polls, with a new **110,90** waypoint. The removal preset clears its terrain before poll 193. These obstacle changes are explicit study inputs; the displayed source cost field reflects its last build.
 
-The first preset holds its clock; others supply +40 ms per poll. **Watch 32 polls (debug)** applies one poll per UI timer tick with no catch-up. Focus loss, pending selection changes, manual actions, reset and closing stop viewing, without automatic resume. Reset restores the applied preset; Load applies a pending selection. Every study action preserves the active battle and settings.
+The first preset holds its clock; the other earlier presets supply +40 ms per poll. **Watch 32 polls (debug)** applies one poll per UI timer tick with no catch-up. Focus loss, pending selection changes, manual actions, reset and closing stop viewing, without automatic resume. Reset restores the applied preset; Load applies a pending selection. Every study action preserves the active battle and settings.
 
 `PracticeNavigationMovementState.AdvanceOfflinePoll` matches 12 original histories: 16,896 recorded stage observations, including complete shared state, terrain and scheduler carryover. These are 12 controlled histories, not 16,896 gameplay scenarios. Initial collision FE, stale cached target, fixed clocks, nonmultiple coordinates and obstacle interventions are diagnostic inputs. This is not a full owner controller, mission, original renderer or calibrated application clock.
 
 Two additional **Repeat callback** presets expose a single supplied poll. Load either one and apply the poll: gold stays at **100,100**, with **2 waypoint calls, 1 repeated call and 3 grid calls**. A future deadline holds the current point after both callbacks. The blocked copy retains deadline 14,345; the future-cooldown copy retains 12,346. These presets supply collision FE at the current point; they do not generate a new movement collision. Reset restores the copy, and stepping disables after the recorded poll.
 
 The collision entry remains internal to this bounded composition and retains the earlier public caller guards. It admits terrain FE and the compared stationary kind-11 slot-30 collision with an unreached point, plus the separately compared goal-4 terrain-FE current/empty inputs. It executes at most one additional waypoint callback after clearing collision FF. Seven paired original contexts verify both navigation and following movement, with explicit callsite counts and tracing-neutral outputs. Some contexts produce identical final states despite different call counts. Unexamined signed fleet indices, yard bypasses, positive-fleet current/empty replan entries, goal-2 current/empty FE replan entries and network callbacks remain rejected. A separate arrival-timed insertion experiment produced no collision and is retained with that narrower scope.
+
+Three **Clock + neutral driver** presets extend this same window with a 128-frame limit: a terrain gap, an inserted terrain obstacle with a repeated clock sample, and an inserted fleet obstacle. They run the recovered clock header, whole admitted neutral AI driver and two scheduler batches before the clock epilogue. The separate clock readout shows **Before / Body / After**, neutral-pass count, inactive fleet 249's visibility/contact fields and the task time. The earlier fourteen presets keep their behavior.
+
+Load **Clock + neutral driver · terrain / zero reset**, then use **To next collision / replan** twice. After 95 frames, collision FE is visible. Frame 96 replans with sampled game time **16,105**; only afterward does the clock epilogue reset current/game/delta to **1**. The task time remains **16,105**. One more frame uses preceding delta **1**, then computes delta **16,184**. At supplied phase 32, the neutral pass clears the inactive fleet's visibility/contact flags. These are deliberate recorded samples and phases, not calibrated wall-clock pacing.
+
+`PracticeNavigationMovementState.AdvanceNeutralDriverPoll` is a separate opt-in; `AdvanceOfflinePoll` retains its earlier prephase-only behavior. `PracticeNavigationClockState.AdvanceFrame` wraps the neutral driver and both movement batches inside the header. Four independent 128-frame original histories match complete carried fleet/shared/heap-row/terrain/clock/scheduler state, including actual collisions and replans. Two histories are identical within that shortened window; their later removal lies outside it. Moving the epilogue before the body is detected through the task timestamp in both zero-reset cases. Original-only compact chains cover the actor grid; the private comparison covers all 250 heap rows. Unaligned stack scratch is retained in private evidence and explicitly omitted from the compact digest.
+
+This profile supplies scenario 1, empty events, neutral owner-pass control, selection, caller words and phases 1–128. Active owner task dispatch, aircraft-policy mixtures, natural clock/phase/pause production and a full Practice world remain unsupported. Export eight software form previews with `--render-navigation-clock` and a fresh directory.
 
 ## Clock and aircraft policy study
 
@@ -534,7 +542,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For the v0.132 source, focused checks pass **623 model groups**. A fresh public checkout passes **504**, with **119 explicit skips** for optional private evidence. Form checks pass **255**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For v0.133, checks pass **629 model groups** and **258 form groups**. A fresh public checkout runs **509 model groups**, with **120 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

@@ -4,7 +4,8 @@ namespace FleetLab
     public sealed class PracticeNavigationMovementStudy : Form
     {
         readonly ComboBox profile=new ComboBox();readonly Button load=new Button(),reset=new Button(),one=new Button(),many=new Button(),all=new Button(),nextMove=new Button(),watchButton=new Button(),collisionButton=new Button();
-        readonly Label summary=new Label(),feedback=new Label(),cell=new Label();readonly TextBox details=new TextBox();readonly HashSet<Keys> held=new HashSet<Keys>();readonly GridCanvas canvas;
+        readonly Label summary=new Label(),feedback=new Label(),cell=new Label();readonly TextBox details=new TextBox(),clockDetails=new TextBox();readonly HashSet<Keys> held=new HashSet<Keys>();readonly GridCanvas canvas;
+        PracticeOwnerVisibilityRules visibility;
         PracticeGoalRouteStudyBasis basis;PracticeNavigationMovementStudyState state;Timer watch;int watchRemaining,selectedX=13,selectedY=12;bool closing;
         internal PracticeNavigationMovementStudyState StudyState {get{return state;}}
         internal bool Watching {get{return watchRemaining>0;}}
@@ -32,12 +33,14 @@ namespace FleetLab
             all.Name="navigationMoveAll";all.Text="Up to 256 supplied polls / end of window";add(all,38);
             watchButton.Name="navigationMoveWatch";watchButton.Text="Watch 32 polls (debug)";add(watchButton,36);
             collisionButton.Name="navigationMoveCollision";collisionButton.Text="To next collision / replan · up to 256 polls";add(collisionButton,38);
-            summary.Name="navigationMoveSummary";add(summary,266);feedback.Name="navigationMoveFeedback";add(feedback,92);cell.Name="navigationMoveCell";add(cell,54);
+            summary.Name="navigationMoveSummary";add(summary,266);
+            clockDetails.Name="navigationMoveClock";clockDetails.Multiline=true;clockDetails.ReadOnly=true;clockDetails.WordWrap=true;clockDetails.ScrollBars=ScrollBars.Vertical;clockDetails.BackColor=BackColor;clockDetails.ForeColor=ForeColor;add(clockDetails,170);clockDetails.Visible=false;
+            feedback.Name="navigationMoveFeedback";add(feedback,92);cell.Name="navigationMoveCell";add(cell,54);
             details.Name="navigationMoveDetails";details.Multiline=true;details.ReadOnly=true;details.ScrollBars=ScrollBars.Vertical;details.WordWrap=true;details.BackColor=BackColor;details.ForeColor=ForeColor;add(details,360);
             var close=new Button{Name="navigationMoveClose",Text="Close"};add(close,34);close.Click+=delegate{Close();};
             watch=new Timer{Interval=40};watch.Tick+=WatchTick;
             profile.SelectedIndexChanged+=delegate{StopWatching();};
-            load.Click+=delegate{StopWatching();if(basis==null)return;try{state=new PracticeNavigationMovementStudyState(basis,profile.SelectedIndex);PreparedFeedback();Sync();}catch(ArgumentException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}};
+            load.Click+=delegate{StopWatching();if(basis==null)return;try{state=new PracticeNavigationMovementStudyState(basis,profile.SelectedIndex,visibility);PreparedFeedback();Sync();}catch(ArgumentException e){Reject(e.Message);}catch(NotSupportedException e){Reject(e.Message);}catch(IOException e){Reject(e.Message);}};
             reset.Click+=delegate{StopWatching();if(state==null)return;state=state.Reset();PreparedFeedback();Sync();};
             one.Click+=delegate{Apply(1,false);};many.Click+=delegate{Apply(32,false);};all.Click+=delegate{Apply(PracticeNavigationMovementStudyState.MaximumPolls,false);};nextMove.Click+=delegate{Apply(64,true);};
             collisionButton.Click+=delegate{
@@ -49,11 +52,11 @@ namespace FleetLab
             KeyUp+=delegate(object sender,KeyEventArgs e){held.Remove(e.KeyCode);};
             Activated+=delegate{foreach(var key in new[]{Keys.Enter,Keys.Space,Keys.Escape})if((GetAsyncKeyState((int)key)&0x8000)!=0)held.Add(key);};
             Deactivate+=delegate{StopWatching();held.Clear();};
-            try{basis=PracticeGoalRouteStudyBasis.Create(programs,startup);state=new PracticeNavigationMovementStudyState(basis,0);PreparedFeedback();}
+            try{basis=PracticeGoalRouteStudyBasis.Create(programs,startup);visibility=PracticeOwnerVisibilityRules.Load(programs);state=new PracticeNavigationMovementStudyState(basis,0,visibility);PreparedFeedback();}
             catch(ArgumentException e){feedback.Text=e.Message;}catch(NotSupportedException e){feedback.Text=e.Message;}catch(IOException e){feedback.Text=e.Message;}
             Sync();
         }
-        void PreparedFeedback(){feedback.Text=state.Preset>=12?"Single-poll copy: collision FE is supplied at the current point. This is not a newly observed movement hit. Apply one poll and inspect the two waypoint calls, one repeated call and three grid entries.":"Prepared queued destination: "+QueueText(state.State.CopyFleetPool())+". The cached target 600,610 is deliberately stale; start replaces it. Try Until pose changes, then inspect the visits and queue.";}
+        void PreparedFeedback(){feedback.Text=state.UsesRecoveredClock?"Recovered clock + neutral driver copy. Samples and phases are supplied. Terrain / zero reset repeats a sample at frame 96, after the collision at 95. Replanning sees the sampled time before the header resets it.":state.IsRepeatedCallback?"Single-poll copy: collision FE is supplied at the current point. This is not a newly observed movement hit. Apply one poll and inspect the two waypoint calls, one repeated call and three grid entries.":"Prepared queued destination: "+QueueText(state.State.CopyFleetPool())+". The cached target 600,610 is deliberately stale; start replaces it. Try Until pose changes, then inspect the visits and queue.";}
         void Reject(string message){feedback.Text="No change: "+message;Sync();}
         void Apply(int count,bool untilMove)
         {
@@ -98,11 +101,13 @@ namespace FleetLab
             collisionButton.Enabled=enabled&&state.Preset>=9;
             watchButton.Enabled=enabled||Watching;watchButton.Text=Watching?"Stop watching ("+watchRemaining+" left)":"Watch 32 polls (debug)";
             if(state!=null)all.Text=state.WindowPolls==1?"Run the single supplied poll":"Up to "+state.WindowPolls+" supplied polls / end of window";
+            clockDetails.Visible=state!=null&&state.UsesRecoveredClock;
             if(state==null){summary.Text="No admitted copy. Close remains available.";canvas.Invalidate();return;}
+            if(state.UsesRecoveredClock)clockDetails.Text=ClockText();
             var f=state.State.CopyFleetPool();var task=state.State.Backing.CopyTaskRecord(16);var bytes=state.State.Grid.CopyCells();int blocked=0,unvisited=0,costs=0;
             foreach(byte value in bytes){if(value==255)blocked++;else if(value==254)unvisited++;else if(value>=1&&value<=127)costs++;}
             string navigation=state.LastUpdate==null?"prepared":state.LastUpdate.Navigation==null?"Dormant":state.LastUpdate.Navigation.Outcome.ToString();
-            summary.Text="Applied: "+PracticeNavigationMovementStudyState.Presets[state.Preset]+"\r\nPolls / supplied phase: "+state.Polls+" / "+state.WindowPolls+"\r\nLast clock "+state.LastSourceClock+"; next "+state.NextSourceClock+"\r\nClock step: "+state.ClockStep+" ms (supplied)\r\nFleet position: "+state.Position.X+","+state.Position.Y+"\r\nCached target: "+BitConverter.ToInt32(task,296)+","+BitConverter.ToInt32(task,300)+"\r\nFirst point: "+QueueText(f)+"\r\nGoal "+BitConverter.ToInt32(task,200)+"; nav "+BitConverter.ToInt32(task,304)+"; collision "+f[16*492+482].ToString("X2")+"\r\nScheduler start "+state.State.Schedule.BatchStart+"; cycles "+state.State.Schedule.CompletedCycles+"\r\nActor visits "+state.ActorVisits+"; pose changes "+state.PositionChanges+"\r\nQueue consumed "+state.QueueConsumptions+"; nav completed "+state.NavigationCompletions+"\r\nReplans "+state.ReplanEntries+"; terrain hits "+state.TerrainCollisionVisits+"; fleet hits "+state.FleetCollisionVisits+"\r\nWaypoint calls "+state.WaypointFunctionVisits+"; repeated "+state.RepeatedWaypointVisits+"; grid calls "+state.GridFunctionVisits+"\r\nSupplied world changes "+state.SuppliedWorldEvents+"\r\nLast navigation: "+navigation+"\r\nCosts "+costs+"; FF "+blocked+"; FE "+unvisited;
+            summary.Text="Applied: "+PracticeNavigationMovementStudyState.Presets[state.Preset]+"\r\nPolls / supplied phase: "+state.Polls+" / "+state.WindowPolls+"\r\nLast clock "+state.LastSourceClock+"; next "+state.NextSourceClock+"\r\nClock step: "+(state.UsesRecoveredClock?"supplied samples (see table)":state.ClockStep+" ms (supplied)")+"\r\nFleet position: "+state.Position.X+","+state.Position.Y+"\r\nCached target: "+BitConverter.ToInt32(task,296)+","+BitConverter.ToInt32(task,300)+"\r\nFirst point: "+QueueText(f)+"\r\nGoal "+BitConverter.ToInt32(task,200)+"; nav "+BitConverter.ToInt32(task,304)+"; collision "+f[16*492+482].ToString("X2")+"\r\nScheduler start "+state.State.Schedule.BatchStart+"; cycles "+state.State.Schedule.CompletedCycles+"\r\nActor visits "+state.ActorVisits+"; pose changes "+state.PositionChanges+"\r\nQueue consumed "+state.QueueConsumptions+"; nav completed "+state.NavigationCompletions+"\r\nReplans "+state.ReplanEntries+"; terrain hits "+state.TerrainCollisionVisits+"; fleet hits "+state.FleetCollisionVisits+"\r\nWaypoint calls "+state.WaypointFunctionVisits+"; repeated "+state.RepeatedWaypointVisits+"; grid calls "+state.GridFunctionVisits+"\r\nSupplied world changes "+state.SuppliedWorldEvents+"\r\nLast navigation: "+navigation+"\r\nCosts "+costs+"; FF "+blocked+"; FE "+unvisited;
             var terrain=state.State.CopyTerrainPool();int terrainCount=0,fleetCount=0;
             for(int slot=0;slot<500;slot++)if(BitConverter.ToInt32(terrain,slot*492)==1)terrainCount++;
             for(int slot=0;slot<250;slot++)if(BitConverter.ToInt32(f,slot*492)==11)fleetCount++;
@@ -111,10 +116,24 @@ namespace FleetLab
             text.AppendLine();text.AppendLine(LastMovementText());text.AppendLine("Raw speed "+BitConverter.ToInt16(f,16*492+60)+" / movement flag "+f[16*492+485]+"; retry "+task[284]+"; deadline "+BitConverter.ToInt32(task,4)+".");
             text.AppendLine("Selected-other fleet 249, raw waypoint counter 4. Gold trail is a modern inspection aid; cyan is the first queued point, green the cached navigation target.");
             text.AppendLine();text.AppendLine("One supplied poll: original navigation prephase, verified inactive selector-1 middle call, then two four-slot movement batches. Only scheduler visits move this actor. Source task navigation=1 locks arrival until a later navigation visit; completion keeps goal 4. Unlocked arrivals then consume the copied queue. ReachedWaypoint names entry into the arrival callback; inspect the queue and navigation fields for completion.");
-            text.AppendLine();text.AppendLine("Fourteen presets: five use 256 polls, seven use 1024, and two use one supplied poll. The first uses a held clock; others supply +40 ms per poll. The ordinary queued-start presets supply a stale initial target 600,610 and collision FE deliberately. The two one-poll callback presets instead start with active goal 4 at their displayed current point. Long dynamic presets insert a test obstacle before poll 65; the removal preset clears it before poll 193. These changes are supplied study inputs, not original scripts. Terrain kind 1 and stationary primary kind 11 are compared;the 125 secondary records remain inactive. The displayed source cost field is its last build and need not immediately reflect a newly supplied obstacle. The two single-poll presets supply current-point terrain FE, rather than generating a new movement collision. Their counted repeated callback can leave the point unchanged under a future deadline. Counts describe reconstructed function entries; seven paired original contexts independently verify the callsite vectors. This is not a mission or complete owner AI.");
+            text.AppendLine();text.AppendLine("The first fourteen presets: five use 256 polls, seven use 1024, and two use one supplied poll. The first uses a held clock; others supply +40 ms per poll. The ordinary queued-start presets supply a stale initial target 600,610 and collision FE deliberately. The two one-poll callback presets instead start with active goal 4 at their displayed current point. Long dynamic presets insert a test obstacle before poll 65; the removal preset clears it before poll 193. These changes are supplied study inputs, not original scripts. Terrain kind 1 and stationary primary kind 11 are compared;the 125 secondary records remain inactive. The displayed source cost field is its last build and need not immediately reflect a newly supplied obstacle. The two single-poll presets supply current-point terrain FE, rather than generating a new movement collision. Their counted repeated callback can leave the point unchanged under a future deadline. Counts describe reconstructed function entries; seven paired original contexts independently verify the callsite vectors. This is not a mission or complete owner AI.");
+            if(state.UsesRecoveredClock)text.AppendLine("Recovered-clock presets use 128 supplied frames. Whole neutral-only AI driver follows the clock header, then two scheduler batches run before its epilogue. Phase32 clears inactive249 visibility/contact. Terrain / zero reset repeats sample16105 on frame96, after the collision on95: replan task time stays16105 while AFTER current/game/delta reset to1. Next BODY delta is1. Samples,phase and caller values remain explicit. This is not natural frame pacing or a full Practice world.");
             text.AppendLine();text.AppendLine("Watch supplies one poll per UI timer tick, up to 32. Slow rendering can take longer; there is no catch-up or automatic resume. Focus loss, pending selector changes and any manual action stop watching. Reset restores the applied preset; Load applies the pending selection.");
             text.AppendLine();text.AppendLine("Field[x,y] uses x*64+y, ten source units per cell. Markers/trail use continuous world positions; the recovered cost grid truncates coordinates. Nonmultiple input is diagnostic; natural UI admission is unverified. No original renderer, audio, network, opponent controller or original clock sampler runs. Existing battle/settings are separate.");
             details.Text=text.ToString();canvas.Invalidate();
+        }
+        string ClockText()
+        {
+            var u=state.LastClockUpdate;var before=u==null?state.Clock:u.Before.Clock;var body=u==null?state.Clock:u.BodyClock;var after=state.Clock;
+            var text=new StringBuilder("Recovered clock: BEFORE / BODY / AFTER\r\n");
+            text.AppendLine("Previous: "+before.PreviousMilliseconds+" / "+body.PreviousMilliseconds+" / "+after.PreviousMilliseconds);
+            text.AppendLine("Current: "+before.CurrentMilliseconds+" / "+body.CurrentMilliseconds+" / "+after.CurrentMilliseconds);
+            text.AppendLine("Game: "+before.GameMilliseconds+" / "+body.GameMilliseconds+" / "+after.GameMilliseconds);
+            text.AppendLine("Delta: "+before.DeltaMilliseconds+" / "+body.DeltaMilliseconds+" / "+after.DeltaMilliseconds);
+            text.AppendLine("Neutral passes: "+state.NeutralPasses+"; last supplied phase: "+(u==null?0:state.Polls));
+            var f=state.State.CopyFleetPool();text.AppendLine("Inactive249 visibility/contact: "+f[249*492+467]+" / "+f[249*492+480]);
+            text.AppendLine("Task time: "+BitConverter.ToInt32(state.State.Backing.CopyTaskRecord(16),4));
+            text.Append("Both scheduler batches run before AFTER.");return text.ToString();
         }
         sealed class GridCanvas:Control
         {

@@ -74,6 +74,30 @@ namespace FleetLab
         public byte[] CopySecondaryPool() { return (byte[])secondary.Clone(); }
 
         public PracticeNavigationMovementUpdate AdvanceOfflinePoll(int sourceClock)
+        { return AdvanceCore(sourceClock,null,null); }
+
+        // Separate opt-in: original925/964 compare the whole neutral-only driver,
+        // then inactive415DF0 and two scheduler batches. Legacy calls above keep
+        // their prephase-only behavior. No active owner dispatcher is admitted.
+        public PracticeNavigationMovementUpdate AdvanceNeutralDriverPoll(int sourceClock,
+            PracticeAiDriverContext context,PracticeOwnerVisibilityRules visibility)
+        {
+            if(context==null||visibility==null)throw new ArgumentNullException("context/visibility");
+            if(context.PhaseCounter<1||context.PhaseCounter>128||context.SelectedWaypoint!=4||
+                context.CallerWord!=0x13579bdf||context.IncomingFrameWord!=0x2468ace0)
+                throw new NotSupportedException("Neutral navigation compares phases1..128,waypoint4 and explicit caller13579BDF/frame2468ACE0 only.");
+            for(int slot=0;slot<250;slot++)
+            {
+                int at=slot*492;byte visible=fleets[at+467],contact=fleets[at+480];
+                if(BitConverter.ToInt32(fleets,at)!=0&&BitConverter.ToInt16(fleets,at+6)==-1)
+                    throw new NotSupportedException("An active unowned fleet would enter an unsupported owner dispatcher.");
+                if((visible!=0||contact!=0)&&!(slot==249&&visible==3&&contact==1))
+                    throw new NotSupportedException("This neutral profile compares only the selected inactive249 visibility3/contact1 and its cleared state.");
+            }
+            return AdvanceCore(sourceClock,context,visibility);
+        }
+
+        PracticeNavigationMovementUpdate AdvanceCore(int sourceClock,PracticeAiDriverContext context,PracticeOwnerVisibilityRules visibility)
         {
             var task=Backing.CopyTaskRecord(16);byte[] f;PracticeAiSharedBacking backing;PracticeAiRouteGrid grid;
             PracticeQueuedNavigationResult navigation=null;PracticePrephaseNavigationResult dormant=null;
@@ -86,6 +110,10 @@ namespace FleetLab
                 navigation=PracticeQueuedNavigation.EvaluateForMovement(Grid,fleets,terrain,Backing,249,SelectedWaypoint,sourceClock,32000,0);
                 f=navigation.CopyFleetPool();backing=navigation.Backing;grid=navigation.Grid;
             }
+            // Whole41D640 already ran the prephase above. Its aligned neutral
+            // visibility pass precedes the two scheduler batches.
+            if(context!=null&&(context.PhaseCounter&31)==0)
+                f=visibility.Apply(f,-1,0,-2,0,249).CopyFleetPool();
             // Original415DF0 has no effects for the supplied Practice selector1;
             // original864 verifies that intervening call at every poll.
             var prepared=new PracticeNavigationMovementState(f,backing,grid,terrain,secondary,Schedule,SelectedWaypoint,true);
@@ -94,12 +122,16 @@ namespace FleetLab
             var next=new PracticeNavigationMovementState(update.State.Movement.CopyFleetPool(),
                 backing.WithMovementAuxiliary(update.State.Movement.CopyAuxiliary()),grid,terrain,secondary,
                 update.State.Schedule,update.State.Movement.SelectedWaypoint,true);
-            return new PracticeNavigationMovementUpdate(prepared,next,navigation,dormant,update,sourceClock);
+            return new PracticeNavigationMovementUpdate(prepared,next,navigation,dormant,update,sourceClock,context);
         }
     }
 
     public sealed class PracticeNavigationMovementUpdate
     {
+        public PracticeAiDriverContext DriverContext { get; private set; }
+        public int OwnerVisibilityPasses { get { return DriverContext!=null&&(DriverContext.PhaseCounter&31)==0?1:0; } }
+        // Unaligned stack scratch is retained in raw evidence, not inferred here.
+        public int? AlignedCallerScratchAfter { get { return OwnerVisibilityPasses==1?(int?)DriverContext.IncomingFrameWord:null; } }
         public PracticeNavigationMovementState Prephase { get; private set; }
         public PracticeNavigationMovementState State { get; private set; }
         public PracticeQueuedNavigationResult Navigation { get; private set; }
@@ -107,7 +139,7 @@ namespace FleetLab
         public PracticeFleetBatchAdvance Movement { get; private set; }
         public int SourceClock { get; private set; }
         internal PracticeNavigationMovementUpdate(PracticeNavigationMovementState prephase,PracticeNavigationMovementState state,
-            PracticeQueuedNavigationResult navigation,PracticePrephaseNavigationResult dormant,PracticeFleetBatchAdvance movement,int sourceClock)
-        { Prephase=prephase;State=state;Navigation=navigation;Dormant=dormant;Movement=movement;SourceClock=sourceClock; }
+            PracticeQueuedNavigationResult navigation,PracticePrephaseNavigationResult dormant,PracticeFleetBatchAdvance movement,int sourceClock,PracticeAiDriverContext context=null)
+        { Prephase=prephase;State=state;Navigation=navigation;Dormant=dormant;Movement=movement;SourceClock=sourceClock;DriverContext=context; }
     }
 }
