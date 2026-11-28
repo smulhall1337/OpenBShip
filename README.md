@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.138**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.139**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -19,7 +19,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -OriginalRoo
 .\Launch.cmd
 ```
 
-Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 44 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
+Replace `C:\Games\Battleship` with your extracted game folder. Setup copies and verifies 1,609 assets, including the 121 supplied SCN maps, extracts 46 runtime resources, and builds `build\current\BattleshipLab.exe`. It preserves the supplied files. The rebuild does not require an ISO mount, original installer, registry changes or administrator setup.
 
 The supported RIP executable is **397,824 bytes**, SHA-256:
 
@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.97 or earlier to import all 44 runtime resources, including the AI preparation delay table. Build only compiles source. It generates `build/current/compile.rsp` so long checkout paths do not overflow the Windows compiler command line.
+Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.138 or earlier to import all 46 runtime resources, including the additional reinforcement units and bank-five templates. Build only compiles source. It generates `build/current/compile.rsp` so long checkout paths do not overflow the Windows compiler command line.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
@@ -55,6 +55,16 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 Restart restores the starting fleets, rule preset, opponent setting and random streams, including manual placements and shuffles. Display and audio preferences retain their current values. The restart snapshot lasts while that battle is open.
 
 **Options → Debug → Skip turn cinematics (debug)** resolves shots without loading turn videos while preserving damage, turn order and random choices. The setting persists and defaults off. Intro/result sequences and the clip library remain available. Normal turn movies appear behind the boards; board surfaces use the accepted 30% transparency during playback while grid lines, ships, markers and controls stay opaque.
+
+## Generated reinforcement study
+
+Open **Recovered maps → Generated reinforcements (study)…**. The original bank-five producer generates deadlines and payloads, then the recovered consumer chooses positions and constructs default fleets in independent copied pools. **At next deadline** demonstrates strict equality; **Just after deadline** creates all events due at that visit; **Repeat clock** verifies one-shot consumption. **Jump past remaining** keeps the original group/slot order, so its fleet order and RNG history can differ from **Finish by deadlines**.
+
+The table distinguishes supplied producer and consumer counts. Events outside the consumer count remain scheduled. Choose the counts, seed, clock base, first-slot reservation and owner counter, then **Load selected copy**. **Reset applied copy** preserves pending control edits. Inspect each created fleet's units, local occupancy and type-15 stock below the map; content scrolls while Close remains visible. Enter loads once per press; Escape closes.
+
+The separate optional readers retain the established 15-unit and 40-ammunition resource identities. Two additional tables supply actual unit records 15/16 and the four default fleet templates. Type 15's literal equipment 40 and 35-WORD stock override are preserved, using the existing stock table. Template-local formations stay fixed; the randomized startup placement is a different source operation.
+
+Evidence covers **1,380 complete original state snapshots across 96 histories**, including tied deadlines, catch-up bursts, counter wrap and different producer/consumer counts. The numeric snapshot digests are original-only and run from public source. The copied initial pools, supplied clock visits, 128-visit/search guards and inspection UI are diagnostic choices. This does not initialize a live AI heap, run movement/combat, establish natural setup/pacing, support other producer banks or complete a Practice mission. Export eight form previews with `--render-generated-reinforcements` and a fresh directory.
 
 ## Scenario position study
 
@@ -586,7 +596,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.138, checks cover **661 model groups** and **275 form groups**. A fresh public checkout runs **536 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The 2,448 position vectors are one numeric corpus, not 2,448 gameplay scenarios.
+For v0.139, checks cover **667 model groups** and **279 form groups**. A fresh public checkout runs **542 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
