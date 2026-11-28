@@ -1,0 +1,32 @@
+using System;using System.IO;using System.Drawing;using System.Windows.Forms;
+namespace FleetLab
+{
+    internal static class PracticeScenarioPositionFormChecks
+    {
+        static T Find<T>(Form f,string name)where T:Control{var a=f.Controls.Find(name,true);if(a.Length!=1)throw new Exception("Missing "+name);return (T)a[0];}
+        static void Need(bool b,string m){if(!b)throw new Exception(m);}
+        static void Show(Form f,Form owner){f.Show(owner);Application.DoEvents();}
+        static void Click(Form f,string name){Find<Button>(f,name).PerformClick();Application.DoEvents();}
+        static void Select(Form f,int scenario,int group,int collision,uint seed){Find<ComboBox>(f,"positionScenario").SelectedItem=scenario;Find<NumericUpDown>(f,"positionGroup").Value=group;Find<NumericUpDown>(f,"positionSeed").Value=seed;Find<ComboBox>(f,"positionCollision").SelectedIndex=collision;Click(f,"positionLoad");}
+        internal static void Run(Action<string,Action> check,string assets,Form owner)
+        {
+            check("Scenario position study opens independent copied terrain retry with direct menu entry",delegate{
+                using(var f=new PracticeScenarioPositionStudy()){Show(f,owner);Need(f.Applied.Scenario==5&&f.Applied.Group==0&&f.Applied.Seed==731&&f.Applied.Collision==4&&f.Applied.Result.Attempts.Count>1,"Original-backed default");Need(Find<TextBox>(f,"positionDetails").ReadOnly&&Find<TextBox>(f,"positionDetails").Text.Contains("terrain record 499")&&Find<Label>(f,"positionSummary").Text.Contains("RNG calls")&&owner.Controls.Find("openScenarioPositionStudy",true).Length==1,"Readable direct entry and source feedback");Need(Find<ComboBox>(f,"positionScenario").ForeColor!=Find<ComboBox>(f,"positionScenario").BackColor&&Find<ComboBox>(f,"positionCollision").ForeColor!=Find<ComboBox>(f,"positionCollision").BackColor&&Find<Button>(f,"positionClose").ForeColor!=Find<Button>(f,"positionClose").BackColor,"Control text contrast");var scroll=Find<Panel>(f,"positionScroll");var canvas=Find<Panel>(f,"positionCanvas");Need(scroll.ClientRectangle.Contains(new Rectangle(scroll.PointToClient(canvas.PointToScreen(Point.Empty)),canvas.Size)),"Whole map visible at normal size");}
+            });
+            check("Scenario position controls preserve pending selection and reset applied inputs",delegate{
+                using(var f=new PracticeScenarioPositionStudy()){Show(f,owner);Find<ComboBox>(f,"positionScenario").SelectedItem=11;Find<NumericUpDown>(f,"positionSeed").Value=42;Need(f.Applied.Scenario==5&&Find<Label>(f,"positionPending").Text.Contains("pending"),"Pending edit");Click(f,"positionReset");Need(f.Applied.Scenario==5&&f.Applied.Seed==731&&(int)Find<ComboBox>(f,"positionScenario").SelectedItem==11&&Find<NumericUpDown>(f,"positionSeed").Value==42,"Applied reset retains pending");Click(f,"positionLoad");Need(f.Applied.Scenario==11&&f.Applied.Seed==42&&f.Applied.Result.Y==0,"Correct original ADC side group0");Select(f,11,1,0,42);Need(f.Applied.Result.Y==630,"Other group opposite edge");Find<NumericUpDown>(f,"positionGroup").Value=3;Find<ComboBox>(f,"positionScenario").SelectedItem=8;Need(Find<NumericUpDown>(f,"positionGroup").Maximum==1&&Find<NumericUpDown>(f,"positionGroup").Value<=1,"Uninitialized group prevented");}
+            });
+            check("Scenario position primary boundary, multiple retries and last-base feedback render",delegate{
+                using(var f=new PracticeScenarioPositionStudy()){Show(f,owner);Select(f,5,0,2,731);Need(f.Applied.Result.Attempts[0].BlockingFleet==20&&f.Applied.Result.Attempts.Count>1,"Near primary rejection");Select(f,5,0,3,731);Need(f.Applied.Result.Attempts.Count==1,"Exactly10 allowed");Select(f,18,3,8,uint.MaxValue);Need(f.Applied.Result.Attempts.Count>=4&&f.Applied.Result.RandomCalls>=8&&Find<Label>(f,"positionSummary").Text.Contains("4294967295"),"Last-base copied retry and uint seed");}
+            });
+            check("Scenario position Enter edges, minimum scroll and Close are safe",delegate{
+                using(var f=new PracticeScenarioPositionStudy()){Show(f,owner);f.StudyKey(Keys.Enter,false);Find<NumericUpDown>(f,"positionSeed").Value=42;f.StudyKey(Keys.Enter,true);Need(f.Applied.Seed==42,"Enter applies");var applied=f.Applied;Find<NumericUpDown>(f,"positionSeed").Value=1;f.StudyKey(Keys.Enter,true);Need(object.ReferenceEquals(applied,f.Applied),"Held Enter suppressed");f.StudyKey(Keys.Enter,false);f.StudyKey(Keys.Enter,true);Need(f.Applied.Seed==1,"New press applies");f.StudyKey(Keys.Enter,false);f.ClientSize=new Size(800,580);Application.DoEvents();var scroll=Find<Panel>(f,"positionScroll");scroll.ScrollControlIntoView(Find<TextBox>(f,"positionDetails"));Application.DoEvents();Need(Find<TextBox>(f,"positionDetails").Width>=730&&scroll.AutoScroll,"Scrollable source details");var close=Find<Button>(f,"positionClose");Need(f.ClientRectangle.Contains(new Rectangle(f.PointToClient(close.PointToScreen(Point.Empty)),close.Size)),"Close remains visible");Click(f,"positionClose");Need(f.IsDisposed||!f.Visible,"Clean close");}
+            });
+        }
+        static void Save(Form f,string file){Application.DoEvents();using(var image=new Bitmap(f.Width,f.Height)){f.DrawToBitmap(image,new Rectangle(Point.Empty,f.Size));image.Save(file,System.Drawing.Imaging.ImageFormat.Png);}}
+        internal static int SavePreviews(string assets,string directory)
+        {
+            try{Directory.CreateDirectory(directory);using(var f=new PracticeScenarioPositionStudy()){f.Show();Application.DoEvents();Save(f,Path.Combine(directory,"01-terrain-retry.png"));Select(f,5,0,2,731);Save(f,Path.Combine(directory,"02-primary-nine.png"));Select(f,5,0,3,731);Save(f,Path.Combine(directory,"03-primary-ten.png"));Select(f,5,0,5,731);Save(f,Path.Combine(directory,"04-terrain-offset.png"));Select(f,12,0,8,731);Save(f,Path.Combine(directory,"05-repeated-retries.png"));Select(f,18,3,8,uint.MaxValue);Save(f,Path.Combine(directory,"06-base-orientations.png"));f.ClientSize=new Size(800,580);Application.DoEvents();Find<Panel>(f,"positionScroll").ScrollControlIntoView(Find<Panel>(f,"positionCanvas"));Save(f,Path.Combine(directory,"07-minimum-map.png"));Find<Panel>(f,"positionScroll").ScrollControlIntoView(Find<TextBox>(f,"positionDetails"));Save(f,Path.Combine(directory,"08-minimum-details.png"));f.Close();}return 0;}catch(Exception ex){File.WriteAllText(Path.Combine(directory,"Error.txt"),ex.ToString());return 1;}
+        }
+    }
+}

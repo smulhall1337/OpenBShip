@@ -306,6 +306,7 @@ namespace FleetLab {
             PracticeMixedNavigationChecks.Run(check,checkEvidence,assets);
             PracticeMixedMovementChecks.Run(check,checkEvidence,assets);
             PracticeMixedClockChecks.Run(check,checkEvidence,assets);
+            PracticeScenarioPositionChecks.Run(check);
             PracticeNavigationCollisionChecks.Run(check,checkEvidence,assets);
             PracticeNavigationTraceChecks.Run(check,checkEvidence,assets);
             PracticeServiceWaypointStudyStateChecks.Run(check,assets);

@@ -53,6 +53,7 @@ namespace FleetLab {
                 if(args.Length==2&&args[0]=="--render-mixed-navigation")return PracticeMixedNavigationFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-mixed-moving")return PracticeMixedMovementFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-mixed-clock")return PracticeMixedClockFormChecks.SavePreviews(assets,args[1]);
+                if(args.Length==2&&args[0]=="--render-scenario-positions")return PracticeScenarioPositionFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-produced-misses")return PracticeProducedMissFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-produced-flight")return PracticeProducedFlightFormChecks.SavePreviews(assets,args[1]);
                 if(args.Length==2&&args[0]=="--render-member-flight")return PracticeFleetRequestFlightFormChecks.SavePreviews(assets,args[1]);

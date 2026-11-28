@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.137**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.138**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -55,6 +55,14 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 Restart restores the starting fleets, rule preset, opponent setting and random streams, including manual placements and shuffles. Display and audio preferences retain their current values. The restart snapshot lasts while that battle is open.
 
 **Options → Debug → Skip turn cinematics (debug)** resolves shots without loading turn videos while preserving damage, turn order and random choices. The setting persists and defaults off. Intro/result sequences and the clip library remain available. Normal turn movies appear behind the boards; board surfaces use the accepted 30% transparency during playback while grid lines, ships, markers and controls stay opaque.
+
+## Scenario position study
+
+Open **Recovered maps → Scenario positions (study)…**. Choose a scenario, group, seed and copied blocker profile, then **Load selected copy**. Gold marks the accepted point; orange marks rejected candidates. The details list the rejecting primary or terrain record and show RNG progression. **Reset applied copy** reproduces the applied inputs while retaining pending control changes. Enter loads once per press; Escape closes. The footer stays visible while the map and details scroll.
+
+This reconstructs the original position selector and RNG for defined branches of scenarios 5, 6, 7, 8, 11, 12, 13, 14 and 18. It uses source coordinates 0..630, literal masks/modulo, strict primary per-axis distance `<10`, exact kind-1 terrain collision and complete dispatch retries. Scenario 18 scans eligible owner-1 bases and retains the last candidate while consuming RNG for every eligible base. Group zero in scenario 11 selects Y=0; other groups select Y=630.
+
+The numeric fixtures contain **2,448 original input/position/RNG vectors**, including index-249 primary and index-499 terrain records, inactive/wrong-kind blockers and multiple retries. An independent reconstruction and fresh source-only replay match all vectors. Original pools remain read-only. The **128-attempt study cap is a modern diagnostic guard**; the original retry loop is unbounded. Undefined dispatches and missing scenario-18 bases fail clearly. Copied blockers and the inspection UI are modern aids; no original constructor, natural spawn schedule or full mission runs here. Export eight form previews with `--render-scenario-positions` and a fresh directory.
 
 ## Clock and moving fleets study
 
@@ -578,7 +586,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.137, checks pass **655 model groups** and **271 form groups**. A fresh public checkout runs **530 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
+For v0.138, checks cover **661 model groups** and **275 form groups**. A fresh public checkout runs **536 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The 2,448 position vectors are one numeric corpus, not 2,448 gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
