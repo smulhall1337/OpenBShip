@@ -24,6 +24,64 @@ namespace FleetLab
                 using(var f=new PracticeGeneratedReinforcementStudy(programs)){Show(f,owner);f.StudyKey(Keys.Enter,false);Find<NumericUpDown>(f,"generatedSeed").Value=9;f.StudyKey(Keys.Enter,true);var applied=f.StateSnapshot;Find<NumericUpDown>(f,"generatedSeed").Value=42;f.StudyKey(Keys.Enter,true);Need(object.ReferenceEquals(applied,f.StateSnapshot),"Held Enter suppressed");f.StudyKey(Keys.Enter,false);f.StudyKey(Keys.Enter,true);Need(f.StateSnapshot.InitialSeed==42,"New Enter press applies");f.StudyKey(Keys.Enter,false);Click(f,"generatedAfter");f.ClientSize=new Size(940,620);var details=Find<TextBox>(f,"generatedDetails");details.Focus();Find<Panel>(f,"generatedScroll").ScrollControlIntoView(details);Application.DoEvents();Need(details.Width>=860&&details.Text.Contains("Local grid"),"Scrollable source roster/grid");var close=Find<Button>(f,"generatedClose");Need(f.ClientRectangle.Contains(new Rectangle(f.PointToClient(close.PointToScreen(Point.Empty)),close.Size)),"Visible persistent Close");Click(f,"generatedClose");Need(f.IsDisposed||!f.Visible,"Clean copied-study close");}
             });
         }
+        internal static void RunMapped(Action<string,Action> check,string assets,Form owner)
+        {
+            string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");
+            check("Occupied reinforcement form separates existing map fleets from new allocations",delegate{
+                using(var f=new PracticeGeneratedReinforcementStudy(programs))
+                {
+                    Show(f,owner);Find<ComboBox>(f,"generatedWorld").SelectedIndex=1;Click(f,"generatedLoad");
+                    Need(f.StateSnapshot.UsesOccupiedMap&&f.StateSnapshot.ExistingFleetCount==29&&Find<ComboBox>(f,"generatedFleet").Items.Count==0,"Existing fleet markers are not generated roster choices");
+                    Need(!Find<CheckBox>(f,"generatedReserve").Enabled&&!Find<ComboBox>(f,"generatedCounter").Enabled&&Find<Label>(f,"generatedSummary").Text.Contains("existing 29 fleets / 63 units"),"Copied map counters/reservations explicit");
+                    Click(f,"generatedEquality");Need(f.StateSnapshot.CreatedFleetCount==0,"Mapped equality holds");Click(f,"generatedAfter");
+                    Need(f.StateSnapshot.LastCreated[0].Fleet==29&&f.StateSnapshot.LastCreated[0].Units[0]==66&&Find<ComboBox>(f,"generatedFleet").SelectedItem.ToString()=="29"&&Find<TextBox>(f,"generatedDetails").Text.Contains("no natural transition"),"Recovered allocation and scope visible");
+                }
+            });
+            check("Occupied reinforcement form rejects unsupported pending seeds without replacing the applied world",delegate{
+                using(var f=new PracticeGeneratedReinforcementStudy(programs))
+                {
+                    Show(f,owner);Find<ComboBox>(f,"generatedWorld").SelectedIndex=1;Click(f,"generatedLoad");var applied=f.StateSnapshot;
+                    Find<NumericUpDown>(f,"generatedSeed").Value=42;Click(f,"generatedLoad");
+                    Need(object.ReferenceEquals(applied,f.StateSnapshot)&&Find<Label>(f,"generatedPending").Text.Contains("0 and 731"),"Unsupported source seed is an inline atomic error");
+                    Find<NumericUpDown>(f,"generatedSeed").Value=0;Click(f,"generatedLoad");Need(f.StateSnapshot.InitialSeed==0&&f.StateSnapshot.InitialRandomState==1349664646,"Supported alternative map basis");
+                    Find<ComboBox>(f,"generatedWorld").SelectedIndex=0;Click(f,"generatedLoad");Need(!f.StateSnapshot.UsesOccupiedMap&&Find<CheckBox>(f,"generatedReserve").Enabled&&Find<ComboBox>(f,"generatedCounter").Enabled,"Empty-fixture controls restored");
+                }
+            });
+            check("Occupied reinforcement form exposes isolated allocation profiles and pending-safe reset at minimum size",delegate{
+                using(var f=new PracticeGeneratedReinforcementStudy(programs))
+                {
+                    Show(f,owner);
+                    foreach(int world in new[]{2,3,4})
+                    {
+                        Find<ComboBox>(f,"generatedWorld").SelectedIndex=world;Click(f,"generatedLoad");Click(f,"generatedAfter");
+                        Need(f.StateSnapshot.MapProfile==world-1&&f.StateSnapshot.LastCreated[0].Fleet==(world==4?30:29)&&f.StateSnapshot.LastCreated[0].Units[0]==66,"Named copied reservation profile");
+                    }
+                    Find<ComboBox>(f,"generatedWorld").SelectedIndex=0;Find<NumericUpDown>(f,"generatedSeed").Value=42;Click(f,"generatedReset");
+                    Need(f.StateSnapshot.MapProfile==3&&f.StateSnapshot.CreatedFleetCount==0&&Find<ComboBox>(f,"generatedWorld").SelectedIndex==0&&Find<Label>(f,"generatedPending").Text.Contains("pending"),"Applied map reset keeps pending world/seed edits");
+                    f.ClientSize=new Size(940,620);var worldChoice=Find<ComboBox>(f,"generatedWorld");worldChoice.Focus();Find<Panel>(f,"generatedScroll").ScrollControlIntoView(worldChoice);Application.DoEvents();
+                    Need(worldChoice.Width>=450&&worldChoice.ForeColor!=worldChoice.BackColor,"Readable scrollable world choices");
+                    var close=Find<Button>(f,"generatedClose");Need(f.ClientRectangle.Contains(new Rectangle(f.PointToClient(close.PointToScreen(Point.Empty)),close.Size)),"Fixed Close survives copied-map controls");Click(f,"generatedClose");Need(f.IsDisposed||!f.Visible,"Clean map-study exit");
+                }
+            });
+        }
+        internal static int SaveMappedPreviews(string assets,string directory)
+        {
+            try
+            {
+                Directory.CreateDirectory(directory);string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");
+                using(var f=new PracticeGeneratedReinforcementStudy(programs))
+                {
+                    f.Show();Application.DoEvents();Find<ComboBox>(f,"generatedWorld").SelectedIndex=1;Click(f,"generatedLoad");Save(f,Path.Combine(directory,"01-occupied-map.png"));Click(f,"generatedAfter");Save(f,Path.Combine(directory,"02-first-map-fleet.png"));
+                    Find<ComboBox>(f,"generatedWorld").SelectedIndex=2;Click(f,"generatedLoad");Click(f,"generatedAfter");Save(f,Path.Combine(directory,"03-bay-only.png"));
+                    Find<ComboBox>(f,"generatedWorld").SelectedIndex=3;Click(f,"generatedLoad");Click(f,"generatedAfter");Save(f,Path.Combine(directory,"04-adjacent-only.png"));
+                    Find<ComboBox>(f,"generatedWorld").SelectedIndex=4;Find<ComboBox>(f,"generatedCounts").SelectedIndex=1;Click(f,"generatedLoad");Click(f,"generatedFinish");Save(f,Path.Combine(directory,"05-reserved-map-fleet.png"));
+                    f.ClientSize=new Size(940,620);var details=Find<TextBox>(f,"generatedDetails");details.Focus();Find<Panel>(f,"generatedScroll").ScrollControlIntoView(details);Save(f,Path.Combine(directory,"06-minimum-details.png"));
+                    var world=Find<ComboBox>(f,"generatedWorld");world.Focus();Find<Panel>(f,"generatedScroll").ScrollControlIntoView(world);Save(f,Path.Combine(directory,"07-minimum-world-choice.png"));f.Close();
+                }
+                return 0;
+            }
+            catch(Exception ex){File.WriteAllText(Path.Combine(directory,"Error.txt"),ex.ToString());return 1;}
+        }
         static void Save(Form f,string file){Application.DoEvents();using(var bitmap=new Bitmap(f.Width,f.Height)){f.DrawToBitmap(bitmap,new Rectangle(Point.Empty,f.Size));bitmap.Save(file,System.Drawing.Imaging.ImageFormat.Png);}}
         internal static int SavePreviews(string assets,string directory)
         {

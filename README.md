@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.139**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.140**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -65,6 +65,8 @@ The table distinguishes supplied producer and consumer counts. Events outside th
 The separate optional readers retain the established 15-unit and 40-ammunition resource identities. Two additional tables supply actual unit records 15/16 and the four default fleet templates. Type 15's literal equipment 40 and 35-WORD stock override are preserved, using the existing stock table. Template-local formations stay fixed; the randomized startup placement is a different source operation.
 
 Evidence covers **1,380 complete original state snapshots across 96 histories**, including tied deadlines, catch-up bursts, counter wrap and different producer/consumer counts. The numeric snapshot digests are original-only and run from public source. The copied initial pools, supplied clock visits, 128-visit/search guards and inspection UI are diagnostic choices. This does not initialize a live AI heap, run movement/combat, establish natural setup/pacing, support other producer banks or complete a Practice mission. Export eight form previews with `--render-generated-reinforcements` and a fresh directory.
+
+The **World copy** selector also offers the recovered occupied BSSB202 start for startup seeds **0** and **731**. Its 29 existing fleets and 63 units appear separately from newly generated fleets. Bank five uses the carried startup RNG and counters; it skips inactive bay members, units immediately before kinds 22/23, and reserved primary slots. Three named diagnostic copy profiles isolate those allocation rules. They leave the supplied map unchanged. Unsupported seeds produce an inline error while retaining the applied world. This deliberately supplies bank five on a copied map; natural scenario selection and live AI remain outside the study. An additional **916 complete original states across 64 occupied-map histories** cover the composed allocator. Export seven occupied-map previews with `--render-mapped-reinforcements` and a fresh directory.
 
 ## Scenario position study
 
@@ -596,7 +598,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.139, checks cover **667 model groups** and **279 form groups**. A fresh public checkout runs **542 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.140, checks cover **673 model groups** and **282 form groups**. A fresh public checkout runs **548 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
