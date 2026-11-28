@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.143**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.144**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -610,7 +610,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.143, checks cover **691 model groups** and **294 form groups**. A fresh public checkout runs **566 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.144, checks cover **697 model groups** and **298 form groups**. A fresh public checkout runs **572 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
@@ -731,3 +731,9 @@ The carrier window also offers **Whole pass** scope with zero, one or two suppli
 Recovered maps → Generated reinforcements (study)... → Clock-header waves... runs the recovered frame-clock header around the phase driver. The ordinary Phase-gated waves window remains available with its earlier supplied clock trace. This mode supplies 40 ms sample intervals, an overdue jump at frame 65 and a repeated timestamp at frame 67. Initial phase 31 starts overdue so a first-frame refresh can be inspected before visibility clears.
 
 The body sees the newly sampled time and the previous delta. On a zero interval the epilogue resets current time, game time and delta to 1 after the body has run. With initial phase 0 and the negative pause profile, frame 67 creates eight due fleets before that reset. Select a trace row to compare body and completed clocks without rewinding the current simulation. All 1,152 original before/after states and clock observations are compared, with fourteen exercised wrong-rule controls. This retains the explicit idle runtime links and zero-cell geometry; full wait/render/input, pause-deadline compensation, live AI, movement and natural pacing remain absent. The 96-frame cap is a modern inspection guard.
+
+### Pause-compensated wave comparison
+
+Recovered maps → Generated reinforcements (study)... → Pause-compensated waves... adds the recovered pause tail after the wave driver and before the clock epilogue. It starts with a negative pause word on frames 33–35. Supplied intervals make the body see preceding deltas of 40, 160 and 40 ms, shifting active deadlines by 240 ms. Details show the per-frame shift, cumulative shift, pending deadline and selected opaque timer fields. The two earlier wave modes remain available.
+
+At frame 67, seven due fleets spawn before the zero-interval clock reset. At the 96-frame inspection limit, seven fleets have spawned and one late wave remains pending. This is the expected finite checkpoint, not mission completion. The model preserves inactive minus-one timestamps, payloads, opaque bytes and unsigned wrapping across the complete 80 timed records, 1,500 primary records, four counters and global field. All 1,152 original expanded before/after states and clock observations match, with seventeen exercised wrong-rule controls. These timer fixtures do not execute full object or order simulation; idle links and zero-cell geometry remain supplied. Full wait/render/input, live AI, movement and natural pacing remain absent.

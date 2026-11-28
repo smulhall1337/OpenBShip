@@ -58,6 +58,7 @@ namespace FleetLab
             initial=source.initial;visibility=source.visibility;World=world;InitialPhase=source.InitialPhase;PhaseCounter=source.PhaseCounter;PauseProfile=source.PauseProfile;Frames=source.Frames;DriverCalls=source.DriverCalls;ConsumerPolls=source.ConsumerPolls;FirstDeadline=source.FirstDeadline;LastDeadline=source.LastDeadline;
         }
         internal PracticeReinforcementPhaseState CompleteClock(uint clock){return new PracticeReinforcementPhaseState(this,World.CompleteDriverClock(clock));}
+        internal PracticeReinforcementPhaseState ApplyPausedDeadlines(byte[] timestamps){return new PracticeReinforcementPhaseState(this,World.WithDriverDeadlines(timestamps));}
         public PracticeReinforcementPhaseUpdate AdvanceFrame()
         {
             return AdvanceWithClock((uint)(Frames==0?FirstDeadline:Frames<32?FirstDeadline+1:LastDeadline+1));

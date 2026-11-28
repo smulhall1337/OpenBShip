@@ -50,6 +50,11 @@ namespace FleetLab
             var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>());next.Clock=clock;return next;
         }
         internal PracticeGeneratedReinforcements PollSourceDriver(){return Visit(Clock);}
+        internal byte[] CopyDriverDeadlines(){var bytes=new byte[64];for(int n=0;n<16;n++)BitConverter.GetBytes(deadlines[n]).CopyTo(bytes,n*4);return bytes;}
+        internal PracticeGeneratedReinforcements WithDriverDeadlines(byte[] bytes)
+        {
+            if(bytes==null||bytes.Length!=64)throw new InvalidDataException("Complete16deadline table required.");var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>(created));for(int n=0;n<16;n++)next.deadlines[n]=BitConverter.ToInt32(bytes,n*4);next.InputRandomState=InputRandomState;next.RefreshRequests=RefreshRequests;return next;
+        }
         internal PracticeGeneratedReinforcements CompleteDriverClock(uint clock)
         {
             var next=new PracticeGeneratedReinforcements(this,new List<PracticeReinforcementCreation>(created));next.Clock=clock;next.InputRandomState=InputRandomState;next.RefreshRequests=RefreshRequests;return next;
