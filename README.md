@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.134**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.135**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -55,6 +55,14 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 Restart restores the starting fleets, rule preset, opponent setting and random streams, including manual placements and shuffles. Display and audio preferences retain their current values. The restart snapshot lasts while that battle is open.
 
 **Options → Debug → Skip turn cinematics (debug)** resolves shots without loading turn videos while preserving damage, turn order and random choices. The setting persists and defaults off. Intro/result sequences and the clip library remain available. Normal turn movies appear behind the boards; board surfaces use the accepted 30% transparency during playback while grid lines, ships, markers and controls stay opaque.
+
+## Navigation and aircraft policy study
+
+Open **Recovered maps → Navigation / aircraft policy (study)…**. Choose a scenario, press **Load selected copy**, then **1 copied visit**. **Remaining 8-visit window** stops at the verified limit. **Reset applied copy** retains any pending selector choice; Escape or Close exits. This independent copy preserves the active battle and settings.
+
+Compare **Navigation first · blocked destination / activation** with **Navigation first · route start / activation**. After one visit, the aircraft has patrol phase 2 in the blocked case and phase 3 in the route-start case. Navigation writes a collision fleet's kind into a stack value later read by aircraft policy; a subsequent aircraft callback makes the final value 6 in both cases. The details show the intermediate values so that final equality does not hide the difference.
+
+Gold marks ship 16 and its first queued point; blue marks the carrier; cyan marks its aircraft and patrol point; red marks a supplied blocker. Positions stay fixed: this study runs recovered policy and navigation, with supplied clocks, caller values and collisions. Six eight-visit original-code histories support the complete state comparisons. It does not yet run movement, aircraft flight, natural application pacing or a complete Practice battle. The older restricted APIs retain their admission guards.
 
 ## Shared aircraft and AA study
 
@@ -550,7 +558,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.134, checks pass **637 model groups** and **261 form groups**. A fresh public checkout runs **515 model groups**, with **122 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
+For v0.135, checks pass **643 model groups** and **265 form groups**. A fresh public checkout runs **520 model groups**, with **123 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

@@ -100,7 +100,7 @@ namespace FleetLab {
             solo=new SoloSetup(assets);solo.Visible=false;solo.StartClassicRequested+=delegate{OpenFleet();};solo.ReturnRequested+=delegate{solo.Pause();solo.Visible=false;front.Visible=true;front.Begin();SuppressHeldControls();};
             fleet=new FleetSetup(assets);fleet.Visible=false;fleet.ReturnRequested+=delegate{fleet.Reset();fleet.Visible=false;solo.Visible=true;solo.BringToFront();solo.Canvas.Focus();SuppressHeldControls();UpdateView();};entry=new EntryPlayer(assets);entry.Visible=false;entry.Ready+=delegate{CommitFleet();};entry.ReturnRequested+=delegate{entry.Reset();entry.Visible=false;fleet.Visible=true;fleet.BringToFront();fleet.Canvas.Focus();SuppressHeldControls();UpdateView();};fleet.StartRequested+=delegate{OpenEntry();};
             ending.MenuRequested+=delegate{if(!disposed&&tabs.SelectedIndex==3){startupPage.Reset();startupPage.Visible=false;creditsPage.Reset();creditsPage.Visible=false;prefsPage.Reset();prefsPage.Visible=false;entry.Reset();entry.Visible=false;fleet.Reset();fleet.Visible=false;solo.Reset();solo.Visible=false;front.Visible=true;front.Reset();tabs.SelectedIndex=4;}};
-            Text="Battleship Fleet Lab 0.134 — recovered phase and pause gate";
+            Text="Battleship Fleet Lab 0.135 — navigation and aircraft policy";
             ClientSize=new Size(1220,840);
             MinimumSize=new Size(1040,780);
             StartPosition=FormStartPosition.CenterScreen;
@@ -330,6 +330,9 @@ namespace FleetLab {
             var clockPolicyButton=new Button{Text="Clock / aircraft policy (study)…",Name="openClockPolicyStudy",AutoSize=true};
             clockPolicyButton.AccessibleDescription="Compare copied clock header, aircraft activation and carried selection with fourteen recorded source frames; no automatic timer or active battle changes.";mapHeader.Controls.Add(clockPolicyButton);
             clockPolicyButton.Click+=delegate{try{string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var startup=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);using(var study=new PracticeFlag23ClockStudy(programs,startup))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Clock / aircraft policy study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Clock / aircraft policy study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Clock / aircraft policy study");}SuppressHeldControls();};
+            var mixedNavigationButton=new Button{Text="Navigation / aircraft policy (study)…",Name="openMixedNavigationStudy",AutoSize=true};
+            mixedNavigationButton.AccessibleDescription="Compare recovered ship navigation and carrier aircraft policy in six bounded copied scenarios; no active battle changes.";mapHeader.Controls.Add(mixedNavigationButton);
+            mixedNavigationButton.Click+=delegate{try{string programs=Path.Combine(Path.GetDirectoryName(assets),"Programs");var startup=PracticeMapStartup.CreateBssb202(programs,File.ReadAllBytes(Path.Combine(assets,"Graphics","BSSB202.SCN")),731);using(var study=new PracticeMixedNavigationStudy(programs,startup))study.ShowDialog(this);}catch(IOException e){MessageBox.Show(this,e.Message,"Navigation / aircraft policy study");}catch(NotSupportedException e){MessageBox.Show(this,e.Message,"Navigation / aircraft policy study");}catch(UnauthorizedAccessException e){MessageBox.Show(this,e.Message,"Navigation / aircraft policy study");}SuppressHeldControls();};
             var serviceWaypointButton=new Button{Text="Service waypoints (study)…",Name="openServiceWaypointStudy",AutoSize=true};
             var goalRouteButton=new Button{Text="Route costs (study)…",Name="openGoalRouteStudy",AutoSize=true};
             var activeNavigationButton=new Button{Text="Active navigation (study)…",Name="openActiveNavigationStudy",AutoSize=true};
@@ -1004,6 +1007,7 @@ namespace FleetLab {
             PracticeGoalRouteFormChecks.RunNavigation(check,assets,this);
             PracticeNavigationMovementFormChecks.Run(check,assets,this);
             PracticeFlag23ClockFormChecks.Run(check,assets,this);
+            PracticeMixedNavigationFormChecks.Run(check,assets,this);
             PracticeNavigationClockFormChecks.Run(check,assets,this);
             PracticeNavigationPhaseFormChecks.Run(check,assets,this);
             check("Map spawn-zone tab exposes recovered sectors and supplied reservation counts",delegate {
