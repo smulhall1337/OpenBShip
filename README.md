@@ -35,7 +35,7 @@ After setup, double-click **Launch.cmd**. To rebuild edited source:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
-Close that build before rebuilding it; Build does not terminate games. Rerun Setup after updating from v0.138 or earlier to import all 46 runtime resources, including the additional reinforcement units and bank-five templates. Build only compiles source. It generates `build/current/compile.rsp` so long checkout paths do not overflow the Windows compiler command line.
+Close that build before rebuilding it; Build does not terminate games. After updating from v0.144 or earlier, rerun Setup to copy the newly used WORLDDOM.FLT asset. Updates from v0.138 or earlier also need all 46 runtime resources, including the additional reinforcement units and bank-five templates. Build only compiles source. It generates `build/current/compile.rsp` so long checkout paths do not overflow the Windows compiler command line.
 
 Settings and saved battles live in **`build\current\UserData`**. Preserve that folder when cleaning or moving the workspace. Only `build/current` is required to play. Temporary builds, private research and older comparison packages are optional. Startup errors are displayed and recorded in `build\current\UserData\last-error.txt`; Launch keeps its console open when setup or required files are missing.
 
