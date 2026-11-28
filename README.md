@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.131**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.132**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -516,9 +516,25 @@ Two additional **Repeat callback** presets expose a single supplied poll. Load e
 
 The collision entry remains internal to this bounded composition and retains the earlier public caller guards. It admits terrain FE and the compared stationary kind-11 slot-30 collision with an unreached point, plus the separately compared goal-4 terrain-FE current/empty inputs. It executes at most one additional waypoint callback after clearing collision FF. Seven paired original contexts verify both navigation and following movement, with explicit callsite counts and tracing-neutral outputs. Some contexts produce identical final states despite different call counts. Unexamined signed fleet indices, yard bypasses, positive-fleet current/empty replan entries, goal-2 current/empty FE replan entries and network callbacks remain rejected. A separate arrival-timed insertion experiment produced no collision and is retained with that narrower scope.
 
+## Clock and aircraft policy study
+
+Open **Recovered maps → Clock / aircraft policy (study)…** directly. No map or fleet selection is required first. This separate copy joins the recovered clock header to the whole bounded AI driver and aircraft policy; it preserves the active battle and settings. Nothing advances automatically.
+
+Choose **Exact 5000 activation · selection carry**, then **Load selected copy**:
+
+1. Apply **1 supplied frame**. The body sees preceding delta **0**, leaving child 23 stored at timer **4,984**. Only after that body does the header compute delta **16**.
+2. Apply another frame. The body adds the preceding **16**, reaches exactly **5,000**, activates the aircraft group from kind 6 to 3, requests one source UI refresh and invalidates the selected waypoint counter to **−1**.
+3. Apply the third frame. Selection remains **−1**, the timer remains 5,000 and no additional refresh is requested. Controls stop at the three-frame recorded limit. This does not fly the aircraft or complete a mission.
+
+The other presets show variable samples, the original zero-interval reset and wrapping inputs. The table keeps **Before frame**, **Body sees** and **After frame** separate. Using the current sample interval in place of the preceding delta activates the threshold fixture a frame too early. Reset rebuilds the applied copy while keeping a different pending preset; Load applies that pending selection.
+
+Four independently prepared histories match all 14 complete original frames, including ship/fleet/order/shared/candidate pools, clock fields, UI requests, selection and caller scratch. Samples, phases, caller words, empty scenario events and the neutral-only owner context are supplied diagnostic inputs. No natural wall-clock pacing, active navigation, movement, original renderer, movies/audio, network or full Practice world runs. The earlier public fixed-waypoint driver constructor keeps its behavior; its new explicit context can carry the observed invalidation value −1.
+
+`PracticeFlag23ClockState.AdvanceFrame` publishes immutable before/body/after results and rejects stale selection, other caller words, visible targets, active navigation and unexamined policy contexts. `OriginalFrameClock` remains a comparison model; the modern game's ordinary scheduler does not use this diagnostic clock. Export eight actual-form previews with `--render-clock-policy` and a fresh directory.
+
 ## Validation
 
-For the v0.131 source, focused checks pass **617 model groups**. A fresh public checkout passes **499**, with **118 explicit skips** for optional private evidence. Form checks pass **251**; a fresh public form run can separately skip the optional private startup-palette comparison.
+For the v0.132 source, focused checks pass **623 model groups**. A fresh public checkout passes **504**, with **119 explicit skips** for optional private evidence. Form checks pass **255**; a fresh public form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

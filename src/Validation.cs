@@ -290,6 +290,7 @@ namespace FleetLab {
             PracticeFlag23PatrolChecks.Run(check,checkEvidence,assets);
             PracticePrephaseFlag23Checks.Run(check,checkEvidence,assets);
             PracticeAiDriverGateChecks.Run(check,checkEvidence,assets);
+            PracticeFlag23ClockChecks.Run(check,checkEvidence,assets);
             PracticeQueuedGoalChecks.Run(check,checkEvidence,assets);
             PracticeServiceDestinationChecks.Run(check,checkEvidence,assets);
             PracticeServiceWaypointChecks.Run(check,checkEvidence,assets);

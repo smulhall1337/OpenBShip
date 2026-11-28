@@ -13,13 +13,20 @@ namespace FleetLab
         public int RawOwnerPassControl { get; private set; }
         public int CallerWord { get; private set; }
         public int IncomingFrameWord { get; private set; }
+        public int SelectedWaypoint { get; private set; }
         public PracticeAiDriverContext(uint phaseCounter, int scenario, int scenarioEventCount,
             int rawOwnerPassControl, int callerWord, int incomingFrameWord)
+            : this(phaseCounter, scenario, scenarioEventCount, rawOwnerPassControl, callerWord, incomingFrameWord, 4) { }
+        public PracticeAiDriverContext(uint phaseCounter, int scenario, int scenarioEventCount,
+            int rawOwnerPassControl, int callerWord, int incomingFrameWord, int selectedWaypoint)
         {
             if (scenario != 1 || scenarioEventCount != 0 || rawOwnerPassControl != 0)
                 throw new NotSupportedException("The compared driver profile requires Practice scenario1, zero scenario events and raw owner-pass control0. Other planners/events/owner dispatchers are not implemented here.");
+            if (selectedWaypoint != 4 && selectedWaypoint != -1)
+                throw new NotSupportedException("The compared driver starts with waypoint counter 4 or carries its invalidated value -1.");
             PhaseCounter = phaseCounter; Scenario = scenario; ScenarioEventCount = scenarioEventCount;
             RawOwnerPassControl = rawOwnerPassControl; CallerWord = callerWord; IncomingFrameWord = incomingFrameWord;
+            SelectedWaypoint = selectedWaypoint;
         }
     }
 
@@ -67,7 +74,7 @@ namespace FleetLab
                 if (BitConverter.ToInt32(fleets, g * 492) != 0 && BitConverter.ToInt16(fleets, g * 492 + 6) == -1)
                     throw new NotSupportedException("An active unowned fleet would enter an unimplemented owner dispatcher. This driver profile requires none.");
             var prephase = PracticePrephaseFlag23.EvaluateNoTargets(policy, ships, fleets, orders, backing,
-                candidates, rawDelta, context.CallerWord, 0, 4);
+                candidates, rawDelta, context.CallerWord, 0, context.SelectedWaypoint);
             var after = prephase.CopyFleetPool();
             if ((context.PhaseCounter & 31) == 0)
                 after = visibility.Apply(after, -1, 0, -2, 0, 249).CopyFleetPool();
