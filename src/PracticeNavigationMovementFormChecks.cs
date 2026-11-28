@@ -57,7 +57,7 @@ namespace FleetLab
             check("Navigation/movement form shows terrain and fleet collision before the next source replan",delegate{
                 using(var f=new PracticeNavigationMovementStudy(programs,startup()))
                 {
-                    Show(f,owner);Load(f,9);Need(Find<ComboBox>(f,"navigationMoveProfile").Items.Count==17&&Find<Button>(f,"navigationMoveAll").Text.Contains("1024"),"Long presets/window action absent");
+                    Show(f,owner);Load(f,9);Need(Find<ComboBox>(f,"navigationMoveProfile").Items.Count==20&&Find<Button>(f,"navigationMoveAll").Text.Contains("1024"),"Long presets/window action absent");
                     Advance(f,65);Need(f.StudyState.SuppliedWorldEvents==0,"Early supplied world event");Find<Button>(f,"navigationMoveOne").PerformClick();Need(f.StudyState.SuppliedWorldEvents==1&&f.StudyState.ReplanEntries==0,"Insertion skipped collision stage");
                     Find<Button>(f,"navigationMoveCollision").PerformClick();Need(f.StudyState.Polls==95&&f.StudyState.TerrainCollisionVisits==1&&f.StudyState.ReplanEntries==0&&Find<Label>(f,"navigationMoveSummary").Text.Contains("collision FE"),"Terrain collision not observable");
                     Find<Button>(f,"navigationMoveCollision").PerformClick();Need(f.StudyState.Polls==96&&f.StudyState.ReplanEntries==1&&Find<Label>(f,"navigationMoveSummary").Text.Contains("Last navigation: Replanned")&&Find<TextBox>(f,"navigationMoveDetails").Text.Contains("before poll 65"),"Next-prephase replan or supplied-input explanation absent");

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.133**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.134**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -524,6 +524,14 @@ Load **Clock + neutral driver · terrain / zero reset**, then use **To next coll
 
 This profile supplies scenario 1, empty events, neutral owner-pass control, selection, caller words and phases 1–128. Active owner task dispatch, aircraft-policy mixtures, natural clock/phase/pause production and a full Practice world remain unsupported. Export eight software form previews with `--render-navigation-clock` and a fresh directory.
 
+Three additional **Phase + clock** presets derive the counter from the recovered phase producer and a copied pause-word sequence. The previous seventeen presets keep their behavior. The first phase preset holds phase 30 for three frames: the clock header continues, while the admitted driver and scheduler hold. The neutral pass then occurs at produced phase 32 after **35 frames**. The fleet preset instead holds an already reached phase 32 without repeating its driver or scheduler calls.
+
+For **Phase + clock · terrain / pause**, use **To next collision / replan** twice. After **98 frames**, collision FE is visible at produced phase 95. Frame **99** replans at phase 96 with task time **16,225**, then the clock epilogue resets current/game/delta to 1. Frame **100** uses preceding delta 1 and computes delta **16,304**. The readout distinguishes frame count, produced phase, raw pause word, held frames and driver visits. The test obstacle is deliberately inserted at index 68, after delayed waypoint advancement. An earlier insertion at 65 was separately compared: the source routes around it before any collision.
+
+`OriginalPracticePhase` preserves the source's complete signed 16-bit pause-word comparison and unchecked 32-bit counter wrap. `PracticeNavigationPhaseState.AdvanceFrame` joins that producer and the simulation gate to the admitted clock/navigation body. Four 128-frame histories match complete original state for each obstacle timing, including all heap rows. The compact source-only chains include phase, raw pause word and actual driver-call count. Three supplied nonzero words per history hold the counter and scheduler; all 128 clock headers still run. At the recorded window end there are 125 driver visits and produced phase 125.
+
+This establishes the phase producer and the bounded simulation gate. Samples, pause words, caller words and initial counter remain supplied inputs. The complete original pause behavior also involves other world calls and deadline compensation, which this profile does not execute. Natural input, waiting/pacing, rendering, owner AI and a full Practice world remain separate. Export eight software form previews with `--render-navigation-phase` and a fresh directory.
+
 ## Clock and aircraft policy study
 
 Open **Recovered maps → Clock / aircraft policy (study)…** directly. No map or fleet selection is required first. This separate copy joins the recovered clock header to the whole bounded AI driver and aircraft policy; it preserves the active battle and settings. Nothing advances automatically.
@@ -542,7 +550,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.133, checks pass **629 model groups** and **258 form groups**. A fresh public checkout runs **509 model groups**, with **120 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
+For v0.134, checks pass **637 model groups** and **261 form groups**. A fresh public checkout runs **515 model groups**, with **122 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
