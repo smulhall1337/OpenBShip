@@ -9,7 +9,9 @@ namespace FleetLab
     {
         public uint PhaseCounter { get; private set; }
         public int Scenario { get; private set; }
-        public int ScenarioEventCount { get; private set; }
+        public int ParticipantRecordCount { get; private set; }
+        [Obsolete("This source global is a participant record count; use ParticipantRecordCount.")]
+        public int ScenarioEventCount { get { return ParticipantRecordCount; } }
         public int RawOwnerPassControl { get; private set; }
         public int CallerWord { get; private set; }
         public int IncomingFrameWord { get; private set; }
@@ -21,10 +23,10 @@ namespace FleetLab
             int rawOwnerPassControl, int callerWord, int incomingFrameWord, int selectedWaypoint)
         {
             if (scenario != 1 || scenarioEventCount != 0 || rawOwnerPassControl != 0)
-                throw new NotSupportedException("The compared driver profile requires Practice scenario1, zero scenario events and raw owner-pass control0. Other planners/events/owner dispatchers are not implemented here.");
+                throw new NotSupportedException("The compared driver profile requires Practice scenario1, zero participant records and raw owner-pass control0. Other planners/events/owner dispatchers are not implemented here.");
             if (selectedWaypoint != 4 && selectedWaypoint != -1)
                 throw new NotSupportedException("The compared driver starts with waypoint counter 4 or carries its invalidated value -1.");
-            PhaseCounter = phaseCounter; Scenario = scenario; ScenarioEventCount = scenarioEventCount;
+            PhaseCounter = phaseCounter; Scenario = scenario; ParticipantRecordCount = scenarioEventCount;
             RawOwnerPassControl = rawOwnerPassControl; CallerWord = callerWord; IncomingFrameWord = incomingFrameWord;
             SelectedWaypoint = selectedWaypoint;
         }
@@ -60,7 +62,7 @@ namespace FleetLab
 
     // Whole41D640 bounded caller.727/728/730 compare1728 complete states.
     // The prephase runs BEFORE the low-five-bit phase gate. Aligned calls run
-    // the empty event scheduler,direct-return scenario1 planner and owner-1
+    // the zero-participant scheduler,direct-return scenario1 planner and owner-1
     //visibility. With no active neutral fleets there are no owner task visits.
     public static class PracticeAiDriverGate
     {

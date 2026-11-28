@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.140**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.141**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -68,6 +68,13 @@ Evidence covers **1,380 complete original state snapshots across 96 histories**,
 
 The **World copy** selector also offers the recovered occupied BSSB202 start for startup seeds **0** and **731**. Its 29 existing fleets and 63 units appear separately from newly generated fleets. Bank five uses the carried startup RNG and counters; it skips inactive bay members, units immediately before kinds 22/23, and reserved primary slots. Three named diagnostic copy profiles isolate those allocation rules. They leave the supplied map unchanged. Unsupported seeds produce an inline error while retaining the applied world. This deliberately supplies bank five on a copied map; natural scenario selection and live AI remain outside the study. An additional **916 complete original states across 64 occupied-map histories** cover the composed allocator. Export seven occupied-map previews with `--render-mapped-reinforcements` and a fresh directory.
 
+## Participant completion study
+
+From **Recovered maps → Generated reinforcements (study)…**, choose **Participant records…**. Prepare configured/current counts, then **Complete records**. The four copied records show preserved existing bytes, appended source type-2 records, and unused records whose kind alone is cleared. **Repeat completed copy** makes no new name or formation requests. Reset restores the applied fixture while keeping pending control edits.
+
+The source routine uses the configured total at `4E384C` and a current count/working index at `55E820`. Initial values 2/1 can become 2/2 after completion; the latter global is not a permanent human-player or scenario-event count. An already larger current count is retained. **Use counts in reinforcement study** transfers a completed selection; **Load** in the parent applies it. A 3/3 choice is available alongside the retained comparison choices.
+
+All **120 original record/count/name-request/formation-request states** match. `CPU` / `CPU n` are supplied inspection labels, and the opaque initial records are modern comparison inputs. Modes 0/20 skip formation natively. Mode 5 exposes requests to `403D30`; that AI formation routine and the original localized labels are outside this implementation. Export six previews with `--render-participants` and a fresh directory.
 ## Scenario position study
 
 Open **Recovered maps → Scenario positions (study)…**. Choose a scenario, group, seed and copied blocker profile, then **Load selected copy**. Gold marks the accepted point; orange marks rejected candidates. The details list the rejecting primary or terrain record and show RNG progression. **Reset applied copy** reproduces the applied inputs while retaining pending control changes. Enter loads once per press; Escape closes. The footer stays visible while the map and details scroll.
@@ -598,7 +605,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.140, checks cover **673 model groups** and **282 form groups**. A fresh public checkout runs **548 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
+For v0.141, checks cover **679 model groups** and **286 form groups**. A fresh public checkout runs **554 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison. The position vectors and generated reinforcement snapshots are controlled numeric corpora, not thousands of gameplay scenarios.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
