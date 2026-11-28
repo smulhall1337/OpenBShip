@@ -35,6 +35,8 @@ sealed class MixedPrephaseWork
         return new MixedPrephaseWork{Ships=(byte[])Ships.Clone(),Fleets=(byte[])Fleets.Clone(),Orders=(byte[])Orders.Clone(),Candidates=(byte[])Candidates.Clone(),Backing=Backing,Grid=Grid,Terrain=(byte[])Terrain.Clone(),Waypoint=Waypoint};
     }
     internal MixedPrephaseWork Advance(PracticeAttachmentPatrolTables tables,int clock,bool ignoreInitialCollisionAlias)
+    { return AdvanceWithDelta(tables,clock,40,ignoreInitialCollisionAlias); }
+    internal MixedPrephaseWork AdvanceWithDelta(PracticeAttachmentPatrolTables tables,int clock,int delta,bool ignoreInitialCollisionAlias)
     {
         var s=Clone();s.Counter=0;
         for(int g=0;g<250;g++)
@@ -45,7 +47,7 @@ sealed class MixedPrephaseWork
             if(flag==2||flag==3)
             {
                 if(g!=15&&g!=17)throw new NotSupportedException("997 suppliedparent15/17only");
-                s.ParentCounterBefore=s.Counter;var p=PracticeFlag23Patrol.EvaluateNoTargets(tables,s.Ships,s.Fleets,s.Orders,s.Backing,s.Candidates,g,40,s.Counter,s.Waypoint);
+                s.ParentCounterBefore=s.Counter;var p=PracticeFlag23Patrol.EvaluateNoTargets(tables,s.Ships,s.Fleets,s.Orders,s.Backing,s.Candidates,g,delta,s.Counter,s.Waypoint);
                 s.Ships=p.CopyShipPool();s.Fleets=p.CopyFleetPool();s.Orders=p.CopyPrimaryOrders();s.Candidates=p.CopyCandidateRegion();s.Backing=p.Backing;s.Counter=p.CounterWordAfter;s.ParentCounterAfter=s.Counter;s.Ui+=p.RouteUiRequests;s.Waypoint=p.SelectedWaypoint;s.Activations+=p.Activations;
             }
             else if(flag==1)

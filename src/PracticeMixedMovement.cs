@@ -16,11 +16,16 @@ namespace FleetLab
         byte[] CopyFleetPool();byte[] CopyTerrainPool();IPracticeMixedComparison AdvanceForStudy();
     }
 
+    internal interface IPracticeMixedMovingComparison : IPracticeMixedComparison
+    {
+        PracticeFleetScheduler Schedule{get;} int TotalShipMoves{get;} int TotalAircraftMoves{get;}
+        int SelectedFleetFlag{get;}
+    }
     // Original1012R2/maintained1013/fresh1015. Whole mixed prephase first,
     // then inactive415DF0 and exactly two427670 batches. Phase1/caller0,
     // clock12345+40*visit/delta40 and diagnostic zero columns are supplied.
     // This is not a natural application loop or an unrestricted Practice world.
-    public sealed class PracticeMixedMovementState : IPracticeMixedComparison
+    public sealed class PracticeMixedMovementState : IPracticeMixedMovingComparison
     {
         public const int MaximumVisits=96;
         static readonly string[] names={

@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.136**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.137**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -55,6 +55,16 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 Restart restores the starting fleets, rule preset, opponent setting and random streams, including manual placements and shuffles. Display and audio preferences retain their current values. The restart snapshot lasts while that battle is open.
 
 **Options → Debug → Skip turn cinematics (debug)** resolves shots without loading turn videos while preserving damage, turn order and random choices. The setting persists and defaults off. Intro/result sequences and the clip library remain available. Normal turn movies appear behind the boards; board surfaces use the accepted 30% transparency during playback while grid lines, ships, markers and controls stay opaque.
+
+## Clock and moving fleets study
+
+Open **Recovered maps → Clock + moving fleets (study)…**. This separate 96-frame comparison adds the recovered clock header, phase producer and pause gate to the moving slice. It shows raw clock values **before / during / after** the body. Both earlier comparison views remain available.
+
+The first three presets hold phase 30 for three supplied pause words, then resume to phase 32. Other presets hold phase 32 after its neutral pass has already run; holding it does not repeat the simulation. Clocks continue through those held frames. No automatic timer advances the copy.
+
+Load **Short route + zero sample · aircraft activation**, then click **To frame 67 (zero reset)**. The body sees delta 40 before the header resets current/game/delta to 1. Advance once: the body sees delta 1 and the header produces 15024. Advance again: the body sees 15024, activates aircraft 27 and clears selected waypoint 4 to −1. Using the new delta immediately would activate it a frame early.
+
+Seven complete original-code histories support these supplied scenarios. The view preserves source order and per-fleet movement cadence. It does not run the original busy wait, rendering/input loop, pause-deadline compensation, natural caller values, active owner AI, combat or a complete Practice battle.
 
 ## Policy and moving fleets study
 
@@ -568,7 +578,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.136, checks pass **649 model groups** and **268 form groups**. A fresh public checkout runs **525 model groups**, with **124 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
+For v0.137, checks pass **655 model groups** and **271 form groups**. A fresh public checkout runs **530 model groups**, with **125 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 
