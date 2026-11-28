@@ -1,6 +1,6 @@
 # OpenBShip
 
-A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.135**.
+A partial C# reconstruction of **Battleship: The Classic Naval Warfare Game (1997)** for modern Windows x64. Current source: **v0.136**.
 
 The project has a playable Classic battle, recovered menu and setup presentation, original media readers, and separate studies of recovered Practice systems. The studies include aircraft flight and AA on a supplied clock, plus a copied original installation with explicit recovery steps, inventory lookup and a separate prepared yard admission/supply/return study. Aircraft viewing includes a copied AWACS airfield, an optional recovered request-phase gate and bounded playback.
 
@@ -55,6 +55,16 @@ Use **Auto-place → Start battle**, or **Original menu → Solo → Classic →
 Restart restores the starting fleets, rule preset, opponent setting and random streams, including manual placements and shuffles. Display and audio preferences retain their current values. The restart snapshot lasts while that battle is open.
 
 **Options → Debug → Skip turn cinematics (debug)** resolves shots without loading turn videos while preserving damage, turn order and random choices. The setting persists and defaults off. Intro/result sequences and the clip library remain available. Normal turn movies appear behind the boards; board surfaces use the accepted 30% transparency during playback while grid lines, ships, markers and controls stay opaque.
+
+## Policy and moving fleets study
+
+Open **Recovered maps → Policy + moving fleets (study)…**. This separate comparison runs recovered aircraft policy, ship navigation and two movement batches per copied poll. It stops after 96 polls and preserves the active battle and settings. The earlier eight-visit **Navigation / aircraft policy** view remains available.
+
+Load **Navigation first · blocked destination / activation**. After one poll, gold ship 16 moves from `100,100` to `107,100`. After the second, cyan aircraft 27 moves from `230,250` to `227,250` toward its queued point `210,250`. Each fleet moves when its scheduler slot is visited; movement on every click is not expected.
+
+For the arrival boundary, load **Short route · selected-fleet arrival writeback**, click **To poll 63 (before arrival)**, then advance one poll. The ship is at `110,100`; the selected fleet 249 flag changes from the supplied diagnostic value `109` to `0` at poll 64. The selected-waypoint counter stays 4 because the arriving ship is a different fleet. Reset restores the applied copy and keeps other selector choices pending until Load.
+
+Seven 96-poll original-code histories support complete state comparisons, including scheduler order and the shared task/movement writeback. Clocks, phase, caller values and diagnostic map columns are supplied inputs. This is a bounded reconstruction study; natural application pacing, active owner AI, combat and a complete Practice battle remain unfinished.
 
 ## Navigation and aircraft policy study
 
@@ -558,7 +568,7 @@ Four independently prepared histories match all 14 complete original frames, inc
 
 ## Validation
 
-For v0.135, checks pass **643 model groups** and **265 form groups**. A fresh public checkout runs **520 model groups**, with **123 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
+For v0.136, checks pass **649 model groups** and **268 form groups**. A fresh public checkout runs **525 model groups**, with **124 explicit skips** for optional private evidence; its form run can separately skip the optional private startup-palette comparison.
 
 Run checks from PowerShell after Setup. Use `Start-Process -Wait` because these are GUI-subsystem executables:
 

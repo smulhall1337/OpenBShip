@@ -8,7 +8,7 @@ namespace FleetLab
     // Bounded whole41D640/41FCC0 comparison from original996r3, independently
     // replayed at997/999. The caller word, phase and clock are supplied inputs.
     // This does not enable the old policy/navigation APIs for arbitrary worlds.
-    public sealed class PracticeMixedNavigationState
+    public sealed class PracticeMixedNavigationState : IPracticeMixedComparison
     {
         static readonly string[] names = {
             "Policy first · stored aircraft / active route",
@@ -22,6 +22,7 @@ namespace FleetLab
         readonly PracticeAttachmentPatrolTables tables;
         public static ReadOnlyCollection<string> Presets { get { return Array.AsReadOnly(names); } }
         public const int MaximumVisits = 8;
+        public int WindowVisits { get { return MaximumVisits; } }
         public int Preset { get; private set; }
         public int Visits { get; private set; }
         public bool CanAdvance { get { return Visits < MaximumVisits; } }
@@ -62,6 +63,18 @@ namespace FleetLab
             return new PracticeMixedNavigationState(tables,MixedPrephaseWork.Initial(basis,preset),preset,0,0);
         }
         public PracticeMixedNavigationState Advance() { return AdvanceCore(false); }
+        IPracticeMixedComparison IPracticeMixedComparison.AdvanceForStudy() { return Advance(); }
+        internal static MixedPrephaseWork CreateMovingFixture(string programs,PracticeMapStartup startup,int preset)
+        {
+            if(preset<0 || preset>6)throw new ArgumentOutOfRangeException("preset");
+            var basis=PracticeAttachmentPatrolStudyBasis.Create(programs,startup);
+            var input=basis.CreateFixture(15,false,0,40,0,false,0,false,false).ForWholePass(0);
+            var fleets=input.CopyFleetPool();fleets[15*492+486]=2;
+            var pools=new[]{input.CopyShipPool(),fleets,input.CopyPrimaryOrders(),input.Backing.CopyRegion(),input.CopyCandidateRegion()};
+            // Keep the same five complete input hashes as the eight-visit API.
+            CreateForComparison(PracticeAttachmentPatrolTables.Load(programs),pools,preset==6?0:preset);
+            return MixedPrephaseWork.Initial(pools,preset);
+        }
         internal PracticeMixedNavigationState AdvanceIgnoringInitialAliasForComparison() { return AdvanceCore(true); }
         PracticeMixedNavigationState AdvanceCore(bool ignoreInitialAlias)
         {

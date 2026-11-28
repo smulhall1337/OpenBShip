@@ -21,8 +21,8 @@ sealed class MixedPrephaseWork
         for(int g=0;g<250;g++){f[g*492+486]=0;I(r,g*312+208,unchecked((int)(0x70000010u+(uint)(g*6432))));}
         for(int n=78000;n<78016;n++)r[n]=0xa7;
         I(f,at,1);W(f,at+6,1);W(f,at+12,100);W(f,at+14,100);W(f,at+60,7);f[at+485]=3;f[at+482]=254;I(f,at+476,0);
-        for(int n=0;n<5;n++){W(f,at+40+n*2,n==0?160:-1);W(f,at+50+n*2,n==0?100:300+n*10);}
-        Array.Copy(r,ta,r,ta+20,180);Array.Clear(r,ta,20);I(r,ta,11);I(r,ta+200,2);I(r,ta+304,0);I(r,ta+296,600);I(r,ta+300,610);I(r,ta+8,160);I(r,ta+12,100);I(r,ta+4,12345);r[ta+284]=0;
+        for(int n=0;n<5;n++){W(f,at+40+n*2,n==0?(history==6?110:160):-1);W(f,at+50+n*2,n==0?100:300+n*10);}
+        Array.Copy(r,ta,r,ta+20,180);Array.Clear(r,ta,20);I(r,ta,11);I(r,ta+200,2);I(r,ta+304,0);I(r,ta+296,600);I(r,ta+300,610);I(r,ta+8,history==6?110:160);I(r,ta+12,100);I(r,ta+4,12345);r[ta+284]=0;
         var s=new MixedPrephaseWork{Ships=(byte[])basis[0].Clone(),Fleets=f,Orders=(byte[])basis[2].Clone(),Candidates=(byte[])basis[4].Clone(),Backing=new PracticeAiSharedBacking(r),Grid=PracticeAiRouteGrid.Diagnostic(16,0xcd),Terrain=new byte[246000]};
         if(history!=1&&history!=2)s.NavigationStep(12345,false);
         s.Fleets[parent*492+486]=2;r=s.Backing.CopyRegion();I(r,child*312+252,history==1||history==2||history==4?4960:0);s.Backing=new PracticeAiSharedBacking(r);
